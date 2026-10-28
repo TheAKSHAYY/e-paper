@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { resolveFontFallback, DEFAULT_EPAPER_FONTS } from './index';
+import {
+  resolveFontFallback,
+  DEFAULT_EPAPER_FONTS,
+  SELF_HOSTED_FONT_FAMILIES,
+  SELF_HOSTED_FONTS_CSS,
+} from './index';
 
 describe('Typography', () => {
   it('should list e-ink optimized font definitions with valid weights', () => {
@@ -14,4 +19,23 @@ describe('Typography', () => {
     expect(resolveFontFallback('cjk')).toBe('Noto Sans CJK');
     expect(resolveFontFallback('devanagari')).toBe('Noto Serif Devanagari');
   });
+
+  it('should export all 8 required self-hosted font families and valid @font-face CSS', () => {
+    expect(SELF_HOSTED_FONT_FAMILIES).toHaveLength(8);
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Rozha One');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Yatra One');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Noto Serif Devanagari');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Tiro Devanagari Hindi');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Poppins');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Mukta');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Hind');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Gotu');
+
+    expect(SELF_HOSTED_FONTS_CSS).toContain('font-display: swap;');
+    expect(SELF_HOSTED_FONTS_CSS).toContain('/fonts/');
+    for (const family of SELF_HOSTED_FONT_FAMILIES) {
+      expect(SELF_HOSTED_FONTS_CSS).toContain(`font-family: '${family}'`);
+    }
+  });
 });
+

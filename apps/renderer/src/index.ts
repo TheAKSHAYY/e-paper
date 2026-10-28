@@ -1,4 +1,6 @@
-import { chromium, type Browser } from 'playwright';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { chromium, type Browser, type Page } from 'playwright';
 import {
   type NewspaperDocument,
   type MinimalDocument,
@@ -194,6 +196,105 @@ export class RendererWorker {
   }
 
   /**
+   * Resolves the directory path containing self-hosted WOFF2 font files.
+   */
+  private getLocalFontsDir(): string {
+    const candidates = [
+      path.resolve(process.cwd(), 'apps/web/public/fonts'),
+      path.resolve(__dirname, '../../web/public/fonts'),
+      path.resolve(__dirname, '../../../apps/web/public/fonts'),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+    return candidates[0];
+  }
+
+  /**
+   * Sets up local font route interception and SSRF mitigations on a Playwright page.
+   */
+  private async setupPageRoutes(page: Page): Promise<void> {
+    const fontsDir = this.getLocalFontsDir();
+
+    await page.route('**/*', async (route) => {
+      const reqUrl = route.request().url();
+
+      // Intercept local font requests and fulfill from disk
+      if (reqUrl.includes('/fonts/')) {
+        const fontFilename = path.basename(new URL(reqUrl).pathname);
+        const fontPath = path.join(fontsDir, fontFilename);
+        if (fs.existsSync(fontPath)) {
+          const fontData = fs.readFileSync(fontPath);
+          return route.fulfill({
+            status: 200,
+            contentType: 'font/woff2',
+            body: fontData,
+          });
+        }
+      }
+
+      if (reqUrl.startsWith('data:') || reqUrl.startsWith('about:')) {
+        return route.continue();
+      }
+      if (!isSafeUrl(reqUrl)) {
+        return route.abort('blockedbyclient');
+      }
+      return route.continue();
+    });
+  }
+
+  /**
+   * Waits for document.fonts.ready and checks that all required fonts loaded without error.
+   * If any font fails, throws a clear Error aborting export.
+   */
+  private async waitForFontsAndImages(page: Page): Promise<void> {
+    const fontCheckResult = await page.evaluate(async () => {
+      if (!document.fonts) {
+        return { ok: true, failed: [] };
+      }
+
+      try {
+        await document.fonts.ready;
+      } catch (err) {
+        return {
+          ok: false,
+          failed: [err instanceof Error ? err.message : String(err)],
+        };
+      }
+
+      const failed: string[] = [];
+      document.fonts.forEach((font) => {
+        if (font.status === 'error') {
+          failed.push(`${font.family} (weight: ${font.weight})`);
+        }
+      });
+
+      return { ok: failed.length === 0, failed };
+    });
+
+    if (!fontCheckResult.ok) {
+      throw new Error(
+        `Export aborted: Required typography font(s) failed to load: ${fontCheckResult.failed.join(', ')}. Please verify self-hosted font assets.`
+      );
+    }
+
+    // Wait for all embedded images to decode or timeout
+    await page.evaluate(async () => {
+      const images = Array.from(document.querySelectorAll('img'));
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete) return Promise.resolve(true);
+          return new Promise((resolve) => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            setTimeout(() => resolve(false), 2500);
+          });
+        })
+      );
+    });
+  }
+
+  /**
    * Renders a NewspaperDocument into a real vector PDF with exact physical dimensions.
    */
   public async renderToPdf(
@@ -219,17 +320,8 @@ export class RendererWorker {
         height: Math.round(heightPt),
       });
 
-      // SSRF Mitigation: Block unsafe URL protocols and internal network IPs
-      await page.route('**/*', (route) => {
-        const reqUrl = route.request().url();
-        if (reqUrl.startsWith('data:') || reqUrl.startsWith('about:')) {
-          return route.continue();
-        }
-        if (!isSafeUrl(reqUrl)) {
-          return route.abort('blockedbyclient');
-        }
-        return route.continue();
-      });
+      // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
+      await this.setupPageRoutes(page);
 
       // Load HTML document
       await page.setContent(html, {
@@ -237,34 +329,8 @@ export class RendererWorker {
         timeout,
       });
 
-      // Wait for typography fonts to resolve
-      await page.evaluate(async () => {
-        try {
-          if (document.fonts && document.fonts.ready) {
-            await Promise.race([
-              document.fonts.ready,
-              new Promise((resolve) => setTimeout(resolve, 3000)),
-            ]);
-          }
-        } catch {
-          // Gracefully continue if fonts ready API is unavailable
-        }
-      });
-
-      // Wait for all embedded images to decode or timeout
-      await page.evaluate(async () => {
-        const images = Array.from(document.querySelectorAll('img'));
-        await Promise.all(
-          images.map((img) => {
-            if (img.complete) return Promise.resolve(true);
-            return new Promise((resolve) => {
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(false);
-              setTimeout(() => resolve(false), 2500);
-            });
-          })
-        );
-      });
+      // Wait for typography fonts to resolve completely without race timeout
+      await this.waitForFontsAndImages(page);
 
       // Inspect layout for column/page height overflows
       const layoutDiagnostics = await page.evaluate(() => {
@@ -337,19 +403,11 @@ export class RendererWorker {
         height: Math.round(heightPt * scale),
       });
 
-      // SSRF Mitigation
-      await page.route('**/*', (route) => {
-        const reqUrl = route.request().url();
-        if (reqUrl.startsWith('data:') || reqUrl.startsWith('about:')) {
-          return route.continue();
-        }
-        if (!isSafeUrl(reqUrl)) {
-          return route.abort('blockedbyclient');
-        }
-        return route.continue();
-      });
+      // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
+      await this.setupPageRoutes(page);
 
       await page.setContent(html, { waitUntil: 'load' });
+      await this.waitForFontsAndImages(page);
 
       const targetPageNumber = options.pageNumber ?? 1;
       const pageLocator = page.locator(`.newspaper-page[data-page-number="${targetPageNumber}"]`);
@@ -391,7 +449,11 @@ export class RendererWorker {
         height: Math.round(heightPt * scale),
       });
 
+      // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
+      await this.setupPageRoutes(page);
+
       await page.setContent(html, { waitUntil: 'load' });
+      await this.waitForFontsAndImages(page);
 
       const pageLocators = page.locator('.newspaper-page');
       const count = await pageLocators.count();

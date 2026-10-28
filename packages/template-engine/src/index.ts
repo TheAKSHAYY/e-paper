@@ -18,9 +18,15 @@ import {
   GOOGLE_FONTS_DEVANAGARI_CSS_URL,
   RECOMMENDED_HINDI_FONT_COMBINATIONS,
   DEVANAGARI_FONTS,
+  SELF_HOSTED_FONTS_CSS,
 } from '@epaper-studio/typography';
 
-export { GOOGLE_FONTS_DEVANAGARI_CSS_URL, RECOMMENDED_HINDI_FONT_COMBINATIONS, DEVANAGARI_FONTS };
+export {
+  GOOGLE_FONTS_DEVANAGARI_CSS_URL,
+  RECOMMENDED_HINDI_FONT_COMBINATIONS,
+  DEVANAGARI_FONTS,
+  SELF_HOSTED_FONTS_CSS,
+};
 
 /* ====================================================================
  * Legacy Template Engine Interfaces (Backward Compatibility)
@@ -1589,11 +1595,10 @@ export function renderNewspaperDocumentToHtml(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(doc.metadata.title)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Fraunces:opsz,wght@9..144,400;700;900&family=Gotu&family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Mukta:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Noto+Serif+Devanagari:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Rozha+One&family=Tiro+Devanagari+Hindi&family=Yatra+One&display=swap" rel="stylesheet">
+  <!-- Self-hosted Latin + Devanagari Typography -->
   <style>
+    ${SELF_HOSTED_FONTS_CSS}
+
     @page {
       size: ${widthPt}pt ${heightPt}pt;
       margin: 0;

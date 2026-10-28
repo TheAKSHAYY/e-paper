@@ -210,5 +210,24 @@ describe('RendererWorker & PDF Export Engine', () => {
       expect(pngHeader[2]).toBe(0x4e); // 'N'
       expect(pngHeader[3]).toBe(0x47); // 'G'
     }, 30000);
+
+    it('should render PDF using self-hosted fonts without Google Fonts CDN dependency', async () => {
+      const doc = createNewspaperDocument({
+        title: 'दैनिक जनसंदेश',
+        presetId: 'classic-hindi-broadsheet',
+        pageSize: 'broadsheet',
+        language: 'hi',
+      });
+
+      const result = await worker.renderToPdf(doc);
+      expect(result).toBeDefined();
+      expect(result.fileSizeBytes).toBeGreaterThan(10000);
+      expect(result.pageCount).toBe(1);
+
+      const metadata = inspectPdf(result.pdfBuffer);
+      expect(metadata.isValidPdf).toBe(true);
+      expect(metadata.hasSelectableText).toBe(true);
+    }, 30000);
   });
 });
+
