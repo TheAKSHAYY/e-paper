@@ -35,11 +35,26 @@ import { draftStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
 import { createArticleFromPreset } from './utils/presetPlacement';
 
+declare global {
+  interface Window {
+    __setDocument?: (doc: NewspaperDocument) => void;
+    __setScale?: (s: number) => void;
+    __setPhysicalCanvas?: (v: boolean) => void;
+  }
+}
+
 export const App: React.FC = () => {
-  // Main publication state initialized with authentic classic Hindi broadsheet preset
-  const [document, setDocument] = useState<NewspaperDocument>(() =>
-    createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' })
-  );
+  // Main publication state initialized with authentic classic Hindi broadsheet preset or URL param
+  const [document, setDocument] = useState<NewspaperDocument>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const presetParam = params.get('preset');
+      if (presetParam) {
+        return createNewspaperDocument({ presetId: presetParam as NewspaperPresetId });
+      }
+    }
+    return createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+  });
 
   // Active page & selection state
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
@@ -60,7 +75,17 @@ export const App: React.FC = () => {
     }
     return 'landing';
   });
-  const [scale, setScale] = useState<number>(0.7);
+  const [scale, setScale] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const scaleParam = params.get('scale');
+      if (scaleParam) {
+        const parsed = parseFloat(scaleParam);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+      }
+    }
+    return 0.7;
+  });
   // Feature flag for physical canvas coordinates (default OFF until parity tests pass, then ON)
   const [usePhysicalCanvasCoordinates, setUsePhysicalCanvasCoordinates] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -83,7 +108,21 @@ export const App: React.FC = () => {
 
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
   const canvasViewportRef = useRef<HTMLDivElement>(null);
-  const hasInitializedFit = useRef<boolean>(false);
+  const hasInitializedFit = useRef<boolean>(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('scale')
+  );
+
+  // Expose test automation hooks in dev / test mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__setDocument = (doc: NewspaperDocument) => {
+        setDocument(doc);
+        setCurrentPageIndex(0);
+      };
+      window.__setScale = (s: number) => setScale(s);
+      window.__setPhysicalCanvas = (v: boolean) => setUsePhysicalCanvasCoordinates(v);
+    }
+  }, []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);

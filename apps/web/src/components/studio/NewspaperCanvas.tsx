@@ -301,6 +301,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               onSelectMasthead?.();
             }}
             data-testid="masthead-section"
+            className="masthead-section"
             style={{
               ...getRuleBorderStyle(),
               paddingBottom: usePhysicalCanvasCoordinates
@@ -963,6 +964,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   <article
                     key={article.id}
                     data-testid={`article-card-${article.id}`}
+                    data-article-id={article.id}
+                    className="newspaper-article"
                     lang={isHindi ? 'hi' : 'en'}
                     onClick={() => onSelectArticle(article.id)}
                     style={{
@@ -1289,6 +1292,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
          * 3. PAGE FOLIO FOOTER
          * ========================================================== */}
         <footer
+          className="newspaper-folio-footer"
+          data-testid="newspaper-folio-footer"
           style={{
             borderTop: '1px solid #111',
             paddingTop: usePhysicalCanvasCoordinates
