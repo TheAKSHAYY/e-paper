@@ -454,8 +454,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 4,
     columnRule: true,
     mastheadStyle: 'ornate-double-rule',
-    headlineFont: "'Playfair Display', Georgia, 'Times New Roman', serif",
-    bodyFont: "'Newsreader', Georgia, serif",
+    headlineFont: "'Rozha One', 'Noto Serif Devanagari', serif",
+    bodyFont: "'Noto Serif Devanagari', serif",
     bodyFontSizePt: 10,
     spacingDensity: 'normal',
     accentColor: '#1a1a1a',
@@ -464,7 +464,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'The Inviolable Record of National & International Affairs',
       subtitle: 'The Inviolable Record of National & International Affairs • Founded 1888',
       establishmentYear: '1888',
-      fontFamily: "'Playfair Display', Georgia, serif",
+      fontFamily: "'Rozha One', 'Noto Serif Devanagari', serif",
       fontSizePt: 48,
       alignment: 'center',
       ruleStyle: 'ornate-double',
@@ -571,8 +571,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 3,
     columnRule: false,
     mastheadStyle: 'clean-minimal',
-    headlineFont: "'Fraunces', 'Playfair Display', serif",
-    bodyFont: "'Newsreader', Georgia, serif",
+    headlineFont: "'Noto Serif Devanagari', serif",
+    bodyFont: "'Noto Serif Devanagari', serif",
     bodyFontSizePt: 10.5,
     spacingDensity: 'spacious',
     accentColor: '#8b0000',
@@ -581,7 +581,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'Culture, Architecture, Ideas & Global Discourse',
       subtitle: 'Culture, Architecture, Ideas & Global Discourse • Est. 1998',
       establishmentYear: '1998',
-      fontFamily: "'Fraunces', serif",
+      fontFamily: "'Noto Serif Devanagari', serif",
       fontSizePt: 46,
       alignment: 'center',
       ruleStyle: 'single-hairline',
@@ -673,8 +673,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 4,
     columnRule: true,
     mastheadStyle: 'bold-slab',
-    headlineFont: "'Oswald', Impact, 'Arial Black', sans-serif",
-    bodyFont: "'Merriweather', Georgia, serif",
+    headlineFont: "'Poppins', sans-serif",
+    bodyFont: "'Hind', sans-serif",
     bodyFontSizePt: 9.5,
     spacingDensity: 'compact',
     accentColor: '#104e8b',
@@ -683,7 +683,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'Your Independent Daily Community Voice',
       subtitle: 'Your Independent Daily Community Voice Since 1921',
       establishmentYear: '1921',
-      fontFamily: "'Oswald', sans-serif",
+      fontFamily: "'Poppins', sans-serif",
       fontSizePt: 46,
       alignment: 'center',
       ruleStyle: 'classic-double',
@@ -1208,20 +1208,14 @@ export function renderNewspaperDocumentToHtml(
   // Sanitize CSS properties against injection attacks
   const mastheadFont = sanitizeCssValue(
     doc.layout.mastheadFont || doc.layout.headlineFont,
-    "'Rozha One', 'Playfair Display', serif"
+    "'Rozha One', 'Noto Serif Devanagari', serif"
   );
-  const headlineFont = sanitizeCssValue(
-    doc.layout.headlineFont,
-    "'Noto Serif Devanagari', 'Playfair Display', serif"
-  );
+  const headlineFont = sanitizeCssValue(doc.layout.headlineFont, "'Noto Serif Devanagari', serif");
   const subheadlineFont = sanitizeCssValue(
     doc.layout.subheadlineFont || doc.layout.headlineFont,
-    "'Noto Serif Devanagari', 'Playfair Display', serif"
+    "'Noto Serif Devanagari', serif"
   );
-  const bodyFont = sanitizeCssValue(
-    doc.layout.bodyFont,
-    "'Noto Serif Devanagari', 'Newsreader', Georgia, serif"
-  );
+  const bodyFont = sanitizeCssValue(doc.layout.bodyFont, "'Noto Serif Devanagari', 'Hind', serif");
   const headlineWeight = Math.max(300, Math.min(900, Number(doc.layout.headlineWeight) || 700));
   const bodyFontSizePt = Math.max(7, Math.min(24, Number(doc.layout.bodyFontSizePt) || 10));
 
@@ -1545,7 +1539,7 @@ export function renderNewspaperDocumentToHtml(
           // 1. Kicker Badge for top-headline or custom
           const kickerHtml = art.kickerText
             ? `
-            <div class="article-kicker" style="color: #b91c1c; font-weight: 700; font-size: 8pt; text-transform: uppercase; margin-bottom: 2px;">
+            <div class="article-kicker" style="color: #b91c1c; font-family: 'Hind', 'Noto Serif Devanagari', sans-serif; font-weight: 700; font-size: 8pt; text-transform: uppercase; margin-bottom: 2px;">
               ${escapeHtml(art.kickerText)}
             </div>
           `
@@ -1712,7 +1706,7 @@ export function renderNewspaperDocumentToHtml(
 <html lang="${escapeHtml(doc.metadata.language || 'en')}" dir="${direction}">
 <head>
   <meta charset="utf-8" />
-  <base href="${escapeHtml(_options.baseUrl ?? 'http://localhost:5173/')}" />
+  <base href="${escapeHtml(_options.baseUrl ?? 'http://epaper-studio.local/')}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Self-hosted Latin + Devanagari Typography -->
   <style>
@@ -1734,7 +1728,7 @@ export function renderNewspaperDocumentToHtml(
       padding: 0;
       background-color: #ffffff;
       color: #121212;
-      font-family: ${bodyFont}, 'Newsreader', 'Noto Serif Devanagari', Georgia, serif;
+      font-family: ${bodyFont}, 'Noto Serif Devanagari', 'Hind', serif;
       font-size: ${bodyFontSizePt}pt;
       line-height: 1.5;
       text-rendering: optimizeLegibility;
@@ -1803,7 +1797,7 @@ export function renderNewspaperDocumentToHtml(
       padding-bottom: 3pt;
       margin-bottom: 4pt;
       font-size: 8pt;
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       color: #333333;
       letter-spacing: 0.2pt;
       line-height: 1.25;
@@ -1821,7 +1815,7 @@ export function renderNewspaperDocumentToHtml(
       align-items: center;
       justify-content: center;
       gap: 4pt;
-      font-family: 'Noto Serif Devanagari', Georgia, serif;
+      font-family: 'Noto Serif Devanagari', serif;
       font-size: 8.5pt;
       color: #333333;
     }
@@ -1903,7 +1897,7 @@ export function renderNewspaperDocumentToHtml(
       padding-top: 3pt;
       margin-top: 4pt;
       font-size: 8.5pt;
-      font-family: 'Inter', 'Noto Serif Devanagari', sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       font-weight: 600;
       color: #111111;
       letter-spacing: 0.3pt;
@@ -1918,7 +1912,7 @@ export function renderNewspaperDocumentToHtml(
     }
 
     .folio-date {
-      font-family: 'Noto Serif Devanagari', Georgia, serif;
+      font-family: 'Noto Serif Devanagari', serif;
     }
 
     /* Inside Folio Header for Page 2+ */
@@ -1930,7 +1924,7 @@ export function renderNewspaperDocumentToHtml(
       padding-bottom: 4pt;
       margin-bottom: 12pt;
       font-size: 8pt;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5pt;
@@ -1975,13 +1969,13 @@ export function renderNewspaperDocumentToHtml(
       margin: 0 0 3pt 0;
       font-size: 9.5pt;
       color: #444;
-      font-family: ${subheadlineFont}, ${bodyFont};
+      font-family: ${subheadlineFont}, ${bodyFont}, 'Noto Serif Devanagari', 'Hind', serif;
       line-height: 1.35;
     }
 
     .article-headline {
       margin: 0;
-      font-family: ${headlineFont}, 'Playfair Display', 'Fraunces', serif;
+      font-family: ${headlineFont}, 'Noto Serif Devanagari', serif;
       font-weight: ${headlineWeight};
       line-height: 1.15;
       color: #121212;
@@ -2008,7 +2002,7 @@ export function renderNewspaperDocumentToHtml(
     .article-byline {
       margin-top: 3pt;
       font-size: 7.5pt;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.5pt;
       color: #666;
@@ -2053,7 +2047,7 @@ export function renderNewspaperDocumentToHtml(
       line-height: 0.8;
       padding-right: 5pt;
       padding-top: 3pt;
-      font-family: ${headlineFont}, serif;
+      font-family: ${headlineFont}, 'Noto Serif Devanagari', serif;
       font-weight: 800;
       color: #121212;
     }
@@ -2111,7 +2105,7 @@ export function renderNewspaperDocumentToHtml(
     .article-caption {
       margin-top: 3pt;
       font-size: 7.5pt;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       color: #444;
       line-height: 1.3;
       font-style: italic;
@@ -2150,7 +2144,7 @@ export function renderNewspaperDocumentToHtml(
       justify-content: space-between;
       align-items: center;
       font-size: 7pt;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Hind', 'Noto Serif Devanagari', sans-serif;
       text-transform: uppercase;
       color: #666;
       letter-spacing: 0.5pt;

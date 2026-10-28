@@ -1,4 +1,3 @@
-import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright';
 import {
@@ -7,6 +6,8 @@ import {
   type PageDimensions,
 } from '@epaper-studio/document-schema';
 import { renderNewspaperDocumentToHtml, getPageDimensionsPt } from '@epaper-studio/template-engine';
+import { readSelfHostedFont } from '@epaper-studio/typography/server';
+import { SELF_HOSTED_FONT_FAMILIES } from '@epaper-studio/typography';
 
 export interface RenderJobRequest {
   jobId: string;
@@ -196,47 +197,35 @@ export class RendererWorker {
   }
 
   /**
-   * Resolves the directory path containing self-hosted WOFF2 font files.
-   */
-  private getLocalFontsDir(): string {
-    const candidates = [
-      path.resolve(process.cwd(), 'apps/web/public/fonts'),
-      path.resolve(__dirname, '../../web/public/fonts'),
-      path.resolve(__dirname, '../../../apps/web/public/fonts'),
-    ];
-    for (const c of candidates) {
-      if (fs.existsSync(c)) return c;
-    }
-    return candidates[0] ?? path.resolve(process.cwd(), 'apps/web/public/fonts');
-  }
-
-  /**
    * Sets up local font route interception and SSRF mitigations on a Playwright page.
+   * If a requested font file is missing, aborts and records a fatal error, never continuing to the network.
    */
-  private async setupPageRoutes(page: Page): Promise<void> {
-    const fontsDir = this.getLocalFontsDir();
-
+  private async setupPageRoutes(page: Page, onRouteError?: (err: Error) => void): Promise<void> {
     await page.route('**/*', async (route) => {
       const reqUrl = route.request().url();
 
-      // Intercept local font requests and fulfill from disk
+      // Intercept local font requests and fulfill from canonical @epaper-studio/typography fonts
       if (reqUrl.includes('/fonts/')) {
         try {
           const fontFilename = path.basename(new URL(reqUrl).pathname);
-          const fontPath = path.join(fontsDir, fontFilename);
-          const exists = fs.existsSync(fontPath);
-          if (exists) {
-            const fontData = fs.readFileSync(fontPath);
+          const fontData = readSelfHostedFont(fontFilename);
+          if (fontData) {
             return route.fulfill({
               status: 200,
               contentType: 'font/woff2',
               body: fontData,
             });
           } else {
-            console.error('[FONT ROUTE MISSING]', fontPath);
+            const err = new Error(
+              `Export aborted: Requested font file "${fontFilename}" not found in @epaper-studio/typography/fonts.`
+            );
+            if (onRouteError) onRouteError(err);
+            return route.abort('failed');
           }
         } catch (err) {
-          console.error('[FONT ROUTE ERROR]', reqUrl, err);
+          const routeErr = err instanceof Error ? err : new Error(String(err));
+          if (onRouteError) onRouteError(routeErr);
+          return route.abort('failed');
         }
       }
 
@@ -246,15 +235,24 @@ export class RendererWorker {
       if (!isSafeUrl(reqUrl)) {
         return route.abort('blockedbyclient');
       }
-      return route.continue();
+      // Never route.continue() to the network for unhandled external origins
+      return route.abort('blockedbyclient');
     });
   }
 
   /**
    * Waits for document.fonts.ready and checks that all required fonts loaded without error.
-   * If any font fails, throws a clear Error aborting export.
+   * If any font fails or a route interception error occurred, throws a clear Error aborting export.
    */
-  private async waitForFontsAndImages(page: Page): Promise<void> {
+  private async waitForFontsAndImages(
+    page: Page,
+    getRouteError?: () => Error | null
+  ): Promise<void> {
+    if (getRouteError) {
+      const routeErr = getRouteError();
+      if (routeErr) throw routeErr;
+    }
+
     const fontCheckResult = await page.evaluate(async () => {
       if (!document.fonts) {
         return { ok: true, failed: [] };
@@ -279,6 +277,11 @@ export class RendererWorker {
       return { ok: failed.length === 0, failed };
     });
 
+    if (getRouteError) {
+      const routeErr = getRouteError();
+      if (routeErr) throw routeErr;
+    }
+
     if (!fontCheckResult.ok) {
       throw new Error(
         `Export aborted: Required typography font(s) failed to load: ${fontCheckResult.failed.join(', ')}. Please verify self-hosted font assets.`
@@ -299,6 +302,87 @@ export class RendererWorker {
         })
       );
     });
+  }
+
+  /**
+   * CDP Platform Font Policy Guard:
+   * Asserts via a CDP session that every text-bearing DOM node resolves strictly
+   * to an allowlisted self-hosted font family. Throws an explicit Error listing
+   * the offending element, text snippet, and platform font family if any fallback occurs.
+   */
+  public async assertPlatformFontsAllowlisted(page: Page): Promise<void> {
+    const cdp = await page.context().newCDPSession(page);
+    try {
+      await cdp.send('DOM.enable');
+      await cdp.send('CSS.enable');
+      const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+
+      const count = await page.evaluate(() => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let c = 0;
+        const seen = new Set<Element>();
+        let textNode: Node | null;
+        while ((textNode = walker.nextNode())) {
+          const text = textNode.textContent?.trim();
+          if (text && text.length > 0) {
+            const el = textNode.parentElement;
+            if (el && !seen.has(el)) {
+              seen.add(el);
+              c++;
+              el.setAttribute('data-guard-node-id', String(c));
+            }
+          }
+        }
+        return c;
+      });
+
+      const violations: string[] = [];
+
+      for (let i = 1; i <= count; i++) {
+        const { nodeId } = await cdp.send('DOM.querySelector', {
+          nodeId: root.nodeId,
+          selector: `[data-guard-node-id="${i}"]`,
+        });
+
+        if (nodeId) {
+          const res = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+          const fonts = res.fonts || [];
+          for (const font of fonts) {
+            const isAllowlisted =
+              font.isCustomFont ||
+              SELF_HOSTED_FONT_FAMILIES.some(
+                (f) =>
+                  font.familyName.toLowerCase() === f.toLowerCase() ||
+                  font.familyName.toLowerCase().includes(f.toLowerCase())
+              );
+
+            if (!isAllowlisted) {
+              const info = await page.evaluate((id) => {
+                const el = document.querySelector(`[data-guard-node-id="${id}"]`);
+                if (!el) return { tag: 'unknown', className: '', text: '' };
+                return {
+                  tag: el.tagName.toLowerCase(),
+                  className: el.className || '',
+                  text: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
+                };
+              }, i);
+
+              violations.push(
+                `<${info.tag}${info.className ? ' class="' + info.className + '"' : ''}> [text: "${info.text}"] used disallowed font "${font.familyName}" (${font.glyphCount} glyphs)`
+              );
+            }
+          }
+        }
+      }
+
+      if (violations.length > 0) {
+        throw new Error(
+          `Export aborted: Font policy violation. Document contains text resolved to non-self-hosted system font(s):\n${violations.map((v) => `  • ${v}`).join('\n')}\nAllowed self-hosted families: ${SELF_HOSTED_FONT_FAMILIES.join(', ')}.`
+        );
+      }
+    } finally {
+      await cdp.detach().catch(() => {});
+    }
   }
 
   /**
@@ -329,8 +413,11 @@ export class RendererWorker {
         height: heightPx,
       });
 
+      let routeFailureError: Error | null = null;
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
-      await this.setupPageRoutes(page);
+      await this.setupPageRoutes(page, (err) => {
+        routeFailureError = err;
+      });
 
       // Load HTML document
       await page.setContent(html, {
@@ -339,7 +426,10 @@ export class RendererWorker {
       });
 
       // Wait for typography fonts to resolve completely without race timeout
-      await this.waitForFontsAndImages(page);
+      await this.waitForFontsAndImages(page, () => routeFailureError);
+
+      // Verify zero host OS font fallback via CDP
+      await this.assertPlatformFontsAllowlisted(page);
 
       // Inspect layout for column/page height overflows
       const layoutDiagnostics = await page.evaluate(() => {
@@ -432,11 +522,15 @@ export class RendererWorker {
         height: heightPx,
       });
 
+      let routeFailureError: Error | null = null;
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
-      await this.setupPageRoutes(page);
+      await this.setupPageRoutes(page, (err) => {
+        routeFailureError = err;
+      });
 
       await page.setContent(html, { waitUntil: 'load' });
-      await this.waitForFontsAndImages(page);
+      await this.waitForFontsAndImages(page, () => routeFailureError);
+      await this.assertPlatformFontsAllowlisted(page);
 
       const targetPageNumber = options.pageNumber ?? 1;
       const pageLocator = page.locator(`.newspaper-page[data-page-number="${targetPageNumber}"]`);
@@ -480,11 +574,15 @@ export class RendererWorker {
         height: heightPx,
       });
 
+      let routeFailureError: Error | null = null;
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
-      await this.setupPageRoutes(page);
+      await this.setupPageRoutes(page, (err) => {
+        routeFailureError = err;
+      });
 
       await page.setContent(html, { waitUntil: 'load' });
-      await this.waitForFontsAndImages(page);
+      await this.waitForFontsAndImages(page, () => routeFailureError);
+      await this.assertPlatformFontsAllowlisted(page);
 
       const pageLocators = page.locator('.newspaper-page');
       const count = await pageLocators.count();

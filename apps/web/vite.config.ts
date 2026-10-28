@@ -1,7 +1,36 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { RendererWorker } from '@epaper-studio/renderer';
+import { getTypographyFontsDir } from '@epaper-studio/typography/server';
+
+function typographyFontsPlugin(): Plugin {
+  const fontsDir = getTypographyFontsDir();
+  const serveFont = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    if (!req.url) return next();
+    const fontName = req.url.replace(/^\//, '').split('?')[0] || '';
+    const fontPath = path.join(fontsDir, fontName);
+    if (fs.existsSync(fontPath)) {
+      const contentType = fontName.endsWith('.css') ? 'text/css' : 'font/woff2';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return fs.createReadStream(fontPath).pipe(res);
+    }
+    next();
+  };
+
+  return {
+    name: 'typography-fonts-server',
+    configureServer(server) {
+      server.middlewares.use('/fonts', serveFont);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use('/fonts', serveFont);
+    },
+  };
+}
 
 function newspaperPdfServerPlugin(): Plugin {
   let worker: RendererWorker | null = null;
@@ -79,7 +108,7 @@ function newspaperPdfServerPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), newspaperPdfServerPlugin()],
+  plugins: [react(), newspaperPdfServerPlugin(), typographyFontsPlugin()],
   server: {
     port: 5173,
     host: true,
