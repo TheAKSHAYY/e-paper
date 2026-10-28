@@ -9,11 +9,13 @@ import type {
   ImagePlacement,
   ImageAspect,
   SpacingDensity,
+  NewspaperPage,
 } from '@epaper-studio/document-schema';
 import {
   PAGE_SIZE_DEFINITIONS,
   getImageObjectPosition,
   getImageAspectRatio,
+  resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
 import { DEVANAGARI_FONTS, RECOMMENDED_HINDI_FONT_COMBINATIONS } from '@epaper-studio/typography';
 import { MastheadInspectorPanel } from './MastheadInspectorPanel';
@@ -21,6 +23,7 @@ import { BorderControls } from './BorderControls';
 
 export interface ContextualInspectorProps {
   selectedArticle: Article | null;
+  currentPage?: NewspaperPage;
   onUpdateArticle: (article: Article) => void;
   onDeleteArticle?: (articleId: string) => void;
   onMoveArticleUp?: (articleId: string) => void;
@@ -45,6 +48,7 @@ export interface ContextualInspectorProps {
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   selectedArticle,
+  currentPage,
   onUpdateArticle,
   onDeleteArticle,
   onMoveArticleUp,
@@ -68,6 +72,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
 }) => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<'content' | 'typography'>('content');
   const isPage1 = currentPageIndex === 0;
+  const pageColumnCount = resolvePageColumnCount({ layout }, currentPage);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,7 +244,6 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
              * 1. ARTICLE / STORY INSPECTOR (WHEN ARTICLE IS SELECTED)
              * ========================================================== */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
               {/* Quick Reorder and Move Actions */}
               <div
                 style={{
@@ -494,7 +498,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       marginBottom: '4px',
                     }}
                   >
-                    कॉलम ({selectedArticle.columnSpan}/{layout.columnCount})
+                    कॉलम ({selectedArticle.columnSpan}/{pageColumnCount})
                   </label>
                   <select
                     value={selectedArticle.columnSpan}
@@ -513,7 +517,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       outline: 'none',
                     }}
                   >
-                    {Array.from({ length: Math.max(12, layout.columnCount) }, (_, i) => i + 1).map((col) => (
+                    {Array.from({ length: pageColumnCount }, (_, i) => i + 1).map((col) => (
                       <option key={col} value={col}>
                         {col} कॉलम
                       </option>
@@ -1378,7 +1382,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', color: '#475569', marginBottom: '3px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '10.5px',
+                        color: '#475569',
+                        marginBottom: '3px',
+                      }}
+                    >
                       पृष्ठभूमि रंग
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1388,7 +1399,13 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         onChange={(e) =>
                           onUpdateArticle({ ...selectedArticle, backgroundColor: e.target.value })
                         }
-                        style={{ width: '28px', height: '28px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                        }}
                       />
                       {selectedArticle.backgroundColor && (
                         <button
@@ -1411,7 +1428,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', color: '#475569', marginBottom: '3px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '10.5px',
+                        color: '#475569',
+                        marginBottom: '3px',
+                      }}
+                    >
                       पैडिंग ({selectedArticle.paddingPx ?? 0}px)
                     </label>
                     <input
@@ -1420,7 +1444,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       max={24}
                       value={selectedArticle.paddingPx ?? 0}
                       onChange={(e) =>
-                        onUpdateArticle({ ...selectedArticle, paddingPx: parseInt(e.target.value, 10) })
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          paddingPx: parseInt(e.target.value, 10),
+                        })
                       }
                       style={{ width: '100%', accentColor: '#b91c1c' }}
                     />

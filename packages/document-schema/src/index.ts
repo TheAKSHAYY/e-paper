@@ -465,7 +465,7 @@ export const NewspaperPageSchema = z.object({
   pageNumber: z.number().int().positive(),
   sectionTitle: z.string().optional().default('मुख्य पृष्ठ'),
   articles: z.array(ArticleSchema).default([]),
-  columnCount: z.number().int().min(2).max(6).optional(),
+  columnCount: z.number().int().min(2).max(12).optional(),
 });
 
 export type NewspaperPage = z.infer<typeof NewspaperPageSchema>;
@@ -484,8 +484,10 @@ export type NewspaperDocument = z.infer<typeof NewspaperDocumentSchema>;
 
 /**
  * Returns an array of discrete pages from a NewspaperDocument.
- * If explicit `pages` exist and are non-empty, returns `doc.pages`.
+ * If explicit `pages` exist and are non-empty, returns `doc.pages` as-is.
  * Otherwise, wraps root `doc.articles` in a single page model for backward compatibility.
+ * Notice: Per-page columnCount is kept undefined on fabricated fallback pages so that
+ * it explicitly inherits doc.layout.columnCount dynamically via resolvePageColumnCount(doc, page).
  */
 export function getPublicationPages(doc: NewspaperDocument): NewspaperPage[] {
   if (doc.pages && doc.pages.length > 0) {
@@ -497,7 +499,7 @@ export function getPublicationPages(doc: NewspaperDocument): NewspaperPage[] {
       pageNumber: 1,
       sectionTitle: doc.metadata.language === 'hi' ? 'मुख्य पृष्ठ' : 'Front Page',
       articles: doc.articles,
-      columnCount: doc.layout.columnCount,
+      columnCount: undefined,
     },
   ];
 }
@@ -546,9 +548,10 @@ export function createNewBlankPage(
  * Clamps result between 2 and 12 columns.
  */
 export function resolvePageColumnCount(
-  docOrLayout?:
-    | { layout?: { columnCount?: number | null } | null; columnCount?: number | null }
-    | null,
+  docOrLayout?: {
+    layout?: { columnCount?: number | null } | null;
+    columnCount?: number | null;
+  } | null,
   page?: { columnCount?: number | null } | null
 ): number {
   const layoutColCount =

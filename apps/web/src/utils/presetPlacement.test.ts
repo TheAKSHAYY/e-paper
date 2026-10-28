@@ -114,5 +114,38 @@ describe('Preset Placement - createArticleFromPreset', () => {
       expect(created.shortNewsItems?.[0]?.title).toBe('मेट्रो विस्तार');
       expect(created.borders?.left?.color).toBe('#2563eb');
     });
+
+    it('should ensure a new block added on a 12-column page gets a valid default span within 12 (TASK 1b)', () => {
+      const pageColumnCount = 12;
+
+      // Unspecified columnSpan gets Math.min(2, defaultColumnCount)
+      const blockWithoutSpan = createArticleFromPreset(
+        {},
+        {
+          defaultColumnCount: pageColumnCount,
+        }
+      );
+      expect(blockWithoutSpan.columnSpan).toBe(2);
+      expect(blockWithoutSpan.columnSpan).toBeLessThanOrEqual(pageColumnCount);
+
+      // Explicit span up to 12 is respected
+      const fullWidthBanner = createArticleFromPreset(
+        { columnSpan: 12 },
+        {
+          defaultColumnCount: pageColumnCount,
+        }
+      );
+      expect(fullWidthBanner.columnSpan).toBe(12);
+      expect(fullWidthBanner.columnSpan).toBeLessThanOrEqual(pageColumnCount);
+
+      // Presets with defined spans are within 12
+      for (const preset of ELEMENT_PRESETS) {
+        const created = createArticleFromPreset(preset.data, {
+          defaultColumnCount: pageColumnCount,
+        });
+        expect(created.columnSpan).toBeGreaterThanOrEqual(1);
+        expect(created.columnSpan).toBeLessThanOrEqual(12);
+      }
+    });
   });
 });

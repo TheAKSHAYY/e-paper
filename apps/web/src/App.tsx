@@ -13,6 +13,7 @@ import {
   getPublicationPages,
   createNewBlankPage,
   getPageDimensions,
+  resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
 import { createNewspaperDocument, getNewspaperPreset } from '@epaper-studio/template-engine';
 
@@ -382,9 +383,10 @@ export const App: React.FC = () => {
   const handleAddBlock = useCallback(
     (blockTemplate: Partial<Article>) => {
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const resolvedColumnCount = resolvePageColumnCount(document, currentPage);
       const newArticle = createArticleFromPreset(blockTemplate, {
         newId,
-        defaultColumnCount: document.layout.columnCount,
+        defaultColumnCount: resolvedColumnCount,
         orderIndex: currentPage.articles.length,
       });
 
@@ -539,18 +541,13 @@ export const App: React.FC = () => {
       const art = currentPage.articles.find((a) => a.id === articleId);
       if (!art) return;
 
-      const maxCols = currentPage.columnCount ?? document.layout.columnCount;
+      const maxCols = resolvePageColumnCount(document, currentPage);
       const newSpan = Math.max(1, Math.min(maxCols, art.columnSpan + delta));
       if (newSpan === art.columnSpan) return;
 
       handleUpdateArticle({ ...art, columnSpan: newSpan });
     },
-    [
-      currentPage.articles,
-      currentPage.columnCount,
-      document.layout.columnCount,
-      handleUpdateArticle,
-    ]
+    [currentPage, document, handleUpdateArticle]
   );
 
   // Move article to another page
@@ -666,9 +663,7 @@ export const App: React.FC = () => {
 
         const updatedArticles = [...targetPage.articles, ...newArticles];
         const updatedPages = currentPages.map((p, idx) =>
-          idx === safePageIndex
-            ? { ...p, columnCount: 12, articles: updatedArticles }
-            : p
+          idx === safePageIndex ? { ...p, columnCount: 12, articles: updatedArticles } : p
         );
 
         return {
@@ -687,18 +682,21 @@ export const App: React.FC = () => {
   );
 
   // Select masthead preset from visual gallery
-  const handleSelectMastheadPreset = useCallback((presetConfig: Partial<MastheadConfig>) => {
-    setDocument((prev) => ({
-      ...prev,
-      masthead: {
-        ...prev.masthead,
-        ...presetConfig,
-      },
-      metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
-    }));
-    setHasUnsavedChanges(true);
-    showNotification('मास्टहेड प्रारूप सफलतापूर्वक लागू किया गया');
-  }, [showNotification]);
+  const handleSelectMastheadPreset = useCallback(
+    (presetConfig: Partial<MastheadConfig>) => {
+      setDocument((prev) => ({
+        ...prev,
+        masthead: {
+          ...prev.masthead,
+          ...presetConfig,
+        },
+        metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+      }));
+      setHasUnsavedChanges(true);
+      showNotification('मास्टहेड प्रारूप सफलतापूर्वक लागू किया गया');
+    },
+    [showNotification]
+  );
 
   // Masthead & Layout updates
   const handleUpdateMasthead = useCallback((masthead: MastheadConfig) => {
@@ -958,398 +956,400 @@ export const App: React.FC = () => {
             onToggleInspector={() => setIsInspectorOpen((prev) => !prev)}
           />
 
-      {/* Status Notification Toast */}
-      {statusMessage && (
-        <div
-          role="status"
-          style={{
-            position: 'fixed',
-            bottom: isMobile ? '70px' : '24px',
-            right: '24px',
-            backgroundColor: '#0f172a',
-            color: '#f8fafc',
-            border: '1px solid #334155',
-            padding: '10px 18px',
-            borderRadius: '8px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.35)',
-            fontSize: '13px',
-            fontWeight: 500,
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <span>ℹ️</span> {statusMessage}
-        </div>
-      )}
-
-      {/* 2. MAIN PUBLISHING WORKSPACE */}
-      <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          overflow: 'hidden',
-          position: 'relative',
-          backgroundColor: '#e2e8f0',
-        }}
-      >
-        {/* Left Activity Sidebar (Desktop & Tablet) */}
-        {!isMobile && isSidebarOpen && viewMode !== 'preview' && (
-          <LeftSidebar
-            activeTab={activeSidebarTab}
-            onTabChange={setActiveSidebarTab}
-            pages={pages}
-            currentPageIndex={safePageIndex}
-            onSelectPage={handleSelectPage}
-            onAddPage={handleAddPage}
-            onDuplicatePage={handleDuplicatePage}
-            onDeletePage={handleDeletePage}
-            onMovePage={handleMovePage}
-            onAddBlock={handleAddBlock}
-            currentPresetId={document.layout.presetId}
-            onSelectPreset={(pId) => handleApplyPreset(pId, false)}
-            onCloseSidebar={() => setIsSidebarOpen(false)}
-            selectedArticleId={selectedArticleId}
-            onSelectArticle={setSelectedArticleId}
-            onDuplicateArticle={handleDuplicateArticle}
-            onDeleteArticle={handleDeleteArticle}
-            onMoveArticleUp={handleMoveArticleUp}
-            onMoveArticleDown={handleMoveArticleDown}
-            onApplyLayoutRow={handleApplyLayoutRow}
-          />
-        )}
-
-        {/* Collapsed Left Icon Rail (Desktop & Tablet) */}
-        {!isMobile && !isSidebarOpen && viewMode !== 'preview' && (
-          <div
-            style={{
-              width: '48px',
-              backgroundColor: '#ffffff',
-              borderRight: '1px solid #e2e8f0',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              paddingTop: '10px',
-              gap: '8px',
-              flexShrink: 0,
-              zIndex: 30,
-            }}
-          >
-            <button
-              onClick={() => {
-                setActiveSidebarTab('pages');
-                setIsSidebarOpen(true);
-              }}
-              title="पेज सूची (Pages)"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#475569',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '2px',
-                cursor: 'pointer',
-                padding: '6px 4px',
-                borderRadius: '4px',
-              }}
-            >
-              <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
-              <span style={{ fontSize: '9px', fontWeight: 600 }}>पेज</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveSidebarTab('blocks');
-                setIsSidebarOpen(true);
-              }}
-              title="तत्व सूची (Elements)"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#475569',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '2px',
-                cursor: 'pointer',
-                padding: '6px 4px',
-                borderRadius: '4px',
-              }}
-            >
-              <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
-              <span style={{ fontSize: '9px', fontWeight: 600 }}>तत्व</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveSidebarTab('templates');
-                setIsSidebarOpen(true);
-              }}
-              title="प्रारूप (Presets)"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#475569',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '2px',
-                cursor: 'pointer',
-                padding: '6px 4px',
-                borderRadius: '4px',
-              }}
-            >
-              <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
-              <span style={{ fontSize: '9px', fontWeight: 600 }}>प्रारूप</span>
-            </button>
-          </div>
-        )}
-
-        {/* Center Canvas Area with Ref for Smart Auto-Fit */}
-        <div
-          ref={canvasViewportRef}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'auto',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            backgroundColor: '#cbd5e1',
-            paddingTop: '24px',
-            paddingLeft: '16px',
-            paddingRight: '16px',
-            paddingBottom: isMobile ? '80px' : '76px',
-            position: 'relative',
-          }}
-          onClick={(e) => {
-            // Deselect article if clicking directly on background
-            if (e.target === e.currentTarget) {
-              setSelectedArticleId(null);
-              setIsMastheadSelected(false);
-            }
-          }}
-        >
-          <NewspaperCanvas
-            page={currentPage}
-            pageIndex={safePageIndex}
-            totalPages={pages.length}
-            masthead={document.masthead}
-            layout={document.layout}
-            pageSize={document.metadata.pageSize}
-            orientation={document.metadata.orientation}
-            scale={scale}
-            selectedArticleId={selectedArticleId}
-            onSelectArticle={(id) => {
-              setSelectedArticleId(id);
-              setIsMastheadSelected(false);
-              if (isMobile) {
-                setMobileDrawer('inspector');
-              } else {
-                setIsInspectorOpen(true);
-              }
-            }}
-            isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-            onSelectMasthead={() => {
-              setIsMastheadSelected(true);
-              setSelectedArticleId(null);
-              if (isMobile) {
-                setMobileDrawer('inspector');
-              } else {
-                setIsInspectorOpen(true);
-              }
-            }}
-            onMoveArticleUp={handleMoveArticleUp}
-            onMoveArticleDown={handleMoveArticleDown}
-            onAdjustColumnSpan={handleAdjustColumnSpan}
-            onAddBlock={handleAddBlock}
-            onAddPage={handleAddPage}
-          />
-        </div>
-
-        {/* Right Contextual Inspector (Desktop) */}
-        {!isMobile && !isTablet && isInspectorOpen && viewMode !== 'preview' && (
-          <ContextualInspector
-            selectedArticle={selectedArticle}
-            onUpdateArticle={handleUpdateArticle}
-            onDeleteArticle={handleDeleteArticle}
-            onMoveArticleUp={handleMoveArticleUp}
-            onMoveArticleDown={handleMoveArticleDown}
-            onMoveArticleToPage={handleMoveArticleToPage}
-            totalPages={pages.length}
-            currentPageIndex={safePageIndex}
-            masthead={document.masthead}
-            onUpdateMasthead={handleUpdateMasthead}
-            layout={document.layout}
-            onUpdateLayout={handleUpdateLayout}
-            pageSize={document.metadata.pageSize}
-            onPageSizeChange={handlePageSizeChange}
-            orientation={document.metadata.orientation}
-            onOrientationChange={handleOrientationChange}
-            onDeselect={() => {
-              setSelectedArticleId(null);
-              setIsMastheadSelected(false);
-            }}
-            onCloseInspector={() => setIsInspectorOpen(false)}
-            isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-            onSelectMasthead={() => {
-              setIsMastheadSelected(true);
-              setSelectedArticleId(null);
-            }}
-            onCloseMasthead={() => setIsMastheadSelected(false)}
-          />
-        )}
-      </div>
-
-      {/* 3. MOBILE TOUCH BOTTOM BAR & DRAWER SHEETS */}
-      {isMobile && (
-        <>
-          <MobileBottomNav
-            activeDrawer={mobileDrawer}
-            onSelectDrawer={setMobileDrawer}
-            currentPageNumber={safePageIndex + 1}
-            totalPages={pages.length}
-            hasSelectedArticle={Boolean(selectedArticle)}
-            onExportPdf={handleExportPdf}
-            isExportingPdf={isExportingPdf}
-          />
-
-          {/* Mobile Slide-Up Drawer */}
-          {mobileDrawer !== 'none' && (
+          {/* Status Notification Toast */}
+          {statusMessage && (
             <div
+              role="status"
               style={{
                 position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                zIndex: 90,
+                bottom: isMobile ? '70px' : '24px',
+                right: '24px',
+                backgroundColor: '#0f172a',
+                color: '#f8fafc',
+                border: '1px solid #334155',
+                padding: '10px 18px',
+                borderRadius: '8px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.35)',
+                fontSize: '13px',
+                fontWeight: 500,
+                zIndex: 1000,
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: '8px',
               }}
-              onClick={() => setMobileDrawer('none')}
             >
+              <span>ℹ️</span> {statusMessage}
+            </div>
+          )}
+
+          {/* 2. MAIN PUBLISHING WORKSPACE */}
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              overflow: 'hidden',
+              position: 'relative',
+              backgroundColor: '#e2e8f0',
+            }}
+          >
+            {/* Left Activity Sidebar (Desktop & Tablet) */}
+            {!isMobile && isSidebarOpen && viewMode !== 'preview' && (
+              <LeftSidebar
+                activeTab={activeSidebarTab}
+                onTabChange={setActiveSidebarTab}
+                pages={pages}
+                currentPageIndex={safePageIndex}
+                onSelectPage={handleSelectPage}
+                onAddPage={handleAddPage}
+                onDuplicatePage={handleDuplicatePage}
+                onDeletePage={handleDeletePage}
+                onMovePage={handleMovePage}
+                onAddBlock={handleAddBlock}
+                currentPresetId={document.layout.presetId}
+                onSelectPreset={(pId) => handleApplyPreset(pId, false)}
+                onCloseSidebar={() => setIsSidebarOpen(false)}
+                selectedArticleId={selectedArticleId}
+                onSelectArticle={setSelectedArticleId}
+                onDuplicateArticle={handleDuplicateArticle}
+                onDeleteArticle={handleDeleteArticle}
+                onMoveArticleUp={handleMoveArticleUp}
+                onMoveArticleDown={handleMoveArticleDown}
+                onApplyLayoutRow={handleApplyLayoutRow}
+              />
+            )}
+
+            {/* Collapsed Left Icon Rail (Desktop & Tablet) */}
+            {!isMobile && !isSidebarOpen && viewMode !== 'preview' && (
               <div
                 style={{
+                  width: '48px',
                   backgroundColor: '#ffffff',
-                  borderTopLeftRadius: '16px',
-                  borderTopRightRadius: '16px',
-                  maxHeight: '75vh',
-                  overflowY: 'auto',
-                  padding: '16px',
-                  boxShadow: '0 -10px 30px rgba(0,0,0,0.3)',
+                  borderRight: '1px solid #e2e8f0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  paddingTop: '10px',
+                  gap: '8px',
+                  flexShrink: 0,
+                  zIndex: 30,
                 }}
-                onClick={(e) => e.stopPropagation()}
               >
-                <div
+                <button
+                  onClick={() => {
+                    setActiveSidebarTab('pages');
+                    setIsSidebarOpen(true);
+                  }}
+                  title="पेज सूची (Pages)"
                   style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#475569',
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    marginBottom: '12px',
-                    paddingBottom: '8px',
-                    borderBottom: '1px solid #e2e8f0',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    padding: '6px 4px',
+                    borderRadius: '4px',
                   }}
                 >
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                    {mobileDrawer === 'pages'
-                      ? 'Pages Manager'
-                      : mobileDrawer === 'blocks'
-                        ? 'Add Newspaper Block'
-                        : selectedArticle
-                          ? 'Edit Article'
-                          : 'Page Layout & Settings'}
-                  </span>
-                  <button
-                    onClick={() => setMobileDrawer('none')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '16px',
-                      color: '#64748b',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {mobileDrawer === 'pages' && (
-                  <LeftSidebar
-                    activeTab="pages"
-                    onTabChange={() => {}}
-                    pages={pages}
-                    currentPageIndex={safePageIndex}
-                    onSelectPage={(idx) => {
-                      handleSelectPage(idx);
-                      setMobileDrawer('none');
-                    }}
-                    onAddPage={handleAddPage}
-                    onDuplicatePage={handleDuplicatePage}
-                    onDeletePage={handleDeletePage}
-                    onMovePage={handleMovePage}
-                    onAddBlock={handleAddBlock}
-                    currentPresetId={document.layout.presetId}
-                    onSelectPreset={() => {}}
-                  />
-                )}
-
-                {mobileDrawer === 'blocks' && (
-                  <LeftSidebar
-                    activeTab="blocks"
-                    onTabChange={() => {}}
-                    pages={pages}
-                    currentPageIndex={safePageIndex}
-                    onSelectPage={() => {}}
-                    onAddPage={() => {}}
-                    onDuplicatePage={() => {}}
-                    onDeletePage={() => {}}
-                    onMovePage={() => {}}
-                    onAddBlock={(tmpl) => {
-                      handleAddBlock(tmpl);
-                      setMobileDrawer('none');
-                    }}
-                    currentPresetId={document.layout.presetId}
-                    onSelectPreset={() => {}}
-                  />
-                )}
-
-                {mobileDrawer === 'inspector' && (
-                  <ContextualInspector
-                    selectedArticle={selectedArticle}
-                    onUpdateArticle={handleUpdateArticle}
-                    onDeleteArticle={handleDeleteArticle}
-                    onMoveArticleUp={handleMoveArticleUp}
-                    onMoveArticleDown={handleMoveArticleDown}
-                    onMoveArticleToPage={handleMoveArticleToPage}
-                    totalPages={pages.length}
-                    currentPageIndex={safePageIndex}
-                    masthead={document.masthead}
-                    onUpdateMasthead={handleUpdateMasthead}
-                    layout={document.layout}
-                    onUpdateLayout={handleUpdateLayout}
-                    pageSize={document.metadata.pageSize}
-                    onPageSizeChange={handlePageSizeChange}
-                    orientation={document.metadata.orientation}
-                    onOrientationChange={handleOrientationChange}
-                    onDeselect={() => {
-                      setSelectedArticleId(null);
-                      setIsMastheadSelected(false);
-                    }}
-                    isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-                    onSelectMasthead={() => {
-                      setIsMastheadSelected(true);
-                      setSelectedArticleId(null);
-                    }}
-                    onCloseMasthead={() => setIsMastheadSelected(false)}
-                  />
-                )}
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
+                  <span style={{ fontSize: '9px', fontWeight: 600 }}>पेज</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveSidebarTab('blocks');
+                    setIsSidebarOpen(true);
+                  }}
+                  title="तत्व सूची (Elements)"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#475569',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    padding: '6px 4px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
+                  <span style={{ fontSize: '9px', fontWeight: 600 }}>तत्व</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveSidebarTab('templates');
+                    setIsSidebarOpen(true);
+                  }}
+                  title="प्रारूप (Presets)"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#475569',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    padding: '6px 4px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
+                  <span style={{ fontSize: '9px', fontWeight: 600 }}>प्रारूप</span>
+                </button>
               </div>
+            )}
+
+            {/* Center Canvas Area with Ref for Smart Auto-Fit */}
+            <div
+              ref={canvasViewportRef}
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                overflowX: 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                backgroundColor: '#cbd5e1',
+                paddingTop: '24px',
+                paddingLeft: '16px',
+                paddingRight: '16px',
+                paddingBottom: isMobile ? '80px' : '76px',
+                position: 'relative',
+              }}
+              onClick={(e) => {
+                // Deselect article if clicking directly on background
+                if (e.target === e.currentTarget) {
+                  setSelectedArticleId(null);
+                  setIsMastheadSelected(false);
+                }
+              }}
+            >
+              <NewspaperCanvas
+                page={currentPage}
+                pageIndex={safePageIndex}
+                totalPages={pages.length}
+                masthead={document.masthead}
+                layout={document.layout}
+                pageSize={document.metadata.pageSize}
+                orientation={document.metadata.orientation}
+                scale={scale}
+                selectedArticleId={selectedArticleId}
+                onSelectArticle={(id) => {
+                  setSelectedArticleId(id);
+                  setIsMastheadSelected(false);
+                  if (isMobile) {
+                    setMobileDrawer('inspector');
+                  } else {
+                    setIsInspectorOpen(true);
+                  }
+                }}
+                isMastheadSelected={isMastheadSelected && safePageIndex === 0}
+                onSelectMasthead={() => {
+                  setIsMastheadSelected(true);
+                  setSelectedArticleId(null);
+                  if (isMobile) {
+                    setMobileDrawer('inspector');
+                  } else {
+                    setIsInspectorOpen(true);
+                  }
+                }}
+                onMoveArticleUp={handleMoveArticleUp}
+                onMoveArticleDown={handleMoveArticleDown}
+                onAdjustColumnSpan={handleAdjustColumnSpan}
+                onAddBlock={handleAddBlock}
+                onAddPage={handleAddPage}
+              />
             </div>
+
+            {/* Right Contextual Inspector (Desktop) */}
+            {!isMobile && !isTablet && isInspectorOpen && viewMode !== 'preview' && (
+              <ContextualInspector
+                selectedArticle={selectedArticle}
+                currentPage={currentPage}
+                onUpdateArticle={handleUpdateArticle}
+                onDeleteArticle={handleDeleteArticle}
+                onMoveArticleUp={handleMoveArticleUp}
+                onMoveArticleDown={handleMoveArticleDown}
+                onMoveArticleToPage={handleMoveArticleToPage}
+                totalPages={pages.length}
+                currentPageIndex={safePageIndex}
+                masthead={document.masthead}
+                onUpdateMasthead={handleUpdateMasthead}
+                layout={document.layout}
+                onUpdateLayout={handleUpdateLayout}
+                pageSize={document.metadata.pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                orientation={document.metadata.orientation}
+                onOrientationChange={handleOrientationChange}
+                onDeselect={() => {
+                  setSelectedArticleId(null);
+                  setIsMastheadSelected(false);
+                }}
+                onCloseInspector={() => setIsInspectorOpen(false)}
+                isMastheadSelected={isMastheadSelected && safePageIndex === 0}
+                onSelectMasthead={() => {
+                  setIsMastheadSelected(true);
+                  setSelectedArticleId(null);
+                }}
+                onCloseMasthead={() => setIsMastheadSelected(false)}
+              />
+            )}
+          </div>
+
+          {/* 3. MOBILE TOUCH BOTTOM BAR & DRAWER SHEETS */}
+          {isMobile && (
+            <>
+              <MobileBottomNav
+                activeDrawer={mobileDrawer}
+                onSelectDrawer={setMobileDrawer}
+                currentPageNumber={safePageIndex + 1}
+                totalPages={pages.length}
+                hasSelectedArticle={Boolean(selectedArticle)}
+                onExportPdf={handleExportPdf}
+                isExportingPdf={isExportingPdf}
+              />
+
+              {/* Mobile Slide-Up Drawer */}
+              {mobileDrawer !== 'none' && (
+                <div
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 90,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                  }}
+                  onClick={() => setMobileDrawer('none')}
+                >
+                  <div
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderTopLeftRadius: '16px',
+                      borderTopRightRadius: '16px',
+                      maxHeight: '75vh',
+                      overflowY: 'auto',
+                      padding: '16px',
+                      boxShadow: '0 -10px 30px rgba(0,0,0,0.3)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '12px',
+                        paddingBottom: '8px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                        {mobileDrawer === 'pages'
+                          ? 'Pages Manager'
+                          : mobileDrawer === 'blocks'
+                            ? 'Add Newspaper Block'
+                            : selectedArticle
+                              ? 'Edit Article'
+                              : 'Page Layout & Settings'}
+                      </span>
+                      <button
+                        onClick={() => setMobileDrawer('none')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '16px',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {mobileDrawer === 'pages' && (
+                      <LeftSidebar
+                        activeTab="pages"
+                        onTabChange={() => {}}
+                        pages={pages}
+                        currentPageIndex={safePageIndex}
+                        onSelectPage={(idx) => {
+                          handleSelectPage(idx);
+                          setMobileDrawer('none');
+                        }}
+                        onAddPage={handleAddPage}
+                        onDuplicatePage={handleDuplicatePage}
+                        onDeletePage={handleDeletePage}
+                        onMovePage={handleMovePage}
+                        onAddBlock={handleAddBlock}
+                        currentPresetId={document.layout.presetId}
+                        onSelectPreset={() => {}}
+                      />
+                    )}
+
+                    {mobileDrawer === 'blocks' && (
+                      <LeftSidebar
+                        activeTab="blocks"
+                        onTabChange={() => {}}
+                        pages={pages}
+                        currentPageIndex={safePageIndex}
+                        onSelectPage={() => {}}
+                        onAddPage={() => {}}
+                        onDuplicatePage={() => {}}
+                        onDeletePage={() => {}}
+                        onMovePage={() => {}}
+                        onAddBlock={(tmpl) => {
+                          handleAddBlock(tmpl);
+                          setMobileDrawer('none');
+                        }}
+                        currentPresetId={document.layout.presetId}
+                        onSelectPreset={() => {}}
+                      />
+                    )}
+
+                    {mobileDrawer === 'inspector' && (
+                      <ContextualInspector
+                        selectedArticle={selectedArticle}
+                        currentPage={currentPage}
+                        onUpdateArticle={handleUpdateArticle}
+                        onDeleteArticle={handleDeleteArticle}
+                        onMoveArticleUp={handleMoveArticleUp}
+                        onMoveArticleDown={handleMoveArticleDown}
+                        onMoveArticleToPage={handleMoveArticleToPage}
+                        totalPages={pages.length}
+                        currentPageIndex={safePageIndex}
+                        masthead={document.masthead}
+                        onUpdateMasthead={handleUpdateMasthead}
+                        layout={document.layout}
+                        onUpdateLayout={handleUpdateLayout}
+                        pageSize={document.metadata.pageSize}
+                        onPageSizeChange={handlePageSizeChange}
+                        orientation={document.metadata.orientation}
+                        onOrientationChange={handleOrientationChange}
+                        onDeselect={() => {
+                          setSelectedArticleId(null);
+                          setIsMastheadSelected(false);
+                        }}
+                        isMastheadSelected={isMastheadSelected && safePageIndex === 0}
+                        onSelectMasthead={() => {
+                          setIsMastheadSelected(true);
+                          setSelectedArticleId(null);
+                        }}
+                        onCloseMasthead={() => setIsMastheadSelected(false)}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
-    </>
-  )}
 
       {/* 4. MODALS */}
       <ProjectSetupModal

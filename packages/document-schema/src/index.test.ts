@@ -9,6 +9,7 @@ import {
   NewspaperPageSchema,
   getPublicationPages,
   getPageDimensions,
+  resolvePageColumnCount,
 } from './index';
 
 describe('DocumentSchema', () => {
@@ -181,6 +182,25 @@ describe('DocumentSchema', () => {
       expect(pages).toHaveLength(1);
       expect(pages[0]?.sectionTitle).toBe('मुख्य पृष्ठ');
     }
+
+    // 12-column page validation
+    const twelveColPage = {
+      ...page,
+      columnCount: 12,
+    };
+    expect(NewspaperPageSchema.safeParse(twelveColPage).success).toBe(true);
+
+    // Legacy doc without pages: getPublicationPages fallback leaves columnCount undefined to inherit dynamically
+    const legacyDoc = {
+      ...multiPageDoc,
+      pages: undefined,
+    };
+    const parsedLegacy = NewspaperDocumentSchema.parse(legacyDoc);
+    const fallbackPages = getPublicationPages(parsedLegacy);
+    expect(fallbackPages).toHaveLength(1);
+    expect(fallbackPages[0]?.columnCount).toBeUndefined();
+    // Dynamically inherits document layout columnCount via resolver
+    expect(resolvePageColumnCount(parsedLegacy, fallbackPages[0])).toBe(4);
   });
 
   it('should calculate explicit page dimensions and swap axes for landscape', () => {
