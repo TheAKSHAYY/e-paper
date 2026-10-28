@@ -21,6 +21,8 @@ export interface TopBarProps {
   onFitWidth?: () => void;
   usePhysicalCanvasCoordinates?: boolean;
   onTogglePhysicalCoordinates?: () => void;
+  useFreeLayout?: boolean;
+  onToggleFreeLayout?: () => void;
   onNewPublication: () => void;
   onOpenTemplates: () => void;
   onOpenMastheadGallery?: () => void;
@@ -50,6 +52,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onFitWidth,
   usePhysicalCanvasCoordinates = false,
   onTogglePhysicalCoordinates,
+  useFreeLayout = false,
+  onToggleFreeLayout,
   onNewPublication,
   onOpenTemplates,
   onExportPdf,
@@ -411,6 +415,31 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
             >
               {usePhysicalCanvasCoordinates ? '📐 1:1 mm' : '800px'}
+            </button>
+          )}
+
+          {onToggleFreeLayout && (
+            <button
+              data-testid="toggle-free-layout-button"
+              onClick={onToggleFreeLayout}
+              title={
+                useFreeLayout
+                  ? 'मुक्त लेआउट मोड सक्रिय (Free Placement Mode). क्लिक करके ऑटो-फ्लो पर स्विच करें'
+                  : 'ऑटो-फ्लो मोड सक्रिय. क्लिक करके मुक्त लेआउट (Free Placement) सक्षम करें'
+              }
+              style={{
+                backgroundColor: useFreeLayout ? '#1e1b4b' : '#374151',
+                border: useFreeLayout ? '1px solid #6366f1' : '1px solid #4b5563',
+                color: useFreeLayout ? '#c7d2fe' : '#9ca3af',
+                borderRadius: '2px',
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                marginLeft: '4px',
+              }}
+            >
+              {useFreeLayout ? '🔲 Free' : 'Auto'}
             </button>
           )}
         </div>

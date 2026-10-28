@@ -8,7 +8,7 @@ import {
   clampFrameToPrintableArea,
   validateFrameInsidePrintableArea,
 } from '@epaper-studio/document-schema';
-import { getPhysicalPageMetrics } from './index';
+import { getPhysicalPageMetrics } from './index.js';
 
 export interface FreeLayoutConversionOptions {
   toleranceMm?: number;
@@ -44,6 +44,7 @@ export interface FreeSlotSearchResult {
   found: boolean;
   xMm?: number;
   yMm?: number;
+  slot?: FrameMm;
   reason?: string;
 }
 
@@ -334,6 +335,13 @@ export function findNearestFreeSlot(
           found: true,
           xMm: Number(x.toFixed(2)),
           yMm: Number(y.toFixed(2)),
+          slot: {
+            x: Number(x.toFixed(2)),
+            y: Number(y.toFixed(2)),
+            w,
+            h,
+            z: page.articles.length + 1,
+          },
         };
       }
     }

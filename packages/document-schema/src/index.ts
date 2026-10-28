@@ -485,7 +485,7 @@ export const NewspaperPageSchema = z.object({
   id: z.string().min(1),
   pageNumber: z.number().int().positive(),
   sectionTitle: z.string().optional().default('मुख्य पृष्ठ'),
-  layoutMode: PageLayoutModeSchema.default('auto'),
+  layoutMode: PageLayoutModeSchema.optional().default('auto'),
   articles: z.array(ArticleSchema).default([]),
   columnCount: z.number().int().min(2).max(12).optional(),
 });
@@ -496,7 +496,8 @@ export const DocumentSchemaVersionSchema = z.enum(['1.0.0', '1.1.0']);
 export type DocumentSchemaVersion = z.infer<typeof DocumentSchemaVersionSchema>;
 
 export const NewspaperDocumentSchema = z.object({
-  version: DocumentSchemaVersionSchema.default('1.1.0'),
+  version: DocumentSchemaVersionSchema.optional().default('1.1.0'),
+  schemaVersion: DocumentSchemaVersionSchema.optional().default('1.1.0'),
   id: z.string().min(1),
   metadata: NewspaperMetadataSchema,
   masthead: MastheadConfigSchema,
@@ -636,14 +637,16 @@ export function getPrintableAreaBoundsMm(
   } = {}
 ): PrintableAreaBoundsMm {
   const dims = getPageDimensions(pageSize, orientation);
+  const pageW = dims.widthMm ?? (dims.widthPt * 25.4) / 72;
+  const pageH = dims.heightMm ?? (dims.heightPt * 25.4) / 72;
   const paddingMm = ((options.paddingPt ?? 24) * 25.4) / 72;
   const headerHeightMm = ((options.headerHeightPt ?? 0) * 25.4) / 72;
   const footerHeightMm = ((options.footerHeightPt ?? 0) * 25.4) / 72;
 
   const minX = Number(paddingMm.toFixed(2));
-  const maxX = Number((dims.widthMm - paddingMm).toFixed(2));
+  const maxX = Number((pageW - paddingMm).toFixed(2));
   const minY = Number((paddingMm + headerHeightMm).toFixed(2));
-  const maxY = Number((dims.heightMm - paddingMm - footerHeightMm).toFixed(2));
+  const maxY = Number((pageH - paddingMm - footerHeightMm).toFixed(2));
 
   return {
     minX,

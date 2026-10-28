@@ -1,9 +1,10 @@
-import type { Article } from '@epaper-studio/document-schema';
+import type { Article, FrameMm } from '@epaper-studio/document-schema';
 
 export interface CreateArticleFromPresetOptions {
   newId?: string;
   defaultColumnCount?: number;
   orderIndex?: number;
+  frame?: FrameMm;
 }
 
 /**
@@ -34,5 +35,6 @@ export function createArticleFromPreset(
     columnSpan: blockTemplate.columnSpan ?? Math.min(2, defaultCols),
     priority: blockTemplate.priority ?? 'major',
     orderIndex: options.orderIndex ?? 0,
+    frame: options.frame ?? blockTemplate.frame,
   };
 }

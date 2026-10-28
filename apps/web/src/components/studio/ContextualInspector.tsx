@@ -249,6 +249,277 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
              * 1. ARTICLE / STORY INSPECTOR (WHEN ARTICLE IS SELECTED)
              * ========================================================== */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Position & Dimensions in Millimeters (Free Layout Mode) */}
+              {selectedArticle.frame && (
+                <div
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '6px',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: '#166534',
+                    }}
+                  >
+                    <span>📐 स्थिति व आकार (Frame in mm)</span>
+                    <span style={{ fontSize: '10px', color: '#15803d', fontWeight: 500 }}>
+                      4mm ग्रिड
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                    <div>
+                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                        X (mm)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={Math.round(selectedArticle.frame.x)}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          if (!isNaN(val) && selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, x: val },
+                            });
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '4px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                        Y (mm)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={Math.round(selectedArticle.frame.y)}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          if (!isNaN(val) && selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, y: val },
+                            });
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '4px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                        W (mm)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={Math.round(selectedArticle.frame.w)}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          if (!isNaN(val) && val >= 10 && selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, w: val },
+                            });
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '4px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                        H (mm)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={Math.round(selectedArticle.frame.h)}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          if (!isNaN(val) && val >= 10 && selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, h: val },
+                            });
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '4px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nudge Buttons */}
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '2px', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: '3px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, x: selectedArticle.frame.x - 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="4mm बाएँ"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, x: selectedArticle.frame.x + 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="4mm दाएँ"
+                      >
+                        →
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, y: selectedArticle.frame.y - 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="4mm ऊपर"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, y: selectedArticle.frame.y + 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="4mm नीचे"
+                      >
+                        ↓
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '3px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, w: Math.max(10, selectedArticle.frame.w - 4) },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="चौड़ाई कम करें"
+                      >
+                        -W
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, w: selectedArticle.frame.w + 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="चौड़ाई बढ़ाएं"
+                      >
+                        +W
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, h: Math.max(10, selectedArticle.frame.h - 4) },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="ऊंचाई कम करें"
+                      >
+                        -H
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedArticle.frame) {
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              frame: { ...selectedArticle.frame, h: selectedArticle.frame.h + 4 },
+                            });
+                          }
+                        }}
+                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        title="ऊंचाई बढ़ाएं"
+                      >
+                        +H
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Quick Reorder and Move Actions */}
               <div
                 style={{

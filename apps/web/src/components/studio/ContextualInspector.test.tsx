@@ -22,6 +22,7 @@ describe('ContextualInspector (TASK 1a)', () => {
       id: 'page-1',
       pageNumber: 1,
       sectionTitle: 'मुख्य पृष्ठ',
+      layoutMode: 'auto',
       articles: [dummyArticle],
       columnCount: 12, // Page-level override
     };
@@ -61,6 +62,7 @@ describe('ContextualInspector (TASK 1a)', () => {
       id: 'page-2',
       pageNumber: 2,
       sectionTitle: 'संपादकीय',
+      layoutMode: 'auto',
       articles: [dummyArticle],
       columnCount: 4,
     };

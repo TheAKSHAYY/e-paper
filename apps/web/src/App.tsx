@@ -8,6 +8,7 @@ import type {
   PageOrientation,
   NewspaperPresetId,
   NewspaperPage,
+  FrameMm,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
@@ -19,6 +20,10 @@ import {
   createNewspaperDocument,
   getNewspaperPreset,
   getPhysicalPageMetrics,
+  autoToFree,
+  freeToAuto,
+  swapFrames,
+  findNearestFreeSlot,
 } from '@epaper-studio/template-engine';
 
 import { TopBar, type ViewMode } from './components/studio/TopBar';
@@ -40,6 +45,7 @@ declare global {
     __setDocument?: (doc: NewspaperDocument) => void;
     __setScale?: (s: number) => void;
     __setPhysicalCanvas?: (v: boolean) => void;
+    __setFreeLayout?: (v: boolean) => void;
   }
 }
 
@@ -106,6 +112,23 @@ export const App: React.FC = () => {
     return true;
   });
 
+  // Feature flag for free placement layout mode (default OFF / false)
+  const [useFreeLayout, setUseFreeLayout] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('freeLayout') === 'true' || params.get('useFreeLayout') === 'true') {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  // Modals for page full and export preflight
+  const [showPageFullModal, setShowPageFullModal] = useState<boolean>(false);
+  const [preflightWarnings, setPreflightWarnings] = useState<
+    Array<{ pageIndex: number; articleId: string; headline: string }> | null
+  >(null);
+
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
   const canvasViewportRef = useRef<HTMLDivElement>(null);
   const hasInitializedFit = useRef<boolean>(
@@ -121,6 +144,7 @@ export const App: React.FC = () => {
       };
       window.__setScale = (s: number) => setScale(s);
       window.__setPhysicalCanvas = (v: boolean) => setUsePhysicalCanvasCoordinates(v);
+      window.__setFreeLayout = (v: boolean) => setUseFreeLayout(v);
     }
   }, []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
@@ -334,6 +358,7 @@ export const App: React.FC = () => {
     id: 'page-1',
     pageNumber: 1,
     sectionTitle: 'मुख्य पृष्ठ',
+    layoutMode: 'auto',
     articles: [],
   };
 
@@ -465,6 +490,7 @@ export const App: React.FC = () => {
           id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           pageNumber: currentPages.length + 1,
           sectionTitle: `${sourcePage.sectionTitle ?? 'पृष्ठ'} (प्रति)`,
+          layoutMode: sourcePage.layoutMode ?? 'auto',
           articles: duplicatedArticles,
           columnCount: sourcePage.columnCount,
         };
@@ -563,6 +589,19 @@ export const App: React.FC = () => {
         orderIndex: currentPage.articles.length,
       });
 
+      // Free placement: find nearest free rectangular module (4mm)
+      if (useFreeLayout && currentPage.layoutMode === 'free') {
+        const blockW = newArticle.frame?.w ?? 90;
+        const blockH = newArticle.frame?.h ?? 60;
+        const slotResult = findNearestFreeSlot(currentPage, document, blockW, blockH, 4);
+
+        if (!slotResult.found || !slotResult.slot) {
+          setShowPageFullModal(true);
+          return;
+        }
+        newArticle.frame = slotResult.slot;
+      }
+
       setDocument((prev) => {
         const currentPages = getPublicationPages(prev);
         const targetPage = currentPages[safePageIndex];
@@ -587,7 +626,105 @@ export const App: React.FC = () => {
         `Added "${newArticle.headline.slice(0, 25)}..." to Page ${safePageIndex + 1}`
       );
     },
-    [document.layout.columnCount, currentPage.articles.length, safePageIndex, showNotification]
+    [document, currentPage, useFreeLayout, safePageIndex, showNotification]
+  );
+
+  // Update article frame (free placement)
+  const handleUpdateArticleFrame = useCallback(
+    (articleId: string, frame: FrameMm) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage) return prev;
+
+        const updatedArticles = targetPage.articles.map((a) =>
+          a.id === articleId ? { ...a, frame } : a
+        );
+        const updatedPages = currentPages.map((p, idx) =>
+          idx === safePageIndex ? { ...p, articles: updatedArticles } : p
+        );
+
+        return {
+          ...prev,
+          pages: updatedPages,
+          articles: safePageIndex === 0 ? updatedArticles : prev.articles,
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+      setHasUnsavedChanges(true);
+    },
+    [safePageIndex]
+  );
+
+  // Swap articles (free placement)
+  const handleSwapArticles = useCallback(
+    (idA: string, idB: string) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage) return prev;
+
+        const swapRes = swapFrames(targetPage, prev, idA, idB);
+        if (!swapRes.success) {
+          showNotification(swapRes.message ?? 'ब्लॉक की स्थिति आपस में नहीं बदली जा सकी।');
+          return prev;
+        }
+
+        const updatedPages = currentPages.map((p, idx) =>
+          idx === safePageIndex ? swapRes.page : p
+        );
+
+        return {
+          ...prev,
+          pages: updatedPages,
+          articles: safePageIndex === 0 ? swapRes.page.articles : prev.articles,
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+      setHasUnsavedChanges(true);
+      showNotification('दोनों ब्लॉकों की स्थितियां आपस में बदल दी गईं (Swapped)');
+    },
+    [safePageIndex, showNotification]
+  );
+
+  // Toggle page layout mode between 'auto' and 'free'
+  const handleTogglePageLayoutMode = useCallback(
+    (mode: 'auto' | 'free') => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage || targetPage.layoutMode === mode) return prev;
+
+        let updatedPage: NewspaperPage;
+        if (mode === 'free') {
+          updatedPage = autoToFree(targetPage, prev);
+          showNotification('पेज को मुक्त लेआउट (Free Placement) में बदल दिया गया।');
+        } else {
+          const res = freeToAuto(targetPage, prev);
+          updatedPage = res.page;
+          if (res.lossyWarnings.length > 0) {
+            showNotification(
+              `ऑटो ग्रिड में बदला गया (चेतावनी: ${res.lossyWarnings.length} स्थिति स्वतः समायोजित)`
+            );
+          } else {
+            showNotification('पेज को ऑटो-ग्रिड लेआउट में बदल दिया गया।');
+          }
+        }
+
+        const updatedPages = currentPages.map((p, idx) =>
+          idx === safePageIndex ? updatedPage : p
+        );
+
+        return {
+          ...prev,
+          pages: updatedPages,
+          articles: safePageIndex === 0 ? updatedPage.articles : prev.articles,
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+      setHasUnsavedChanges(true);
+    },
+    [safePageIndex, showNotification]
   );
 
   // Update article on current page
@@ -937,22 +1074,49 @@ export const App: React.FC = () => {
     }
   }, [document, showNotification]);
 
-  // Export PDF
-  const handleExportPdf = useCallback(async () => {
-    setIsExportingPdf(true);
-    showNotification('प्रिंट-रेडी PDF तैयार हो रहा है...');
-    try {
-      const result = await exportDocumentToPdf(document);
-      showNotification(
-        `✓ डाउनलोड संपन्न: ${result.filename} (${(result.byteLength / 1024).toFixed(1)} KB)`
-      );
-    } catch (err) {
-      console.error('PDF export error:', err);
-      showNotification(`PDF डाउनलोड विफल: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`);
-    } finally {
-      setIsExportingPdf(false);
-    }
-  }, [document, showNotification]);
+  // Export PDF with Preflight Overflow Guard (Task 4)
+  const handleExportPdf = useCallback(
+    async (bypassPreflight = false) => {
+      if (!bypassPreflight) {
+        // Preflight overflow detection: find any blocks whose content exceeds capacity
+        const overflows: Array<{ pageIndex: number; articleId: string; headline: string }> = [];
+        pages.forEach((pg, pIdx) => {
+          if (pg.layoutMode === 'free') {
+            pg.articles.forEach((art) => {
+              if (art.frame) {
+                const areaMm2 = art.frame.w * art.frame.h;
+                const words = art.body.trim().split(/\s+/).filter(Boolean).length;
+                // Roughly 1 word takes ~18mm2 in 10pt text
+                if (words * 18 > areaMm2 * 1.35) {
+                  overflows.push({ pageIndex: pIdx, articleId: art.id, headline: art.headline });
+                }
+              }
+            });
+          }
+        });
+
+        if (overflows.length > 0) {
+          setPreflightWarnings(overflows);
+          return;
+        }
+      }
+
+      setIsExportingPdf(true);
+      showNotification('प्रिंट-रेडी PDF तैयार हो रहा है...');
+      try {
+        const result = await exportDocumentToPdf(document);
+        showNotification(
+          `✓ डाउनलोड संपन्न: ${result.filename} (${(result.byteLength / 1024).toFixed(1)} KB)`
+        );
+      } catch (err) {
+        console.error('PDF export error:', err);
+        showNotification(`PDF डाउनलोड विफल: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`);
+      } finally {
+        setIsExportingPdf(false);
+      }
+    },
+    [document, pages, showNotification]
+  );
 
   // Create new newspaper from setup modal
   const handleCreateNewspaper = useCallback(
@@ -1120,6 +1284,8 @@ export const App: React.FC = () => {
             onFitWidth={handleFitWidth}
             usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
             onTogglePhysicalCoordinates={() => setUsePhysicalCanvasCoordinates((prev) => !prev)}
+            useFreeLayout={useFreeLayout}
+            onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
             onNewPublication={() => setIsSetupOpen(true)}
             onOpenTemplates={() => setIsPresetsOpen(true)}
             onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
@@ -1314,6 +1480,8 @@ export const App: React.FC = () => {
                 orientation={document.metadata.orientation}
                 scale={scale}
                 usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
+                useFreeLayout={useFreeLayout}
+                doc={document}
                 selectedArticleId={selectedArticleId}
                 onSelectArticle={(id) => {
                   setSelectedArticleId(id);
@@ -1339,6 +1507,9 @@ export const App: React.FC = () => {
                 onAdjustColumnSpan={handleAdjustColumnSpan}
                 onAddBlock={handleAddBlock}
                 onAddPage={handleAddPage}
+                onUpdateArticleFrame={handleUpdateArticleFrame}
+                onSwapArticles={handleSwapArticles}
+                onTogglePageLayoutMode={handleTogglePageLayoutMode}
               />
             </div>
 
@@ -1573,6 +1744,204 @@ export const App: React.FC = () => {
           setIsSetupOpen(true);
         }}
       />
+
+      {/* 5. PAGE FULL ALERT MODAL (TASK 3) */}
+      {showPageFullModal && (
+        <div
+          data-testid="page-full-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              maxWidth: '420px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄⚠️</div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#111827' }}>
+              Page bhar gaya - naya page jodein?
+            </h3>
+            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.5 }}>
+              इस पृष्ठ पर और नया ब्लॉक जोड़ने के लिए पर्याप्त खाली जगह नहीं बची है। क्या आप अगला पृष्ठ जोड़ना चाहते हैं?
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowPageFullModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  border: '1px solid #d1d5db',
+                  background: '#ffffff',
+                  color: '#374151',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                रद्द करें
+              </button>
+              <button
+                onClick={() => {
+                  setShowPageFullModal(false);
+                  handleAddPage();
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  background: '#b91c1c',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                + नया पेज जोड़ें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. PREFLIGHT OVERFLOW WARNING MODAL (TASK 4) */}
+      {preflightWarnings && (
+        <div
+          data-testid="preflight-overflow-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '24px' }}>⚠️</span>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#991b1b' }}>
+                एक्सपोर्ट प्रीफ़्लाइट: टेक्स्ट कटने की चेतावनी (Text Overflow)
+              </h3>
+            </div>
+            <p style={{ margin: '0 0 14px 0', fontSize: '12.5px', color: '#4b5563', lineHeight: 1.4 }}>
+              निम्नलिखित समाचार ब्लॉकों में पाठ्य सामग्री उनके निर्धारित फ़्रेम से अधिक है और प्रिंट में कट सकती है:
+            </p>
+            <div
+              style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                marginBottom: '18px',
+              }}
+            >
+              {preflightWarnings.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ marginRight: '10px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#991b1b' }}>
+                      पृष्ठ {item.pageIndex + 1}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#1f2937', fontWeight: 500 }}>
+                      {item.headline || 'समाचार ब्लॉक'}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCurrentPageIndex(item.pageIndex);
+                      setSelectedArticleId(item.articleId);
+                      setPreflightWarnings(null);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#2563eb',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ब्लॉक पर जाएं →
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setPreflightWarnings(null)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '4px',
+                  border: '1px solid #d1d5db',
+                  background: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                संपादित करने के लिए वापस जाएं
+              </button>
+              <button
+                onClick={() => {
+                  setPreflightWarnings(null);
+                  handleExportPdf(true);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  background: '#b91c1c',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                फिर भी PDF डाउनलोड करें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -31,7 +31,7 @@ export {
   SELF_HOSTED_FONTS_CSS,
 };
 
-export * from './freeLayout';
+export * from './freeLayout.js';
 
 /* ====================================================================
  * Legacy Template Engine Interfaces (Backward Compatibility)
@@ -916,6 +916,7 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
 
   return {
     version: '1.1.0',
+    schemaVersion: '1.1.0',
     id: docId,
     metadata: {
       id: docId,
