@@ -1019,9 +1019,27 @@ export function sanitizeCssValue(value: string | undefined, fallback: string = '
 }
 
 /**
- * Converts plain text into clean, accessible newspaper paragraphs with drop caps on lead paragraphs.
+ * Tests whether text is predominantly composed of Devanagari Unicode characters.
  */
-export function formatBodyParagraphsHtml(body: string, enableDropCap: boolean = false): string {
+export function isPredominantlyDevanagari(text: string): boolean {
+  if (!text) return false;
+  const devanagariCount = (text.match(/[\u0900-\u097F]/g) || []).length;
+  const latinCount = (text.match(/[A-Za-z]/g) || []).length;
+  return devanagariCount > latinCount;
+}
+
+/**
+ * Converts plain text into clean, accessible newspaper paragraphs with drop caps on lead paragraphs.
+ * Drop caps are disabled for Hindi / Devanagari text to avoid severing complex consonant conjuncts.
+ */
+export function formatBodyParagraphsHtml(
+  body: string,
+  enableDropCap: boolean = false,
+  language: string = 'en'
+): string {
+  const isHindi = language === 'hi' || isPredominantlyDevanagari(body);
+  const allowDropCap = enableDropCap && !isHindi;
+
   const paragraphs = body
     .split(/\n\s*\n/)
     .map((p) => p.trim())
@@ -1033,7 +1051,7 @@ export function formatBodyParagraphsHtml(body: string, enableDropCap: boolean = 
 
   return paragraphs
     .map((para, idx) => {
-      const isFirst = idx === 0 && enableDropCap;
+      const isFirst = idx === 0 && allowDropCap;
       const cls = isFirst ? 'article-para drop-cap' : 'article-para';
       return `<p class="${cls}">${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`;
     })
@@ -1508,7 +1526,7 @@ export function renderNewspaperDocumentToHtml(
             <div class="article-body">
               ${kickerHtml}
               ${art.dateline ? `<span class="article-dateline">${escapeHtml(art.dateline)} </span>` : ''}
-              ${formatBodyParagraphsHtml(art.body, enableDropCap)}
+              ${formatBodyParagraphsHtml(art.body, enableDropCap, isHindi ? 'hi' : 'en')}
               ${specializedExtraHtml}
             </div>
           `;
@@ -1552,7 +1570,7 @@ export function renderNewspaperDocumentToHtml(
           }
 
           return `
-            <article class="newspaper-article priority-${priority} element-${art.elementType ?? 'block'} ${columnRule ? 'has-column-rule' : ''}" style="${customStyles}">
+            <article class="newspaper-article priority-${priority} element-${art.elementType ?? 'block'} ${columnRule ? 'has-column-rule' : ''} ${isHindi ? 'lang-hi' : ''}" lang="${isHindi ? 'hi' : 'en'}" style="${customStyles}">
               ${innerContent}
             </article>
           `;
@@ -1903,6 +1921,18 @@ export function renderNewspaperDocumentToHtml(
       hyphens: auto;
     }
 
+    /* Devanagari Typography: disable automatic hyphenation to prevent severing matras/conjuncts */
+    :lang(hi),
+    [lang="hi"],
+    [lang="hi"] .article-body,
+    [lang="hi"] .article-para,
+    .newspaper-article.lang-hi,
+    .newspaper-article.lang-hi .article-body,
+    .newspaper-article.lang-hi .article-para {
+      hyphens: manual;
+      -webkit-hyphens: manual;
+    }
+
     .article-dateline {
       font-weight: 700;
       text-transform: uppercase;
@@ -1925,6 +1955,20 @@ export function renderNewspaperDocumentToHtml(
       font-family: ${headlineFont}, serif;
       font-weight: 800;
       color: #121212;
+    }
+
+    /* Disable CSS :first-letter drop caps when element language is Hindi or Devanagari */
+    :lang(hi) .drop-cap:first-of-type::first-letter,
+    [lang="hi"] .drop-cap:first-of-type::first-letter,
+    .newspaper-article.lang-hi .drop-cap:first-of-type::first-letter,
+    [lang="hi"] p:first-of-type::first-letter {
+      float: none !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      padding: 0 !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      color: inherit !important;
     }
 
     [dir="rtl"] .drop-cap:first-of-type::first-letter {

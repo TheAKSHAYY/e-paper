@@ -8,6 +8,8 @@ import {
   createNewspaperDocument,
   estimateNewspaperContentVolume,
   renderNewspaperDocumentToHtml,
+  formatBodyParagraphsHtml,
+  isPredominantlyDevanagari,
 } from './index';
 
 describe('TemplateEngine', () => {
@@ -178,4 +180,55 @@ describe('TemplateEngine', () => {
     expect(html).toContain('बुधवार, 28 अक्टूबर 2026');
     expect(html).toContain('प्रातःकालीन मुख्य संस्करण');
   });
+
+  describe('Devanagari Typography Rules', () => {
+    it('detects predominantly Devanagari text correctly', () => {
+      expect(isPredominantlyDevanagari('क्षत्रिय और श्रद्धा का प्रतीक')).toBe(true);
+      expect(isPredominantlyDevanagari('प्रधानमंत्री नरेंद्र मोदी ने संबोधित किया।')).toBe(true);
+      expect(isPredominantlyDevanagari('The quick brown fox jumps over the lazy dog')).toBe(false);
+      expect(isPredominantlyDevanagari('')).toBe(false);
+    });
+
+    it('suppresses drop-cap class on Devanagari text even if enableDropCap is true', () => {
+      const hindiBody = 'क्षत्रिय धर्म और मर्यादा का पालन करते हुए समाज के हर वर्ग ने अपनी प्रतिबद्धता दोहराई।';
+      const renderedHindi = formatBodyParagraphsHtml(hindiBody, true, 'hi');
+      expect(renderedHindi).not.toContain('drop-cap');
+      expect(renderedHindi).toContain('class="article-para"');
+
+      // Also when auto-detected via predominantly Devanagari
+      const renderedAuto = formatBodyParagraphsHtml(hindiBody, true);
+      expect(renderedAuto).not.toContain('drop-cap');
+    });
+
+    it('preserves drop-cap class on English text when enableDropCap is true', () => {
+      const englishBody = 'In an extraordinary plenary session, parliament passed the landmark bill with unanimous support.';
+      const renderedEnglish = formatBodyParagraphsHtml(englishBody, true, 'en');
+      expect(renderedEnglish).toContain('class="article-para drop-cap"');
+    });
+
+    it('injects hyphens: manual and lang="hi" attributes for Devanagari articles in generated HTML', () => {
+      const doc = createNewspaperDocument({
+        presetId: 'classic-hindi-broadsheet',
+        title: 'दैनिक जागरण',
+      });
+      doc.articles = [
+        {
+          id: 'lead-hindi',
+          headline: 'प्रधानमंत्री नरेंद्र मोदी का बड़ा ऐलान',
+          body: 'क्षत्रिय और श्रद्धा की पावन भूमि पर आज एक ऐतिहासिक निर्णय लिया गया।',
+          priority: 'lead',
+          columnSpan: 6,
+          orderIndex: 0,
+        },
+      ];
+
+      const html = renderNewspaperDocumentToHtml(doc);
+      expect(html).toContain('lang="hi"');
+      expect(html).toContain('newspaper-article.lang-hi');
+      expect(html).toContain('hyphens: manual');
+      expect(html).toContain(':lang(hi) .drop-cap:first-of-type::first-letter');
+      expect(html).toContain('float: none !important');
+    });
+  });
 });
+

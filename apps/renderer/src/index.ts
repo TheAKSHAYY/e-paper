@@ -207,7 +207,7 @@ export class RendererWorker {
     for (const c of candidates) {
       if (fs.existsSync(c)) return c;
     }
-    return candidates[0];
+    return candidates[0] ?? path.resolve(process.cwd(), 'apps/web/public/fonts');
   }
 
   /**

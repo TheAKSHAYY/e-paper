@@ -818,10 +818,20 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     : undefined,
                 };
 
+                const isHindi = Boolean(article.headline?.match(/[\u0900-\u097F]/)) ||
+                  Boolean(article.body?.match(/[\u0900-\u097F]/)) ||
+                  Boolean(article.subheadline?.match(/[\u0900-\u097F]/)) ||
+                  layout.headlineFont?.toLowerCase().includes('devanagari') ||
+                  layout.bodyFont?.toLowerCase().includes('devanagari') ||
+                  ['Gotu', 'Hind', 'Mukta', 'Rozha One', 'Yatra One', 'Tiro Devanagari Hindi', 'Noto Serif Devanagari'].some(
+                    (f) => layout.bodyFont?.includes(f) || layout.headlineFont?.includes(f)
+                  );
+
                 return (
                   <article
                     key={article.id}
                     data-testid={`article-card-${article.id}`}
+                    lang={isHindi ? 'hi' : 'en'}
                     onClick={() => onSelectArticle(article.id)}
                     style={{
                       gridColumn: `span ${span}`,
@@ -837,6 +847,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       backgroundColor: article.backgroundColor ?? 'transparent',
                       borderRadius: '1px',
                       transition: 'outline 0.15s ease',
+                      hyphens: isHindi ? 'manual' : undefined,
+                      WebkitHyphens: isHindi ? 'manual' : undefined,
                       ...(columnRule && span < columnCount && !customBorders?.right
                         ? {
                             paddingRight: `${Math.round(gapPx / 2)}px`,
@@ -1039,6 +1051,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     ) : (
                       /* Standard Body Paragraphs (with Side Photo if placement === 'side') */
                       <div
+                        lang={isHindi ? 'hi' : 'en'}
                         style={{
                           fontSize: `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
                           lineHeight: 1.45,
@@ -1046,6 +1059,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                           fontFamily: layout.bodyFont,
                           textAlign: 'justify',
                           textJustify: 'inter-word',
+                          hyphens: isHindi ? 'manual' : 'auto',
+                          WebkitHyphens: isHindi ? 'manual' : 'auto',
                         }}
                       >
                         {article.imagePlacement === 'side' && renderPhoto()}
