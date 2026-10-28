@@ -1133,6 +1133,7 @@ export function partitionArticlesForPages(doc: NewspaperDocument): Article[][] {
 
 export interface RenderHtmlOptions {
   includePrintStyles?: boolean;
+  baseUrl?: string;
 }
 
 export function getMastheadEmblemSvg(emblem?: string, customUrl?: string): string {
@@ -1293,11 +1294,16 @@ export function renderNewspaperDocumentToHtml(
         const temperature = mh.temperature || '25°C';
         const weatherCondition = mh.weatherCondition || (isHindiDoc ? 'साफ़ आसमान' : 'Clear');
         const airQuality = mh.airQuality || (isHindiDoc ? 'AQI 128 • मध्यम' : 'AQI 45 • Good');
-        const tagline = mh.tagline || mh.subtitle || (isHindiDoc ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'The Record of Public Discourse');
+        const tagline =
+          mh.tagline ||
+          mh.subtitle ||
+          (isHindiDoc ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'The Record of Public Discourse');
         const establishmentYear = mh.establishmentYear || '1947';
         const price = mh.price || (isHindiDoc ? 'मूल्य ₹5.00' : '$2.50');
-        const postalReg = mh.postalRegNumber || (isHindiDoc ? 'पंजीयन सं. DL-11001/2026' : 'Reg. No. 24910/2026');
-        const pageCountLabel = mh.pageCountLabel || (isHindiDoc ? `कुल पृष्ठ ${totalPages}` : `${totalPages} Pages`);
+        const postalReg =
+          mh.postalRegNumber || (isHindiDoc ? 'पंजीयन सं. DL-11001/2026' : 'Reg. No. 24910/2026');
+        const pageCountLabel =
+          mh.pageCountLabel || (isHindiDoc ? `कुल पृष्ठ ${totalPages}` : `${totalPages} Pages`);
 
         const volumeYear = mh.volumeYear || (isHindiDoc ? 'वर्ष 78' : 'Vol. 78');
         const issueCount = mh.issueCount || (isHindiDoc ? 'अंक 142' : 'Issue 142');
@@ -1305,74 +1311,117 @@ export function renderNewspaperDocumentToHtml(
         const dayOfWeek = mh.dayOfWeek || (isHindiDoc ? 'बुधवार' : 'Wednesday');
         const dateStr = mh.date || (isHindiDoc ? '28 अक्टूबर 2026' : 'October 28, 2026');
         const fullDate = `${dayOfWeek ? dayOfWeek + ', ' : ''}${dateStr}`;
-        const edition = mh.edition || (isHindiDoc ? 'प्रातःकालीन मुख्य संस्करण' : 'Morning Edition');
+        const edition =
+          mh.edition || (isHindiDoc ? 'प्रातःकालीन मुख्य संस्करण' : 'Morning Edition');
 
         const alignment = mh.alignment || 'center';
         const ruleStyle = mh.ruleStyle || 'ornate-double';
         const emblemSvg = getMastheadEmblemSvg(mh.emblem, mh.customEmblemUrl);
-        const emblemHtml = mh.showEmblem && emblemSvg ? `<div class="masthead-emblem-box">${emblemSvg}</div>` : '';
+        const emblemHtml =
+          mh.showEmblem && emblemSvg ? `<div class="masthead-emblem-box">${emblemSvg}</div>` : '';
         const effectiveFont = mh.fontFamily || mastheadFont;
         const effectiveFontSize = mh.fontSizePt || 48;
 
         const showTopStrip = mh.showTopStrip !== false;
         const showBottomStrip = mh.showBottomStrip !== false;
 
-        const announcementHtml = mh.showAnnouncementStrip && mh.announcementStripText ? `
+        const announcementHtml =
+          mh.showAnnouncementStrip && mh.announcementStripText
+            ? `
           <div class="masthead-announcement-strip" style="background-color: #b91c1c; color: #ffffff; text-align: center; font-size: 8pt; font-weight: 700; padding: 3px 8px; margin-bottom: 4px; border-radius: 2px;">
             ${escapeHtml(mh.announcementStripText)}
           </div>
-        ` : '';
+        `
+            : '';
 
-        const secondaryHeaderHtml = mh.showSecondaryHeader && mh.secondaryHeaderTitle ? `
+        const secondaryHeaderHtml =
+          mh.showSecondaryHeader && mh.secondaryHeaderTitle
+            ? `
           <div class="masthead-secondary-header" style="text-align: center; font-size: 8.5pt; font-weight: 600; color: #2563eb; border-top: 1px solid #111; padding-top: 2px; margin-top: 4px;">
             <span>${escapeHtml(mh.secondaryHeaderTitle)}</span>
             ${mh.secondaryHeaderSubtitle ? ` <span style="color: #666; font-size: 7.5pt;">• ${escapeHtml(mh.secondaryHeaderSubtitle)}</span>` : ''}
           </div>
-        ` : '';
+        `
+            : '';
 
         headerHtml = `
           <header class="masthead-section rule-${ruleStyle}">
             ${announcementHtml}
-            ${showTopStrip ? `
+            ${
+              showTopStrip
+                ? `
               <div class="masthead-top-strip">
                 <div class="top-strip-left">
-                  ${mh.showWeather !== false ? `
+                  ${
+                    mh.showWeather !== false
+                      ? `
                     <div class="meta-item weather-box">
                       <span class="meta-label">${isHindiDoc ? 'मौसम' : 'WEATHER'}:</span>
                       <span class="meta-value">${escapeHtml(weatherCity)} ${escapeHtml(temperature)} • ${escapeHtml(weatherCondition)}</span>
                     </div>
-                  ` : ''}
-                  ${mh.showAirQuality !== false && airQuality ? `
+                  `
+                      : ''
+                  }
+                  ${
+                    mh.showAirQuality !== false && airQuality
+                      ? `
                     <div class="meta-item aqi-box">
                       <span class="meta-value">${escapeHtml(airQuality)}</span>
                     </div>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
                 <div class="top-strip-center">
-                  ${mh.showTagline !== false && tagline ? `
+                  ${
+                    mh.showTagline !== false && tagline
+                      ? `
                     <span class="meta-tagline">${escapeHtml(tagline)}</span>
-                  ` : ''}
-                  ${mh.showTagline !== false && mh.showEstablishment !== false && tagline && establishmentYear ? `
+                  `
+                      : ''
+                  }
+                  ${
+                    mh.showTagline !== false &&
+                    mh.showEstablishment !== false &&
+                    tagline &&
+                    establishmentYear
+                      ? `
                     <span class="meta-bullet">•</span>
-                  ` : ''}
-                  ${mh.showEstablishment !== false && establishmentYear ? `
+                  `
+                      : ''
+                  }
+                  ${
+                    mh.showEstablishment !== false && establishmentYear
+                      ? `
                     <span class="meta-establishment">${isHindiDoc ? 'स्थापना' : 'Est.'} ${escapeHtml(establishmentYear)}</span>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
                 <div class="top-strip-right">
-                  ${mh.showPrice !== false && price ? `
+                  ${
+                    mh.showPrice !== false && price
+                      ? `
                     <div class="meta-item price-box">
                       <span class="meta-value">${escapeHtml(price)}</span>
                     </div>
-                  ` : ''}
-                  ${mh.showPostalReg !== false && postalReg ? `
+                  `
+                      : ''
+                  }
+                  ${
+                    mh.showPostalReg !== false && postalReg
+                      ? `
                     <div class="meta-item postal-box">
                       <span class="meta-value">${escapeHtml(postalReg)}</span>
                     </div>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
 
             <div class="masthead-main-row align-${alignment}">
               ${emblemHtml}
@@ -1381,28 +1430,48 @@ export function renderNewspaperDocumentToHtml(
               </h1>
             </div>
 
-            ${showBottomStrip ? `
+            ${
+              showBottomStrip
+                ? `
               <div class="masthead-bottom-strip">
                 <div class="bottom-strip-left">
-                  ${mh.showVolumeIssue !== false ? `
+                  ${
+                    mh.showVolumeIssue !== false
+                      ? `
                     <span class="folio-item">${escapeHtml(volumeIssue)}</span>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
                 <div class="bottom-strip-center">
-                  ${mh.showDate !== false ? `
+                  ${
+                    mh.showDate !== false
+                      ? `
                     <span class="folio-item folio-date">${escapeHtml(fullDate)}</span>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
                 <div class="bottom-strip-right">
-                  ${mh.showEdition !== false ? `
+                  ${
+                    mh.showEdition !== false
+                      ? `
                     <span class="folio-item">${escapeHtml(edition)}</span>
-                  ` : ''}
-                  ${mh.showPostalReg !== false && pageCountLabel ? `
+                  `
+                      : ''
+                  }
+                  ${
+                    mh.showPostalReg !== false && pageCountLabel
+                      ? `
                     <span class="folio-item folio-pages">${escapeHtml(pageCountLabel)}</span>
-                  ` : ''}
+                  `
+                      : ''
+                  }
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
             ${secondaryHeaderHtml}
           </header>
         `;
@@ -1474,22 +1543,32 @@ export function renderNewspaperDocumentToHtml(
           let specializedExtraHtml = '';
 
           // 1. Kicker Badge for top-headline or custom
-          const kickerHtml = art.kickerText ? `
+          const kickerHtml = art.kickerText
+            ? `
             <div class="article-kicker" style="color: #b91c1c; font-weight: 700; font-size: 8pt; text-transform: uppercase; margin-bottom: 2px;">
               ${escapeHtml(art.kickerText)}
             </div>
-          ` : '';
+          `
+            : '';
 
           // 2. Short News Items
-          if (art.elementType === 'short-news' && art.shortNewsItems && art.shortNewsItems.length > 0) {
+          if (
+            art.elementType === 'short-news' &&
+            art.shortNewsItems &&
+            art.shortNewsItems.length > 0
+          ) {
             specializedExtraHtml += `
               <div class="short-news-container" style="margin-top: 6px;">
-                ${art.shortNewsItems.map((sn) => `
+                ${art.shortNewsItems
+                  .map(
+                    (sn) => `
                   <div style="margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dotted #ccc;">
                     <strong style="color: #111;">• ${escapeHtml(sn.title)}: </strong>
                     <span style="color: #333;">${escapeHtml(sn.snippet)}</span>
                   </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
               </div>
             `;
           }
@@ -1517,12 +1596,16 @@ export function renderNewspaperDocumentToHtml(
           if (art.elementType === 'rashifal' && art.rashifalItems && art.rashifalItems.length > 0) {
             specializedExtraHtml += `
               <div class="rashifal-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 6px;">
-                ${art.rashifalItems.map((r) => `
+                ${art.rashifalItems
+                  .map(
+                    (r) => `
                   <div style="background: #fffdf5; border: 1px solid #fde68a; border-radius: 3px; padding: 4px 5px;">
                     <div style="font-weight: 700; font-size: 7.5pt; color: #b45309;">${escapeHtml(r.sign)} ${escapeHtml(r.rashi)}</div>
                     <div style="font-size: 7pt; color: #333; line-height: 1.25;">${escapeHtml(r.prediction)}</div>
                   </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
               </div>
             `;
           }
@@ -1554,13 +1637,25 @@ export function renderNewspaperDocumentToHtml(
             if (art.borders.top && art.borders.top.style !== 'none' && art.borders.top.width > 0) {
               customStyles += `border-top: ${art.borders.top.width}px ${art.borders.top.style} ${art.borders.top.color}; `;
             }
-            if (art.borders.right && art.borders.right.style !== 'none' && art.borders.right.width > 0) {
+            if (
+              art.borders.right &&
+              art.borders.right.style !== 'none' &&
+              art.borders.right.width > 0
+            ) {
               customStyles += `border-right: ${art.borders.right.width}px ${art.borders.right.style} ${art.borders.right.color}; `;
             }
-            if (art.borders.bottom && art.borders.bottom.style !== 'none' && art.borders.bottom.width > 0) {
+            if (
+              art.borders.bottom &&
+              art.borders.bottom.style !== 'none' &&
+              art.borders.bottom.width > 0
+            ) {
               customStyles += `border-bottom: ${art.borders.bottom.width}px ${art.borders.bottom.style} ${art.borders.bottom.color}; `;
             }
-            if (art.borders.left && art.borders.left.style !== 'none' && art.borders.left.width > 0) {
+            if (
+              art.borders.left &&
+              art.borders.left.style !== 'none' &&
+              art.borders.left.width > 0
+            ) {
               customStyles += `border-left: ${art.borders.left.width}px ${art.borders.left.style} ${art.borders.left.color}; `;
             }
           }
@@ -1617,6 +1712,7 @@ export function renderNewspaperDocumentToHtml(
 <html lang="${escapeHtml(doc.metadata.language || 'en')}" dir="${direction}">
 <head>
   <meta charset="utf-8" />
+  <base href="${escapeHtml(_options.baseUrl ?? 'http://localhost:5173/')}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Self-hosted Latin + Devanagari Typography -->
   <style>
@@ -2040,6 +2136,7 @@ export function renderNewspaperDocumentToHtml(
     .newspaper-folio-footer {
       margin-top: auto;
       padding-top: 6pt;
+      flex-shrink: 0;
     }
 
     .footer-rule {

@@ -221,15 +221,22 @@ export class RendererWorker {
 
       // Intercept local font requests and fulfill from disk
       if (reqUrl.includes('/fonts/')) {
-        const fontFilename = path.basename(new URL(reqUrl).pathname);
-        const fontPath = path.join(fontsDir, fontFilename);
-        if (fs.existsSync(fontPath)) {
-          const fontData = fs.readFileSync(fontPath);
-          return route.fulfill({
-            status: 200,
-            contentType: 'font/woff2',
-            body: fontData,
-          });
+        try {
+          const fontFilename = path.basename(new URL(reqUrl).pathname);
+          const fontPath = path.join(fontsDir, fontFilename);
+          const exists = fs.existsSync(fontPath);
+          if (exists) {
+            const fontData = fs.readFileSync(fontPath);
+            return route.fulfill({
+              status: 200,
+              contentType: 'font/woff2',
+              body: fontData,
+            });
+          } else {
+            console.error('[FONT ROUTE MISSING]', fontPath);
+          }
+        } catch (err) {
+          console.error('[FONT ROUTE ERROR]', reqUrl, err);
         }
       }
 
@@ -314,10 +321,12 @@ export class RendererWorker {
     const page = await browser.newPage();
 
     try {
-      // Set viewport matching newspaper aspect ratio
+      // Set viewport matching newspaper physical dimensions in CSS pixels (96 DPI)
+      const widthPx = Math.round((widthPt * 96) / 72);
+      const heightPx = Math.round((heightPt * 96) / 72);
       await page.setViewportSize({
-        width: Math.round(widthPt),
-        height: Math.round(heightPt),
+        width: widthPx,
+        height: heightPx,
       });
 
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
@@ -346,10 +355,28 @@ export class RendererWorker {
               `Page ${idx + 1} content height (${grid.scrollHeight}px) exceeds physical page grid (${grid.clientHeight}px)`
             );
           }
+
+          // Export-time check: measure whether the footer's bounding box lies inside the page box
+          const footer = p.querySelector('.newspaper-folio-footer');
+          if (footer) {
+            const pageRect = p.getBoundingClientRect();
+            const footerRect = footer.getBoundingClientRect();
+            if (footerRect.bottom > pageRect.bottom + 1.0 || footerRect.top < pageRect.top) {
+              warnings.push(
+                `Page ${idx + 1} footer bounding box (bottom: ${footerRect.bottom.toFixed(1)}px) exceeds page box boundary (${pageRect.bottom.toFixed(1)}px)`
+              );
+            }
+          }
         });
 
         return { hasOverflow, warnings };
       });
+
+      if (layoutDiagnostics.warnings.length > 0) {
+        for (const w of layoutDiagnostics.warnings) {
+          console.warn(`[PDF Export Warning] ${w}`);
+        }
+      }
 
       // Render vector PDF via Chromium print engine
       const pdfBuffer = await page.pdf({
@@ -398,9 +425,11 @@ export class RendererWorker {
     const page = await browser.newPage();
 
     try {
+      const widthPx = Math.round(((widthPt * 96) / 72) * scale);
+      const heightPx = Math.round(((heightPt * 96) / 72) * scale);
       await page.setViewportSize({
-        width: Math.round(widthPt * scale),
-        height: Math.round(heightPt * scale),
+        width: widthPx,
+        height: heightPx,
       });
 
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation
@@ -444,9 +473,11 @@ export class RendererWorker {
     const page = await browser.newPage();
 
     try {
+      const widthPx = Math.round(((widthPt * 96) / 72) * scale);
+      const heightPx = Math.round(((heightPt * 96) / 72) * scale);
       await page.setViewportSize({
-        width: Math.round(widthPt * scale),
-        height: Math.round(heightPt * scale),
+        width: widthPx,
+        height: heightPx,
       });
 
       // Route interception: serve self-hosted fonts from disk & apply SSRF mitigation

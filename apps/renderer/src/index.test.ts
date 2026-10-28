@@ -228,6 +228,39 @@ describe('RendererWorker & PDF Export Engine', () => {
       expect(metadata.isValidPdf).toBe(true);
       expect(metadata.hasSelectableText).toBe(true);
     }, 30000);
+
+    it('should maintain exact physical dimensions in mm and keep footer inside page box (FIX B)', async () => {
+      const doc = createNewspaperDocument({
+        title: 'जनवाणी समाचार',
+        presetId: 'classic-hindi-broadsheet',
+        pageSize: 'broadsheet',
+        language: 'hi',
+      });
+
+      const result = await worker.renderToPdf(doc);
+
+      // Verify no footer boundary overflow warnings
+      const footerOverflowWarnings = result.warnings.filter((w) =>
+        w.toLowerCase().includes('footer')
+      );
+      expect(footerOverflowWarnings).toHaveLength(0);
+
+      // Read back MediaBox from PDF and verify dimensions in mm
+      const metadata = inspectPdf(result.pdfBuffer);
+      expect(metadata.mediaBoxes).toHaveLength(1);
+      const mediaBox = metadata.mediaBoxes[0]!;
+
+      // Broadsheet is 1080pt x 1638pt (15in x 22.75in)
+      expect(mediaBox.width).toBe(1080);
+      expect(mediaBox.height).toBe(1638);
+
+      const widthMm = (mediaBox.width * 25.4) / 72;
+      const heightMm = (mediaBox.height * 25.4) / 72;
+
+      // 1080 * 25.4 / 72 = 381.0 mm
+      expect(widthMm).toBeCloseTo(381.0, 1);
+      // 1638 * 25.4 / 72 = 577.85 mm
+      expect(heightMm).toBeCloseTo(577.85, 1);
+    }, 35000);
   });
 });
-

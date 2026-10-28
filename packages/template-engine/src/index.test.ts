@@ -191,7 +191,8 @@ describe('TemplateEngine', () => {
     });
 
     it('suppresses drop-cap class on Devanagari text even if enableDropCap is true', () => {
-      const hindiBody = 'क्षत्रिय धर्म और मर्यादा का पालन करते हुए समाज के हर वर्ग ने अपनी प्रतिबद्धता दोहराई।';
+      const hindiBody =
+        'क्षत्रिय धर्म और मर्यादा का पालन करते हुए समाज के हर वर्ग ने अपनी प्रतिबद्धता दोहराई।';
       const renderedHindi = formatBodyParagraphsHtml(hindiBody, true, 'hi');
       expect(renderedHindi).not.toContain('drop-cap');
       expect(renderedHindi).toContain('class="article-para"');
@@ -202,7 +203,8 @@ describe('TemplateEngine', () => {
     });
 
     it('preserves drop-cap class on English text when enableDropCap is true', () => {
-      const englishBody = 'In an extraordinary plenary session, parliament passed the landmark bill with unanimous support.';
+      const englishBody =
+        'In an extraordinary plenary session, parliament passed the landmark bill with unanimous support.';
       const renderedEnglish = formatBodyParagraphsHtml(englishBody, true, 'en');
       expect(renderedEnglish).toContain('class="article-para drop-cap"');
     });
@@ -235,35 +237,17 @@ describe('TemplateEngine', () => {
   describe('Column Count Resolution & Grid Row Placement Parity (FIX A)', () => {
     it('resolvePageColumnCount prioritizes page.columnCount, falls back to layout.columnCount, and defaults to 12', () => {
       // 1. page.columnCount overrides layout.columnCount
-      expect(
-        resolvePageColumnCount(
-          { layout: { columnCount: 4 } },
-          { columnCount: 12 }
-        )
-      ).toBe(12);
+      expect(resolvePageColumnCount({ layout: { columnCount: 4 } }, { columnCount: 12 })).toBe(12);
 
       // 2. doc with no page.columnCount falls back to layout.columnCount
       expect(
-        resolvePageColumnCount(
-          { layout: { columnCount: 5 } },
-          { columnCount: undefined }
-        )
+        resolvePageColumnCount({ layout: { columnCount: 5 } }, { columnCount: undefined })
       ).toBe(5);
 
-      expect(
-        resolvePageColumnCount(
-          { layout: { columnCount: 6 } },
-          null
-        )
-      ).toBe(6);
+      expect(resolvePageColumnCount({ layout: { columnCount: 6 } }, null)).toBe(6);
 
       // 3. no layout.columnCount defaults to 12
-      expect(
-        resolvePageColumnCount(
-          { layout: {} },
-          {}
-        )
-      ).toBe(12);
+      expect(resolvePageColumnCount({ layout: {} }, {})).toBe(12);
 
       // 4. clamps between 2 and 12
       expect(resolvePageColumnCount({ layout: { columnCount: 1 } })).toBe(2);
@@ -357,5 +341,3 @@ describe('TemplateEngine', () => {
     });
   });
 });
-
-
