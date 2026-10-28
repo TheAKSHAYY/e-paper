@@ -15,7 +15,11 @@ import {
   getPageDimensions,
   resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
-import { createNewspaperDocument, getNewspaperPreset } from '@epaper-studio/template-engine';
+import {
+  createNewspaperDocument,
+  getNewspaperPreset,
+  getPhysicalPageMetrics,
+} from '@epaper-studio/template-engine';
 
 import { TopBar, type ViewMode } from './components/studio/TopBar';
 import { LeftSidebar, type SidebarTab } from './components/studio/LeftSidebar';
@@ -57,6 +61,26 @@ export const App: React.FC = () => {
     return 'landing';
   });
   const [scale, setScale] = useState<number>(0.7);
+  // Feature flag for physical canvas coordinates (default OFF until parity tests pass, then ON)
+  const [usePhysicalCanvasCoordinates, setUsePhysicalCanvasCoordinates] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get('physicalCanvas') === 'true' ||
+        params.get('usePhysicalCanvasCoordinates') === 'true'
+      ) {
+        return true;
+      }
+      if (
+        params.get('physicalCanvas') === 'false' ||
+        params.get('usePhysicalCanvasCoordinates') === 'false'
+      ) {
+        return false;
+      }
+    }
+    return false;
+  });
+
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
   const canvasViewportRef = useRef<HTMLDivElement>(null);
   const hasInitializedFit = useRef<boolean>(false);
@@ -118,37 +142,147 @@ export const App: React.FC = () => {
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
-  const calculateFitScale = useCallback(() => {
-    if (!canvasViewportRef.current) {
-      if (typeof window !== 'undefined') {
-        const estAvailableW =
-          window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 48;
-        const baseW = document.metadata.orientation === 'landscape' ? 1080 : 800;
-        return Math.max(0.35, Math.min(1.0, Math.round((estAvailableW / baseW) * 100) / 100));
-      }
-      return 0.75;
+  // Resolves the layout canvas base dimensions (physical vs legacy 800px)
+  const getCanvasBaseDimensions = useCallback(() => {
+    if (usePhysicalCanvasCoordinates) {
+      const metrics = getPhysicalPageMetrics(
+        document.metadata.pageSize,
+        document.metadata.orientation,
+        document.layout.spacingDensity,
+        document.layout.bodyFontSizePt
+      );
+      return { widthPx: metrics.widthPx, heightPx: metrics.heightPx };
     }
-    const rect = canvasViewportRef.current.getBoundingClientRect();
-    const availableW = Math.max(260, rect.width - 48);
-    const baseWidth = document.metadata.orientation === 'landscape' ? 1080 : 800;
-    const scaleW = availableW / baseWidth;
-    return Math.max(0.35, Math.min(1.0, Math.round(scaleW * 100) / 100));
-  }, [document.metadata.orientation, isSidebarOpen, isInspectorOpen]);
+    const dims = getPageDimensions(document.metadata.pageSize, document.metadata.orientation);
+    const aspect = dims.aspectRatio ?? dims.widthPt / dims.heightPt;
+    const baseW = document.metadata.orientation === 'landscape' ? 1080 : 800;
+    return { widthPx: baseW, heightPx: Math.round(baseW / aspect) };
+  }, [
+    usePhysicalCanvasCoordinates,
+    document.metadata.pageSize,
+    document.metadata.orientation,
+    document.layout.spacingDensity,
+    document.layout.bodyFontSizePt,
+  ]);
+
+  // Fit to Width (default on mobile phones so the entire page width is visible)
+  const calculateFitWidthScale = useCallback(() => {
+    const { widthPx } = getCanvasBaseDimensions();
+    let availableW = 1200;
+    if (canvasViewportRef.current) {
+      const rect = canvasViewportRef.current.getBoundingClientRect();
+      availableW = Math.max(260, rect.width - 32);
+    } else if (typeof window !== 'undefined') {
+      availableW = window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+    }
+    const scaleW = availableW / widthPx;
+    return Math.max(0.25, Math.min(3.0, Math.round(scaleW * 100) / 100));
+  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen]);
+
+  // Fit to Page (fits both width and height within viewport)
+  const calculateFitPageScale = useCallback(() => {
+    const { widthPx, heightPx } = getCanvasBaseDimensions();
+    let availableW = 1200;
+    let availableH = 800;
+    if (canvasViewportRef.current) {
+      const rect = canvasViewportRef.current.getBoundingClientRect();
+      availableW = Math.max(260, rect.width - 32);
+      availableH = Math.max(260, rect.height - 32);
+    } else if (typeof window !== 'undefined') {
+      availableW = window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+      availableH = Math.max(300, window.innerHeight - 120);
+    }
+    const scaleW = availableW / widthPx;
+    const scaleH = availableH / heightPx;
+    const bestFit = Math.min(scaleW, scaleH);
+    return Math.max(0.25, Math.min(3.0, Math.round(bestFit * 100) / 100));
+  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen]);
 
   const handleFitPage = useCallback(() => {
-    const fit = calculateFitScale();
+    const fit = calculateFitPageScale();
     setScale(fit);
     showNotification(`पेज फ़िट: ${Math.round(fit * 100)}%`);
-  }, [calculateFitScale, showNotification]);
+  }, [calculateFitPageScale, showNotification]);
+
+  const handleFitWidth = useCallback(() => {
+    const fit = calculateFitWidthScale();
+    setScale(fit);
+    showNotification(`चौड़ाई फ़िट: ${Math.round(fit * 100)}%`);
+  }, [calculateFitWidthScale, showNotification]);
 
   // Automatically fit on initial mount or when view transitions to studio
   useEffect(() => {
     if (!hasInitializedFit.current && canvasViewportRef.current && viewMode !== 'landing') {
       hasInitializedFit.current = true;
-      const fit = calculateFitScale();
-      setScale(fit);
+      const initialFit = isMobile ? calculateFitWidthScale() : calculateFitPageScale();
+      setScale(initialFit);
     }
-  }, [calculateFitScale, viewMode]);
+  }, [calculateFitWidthScale, calculateFitPageScale, isMobile, viewMode]);
+
+  // Pinch-zoom (touch) & wheel-zoom (Ctrl + Wheel) clamped 25% - 300%
+  useEffect(() => {
+    const viewport = canvasViewportRef.current;
+    if (!viewport) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        setScale((current) => {
+          const delta = -e.deltaY * 0.002;
+          return Math.max(0.25, Math.min(3.0, Math.round((current + delta) * 100) / 100));
+        });
+      }
+    };
+
+    let touchStartDist = 0;
+    let touchStartScale = 1;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        if (t0 && t1) {
+          touchStartDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+          touchStartScale = scale;
+        }
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && touchStartDist > 0) {
+        e.preventDefault();
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        if (t0 && t1) {
+          const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+          const factor = dist / touchStartDist;
+          const newScale = Math.max(
+            0.25,
+            Math.min(3.0, Math.round(touchStartScale * factor * 100) / 100)
+          );
+          setScale(newScale);
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        touchStartDist = 0;
+      }
+    };
+
+    viewport.addEventListener('wheel', handleWheel, { passive: false });
+    viewport.addEventListener('touchstart', handleTouchStart, { passive: true });
+    viewport.addEventListener('touchmove', handleTouchMove, { passive: false });
+    viewport.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener('wheel', handleWheel);
+      viewport.removeEventListener('touchstart', handleTouchStart);
+      viewport.removeEventListener('touchmove', handleTouchMove);
+      viewport.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [scale]);
 
   // Compute pages list from publication
   const pages: NewspaperPage[] = useMemo(() => {
@@ -944,6 +1078,9 @@ export const App: React.FC = () => {
             scale={scale}
             onScaleChange={setScale}
             onFitPage={handleFitPage}
+            onFitWidth={handleFitWidth}
+            usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
+            onTogglePhysicalCoordinates={() => setUsePhysicalCanvasCoordinates((prev) => !prev)}
             onNewPublication={() => setIsSetupOpen(true)}
             onOpenTemplates={() => setIsPresetsOpen(true)}
             onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
@@ -1137,6 +1274,7 @@ export const App: React.FC = () => {
                 pageSize={document.metadata.pageSize}
                 orientation={document.metadata.orientation}
                 scale={scale}
+                usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
                 selectedArticleId={selectedArticleId}
                 onSelectArticle={(id) => {
                   setSelectedArticleId(id);

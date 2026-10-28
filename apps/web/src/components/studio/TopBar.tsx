@@ -18,6 +18,9 @@ export interface TopBarProps {
   scale: number;
   onScaleChange: (scale: number) => void;
   onFitPage?: () => void;
+  onFitWidth?: () => void;
+  usePhysicalCanvasCoordinates?: boolean;
+  onTogglePhysicalCoordinates?: () => void;
   onNewPublication: () => void;
   onOpenTemplates: () => void;
   onOpenMastheadGallery?: () => void;
@@ -44,6 +47,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   scale,
   onScaleChange,
   onFitPage,
+  onFitWidth,
+  usePhysicalCanvasCoordinates = false,
+  onTogglePhysicalCoordinates,
   onNewPublication,
   onOpenTemplates,
   onExportPdf,
@@ -70,7 +76,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   const roundedScale = Math.round(scale * 100) / 100;
-  const standardScales = [0.25, 0.35, 0.5, 0.65, 0.75, 1.0, 1.25, 1.5];
+  const standardScales = [0.25, 0.35, 0.5, 0.65, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
 
   return (
     <header
@@ -328,7 +334,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </select>
 
           <button
-            onClick={() => onScaleChange(Math.min(2.0, Math.round((scale + 0.1) * 100) / 100))}
+            onClick={() => onScaleChange(Math.min(3.0, Math.round((scale + 0.1) * 100) / 100))}
             title="ज़ूम बढ़ाएं"
             style={{
               backgroundColor: '#1f2937',
@@ -348,7 +354,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           {onFitPage && (
             <button
               onClick={onFitPage}
-              title="पूरा पेज फ़िट करें"
+              title="पूरा पेज फ़िट करें (Fit to Page)"
               style={{
                 backgroundColor: 'transparent',
                 border: '1px solid #374151',
@@ -361,7 +367,50 @@ export const TopBar: React.FC<TopBarProps> = ({
                 marginLeft: '2px',
               }}
             >
-              फ़िट
+              पेज
+            </button>
+          )}
+
+          {onFitWidth && (
+            <button
+              onClick={onFitWidth}
+              title="पेज की चौड़ाई स्क्रीन पर फ़िट करें (Fit to Width)"
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #374151',
+                color: '#9ca3af',
+                borderRadius: '2px',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                padding: '2px 5px',
+                cursor: 'pointer',
+              }}
+            >
+              चौड़ाई
+            </button>
+          )}
+
+          {onTogglePhysicalCoordinates && (
+            <button
+              onClick={onTogglePhysicalCoordinates}
+              title={
+                usePhysicalCanvasCoordinates
+                  ? 'भौतिक माप सक्रिय (1:1 Physical Canvas Mode - WYSIWYG). क्लिक करके 800px लेगसी पर स्विच करें'
+                  : 'लेगसी 800px कैनवस सक्रिय. क्लिक करके 1:1 भौतिक माप (Physical Canvas) सक्रिय करें'
+              }
+              style={{
+                backgroundColor: usePhysicalCanvasCoordinates ? '#065f46' : '#374151',
+                border: usePhysicalCanvasCoordinates ? '1px solid #10b981' : '1px solid #4b5563',
+                color: usePhysicalCanvasCoordinates ? '#a7f3d0' : '#9ca3af',
+                borderRadius: '2px',
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                marginLeft: '4px',
+              }}
+            >
+              {usePhysicalCanvasCoordinates ? '📐 1:1 mm' : '800px'}
             </button>
           )}
         </div>
