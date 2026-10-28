@@ -11,6 +11,7 @@ import {
   getPageDimensions,
   getImageObjectPosition,
   getImageAspectRatio,
+  resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
 import { THEME_TOKENS } from '@epaper-studio/ui';
 import { getMastheadEmblemSvg } from '@epaper-studio/template-engine';
@@ -57,7 +58,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const isFirstPage = pageIndex === 0;
   const pageNumber = page.pageNumber ?? pageIndex + 1;
-  const columnCount = Math.max(2, Math.min(12, page.columnCount ?? layout.columnCount ?? 12));
+  const columnCount = resolvePageColumnCount({ layout }, page);
   const columnRule = layout.columnRule;
   const density = layout.spacingDensity;
 

@@ -10,6 +10,7 @@ import {
   renderNewspaperDocumentToHtml,
   formatBodyParagraphsHtml,
   isPredominantlyDevanagari,
+  resolvePageColumnCount,
 } from './index';
 
 describe('TemplateEngine', () => {
@@ -230,5 +231,131 @@ describe('TemplateEngine', () => {
       expect(html).toContain('float: none !important');
     });
   });
+
+  describe('Column Count Resolution & Grid Row Placement Parity (FIX A)', () => {
+    it('resolvePageColumnCount prioritizes page.columnCount, falls back to layout.columnCount, and defaults to 12', () => {
+      // 1. page.columnCount overrides layout.columnCount
+      expect(
+        resolvePageColumnCount(
+          { layout: { columnCount: 4 } },
+          { columnCount: 12 }
+        )
+      ).toBe(12);
+
+      // 2. doc with no page.columnCount falls back to layout.columnCount
+      expect(
+        resolvePageColumnCount(
+          { layout: { columnCount: 5 } },
+          { columnCount: undefined }
+        )
+      ).toBe(5);
+
+      expect(
+        resolvePageColumnCount(
+          { layout: { columnCount: 6 } },
+          null
+        )
+      ).toBe(6);
+
+      // 3. no layout.columnCount defaults to 12
+      expect(
+        resolvePageColumnCount(
+          { layout: {} },
+          {}
+        )
+      ).toBe(12);
+
+      // 4. clamps between 2 and 12
+      expect(resolvePageColumnCount({ layout: { columnCount: 1 } })).toBe(2);
+      expect(resolvePageColumnCount({ layout: { columnCount: 16 } })).toBe(12);
+    });
+
+    it('renders a 12-column grid allowing 9-col lead and 3-col story to share the same row when page.columnCount=12', () => {
+      const doc = createNewspaperDocument({
+        presetId: 'classic-hindi-broadsheet',
+      });
+      // Preset layout.columnCount is 4, but page.columnCount is set to 12
+      doc.layout.columnCount = 4;
+      doc.pages[0].columnCount = 12;
+
+      const articles = [
+        {
+          id: 'art-lead',
+          headline: 'Lead Story Spanning 9 Columns',
+          body: 'Lead story body paragraph text.',
+          priority: 'lead' as const,
+          columnSpan: 9,
+          orderIndex: 0,
+        },
+        {
+          id: 'art-sidebar',
+          headline: 'Narrow Sidebar Spanning 3 Columns',
+          body: 'Sidebar story body paragraph text.',
+          priority: 'minor' as const,
+          columnSpan: 3,
+          orderIndex: 1,
+        },
+      ];
+
+      doc.pages[0].articles = articles;
+      doc.articles = articles;
+
+      const html = renderNewspaperDocumentToHtml(doc);
+
+      // 1. Grid container must have inline 12-column template
+      expect(html).toContain('grid-template-columns: repeat(12, 1fr);');
+
+      // 2. Lead story must span 9 columns (not clamped to 4)
+      expect(html).toContain('grid-column: span 9;');
+
+      // 3. Second story must span 3 columns
+      expect(html).toContain('grid-column: span 3;');
+
+      // 4. Combined spans: 9 + 3 = 12 <= 12, so CSS Grid places them in the same row
+      expect(doc.pages[0].articles[0].columnSpan + doc.pages[0].articles[1].columnSpan).toBe(12);
+    });
+
+    it('falls back to layout.columnCount and clamps spans when page has no page.columnCount', () => {
+      const doc = createNewspaperDocument({
+        presetId: 'classic-hindi-broadsheet',
+      });
+      doc.layout.columnCount = 4;
+      delete doc.pages[0].columnCount;
+
+      const articles = [
+        {
+          id: 'art-lead',
+          headline: 'Lead Story Spanning 9 Columns',
+          body: 'Lead story body paragraph text.',
+          priority: 'lead' as const,
+          columnSpan: 9,
+          orderIndex: 0,
+        },
+        {
+          id: 'art-story-2',
+          headline: 'Second Story Spanning 3 Columns',
+          body: 'Second story body paragraph text.',
+          priority: 'minor' as const,
+          columnSpan: 3,
+          orderIndex: 1,
+        },
+      ];
+
+      doc.pages[0].articles = articles;
+      doc.articles = articles;
+
+      const html = renderNewspaperDocumentToHtml(doc);
+
+      // 1. Grid container must have inline 4-column template resolved from layout.columnCount
+      expect(html).toContain('grid-template-columns: repeat(4, 1fr);');
+
+      // 2. Lead story with columnSpan 9 must be clamped to resolved columnCount 4
+      expect(html).toContain('grid-column: span 4;');
+
+      // 3. Second story with columnSpan 3 must span 3
+      expect(html).toContain('grid-column: span 3;');
+    });
+  });
 });
+
 

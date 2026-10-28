@@ -539,3 +539,21 @@ export function createNewBlankPage(
     articles: [],
   };
 }
+
+/**
+ * Resolves the effective column count for a page, prioritizing page-level override,
+ * falling back to document layout column count, and finally defaulting to 12.
+ * Clamps result between 2 and 12 columns.
+ */
+export function resolvePageColumnCount(
+  docOrLayout?:
+    | { layout?: { columnCount?: number | null } | null; columnCount?: number | null }
+    | null,
+  page?: { columnCount?: number | null } | null
+): number {
+  const layoutColCount =
+    docOrLayout && 'layout' in docOrLayout && docOrLayout.layout
+      ? docOrLayout.layout.columnCount
+      : (docOrLayout as { columnCount?: number | null } | null | undefined)?.columnCount;
+  return Math.max(2, Math.min(12, page?.columnCount ?? layoutColCount ?? 12));
+}

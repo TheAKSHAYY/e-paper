@@ -13,6 +13,7 @@ import {
   createNewBlankPage,
   getImageObjectPosition,
   getImageAspectRatio,
+  resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
 import {
   GOOGLE_FONTS_DEVANAGARI_CSS_URL,
@@ -22,6 +23,7 @@ import {
 } from '@epaper-studio/typography';
 
 export {
+  resolvePageColumnCount,
   GOOGLE_FONTS_DEVANAGARI_CSS_URL,
   RECOMMENDED_HINDI_FONT_COMBINATIONS,
   DEVANAGARI_FONTS,
@@ -1197,7 +1199,7 @@ export function renderNewspaperDocumentToHtml(
     doc.metadata.pageSize,
     doc.metadata.orientation
   );
-  const columnCount = Math.max(2, Math.min(12, doc.layout.columnCount || 12));
+  const columnCount = resolvePageColumnCount(doc);
   const columnRule = doc.layout.columnRule;
   const density = doc.layout.spacingDensity;
   const direction = doc.metadata.direction ?? 'ltr';
@@ -1242,10 +1244,13 @@ export function renderNewspaperDocumentToHtml(
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,
       articles: p.articles,
-      columnCount: Math.max(2, Math.min(12, p.columnCount ?? columnCount)),
+      columnCount: resolvePageColumnCount(doc, p),
     }));
   } else {
     // Single page or legacy document: use partitionArticlesForPages to partition overflow
+    const firstPage = doc.pages?.[0];
+    const singlePageColumnCount = resolvePageColumnCount(doc, firstPage);
+
     const sourceArticles =
       doc.pages && doc.pages[0] && doc.pages[0].articles.length >= doc.articles.length
         ? doc.pages[0].articles
@@ -1267,7 +1272,7 @@ export function renderNewspaperDocumentToHtml(
             ? 'संपादकीय एवं विचार'
             : 'Inside News',
       articles: pageArticles,
-      columnCount,
+      columnCount: singlePageColumnCount,
     }));
   }
 
@@ -1599,7 +1604,7 @@ export function renderNewspaperDocumentToHtml(
       return `
         <div class="newspaper-page" data-page-number="${pageNumber}">
           ${headerHtml}
-          <main class="newspaper-grid">
+          <main class="newspaper-grid" style="grid-template-columns: repeat(${effectiveColumnCount}, 1fr);">
             ${articlesHtml}
           </main>
           ${footerHtml}
