@@ -200,6 +200,21 @@ export const AdvertisementDataSchema = z.object({
 });
 export type AdvertisementData = z.infer<typeof AdvertisementDataSchema>;
 
+export const FrameMmSchema = z.object({
+  /** Horizontal offset in mm from page top-left */
+  x: z.number().min(0, 'Frame x must be >= 0'),
+  /** Vertical offset in mm from page top-left */
+  y: z.number().min(0, 'Frame y must be >= 0'),
+  /** Width in mm (minimum 10mm) */
+  w: z.number().min(10, 'Frame width must be at least 10mm'),
+  /** Height in mm (minimum 10mm) */
+  h: z.number().min(10, 'Frame height must be at least 10mm'),
+  /** Stacking order z-index */
+  z: z.number().int().default(1),
+});
+
+export type FrameMm = z.infer<typeof FrameMmSchema>;
+
 export const ArticleSchema = z.object({
   id: z.string().min(1),
   elementType: ElementTypeSchema.optional(),
@@ -235,6 +250,9 @@ export const ArticleSchema = z.object({
   columnSpan: z.number().int().min(1).max(12).default(6),
   priority: ArticlePrioritySchema.default('major'),
   orderIndex: z.number().int().default(0),
+
+  /** Optional absolute frame in physical mm for free-placement layouts */
+  frame: FrameMmSchema.optional(),
 
   // Independent 4-side borders
   borders: ElementBordersSchema.optional(),
@@ -460,18 +478,25 @@ export const NewspaperBlockTypeSchema = z.enum([
 ]);
 export type NewspaperBlockType = z.infer<typeof NewspaperBlockTypeSchema>;
 
+export const PageLayoutModeSchema = z.enum(['auto', 'free']);
+export type PageLayoutMode = z.infer<typeof PageLayoutModeSchema>;
+
 export const NewspaperPageSchema = z.object({
   id: z.string().min(1),
   pageNumber: z.number().int().positive(),
   sectionTitle: z.string().optional().default('मुख्य पृष्ठ'),
+  layoutMode: PageLayoutModeSchema.default('auto'),
   articles: z.array(ArticleSchema).default([]),
   columnCount: z.number().int().min(2).max(12).optional(),
 });
 
 export type NewspaperPage = z.infer<typeof NewspaperPageSchema>;
 
+export const DocumentSchemaVersionSchema = z.enum(['1.0.0', '1.1.0']);
+export type DocumentSchemaVersion = z.infer<typeof DocumentSchemaVersionSchema>;
+
 export const NewspaperDocumentSchema = z.object({
-  version: z.literal('1.0.0'),
+  version: DocumentSchemaVersionSchema.default('1.1.0'),
   id: z.string().min(1),
   metadata: NewspaperMetadataSchema,
   masthead: MastheadConfigSchema,
@@ -498,6 +523,7 @@ export function getPublicationPages(doc: NewspaperDocument): NewspaperPage[] {
       id: 'page-1',
       pageNumber: 1,
       sectionTitle: doc.metadata.language === 'hi' ? 'मुख्य पृष्ठ' : 'Front Page',
+      layoutMode: 'auto',
       articles: doc.articles,
       columnCount: undefined,
     },
@@ -509,7 +535,7 @@ export function getPublicationPages(doc: NewspaperDocument): NewspaperPage[] {
  */
 export function createNewBlankPage(
   pageNumber: number,
-  options: { sectionTitle?: string; language?: string } = {}
+  options: { sectionTitle?: string; language?: string; layoutMode?: PageLayoutMode } = {}
 ): NewspaperPage {
   const isHindi = options.language === 'hi';
   const defaultTitle =
@@ -538,6 +564,7 @@ export function createNewBlankPage(
     id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     pageNumber,
     sectionTitle: defaultTitle,
+    layoutMode: options.layoutMode ?? 'auto',
     articles: [],
   };
 }
@@ -559,4 +586,117 @@ export function resolvePageColumnCount(
       ? docOrLayout.layout.columnCount
       : (docOrLayout as { columnCount?: number | null } | null | undefined)?.columnCount;
   return Math.max(2, Math.min(12, page?.columnCount ?? layoutColCount ?? 12));
+}
+
+/**
+ * Upgrades legacy 1.0.0 documents to 1.1.0, preserving all existing
+ * properties and ensuring every page has an explicit layoutMode ('auto').
+ */
+export function migrateDocumentSchema(doc: unknown): NewspaperDocument {
+  if (!doc || typeof doc !== 'object') {
+    throw new Error('Invalid document object for migration');
+  }
+  const raw = doc as Record<string, unknown>;
+  const migrated = {
+    ...raw,
+    version: '1.1.0',
+    pages: Array.isArray(raw.pages)
+      ? raw.pages.map((p: unknown) => {
+          if (!p || typeof p !== 'object') return p;
+          const pageObj = p as Record<string, unknown>;
+          return {
+            ...pageObj,
+            layoutMode: pageObj.layoutMode ?? 'auto',
+          };
+        })
+      : raw.pages,
+  };
+  return NewspaperDocumentSchema.parse(migrated);
+}
+
+export interface PrintableAreaBoundsMm {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  contentWidth: number;
+  contentHeight: number;
+}
+
+/**
+ * Derives the printable area bounding box in millimeters from page dimensions and margins.
+ */
+export function getPrintableAreaBoundsMm(
+  pageSize: PageSizePreset,
+  orientation: PageOrientation = 'portrait',
+  options: {
+    paddingPt?: number;
+    headerHeightPt?: number;
+    footerHeightPt?: number;
+  } = {}
+): PrintableAreaBoundsMm {
+  const dims = getPageDimensions(pageSize, orientation);
+  const paddingMm = ((options.paddingPt ?? 24) * 25.4) / 72;
+  const headerHeightMm = ((options.headerHeightPt ?? 0) * 25.4) / 72;
+  const footerHeightMm = ((options.footerHeightPt ?? 0) * 25.4) / 72;
+
+  const minX = Number(paddingMm.toFixed(2));
+  const maxX = Number((dims.widthMm - paddingMm).toFixed(2));
+  const minY = Number((paddingMm + headerHeightMm).toFixed(2));
+  const maxY = Number((dims.heightMm - paddingMm - footerHeightMm).toFixed(2));
+
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    contentWidth: Number((maxX - minX).toFixed(2)),
+    contentHeight: Number((maxY - minY).toFixed(2)),
+  };
+}
+
+/**
+ * Validates that an article frame lies completely inside the page's printable area.
+ */
+export function validateFrameInsidePrintableArea(
+  frame: FrameMm,
+  bounds: PrintableAreaBoundsMm,
+  toleranceMm: number = 0.5
+): { valid: boolean; reason?: string } {
+  if (frame.x < bounds.minX - toleranceMm) {
+    return { valid: false, reason: `Frame x (${frame.x}mm) exceeds left margin (${bounds.minX}mm)` };
+  }
+  if (frame.y < bounds.minY - toleranceMm) {
+    return { valid: false, reason: `Frame y (${frame.y}mm) encroaches into header zone (${bounds.minY}mm)` };
+  }
+  if (frame.x + frame.w > bounds.maxX + toleranceMm) {
+    return { valid: false, reason: `Frame right edge (${(frame.x + frame.w).toFixed(1)}mm) exceeds right margin (${bounds.maxX}mm)` };
+  }
+  if (frame.y + frame.h > bounds.maxY + toleranceMm) {
+    return { valid: false, reason: `Frame bottom edge (${(frame.y + frame.h).toFixed(1)}mm) exceeds bottom margin/footer (${bounds.maxY}mm)` };
+  }
+  return { valid: true };
+}
+
+/**
+ * Strictly clamps an article frame to lie completely inside the printable area.
+ */
+export function clampFrameToPrintableArea(
+  frame: FrameMm,
+  bounds: PrintableAreaBoundsMm
+): FrameMm {
+  const maxW = Math.max(10, bounds.contentWidth);
+  const maxH = Math.max(10, bounds.contentHeight);
+  const w = Math.min(Math.max(10, frame.w), maxW);
+  const h = Math.min(Math.max(10, frame.h), maxH);
+  const x = Math.min(Math.max(bounds.minX, frame.x), bounds.maxX - w);
+  const y = Math.min(Math.max(bounds.minY, frame.y), bounds.maxY - h);
+
+  return {
+    x: Number(x.toFixed(2)),
+    y: Number(y.toFixed(2)),
+    w: Number(w.toFixed(2)),
+    h: Number(h.toFixed(2)),
+    z: frame.z ?? 1,
+  };
 }

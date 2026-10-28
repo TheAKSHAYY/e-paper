@@ -10,6 +10,10 @@ import {
   getPublicationPages,
   getPageDimensions,
   resolvePageColumnCount,
+  migrateDocumentSchema,
+  getPrintableAreaBoundsMm,
+  validateFrameInsidePrintableArea,
+  clampFrameToPrintableArea,
 } from './index';
 
 describe('DocumentSchema', () => {
@@ -252,4 +256,155 @@ describe('DocumentSchema', () => {
       expect(parsed.data.imageAspect).toBe('wide');
     }
   });
+
+  describe('Free-Placement Layout Schema & Clamping', () => {
+    it('should validate Article with FrameMm', () => {
+      const freeArticle = {
+        id: 'art-free-1',
+        headline: 'मुक्त लेआउट शीर्षक',
+        body: 'आर्टिकल बॉडी टेक्स्ट...',
+        frame: {
+          x: 25.4,
+          y: 60.0,
+          w: 120.0,
+          h: 85.5,
+          z: 2,
+        },
+      };
+
+      const parsed = ArticleSchema.safeParse(freeArticle);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.frame?.x).toBe(25.4);
+        expect(parsed.data.frame?.w).toBe(120.0);
+        expect(parsed.data.frame?.z).toBe(2);
+      }
+    });
+
+    it('should reject invalid frame with dimensions below 10mm or negative coordinates', () => {
+      const invalidFrame = {
+        id: 'art-free-invalid',
+        headline: 'अमान्य फ्रेम',
+        body: 'सामग्री...',
+        frame: {
+          x: -5,
+          y: 10,
+          w: 5, // < 10mm min
+          h: 20,
+        },
+      };
+
+      const parsed = ArticleSchema.safeParse(invalidFrame);
+      expect(parsed.success).toBe(false);
+    });
+
+    it('should validate NewspaperPage with layoutMode "free" and "auto"', () => {
+      const freePage = {
+        id: 'page-free',
+        pageNumber: 1,
+        layoutMode: 'free' as const,
+        articles: [],
+      };
+      const parsedFree = NewspaperPageSchema.safeParse(freePage);
+      expect(parsedFree.success).toBe(true);
+      if (parsedFree.success) {
+        expect(parsedFree.data.layoutMode).toBe('free');
+      }
+
+      const autoPage = {
+        id: 'page-auto',
+        pageNumber: 2,
+        articles: [],
+      };
+      const parsedAuto = NewspaperPageSchema.safeParse(autoPage);
+      expect(parsedAuto.success).toBe(true);
+      if (parsedAuto.success) {
+        expect(parsedAuto.data.layoutMode).toBe('auto');
+      }
+    });
+
+    it('should migrate legacy 1.0.0 documents to 1.1.0 preserving all content', () => {
+      const legacyDoc = {
+        version: '1.0.0',
+        id: 'legacy-doc-1',
+        metadata: {
+          id: 'legacy-doc-1',
+          title: 'Legacy Paper',
+          language: 'hi',
+          direction: 'ltr',
+          pageSize: 'broadsheet',
+          orientation: 'portrait',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        masthead: {
+          title: 'दैनिक नवप्रभात',
+        },
+        layout: {
+          presetId: 'classic-hindi-broadsheet',
+          columnCount: 12,
+        },
+        articles: [],
+        pages: [
+          {
+            id: 'page-legacy-1',
+            pageNumber: 1,
+            articles: [
+              {
+                id: 'art-1',
+                headline: 'समाचार',
+                body: 'विवरण...',
+              },
+            ],
+          },
+        ],
+      };
+
+      const migrated = migrateDocumentSchema(legacyDoc);
+      expect(migrated.version).toBe('1.1.0');
+      expect(migrated.pages?.[0]?.layoutMode).toBe('auto');
+      expect(migrated.pages?.[0]?.articles).toHaveLength(1);
+    });
+
+    it('should compute printable area bounds and correctly validate/clamp frames', () => {
+      const bounds = getPrintableAreaBoundsMm('broadsheet', 'portrait', {
+        paddingPt: 24, // ~8.47mm
+        headerHeightPt: 120, // ~42.33mm
+        footerHeightPt: 20, // ~7.06mm
+      });
+
+      expect(bounds.minX).toBeCloseTo(8.47, 1);
+      expect(bounds.maxX).toBeCloseTo(381 - 8.47, 1);
+      expect(bounds.minY).toBeCloseTo(8.47 + 42.33, 1);
+      expect(bounds.maxY).toBeCloseTo(578 - 8.47 - 7.06, 1);
+
+      // Frame completely inside
+      const insideFrame = {
+        x: bounds.minX + 10,
+        y: bounds.minY + 10,
+        w: 100,
+        h: 100,
+        z: 1,
+      };
+      expect(validateFrameInsidePrintableArea(insideFrame, bounds).valid).toBe(true);
+
+      // Frame extending past right edge
+      const outsideRightFrame = {
+        x: bounds.maxX - 50,
+        y: bounds.minY + 10,
+        w: 100, // 50mm past margin!
+        h: 100,
+        z: 1,
+      };
+      const rightResult = validateFrameInsidePrintableArea(outsideRightFrame, bounds);
+      expect(rightResult.valid).toBe(false);
+
+      // Clamping should bring it strictly inside bounds
+      const clamped = clampFrameToPrintableArea(outsideRightFrame, bounds);
+      expect(clamped.x + clamped.w).toBeLessThanOrEqual(bounds.maxX + 0.05);
+      expect(clamped.x).toBeGreaterThanOrEqual(bounds.minX);
+      expect(validateFrameInsidePrintableArea(clamped, bounds).valid).toBe(true);
+    });
+  });
 });
+
