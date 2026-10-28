@@ -1033,6 +1033,34 @@ export interface PhysicalPageMetrics {
     minor: number;
     brief: number;
   };
+  typographyPt: {
+    deckFontSizePt: number;
+    kickerFontSizePt: number;
+    bylineFontSizePt: number;
+    captionFontSizePt: number;
+    captionCreditFontSizePt: number;
+    footerFontSizePt: number;
+    topStripFontSizePt: number;
+    bottomStripFontSizePt: number;
+    weatherLabelFontSizePt: number;
+    taglineFontSizePt: number;
+    establishmentFontSizePt: number;
+  };
+  spacingPt: {
+    mastheadPaddingBottomPt: number;
+    mastheadMarginBottomPt: number;
+    topStripPaddingBottomPt: number;
+    topStripMarginBottomPt: number;
+    bottomStripPaddingTopPt: number;
+    bottomStripMarginTopPt: number;
+    articleHeaderMarginBottomPt: number;
+    deckMarginBottomPt: number;
+    bylineMarginTopPt: number;
+    paraMarginBottomPt: number;
+    paraTextIndentPt: number;
+    figureMarginBottomPt: number;
+    footerPaddingTopPt: number;
+  };
 }
 
 /**
@@ -1043,7 +1071,8 @@ export function getPhysicalPageMetrics(
   pageSize: PageSizePreset,
   orientation: PageOrientation = 'portrait',
   density: SpacingDensity = 'normal',
-  customBodyFontSizePt?: number
+  customBodyFontSizePt?: number,
+  customHeadlineFontSizePt?: number
 ): PhysicalPageMetrics {
   const { widthPt, heightPt } = getPageDimensionsPt(pageSize, orientation);
   // CSS pixels at standard 96 DPI: 1 pt = 96/72 px = 1.3333 px.
@@ -1064,6 +1093,8 @@ export function getPhysicalPageMetrics(
 
   const bodyFontSizePt = Math.max(7, Math.min(24, Number(customBodyFontSizePt) || 10));
 
+  const baseLead = customHeadlineFontSizePt ? Math.max(16, Math.min(72, Number(customHeadlineFontSizePt))) : 26;
+
   return {
     widthPt,
     heightPt,
@@ -1077,10 +1108,38 @@ export function getPhysicalPageMetrics(
     gapPx,
     bodyFontSizePt,
     headlineSizesPt: {
-      lead: 26,
-      major: 19,
-      minor: 14,
-      brief: 11,
+      lead: baseLead,
+      major: Math.round(baseLead * (19 / 26)),
+      minor: Math.round(baseLead * (14 / 26)),
+      brief: Math.round(baseLead * (11 / 26)),
+    },
+    typographyPt: {
+      deckFontSizePt: 9.5,
+      kickerFontSizePt: 8,
+      bylineFontSizePt: 7.5,
+      captionFontSizePt: 7.5,
+      captionCreditFontSizePt: 7,
+      footerFontSizePt: 7.5,
+      topStripFontSizePt: 8,
+      bottomStripFontSizePt: 8.5,
+      weatherLabelFontSizePt: 7.5,
+      taglineFontSizePt: 8.5,
+      establishmentFontSizePt: 8,
+    },
+    spacingPt: {
+      mastheadPaddingBottomPt: 6,
+      mastheadMarginBottomPt: 12,
+      topStripPaddingBottomPt: 3,
+      topStripMarginBottomPt: 4,
+      bottomStripPaddingTopPt: 3,
+      bottomStripMarginTopPt: 4,
+      articleHeaderMarginBottomPt: 6,
+      deckMarginBottomPt: 3,
+      bylineMarginTopPt: 3,
+      paraMarginBottomPt: 5,
+      paraTextIndentPt: 12,
+      figureMarginBottomPt: 6,
+      footerPaddingTopPt: 4,
     },
   };
 }
@@ -1340,7 +1399,8 @@ export function renderNewspaperDocumentToHtml(
     doc.metadata.pageSize,
     doc.metadata.orientation,
     doc.layout.spacingDensity,
-    doc.layout.bodyFontSizePt
+    doc.layout.bodyFontSizePt,
+    doc.layout.headlineFontSizePt
   );
   const { widthPt, heightPt, paddingPt, gapPt, bodyFontSizePt } = metrics;
   const columnCount = resolvePageColumnCount(doc);
