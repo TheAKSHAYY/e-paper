@@ -228,18 +228,40 @@ The unicode ranges are completely sufficient for all Hindi newspaper content.
 
 ---
 
-## 6. Implementation Plan for Tasks 2, 3 & 4
 
-1. **Task 2 (Fix):**
-   - Move font binary files and `@font-face` definitions into `packages/typography/fonts/`.
-   - Re-export font assets or font directory helper from `packages/typography`.
-   - Update `template-engine` CSS font stacks: change `.masthead-top-strip`, `.article-byline`, `.inside-folio-header`, `.article-caption`, and `.footer-text` to include self-hosted fonts (`'Hind', 'Noto Serif Devanagari', sans-serif`).
-   - Fix fixture CJK full stop `。` to Hindi danda `।` in test articles.
-   - Replace base URL with dummy non-routable origin `http://epaper-studio.local/`.
-   - In renderer route interception, throw an immediate fatal error if any requested font file is missing; never `route.continue()` to the external network.
-2. **Task 3 (Guard):**
-   - Add export-time CDP font check in `apps/renderer`: fail export if any node resolves to non-allowlisted family.
-   - Add integration test asserting PDF `/BaseFont` and `/FontName` contain only allowlisted self-hosted font families.
-   - Generate visual snapshot in `tests/after-fonts/` with the Hindi test strings.
-3. **Task 4 (Report):**
-   - Write `docs/font-fix-report.md`.
+---
+
+## 7. Noto Serif Devanagari Evaluation & Hindi Preset Audit (Task 3 Follow-Up)
+
+### 7.1 Root Cause for Initial Non-Use Perception
+
+In earlier stages (`docs/cleanup-report.md`), it was reported that exported PDFs embedded system fonts (`Nirmala UI` and `ArialMT`) instead of `Noto Serif Devanagari`.
+Our exhaustive Chrome DevTools Protocol (CDP) audit demonstrated that:
+1. **Noto Serif Devanagari was never rejected by Blink or Skia**: The `@font-face` family name, unicode ranges, and WOFF2 asset definitions matched properly.
+2. **The Actual Cause**: 12 specific UI and metadata elements (weather boxes, price labels, registration numbers, bylines, and folio headers) had CSS rules specifying `'Inter', -apple-system, sans-serif` without self-hosted fallbacks. Since `Inter` lacked Devanagari glyphs, the browser fell back to Windows `Nirmala UI` and `Arial`.
+3. **Weight Pairing Nuance**: Google Fonts' variable axes or static drops had bundled the same base static binary for both 400 and 700 Devanagari subsets (`bab9ee27c014...`). When bold weights were requested, Chromium synthetic-bolded the font glyphs, and both weights are fully embedded in the resulting PDF.
+
+### 7.2 Preset Inventory: Font Configuration Across Hindi and English Presets
+
+The table below catalogs which presets currently reference `Noto Serif Devanagari` and the exact headline, masthead, and body fonts configured across all built-in publication templates:
+
+| Preset ID | Category | Language | Masthead Font | Headline Font | Body Font (Current) | Noto Serif Referenced? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`classic-hindi-broadsheet`** | Hindi Broadsheet | `hi` | `'Rozha One', serif` | `'Noto Serif Devanagari', serif` | `'Noto Serif Devanagari', serif` | ✅ Yes (Headline, Subhead, Body) |
+| **`modern-hindi-daily`** | Hindi Berliner | `hi` | `'Poppins', sans-serif` | `'Poppins', sans-serif` | `'Hind', sans-serif` | ❌ No (`Hind` body, `Poppins` headline) |
+| **`local-hindi-gazette`** | Hindi Tabloid | `hi` | `'Yatra One', cursive` | `'Mukta', sans-serif` | `'Tiro Devanagari Hindi', serif` | ❌ No (`Tiro Devanagari Hindi` body, `Mukta` headline) |
+| **`classic-broadsheet`** | English Broadsheet | `en` | `'Playfair Display', serif` | `'Playfair Display', serif` | `'Source Serif 4', serif` | 🔄 Dynamic fallback if rendered in Hindi |
+| **`modern-editorial`** | English Berliner | `en` | `'Playfair Display', serif` | `'Playfair Display', serif` | `'Source Serif 4', serif` | 🔄 Dynamic fallback if rendered in Hindi |
+| **`compact-local`** | English Tabloid | `en` | `'Playfair Display', serif` | `'Playfair Display', serif` | `'Source Serif 4', serif` | 🔄 Dynamic fallback if rendered in Hindi |
+
+*Note on dynamic fallback:* In `packages/template-engine/src/index.ts`, when an English preset is rendered with `language: 'hi'`, the engine dynamically swaps the Latin-only fonts to `'Noto Serif Devanagari'` for headlines/body and `'Rozha One'` for mastheads to maintain authentic script shaping without font collapse.
+
+### 7.3 Side-by-Side Visual Comparison
+
+A high-resolution side-by-side comparison for `classic-hindi-broadsheet` (Page 1) has been generated at:
+- **Image Artifact:** `docs/hindi-body-comparison.png`
+- **Option A (Hind):** Contemporary humanist sans-serif body. High legibility at small sizes with open counters and clean modern news feel.
+- **Option B (Noto Serif Devanagari):** Traditional literary editorial serif body. Formal newspaper aesthetic with modulated strokes and traditional headstroke hooks.
+
+Both options render with 100% self-hosted fonts without host OS dependencies. The visual artifact is prepared for editorial review.
+
