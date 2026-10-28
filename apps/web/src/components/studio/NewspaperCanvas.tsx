@@ -51,7 +51,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   orientation,
   scale = 1.0,
   selectedArticleId,
-  usePhysicalCanvasCoordinates = false,
+  usePhysicalCanvasCoordinates = true,
   onSelectArticle,
   onMoveArticleUp: _onMoveArticleUp,
   onMoveArticleDown: _onMoveArticleDown,
@@ -278,8 +278,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             backgroundColor: '#ffffff', // Requirement 4: Pure White Print Paper
             color: THEME_TOKENS.inkPrimary,
             fontFamily: layout.bodyFont,
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.12)',
-            border: '1px solid #d1d5db',
+            boxShadow: usePhysicalCanvasCoordinates
+              ? '0 0 0 1px #d1d5db, 0 12px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.12)'
+              : '0 12px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.12)',
+            border: usePhysicalCanvasCoordinates ? 'none' : '1px solid #d1d5db',
             padding: paddingVal,
             boxSizing: 'border-box',
             position: 'absolute',
@@ -324,6 +326,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             {/* Top Metadata Row (Ear Strip) */}
             {masthead.showTopStrip !== false && (
               <div
+                className="masthead-top-strip"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -339,7 +342,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
                     : '10.5px',
                   color: '#333333',
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: usePhysicalCanvasCoordinates
+                    ? "'Hind', 'Noto Serif Devanagari', sans-serif"
+                    : "'Inter', sans-serif",
                   letterSpacing: usePhysicalCanvasCoordinates ? '0.2pt' : '0.02em',
                   lineHeight: usePhysicalCanvasCoordinates ? 1.25 : undefined,
                 }}
@@ -428,6 +433,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
 
             {/* 2. Main Masthead Row */}
             <div
+              className="masthead-main-row"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -438,7 +444,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       ? 'space-between'
                       : 'center',
                 gap: usePhysicalCanvasCoordinates ? '14pt' : '16px',
-                margin: usePhysicalCanvasCoordinates ? '4pt 0 6pt' : '4px 0 8px',
+                padding: usePhysicalCanvasCoordinates ? '4pt 0 6pt 0' : undefined,
+                margin: usePhysicalCanvasCoordinates ? 0 : '4px 0 8px',
                 textAlign:
                   masthead.alignment === 'left'
                     ? 'left'
@@ -474,6 +481,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             {/* 3. Masthead Bottom Folio Strip */}
             {masthead.showBottomStrip !== false && (
               <div
+                className="masthead-bottom-strip"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -488,6 +496,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   fontSize: usePhysicalCanvasCoordinates
                     ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
                     : '11px',
+                  fontFamily: usePhysicalCanvasCoordinates
+                    ? "'Hind', 'Noto Serif Devanagari', sans-serif"
+                    : undefined,
+                  lineHeight: usePhysicalCanvasCoordinates ? 1.5 : undefined,
                   fontWeight: 600,
                   color: '#222222',
                   letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
@@ -503,7 +515,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 </div>
                 <div>
                   {masthead.showDate !== false && (
-                    <span style={{ fontSize: '11.5px', fontFamily: "'Noto Serif Devanagari', serif" }}>
+                    <span style={{ fontSize: usePhysicalCanvasCoordinates ? undefined : '11.5px', fontFamily: "'Noto Serif Devanagari', serif" }}>
                       {masthead.dayOfWeek ? `${masthead.dayOfWeek}, ` : ''}
                       {masthead.date || '28 अक्टूबर 2026'}
                     </span>
@@ -942,10 +954,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     : undefined,
                   borderRight: customBorders?.right && customBorders.right.style !== 'none'
                     ? `${customBorders.right.width}px ${customBorders.right.style} ${customBorders.right.color}`
-                    : (columnRule && span < columnCount ? (usePhysicalCanvasCoordinates ? '1px solid #c8c5bc' : '1px solid #d5d0c4') : undefined),
+                    : (columnRule && (usePhysicalCanvasCoordinates || span < columnCount) ? (usePhysicalCanvasCoordinates ? '1px solid #c8c5bc' : '1px solid #d5d0c4') : undefined),
                   borderBottom: customBorders?.bottom && customBorders.bottom.style !== 'none'
                     ? `${customBorders.bottom.width}px ${customBorders.bottom.style} ${customBorders.bottom.color}`
-                    : '1px solid #e0ded6',
+                    : (usePhysicalCanvasCoordinates ? undefined : '1px solid #e0ded6'),
                   borderLeft: customBorders?.left && customBorders.left.style !== 'none'
                     ? `${customBorders.left.width}px ${customBorders.left.style} ${customBorders.left.color}`
                     : undefined,
@@ -984,7 +996,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       transition: 'outline 0.15s ease',
                       hyphens: isHindi ? 'manual' : undefined,
                       WebkitHyphens: isHindi ? 'manual' : undefined,
-                      ...(columnRule && span < columnCount && !customBorders?.right
+                      ...(columnRule && (usePhysicalCanvasCoordinates || span < columnCount) && !customBorders?.right
                         ? {
                             paddingRight: colRuleGutter,
                           }
@@ -995,97 +1007,134 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     {article.imagePlacement === 'top' && renderPhoto()}
 
                     {/* Headline, Subheadline & Byline */}
-                    <header style={{
-                      marginBottom: usePhysicalCanvasCoordinates
-                        ? `${physicalMetrics.spacingPt.articleHeaderMarginBottomPt}pt`
-                        : '6px'
-                    }}>
-                      {article.kickerText && (
-                        <div
-                          style={{
-                            fontSize: usePhysicalCanvasCoordinates
-                              ? `${physicalMetrics.typographyPt.kickerFontSizePt}pt`
-                              : '10.5px',
-                            fontWeight: 800,
-                            color: '#b91c1c',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.04em',
-                            marginBottom: '2px',
-                          }}
-                        >
-                          {article.kickerText}
-                        </div>
-                      )}
-
-                      <h2
-                        style={{
-                          fontFamily: layout.headlineFont,
-                          fontSize: usePhysicalCanvasCoordinates
-                            ? isLead
-                              ? `${physicalMetrics.headlineSizesPt.lead}pt`
-                              : article.priority === 'major'
-                                ? `${physicalMetrics.headlineSizesPt.major}pt`
-                                : article.priority === 'minor'
-                                  ? `${physicalMetrics.headlineSizesPt.minor}pt`
-                                  : `${physicalMetrics.headlineSizesPt.brief}pt`
-                            : isLead
-                              ? '30px'
-                              : article.priority === 'major'
-                                ? '22px'
-                                : article.priority === 'minor'
-                                  ? '15px'
-                                  : '18px',
-                          fontWeight: headlineWeight,
-                          lineHeight: 1.15,
-                          margin: '0 0 4px 0',
-                          color: article.textColor ?? THEME_TOKENS.inkPrimary,
-                          letterSpacing: isLead && usePhysicalCanvasCoordinates ? '-0.3pt' : '-0.01em',
-                        }}
-                      >
-                        {article.headline}
-                      </h2>
-
-                      {article.subheadline && (
-                        <p
-                          style={{
-                            margin: usePhysicalCanvasCoordinates
-                              ? `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`
-                              : '3px 0 5px 0',
-                            fontSize: usePhysicalCanvasCoordinates
-                              ? `${physicalMetrics.typographyPt.deckFontSizePt}pt`
-                              : isLead
-                                ? '13px'
-                                : '11.5px',
-                            lineHeight: 1.35,
-                            fontFamily: layout.subheadlineFont || layout.headlineFont,
-                            fontStyle: 'italic',
-                            color: '#333',
-                          }}
-                        >
-                          {article.subheadline}
-                        </p>
-                      )}
-
-                      {(article.byline || article.dateline) && (
-                        <div
-                          style={{
-                            fontSize: usePhysicalCanvasCoordinates
-                              ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
-                              : '10.5px',
-                            color: '#555',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.03em',
-                            borderTop: isLead && !usePhysicalCanvasCoordinates ? '1px solid #222' : 'none',
-                            paddingTop: isLead && !usePhysicalCanvasCoordinates ? '3px' : 0,
-                            marginTop: usePhysicalCanvasCoordinates
-                              ? `${physicalMetrics.spacingPt.bylineMarginTopPt}pt`
-                              : undefined,
-                            marginBottom: '6px',
-                          }}
-                        >
-                          {article.byline}
-                        </div>
+                    <header
+                      className={`article-header priority-${article.priority}`}
+                      style={{
+                        marginBottom: usePhysicalCanvasCoordinates
+                          ? `${physicalMetrics.spacingPt.articleHeaderMarginBottomPt}pt`
+                          : '6px',
+                      }}
+                    >
+                      {/* Subheadline (Deck) rendered before Headline when in physical mode to match PDF HTML */}
+                      {usePhysicalCanvasCoordinates ? (
+                        <>
+                          {article.subheadline && (
+                            <p
+                              className="article-deck"
+                              style={{
+                                margin: `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`,
+                                fontSize: `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
+                                lineHeight: 1.35,
+                                fontFamily: layout.subheadlineFont || layout.headlineFont,
+                                color: '#444',
+                              }}
+                            >
+                              {article.subheadline}
+                            </p>
+                          )}
+                          <h2
+                            className="article-headline"
+                            style={{
+                              fontFamily: layout.headlineFont,
+                              fontSize: isLead
+                                ? `${physicalMetrics.headlineSizesPt.lead}pt`
+                                : article.priority === 'major'
+                                  ? `${physicalMetrics.headlineSizesPt.major}pt`
+                                  : article.priority === 'minor'
+                                    ? `${physicalMetrics.headlineSizesPt.minor}pt`
+                                    : `${physicalMetrics.headlineSizesPt.brief}pt`,
+                              fontWeight: headlineWeight,
+                              lineHeight: 1.15,
+                              margin: 0,
+                              color: article.textColor ?? THEME_TOKENS.inkPrimary,
+                              letterSpacing: isLead ? '-0.3pt' : undefined,
+                            }}
+                          >
+                            {article.headline}
+                          </h2>
+                          {article.byline && (
+                            <div
+                              className="article-byline"
+                              style={{
+                                fontSize: `${physicalMetrics.typographyPt.bylineFontSizePt}pt`,
+                                color: '#666',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5pt',
+                                marginTop: `${physicalMetrics.spacingPt.bylineMarginTopPt}pt`,
+                                fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
+                              }}
+                            >
+                              {article.byline}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {article.kickerText && (
+                            <div
+                              style={{
+                                fontSize: '10.5px',
+                                fontWeight: 800,
+                                color: '#b91c1c',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                marginBottom: '2px',
+                              }}
+                            >
+                              {article.kickerText}
+                            </div>
+                          )}
+                          <h2
+                            style={{
+                              fontFamily: layout.headlineFont,
+                              fontSize: isLead
+                                ? '30px'
+                                : article.priority === 'major'
+                                  ? '22px'
+                                  : article.priority === 'minor'
+                                    ? '15px'
+                                    : '18px',
+                              fontWeight: headlineWeight,
+                              lineHeight: 1.15,
+                              margin: '0 0 4px 0',
+                              color: article.textColor ?? THEME_TOKENS.inkPrimary,
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {article.headline}
+                          </h2>
+                          {article.subheadline && (
+                            <p
+                              style={{
+                                margin: '3px 0 5px 0',
+                                fontSize: isLead ? '13px' : '11.5px',
+                                lineHeight: 1.35,
+                                fontFamily: layout.subheadlineFont || layout.headlineFont,
+                                fontStyle: 'italic',
+                                color: '#333',
+                              }}
+                            >
+                              {article.subheadline}
+                            </p>
+                          )}
+                          {(article.byline || article.dateline) && (
+                            <div
+                              style={{
+                                fontSize: '10.5px',
+                                color: '#555',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                borderTop: isLead ? '1px solid #222' : 'none',
+                                paddingTop: isLead ? '3px' : 0,
+                                marginBottom: '6px',
+                              }}
+                            >
+                              {article.byline}
+                            </div>
+                          )}
+                        </>
                       )}
                     </header>
 
@@ -1249,19 +1298,46 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       >
                         {article.imagePlacement === 'side' && renderPhoto()}
 
+                        {usePhysicalCanvasCoordinates && article.kickerText && (
+                          <div
+                            className="article-kicker"
+                            style={{
+                              color: '#b91c1c',
+                              fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
+                              fontWeight: 700,
+                              fontSize: `${physicalMetrics.typographyPt.kickerFontSizePt}pt`,
+                              textTransform: 'uppercase',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            {article.kickerText}
+                          </div>
+                        )}
+
                         {article.dateline && (
-                          <strong style={{
-                            color: '#111',
-                            marginRight: '4px',
-                            textTransform: usePhysicalCanvasCoordinates ? 'uppercase' : undefined,
-                            fontSize: usePhysicalCanvasCoordinates ? '0.9em' : undefined,
-                          }}>
-                            {article.dateline}
-                          </strong>
+                          usePhysicalCanvasCoordinates ? (
+                            <span
+                              className="article-dateline"
+                              style={{
+                                color: '#121212',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                fontSize: '0.9em',
+                                letterSpacing: '0.5pt',
+                              }}
+                            >
+                              {article.dateline}{' '}
+                            </span>
+                          ) : (
+                            <strong style={{ color: '#111', marginRight: '4px' }}>
+                              {article.dateline}
+                            </strong>
+                          )
                         )}
                         {article.body.split(/\n\s*\n/).map((para, pIdx) => (
                           <p
                             key={pIdx}
+                            className="article-para"
                             style={{
                               margin: usePhysicalCanvasCoordinates
                                 ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
@@ -1271,7 +1347,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                                 : undefined,
                             }}
                           >
-                            {para}
+                            {usePhysicalCanvasCoordinates
+                              ? para.split('\n').map((line, lIdx, arr) => (
+                                  <React.Fragment key={lIdx}>
+                                    {line}
+                                    {lIdx < arr.length - 1 && <br />}
+                                  </React.Fragment>
+                                ))
+                              : para}
                           </p>
                         ))}
                       </div>
@@ -1295,26 +1378,57 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           className="newspaper-folio-footer"
           data-testid="newspaper-folio-footer"
           style={{
-            borderTop: '1px solid #111',
-            paddingTop: usePhysicalCanvasCoordinates
-              ? `${physicalMetrics.spacingPt.footerPaddingTopPt}pt`
-              : '6px',
             marginTop: 'auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: usePhysicalCanvasCoordinates
-              ? `${physicalMetrics.typographyPt.footerFontSizePt}pt`
-              : '11px',
-            color: '#444',
+            paddingTop: usePhysicalCanvasCoordinates ? '6pt' : '6px',
+            borderTop: usePhysicalCanvasCoordinates ? undefined : '1px solid #111',
             flexShrink: 0,
           }}
         >
-          <span>{masthead.title}</span>
-          <span style={{ fontWeight: 600 }}>
-            पृष्ठ {pageNumber} / {totalPages}
-          </span>
-          <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+          {usePhysicalCanvasCoordinates ? (
+            <>
+              <div
+                style={{
+                  height: '1px',
+                  backgroundColor: '#121212',
+                  marginBottom: '4pt',
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '7pt',
+                  fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
+                  textTransform: 'uppercase',
+                  color: '#666',
+                  letterSpacing: '0.5pt',
+                }}
+              >
+                <span>{masthead.title}</span>
+                <span>
+                  पृष्ठ {pageNumber} / {totalPages}
+                </span>
+                <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '11px',
+                color: '#444',
+              }}
+            >
+              <span>{masthead.title}</span>
+              <span style={{ fontWeight: 600 }}>
+                पृष्ठ {pageNumber} / {totalPages}
+              </span>
+              <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+            </div>
+          )}
         </footer>
       </div>
     </div>

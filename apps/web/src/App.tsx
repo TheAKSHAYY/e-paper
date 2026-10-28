@@ -86,24 +86,24 @@ export const App: React.FC = () => {
     }
     return 0.7;
   });
-  // Feature flag for physical canvas coordinates (default OFF until parity tests pass, then ON)
+  // Feature flag for physical canvas coordinates (default ON now that parity tests pass)
   const [usePhysicalCanvasCoordinates, setUsePhysicalCanvasCoordinates] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (
-        params.get('physicalCanvas') === 'true' ||
-        params.get('usePhysicalCanvasCoordinates') === 'true'
-      ) {
-        return true;
-      }
       if (
         params.get('physicalCanvas') === 'false' ||
         params.get('usePhysicalCanvasCoordinates') === 'false'
       ) {
         return false;
       }
+      if (
+        params.get('physicalCanvas') === 'true' ||
+        params.get('usePhysicalCanvasCoordinates') === 'true'
+      ) {
+        return true;
+      }
     }
-    return false;
+    return true;
   });
 
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
