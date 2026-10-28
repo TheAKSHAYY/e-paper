@@ -17,7 +17,12 @@ import {
   getImageAspectRatio,
   resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
-import { DEVANAGARI_FONTS, RECOMMENDED_HINDI_FONT_COMBINATIONS } from '@epaper-studio/typography';
+import {
+  DEVANAGARI_FONTS,
+  RECOMMENDED_HINDI_FONT_COMBINATIONS,
+  findUnsupportedCharacters,
+  type UnsupportedCharacterInfo,
+} from '@epaper-studio/typography';
 import { MastheadInspectorPanel } from './MastheadInspectorPanel';
 import { BorderControls } from './BorderControls';
 
@@ -334,25 +339,50 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 >
                   किकर (Kicker)
                 </label>
-                <input
-                  type="text"
-                  value={selectedArticle.kickerText ?? ''}
-                  onChange={(e) =>
-                    onUpdateArticle({ ...selectedArticle, kickerText: e.target.value })
-                  }
-                  placeholder="उदा: विशेष रिपोर्ट, खेल, राजनीति"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: '#b91c1c',
-                    outline: 'none',
-                  }}
-                />
+                {(() => {
+                  const unsupp = findUnsupportedCharacters(selectedArticle.kickerText ?? '', [layout.bodyFont]);
+                  return (
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={selectedArticle.kickerText ?? ''}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, kickerText: e.target.value })
+                        }
+                        placeholder="उदा: विशेष रिपोर्ट, खेल, राजनीति"
+                        title={
+                          unsupp.length > 0
+                            ? `असमर्थित वर्ण (${unsupp.length}): ${unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).join(', ')}`
+                            : undefined
+                        }
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          border: unsupp.length > 0 ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          textDecoration: unsupp.length > 0 ? 'underline wavy #ef4444' : 'none',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#b91c1c',
+                          outline: 'none',
+                        }}
+                      />
+                      {unsupp.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: '9.5px',
+                            color: '#b91c1c',
+                            marginTop: '2px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Headline */}
@@ -368,25 +398,50 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 >
                   मुख्य शीर्षक (Headline) *
                 </label>
-                <textarea
-                  rows={2}
-                  value={selectedArticle.headline}
-                  onChange={(e) =>
-                    onUpdateArticle({ ...selectedArticle, headline: e.target.value })
-                  }
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px',
-                    fontFamily: layout.headlineFont,
-                    fontWeight: 700,
-                    lineHeight: 1.3,
-                    outline: 'none',
-                  }}
-                />
+                {(() => {
+                  const unsupp = findUnsupportedCharacters(selectedArticle.headline, [layout.headlineFont]);
+                  return (
+                    <div style={{ position: 'relative' }}>
+                      <textarea
+                        rows={2}
+                        value={selectedArticle.headline}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, headline: e.target.value })
+                        }
+                        title={
+                          unsupp.length > 0
+                            ? `असमर्थित वर्ण (${unsupp.length}): ${unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).join(', ')}`
+                            : undefined
+                        }
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: unsupp.length > 0 ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          textDecoration: unsupp.length > 0 ? 'underline wavy #ef4444' : 'none',
+                          fontSize: '13px',
+                          fontFamily: layout.headlineFont,
+                          fontWeight: 700,
+                          lineHeight: 1.3,
+                          outline: 'none',
+                        }}
+                      />
+                      {unsupp.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: '9.5px',
+                            color: '#b91c1c',
+                            marginTop: '2px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Subheadline / Deck */}
@@ -402,23 +457,51 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 >
                   उप-शीर्षक (Deck)
                 </label>
-                <input
-                  type="text"
-                  value={selectedArticle.subheadline ?? ''}
-                  onChange={(e) =>
-                    onUpdateArticle({ ...selectedArticle, subheadline: e.target.value })
-                  }
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11.5px',
-                    fontFamily: layout.subheadlineFont || layout.headlineFont,
-                    outline: 'none',
-                  }}
-                />
+                {(() => {
+                  const unsupp = findUnsupportedCharacters(
+                    selectedArticle.subheadline ?? '',
+                    [layout.subheadlineFont || layout.headlineFont]
+                  );
+                  return (
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={selectedArticle.subheadline ?? ''}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, subheadline: e.target.value })
+                        }
+                        title={
+                          unsupp.length > 0
+                            ? `असमर्थित वर्ण (${unsupp.length}): ${unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).join(', ')}`
+                            : undefined
+                        }
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          border: unsupp.length > 0 ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          textDecoration: unsupp.length > 0 ? 'underline wavy #ef4444' : 'none',
+                          fontSize: '11.5px',
+                          fontFamily: layout.subheadlineFont || layout.headlineFont,
+                          outline: 'none',
+                        }}
+                      />
+                      {unsupp.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: '9.5px',
+                            color: '#b91c1c',
+                            marginTop: '2px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Byline & Dateline */}
@@ -1340,22 +1423,52 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     {selectedArticle.body.trim().split(/\s+/).filter(Boolean).length} words
                   </span>
                 </div>
-                <textarea
-                  rows={8}
-                  value={selectedArticle.body}
-                  onChange={(e) => onUpdateArticle({ ...selectedArticle, body: e.target.value })}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '12px',
-                    fontFamily: layout.bodyFont,
-                    lineHeight: 1.5,
-                    outline: 'none',
-                  }}
-                />
+                {(() => {
+                  const unsupp = findUnsupportedCharacters(selectedArticle.body, [layout.bodyFont]);
+                  return (
+                    <div style={{ position: 'relative' }}>
+                      <textarea
+                        rows={8}
+                        value={selectedArticle.body}
+                        onChange={(e) => onUpdateArticle({ ...selectedArticle, body: e.target.value })}
+                        title={
+                          unsupp.length > 0
+                            ? `असमर्थित वर्ण (${unsupp.length}): ${unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).join(', ')}`
+                            : undefined
+                        }
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '8px',
+                          borderRadius: '6px',
+                          border: unsupp.length > 0 ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          textDecoration: unsupp.length > 0 ? 'underline wavy #ef4444' : 'none',
+                          fontSize: '12px',
+                          fontFamily: layout.bodyFont,
+                          lineHeight: 1.5,
+                          outline: 'none',
+                        }}
+                      />
+                      {unsupp.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: '10px',
+                            color: '#b91c1c',
+                            marginTop: '3px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ⚠️ फॉन्ट में {unsupp.length} असमर्थित वर्ण हैं:{' '}
+                          {unsupp
+                            .slice(0, 5)
+                            .map((u: UnsupportedCharacterInfo) => `"${u.char}" (${u.codePoint})`)
+                            .join(', ')}
+                          {unsupp.length > 5 ? ` (+${unsupp.length - 5} अन्य)` : ''}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* ── BORDER CONTROLS (Top, Right, Bottom, Left) ── */}

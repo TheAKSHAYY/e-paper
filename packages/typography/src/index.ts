@@ -679,3 +679,115 @@ export function resolveFontFallback(script: WritingScript): string {
   const matched = DEFAULT_EPAPER_FONTS.find((f) => f.scripts.includes(script));
   return matched ? matched.family : 'serif';
 }
+
+export interface UnsupportedCharacterInfo {
+  char: string;
+  codePoint: string;
+  decimal: number;
+  index: number;
+}
+
+/**
+ * Parsed unicode range intervals [start, end] for fast character coverage lookup.
+ */
+function parseUnicodeRangeString(rangeStr: string): Array<[number, number]> {
+  return rangeStr.split(',').map((part) => {
+    const trimmed = part.trim();
+    if (trimmed.includes('-')) {
+      const parts = trimmed.split('-');
+      const startHex = parts[0] ?? '';
+      const endHex = parts[1] ?? '';
+      const start = parseInt(startHex.replace(/^U\+/i, ''), 16);
+      const end = parseInt(endHex.replace(/^U\+/i, ''), 16);
+      return [start, end];
+    }
+    const val = parseInt(trimmed.replace(/^U\+/i, ''), 16);
+    return [val, val];
+  });
+}
+
+const DEVANAGARI_AND_LATIN_RANGES: Array<[number, number]> = [
+  // Devanagari core & Vedic extensions
+  ...parseUnicodeRangeString(
+    'U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A'
+  ),
+  // Basic Latin & Latin Extended
+  ...parseUnicodeRangeString(
+    'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD'
+  ),
+  ...parseUnicodeRangeString(
+    'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF'
+  ),
+];
+
+const LATIN_ONLY_RANGES: Array<[number, number]> = [
+  ...parseUnicodeRangeString(
+    'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD'
+  ),
+  ...parseUnicodeRangeString(
+    'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF'
+  ),
+];
+
+/**
+ * Checks whether a given character / codepoint is supported by the self-hosted font families.
+ * Returns a list of unsupported characters with their codepoints and string indices.
+ */
+export function findUnsupportedCharacters(
+  text: string,
+  fontFamilies: string[] = []
+): UnsupportedCharacterInfo[] {
+  if (!text) return [];
+
+  const familiesLower = fontFamilies.map((f) =>
+    f.toLowerCase().replace(/['"]/g, '').trim()
+  );
+
+  // If any self-hosted Devanagari font or generic Devanagari stack is in the list, use full Devanagari+Latin ranges
+  const hasDevanagari =
+    familiesLower.length === 0 ||
+    familiesLower.some((f) =>
+      [
+        'noto serif devanagari',
+        'hind',
+        'mukta',
+        'poppins',
+        'rozha one',
+        'yatra one',
+        'tiro devanagari hindi',
+        'gotu',
+        'devanagari',
+      ].some((d) => f.includes(d))
+    );
+
+  const ranges = hasDevanagari ? DEVANAGARI_AND_LATIN_RANGES : LATIN_ONLY_RANGES;
+
+  const unsupported: UnsupportedCharacterInfo[] = [];
+
+  // Iterate over Unicode code points (properly handling surrogate pairs)
+  let charIdx = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    if (cp !== undefined) {
+      // Ignore common whitespace and control characters (newline, carriage return, tab)
+      if (cp === 0x0a || cp === 0x0d || cp === 0x09) {
+        charIdx += ch.length;
+        continue;
+      }
+
+      const isCovered = ranges.some(([start, end]) => cp >= start && cp <= end);
+      if (!isCovered) {
+        unsupported.push({
+          char: ch,
+          codePoint: `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`,
+          decimal: cp,
+          index: charIdx,
+        });
+      }
+    }
+    charIdx += ch.length;
+  }
+
+  return unsupported;
+}
+

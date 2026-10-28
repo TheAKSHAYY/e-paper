@@ -39,5 +39,56 @@ describe('Typography', () => {
       expect(SELF_HOSTED_FONTS_CSS).toContain(`font-family: '${family}'`);
     }
   });
+
+  describe('findUnsupportedCharacters', () => {
+    it('should confirm all required Hindi typography test glyphs are supported', async () => {
+      const { findUnsupportedCharacters } = await import('./index');
+
+      // Task 4 required test characters:
+      // ₹, Devanagari digits ०१२३४५६७८९, danda । and double danda ॥,
+      // curly quotes “ ” ‘ ’, en/em dash – —, ZWJ/ZWNJ sequences,
+      // "क्ष त्र ज्ञ श्र" ligatures, nukta letters (क़ ख़ ग़ ज़ ड़ ढ़ फ़), and plain English line
+      const richHindiTestText =
+        'मूल्य: ₹५०,००० • अंक: ०१२३४५६७८९ । संपूर्ण विराम ॥ ' +
+        '“उद्धरण चिन्ह” एवं ‘एकल उद्धरण’ – लघु डैश — दीर्घ डैश • ' +
+        'संयुक्ताक्षर: क्षत्रिय, श्रद्धा, द्वारा, कर्त्ता (ZWJ/ZWNJ: \u200D \u200C) ' +
+        'नुक्ता अक्षर: क़िस्सा, ख़ास, ग़लत, ज़मीन, पेड़, चढ़ाई, फ़ैसला। ' +
+        'Plain English headline text 123.';
+
+      const unsupported = findUnsupportedCharacters(richHindiTestText, [
+        'Noto Serif Devanagari',
+        'Hind',
+      ]);
+      expect(unsupported).toEqual([]);
+    });
+
+    it('should detect unsupported characters outside the self-hosted font coverage', async () => {
+      const { findUnsupportedCharacters } = await import('./index');
+
+      // Include unsupported characters: CJK ideograph (你好), Emoji (🚀), Armenian (Ա)
+      const textWithUnsupported = 'शुभ प्रभात 你好 🚀 Test Ա';
+      const unsupported = findUnsupportedCharacters(textWithUnsupported, ['Hind']);
+
+      expect(unsupported.length).toBeGreaterThanOrEqual(3);
+      const chars = unsupported.map((u) => u.char);
+      expect(chars).toContain('你');
+      expect(chars).toContain('好');
+      expect(chars).toContain('Ա');
+
+      const ni = unsupported.find((u) => u.char === '你');
+      expect(ni?.codePoint).toBe('U+4F60');
+    });
+
+    it('should detect Devanagari characters when used with Latin-only font stacks', async () => {
+      const { findUnsupportedCharacters } = await import('./index');
+
+      const hindiText = 'नमस्ते भारत';
+      const unsupported = findUnsupportedCharacters(hindiText, ['Playfair Display']);
+
+      expect(unsupported.length).toBeGreaterThan(0);
+      expect(unsupported[0].codePoint).toMatch(/^U\+09/);
+    });
+  });
 });
+
 
