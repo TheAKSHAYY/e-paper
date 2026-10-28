@@ -31,6 +31,8 @@ export {
   SELF_HOSTED_FONTS_CSS,
 };
 
+export * from './freeLayout';
+
 /* ====================================================================
  * Legacy Template Engine Interfaces (Backward Compatibility)
  * ==================================================================== */
@@ -900,6 +902,7 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
     id: `page-1`,
     pageNumber: 1,
     sectionTitle: language === 'hi' ? 'मुख्य पृष्ठ' : 'Front Page',
+    layoutMode: 'auto',
     articles,
     columnCount: layout.columnCount,
   };
@@ -912,7 +915,7 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
   }
 
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     id: docId,
     metadata: {
       id: docId,
@@ -1429,6 +1432,7 @@ export function renderNewspaperDocumentToHtml(
   interface PageRenderUnit {
     pageNumber: number;
     sectionTitle?: string;
+    layoutMode?: 'auto' | 'free';
     articles: Article[];
     columnCount: number;
   }
@@ -1440,6 +1444,7 @@ export function renderNewspaperDocumentToHtml(
     pagesToRender = doc.pages.map((p, idx) => ({
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,
+      layoutMode: p.layoutMode ?? 'auto',
       articles: p.articles,
       columnCount: resolvePageColumnCount(doc, p),
     }));
@@ -1468,6 +1473,7 @@ export function renderNewspaperDocumentToHtml(
           : doc.metadata.language === 'hi'
             ? 'संपादकीय एवं विचार'
             : 'Inside News',
+      layoutMode: firstPage?.layoutMode ?? 'auto',
       articles: pageArticles,
       columnCount: singlePageColumnCount,
     }));
@@ -1828,7 +1834,11 @@ export function renderNewspaperDocumentToHtml(
           }
 
           // Build custom 4-side border & style rules
-          let customStyles = `grid-column: span ${span}; `;
+          const isFreeLayout = pageUnit.layoutMode === 'free' && Boolean(art.frame);
+          let customStyles = isFreeLayout
+            ? `position: absolute; left: ${art.frame!.x}mm; top: ${art.frame!.y}mm; width: ${art.frame!.w}mm; height: ${art.frame!.h}mm; z-index: ${art.frame!.z ?? 1}; pointer-events: auto; overflow: hidden; `
+            : `grid-column: span ${span}; `;
+
           if (art.borders) {
             if (art.borders.top && art.borders.top.style !== 'none' && art.borders.top.width > 0) {
               customStyles += `border-top: ${art.borders.top.width}px ${art.borders.top.style} ${art.borders.top.color}; `;
@@ -1866,7 +1876,7 @@ export function renderNewspaperDocumentToHtml(
           }
 
           return `
-            <article class="newspaper-article priority-${priority} element-${art.elementType ?? 'block'} ${columnRule ? 'has-column-rule' : ''} ${isHindi ? 'lang-hi' : ''}" lang="${isHindi ? 'hi' : 'en'}" style="${customStyles}">
+            <article class="newspaper-article priority-${priority} element-${art.elementType ?? 'block'} ${columnRule ? 'has-column-rule' : ''} ${isHindi ? 'lang-hi' : ''} ${isFreeLayout ? 'layout-free-article' : ''}" data-article-id="${art.id}" lang="${isHindi ? 'hi' : 'en'}" style="${customStyles}">
               ${innerContent}
             </article>
           `;
@@ -1891,6 +1901,19 @@ export function renderNewspaperDocumentToHtml(
           </div>
         </footer>
       `;
+
+      if (pageUnit.layoutMode === 'free') {
+        return `
+        <div class="newspaper-page layout-free" data-page-number="${pageNumber}">
+          ${headerHtml}
+          <div class="newspaper-free-layer" style="position: absolute; inset: 0; pointer-events: none;">
+            ${articlesHtml}
+          </div>
+          <div style="flex: 1;"></div>
+          ${footerHtml}
+        </div>
+      `;
+      }
 
       return `
         <div class="newspaper-page" data-page-number="${pageNumber}">
