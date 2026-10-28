@@ -10,6 +10,7 @@ import {
   type MastheadConfig,
   type NewspaperLayoutConfig,
   type NewspaperPage,
+  type SpacingDensity,
   createNewBlankPage,
   getImageObjectPosition,
   getImageAspectRatio,
@@ -1014,6 +1015,104 @@ export function getPageDimensionsPt(
   };
 }
 
+export interface PhysicalPageMetrics {
+  widthPt: number;
+  heightPt: number;
+  widthPx: number;
+  heightPx: number;
+  widthMm: number;
+  heightMm: number;
+  paddingPt: number;
+  gapPt: number;
+  paddingPx: number;
+  gapPx: number;
+  bodyFontSizePt: number;
+  headlineSizesPt: {
+    lead: number;
+    major: number;
+    minor: number;
+    brief: number;
+  };
+}
+
+/**
+ * Calculates exact physical page dimensions and spacing tokens (in points and 96-DPI CSS pixels).
+ * Shared identically between renderNewspaperDocumentToHtml and NewspaperCanvas.
+ */
+export function getPhysicalPageMetrics(
+  pageSize: PageSizePreset,
+  orientation: PageOrientation = 'portrait',
+  density: SpacingDensity = 'normal',
+  customBodyFontSizePt?: number
+): PhysicalPageMetrics {
+  const { widthPt, heightPt } = getPageDimensionsPt(pageSize, orientation);
+  // CSS pixels at standard 96 DPI: 1 pt = 96/72 px = 1.3333 px.
+  // 1 mm = 96 / 25.4 px = 3.7795 px.
+  const widthPx = Math.round((widthPt * 96) / 72);
+  const heightPx = Math.round((heightPt * 96) / 72);
+
+  const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
+  const isLandscape = orientation === 'landscape';
+  const widthMm = isLandscape ? def.heightMm : def.widthMm;
+  const heightMm = isLandscape ? def.widthMm : def.heightMm;
+
+  const paddingPt = density === 'compact' ? 18 : density === 'spacious' ? 32 : 24;
+  const gapPt = density === 'compact' ? 10 : density === 'spacious' ? 20 : 14;
+
+  const paddingPx = (paddingPt * 96) / 72;
+  const gapPx = (gapPt * 96) / 72;
+
+  const bodyFontSizePt = Math.max(7, Math.min(24, Number(customBodyFontSizePt) || 10));
+
+  return {
+    widthPt,
+    heightPt,
+    widthPx,
+    heightPx,
+    widthMm,
+    heightMm,
+    paddingPt,
+    gapPt,
+    paddingPx,
+    gapPx,
+    bodyFontSizePt,
+    headlineSizesPt: {
+      lead: 26,
+      major: 19,
+      minor: 14,
+      brief: 11,
+    },
+  };
+}
+
+/**
+ * Converts a viewport/client screen coordinate into page millimeter coordinates
+ * relative to the page top-left origin, taking into account container bounding rect and transform scale.
+ */
+export function screenToPageMm(
+  screenPoint: { clientX: number; clientY: number },
+  canvasBoundingRect: { left: number; top: number; width: number; height: number },
+  scale: number,
+  pageDimensionsMm: { widthMm: number; heightMm: number }
+): { xMm: number; yMm: number; isInside: boolean } {
+  const effectiveScale = scale > 0 ? scale : 1;
+  const pixelX = (screenPoint.clientX - canvasBoundingRect.left) / effectiveScale;
+  const pixelY = (screenPoint.clientY - canvasBoundingRect.top) / effectiveScale;
+
+  // 1 mm = 96 / 25.4 CSS px
+  const mmPerPx = 25.4 / 96;
+  const xMm = pixelX * mmPerPx;
+  const yMm = pixelY * mmPerPx;
+
+  const isInside =
+    xMm >= 0 &&
+    xMm <= pageDimensionsMm.widthMm &&
+    yMm >= 0 &&
+    yMm <= pageDimensionsMm.heightMm;
+
+  return { xMm, yMm, isInside };
+}
+
 /**
  * Escapes HTML entities to prevent unescaped content rendering and script injection.
  */
@@ -1237,13 +1336,15 @@ export function renderNewspaperDocumentToHtml(
   doc: NewspaperDocument,
   _options: RenderHtmlOptions = {}
 ): string {
-  const { widthPt, heightPt } = getPageDimensionsPt(
+  const metrics = getPhysicalPageMetrics(
     doc.metadata.pageSize,
-    doc.metadata.orientation
+    doc.metadata.orientation,
+    doc.layout.spacingDensity,
+    doc.layout.bodyFontSizePt
   );
+  const { widthPt, heightPt, paddingPt, gapPt, bodyFontSizePt } = metrics;
   const columnCount = resolvePageColumnCount(doc);
   const columnRule = doc.layout.columnRule;
-  const density = doc.layout.spacingDensity;
   const direction = doc.metadata.direction ?? 'ltr';
 
   // Sanitize CSS properties against injection attacks
@@ -1264,11 +1365,6 @@ export function renderNewspaperDocumentToHtml(
     "'Noto Serif Devanagari', 'Hind', serif"
   );
   const headlineWeight = Math.max(300, Math.min(900, Number(doc.layout.headlineWeight) || 700));
-  const bodyFontSizePt = Math.max(7, Math.min(24, Number(doc.layout.bodyFontSizePt) || 10));
-
-  // Density spacing in points
-  const paddingPt = density === 'compact' ? 18 : density === 'spacious' ? 32 : 24;
-  const gapPt = density === 'compact' ? 10 : density === 'spacious' ? 20 : 14;
 
   // Support explicit multi-page documents or fallback to automatic article partitioning
   interface PageRenderUnit {

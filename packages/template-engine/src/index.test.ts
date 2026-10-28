@@ -340,4 +340,54 @@ describe('TemplateEngine', () => {
       expect(html).toContain('grid-column: span 3;');
     });
   });
+
+  describe('getPhysicalPageMetrics & screenToPageMm (Physical Coordinates)', () => {
+    it('should compute exact physical dimensions matching standard print specifications', async () => {
+      const { getPhysicalPageMetrics } = await import('./index');
+
+      // Broadsheet Portrait: 381 x 577.85 mm = 1080 x 1638 pt = 1440 x 2184 px (at 96 DPI)
+      const metrics = getPhysicalPageMetrics('broadsheet', 'portrait', 'normal');
+      expect(metrics.widthPt).toBe(1080);
+      expect(metrics.heightPt).toBe(1638);
+      expect(metrics.widthPx).toBe(1440);
+      expect(metrics.heightPx).toBe(2184);
+      expect(metrics.paddingPt).toBe(24);
+      expect(metrics.gapPt).toBe(14);
+      expect(metrics.paddingPx).toBe(32);
+      expect(metrics.gapPx).toBeCloseTo(18.667, 2);
+
+      // Broadsheet Landscape: axes swapped
+      const landscape = getPhysicalPageMetrics('broadsheet', 'landscape', 'compact');
+      expect(landscape.widthPt).toBe(1638);
+      expect(landscape.heightPt).toBe(1080);
+      expect(landscape.widthPx).toBe(2184);
+      expect(landscape.heightPx).toBe(1440);
+      expect(landscape.paddingPt).toBe(18);
+      expect(landscape.gapPt).toBe(10);
+    });
+
+    it('should convert screen coordinates to page millimeters accurately under zoom scale', async () => {
+      const { screenToPageMm } = await import('./index');
+
+      const canvasRect = { left: 100, top: 50, width: 720, height: 1092 }; // scale = 0.5 (1440*0.5=720)
+      const pageDims = { widthMm: 381, heightMm: 577.85 };
+      const scale = 0.5;
+
+      // Top-left corner
+      const origin = screenToPageMm({ clientX: 100, clientY: 50 }, canvasRect, scale, pageDims);
+      expect(origin.xMm).toBeCloseTo(0, 1);
+      expect(origin.yMm).toBeCloseTo(0, 1);
+      expect(origin.isInside).toBe(true);
+
+      // Point at center in screen: 100 + 360 = 460px clientX -> unscaled 720px -> 720 * 25.4/96 = 190.5 mm
+      const center = screenToPageMm({ clientX: 460, clientY: 50 }, canvasRect, scale, pageDims);
+      expect(center.xMm).toBeCloseTo(190.5, 1);
+      expect(center.isInside).toBe(true);
+
+      // Point outside canvas
+      const outside = screenToPageMm({ clientX: 50, clientY: 20 }, canvasRect, scale, pageDims);
+      expect(outside.isInside).toBe(false);
+    });
+  });
 });
+
