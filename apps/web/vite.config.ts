@@ -29,6 +29,21 @@ function typographyFontsPlugin(): Plugin {
     configurePreviewServer(server) {
       server.middlewares.use('/fonts', serveFont);
     },
+    generateBundle() {
+      if (fs.existsSync(fontsDir)) {
+        const files = fs.readdirSync(fontsDir);
+        for (const file of files) {
+          const filePath = path.join(fontsDir, file);
+          if (fs.statSync(filePath).isFile()) {
+            this.emitFile({
+              type: 'asset',
+              fileName: `fonts/${file}`,
+              source: fs.readFileSync(filePath),
+            });
+          }
+        }
+      }
+    },
   };
 }
 
