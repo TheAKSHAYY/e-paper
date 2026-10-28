@@ -60,7 +60,9 @@ describe('Hindi Body Typography Comparison Generator', () => {
     `;
 
     // Render using worker's internal playwright page
-    const browser = await (worker as any).getBrowser();
+    const browser = await (
+      worker as unknown as { getBrowser(): Promise<import('playwright').Browser> }
+    ).getBrowser();
     const page = await browser.newPage({ viewport: { width: 1920, height: 1600 } });
     await page.setContent(html);
     await page.waitForLoadState('networkidle');
