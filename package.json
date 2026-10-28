@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "epaper:baseline": "vitest run --config scripts/vitest.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "pnpm -r exec rm -rf dist node_modules"
