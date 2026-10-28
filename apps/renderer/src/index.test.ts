@@ -1,6 +1,7 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { RendererWorker, inspectPdf } from './index';
-import { createNewspaperDocument } from '@epaper-studio/template-engine';
+import { createNewspaperDocument, getAllNewspaperPresets } from '@epaper-studio/template-engine';
+import { SELF_HOSTED_FONT_FAMILIES } from '@epaper-studio/typography';
 
 describe('RendererWorker & PDF Export Engine', () => {
   const worker = new RendererWorker({ timeoutMs: 25000 });
@@ -262,5 +263,107 @@ describe('RendererWorker & PDF Export Engine', () => {
       // 1638 * 25.4 / 72 = 577.85 mm
       expect(heightMm).toBeCloseTo(577.85, 1);
     }, 35000);
+
+    it('should embed ONLY self-hosted allowlisted fonts in PDF across all 6 templates and hindi fixture', async () => {
+      const forbiddenSubstrings = [
+        'nirmala',
+        'arial',
+        'georgia',
+        'timesnewroman',
+        'times new roman',
+        'impact',
+        'playfair',
+        'newsreader',
+        'fraunces',
+        'merriweather',
+        'oswald',
+        'microsoftyahei',
+        'simsun',
+        'segoe',
+      ];
+
+      const presets = getAllNewspaperPresets();
+      const docsToTest = presets.map((p) => ({
+        id: p.id,
+        doc: createNewspaperDocument({ presetId: p.id }),
+      }));
+
+      // Add Hindi Fixture
+      const hindiFixture = createNewspaperDocument({
+        presetId: 'classic-hindi-broadsheet',
+        title: 'दैनिक जनसंदेश',
+        language: 'hi',
+      });
+      hindiFixture.masthead.title = 'दैनिक जनसंदेश';
+      hindiFixture.masthead.tagline = 'सत्य, निष्पक्षता और संघर्ष का प्रतीक';
+      hindiFixture.articles = [
+        {
+          id: 'hf-lead-story',
+          title:
+            'प्रधानमंत्री नरेंद्र मोदी द्वारा क्षत्रिय और श्रद्धा का सम्मान: पूर्ण संघर्ष की गाथा',
+          kicker: 'कर्त्ता एवं संघर्ष',
+          byline: 'विशेष संवाददाता, नई दिल्ली',
+          dateline: 'नई दिल्ली —',
+          category: 'राष्ट्रीय',
+          columnSpan: 4,
+          rowSpan: 2,
+          orderIndex: 0,
+          enableDropCap: true,
+          body: 'क्षत्रिय परंपरा और श्रद्धा के प्रतीक के रूप में यह ऐतिहासिक निर्णय लिया गया है। प्रधानमंत्री नरेंद्र मोदी द्वारा राष्ट्र को संबोधित करते हुए कहा गया कि प्रत्येक नागरिक का संघर्ष और कर्त्ता का दायित्व ही राष्ट्र की पूर्ण शक्ति है।',
+        },
+        {
+          id: 'hf-analysis',
+          title: 'पूर्ण निष्ठा के साथ कर्त्ता का संकल्प',
+          kicker: 'संपादकीय विश्लेषण',
+          byline: 'डॉ. विद्याधर शर्मा',
+          category: 'संपादकीय',
+          columnSpan: 2,
+          rowSpan: 2,
+          orderIndex: 1,
+          enableDropCap: false,
+          body: 'राष्ट्र के सर्वांगीण विकास में क्षत्रिय धर्म, जन-जन की श्रद्धा तथा निस्वार्थ संघर्ष की महत्ता को कभी विस्मृत नहीं किया जा सकता। प्रधानमंत्री नरेंद्र मोदी द्वारा रेखांकित किए गए विचार हमें निरंतर कर्तव्य पथ पर अग्रसर रहने की प्रेरणा देते हैं। जब संकल्प पूर्ण हो तो सफलता सुनिश्चित हो जाती है।',
+        },
+      ];
+      if (hindiFixture.pages && hindiFixture.pages[0]) {
+        hindiFixture.pages[0].articles = hindiFixture.articles;
+      }
+      docsToTest.push({ id: 'hindi-fixture', doc: hindiFixture });
+
+      for (const item of docsToTest) {
+        const renderResult = await worker.renderToPdf(item.doc);
+        expect(renderResult.fileSizeBytes).toBeGreaterThan(5000);
+
+        const pdfText = renderResult.pdfBuffer.toString('binary');
+        const baseFontMatches = pdfText.match(/\/BaseFont\s*\/([A-Za-z0-9+#_.-]+)/g) || [];
+        const baseFonts = baseFontMatches.map((m) => m.replace(/^\/BaseFont\s*\//, ''));
+
+        expect(
+          baseFonts.length,
+          `Expected at least one font embedded in PDF for ${item.id}`
+        ).toBeGreaterThan(0);
+
+        for (const fontName of baseFonts) {
+          const lowerName = fontName.toLowerCase();
+          for (const forbidden of forbiddenSubstrings) {
+            expect(
+              lowerName.includes(forbidden),
+              `Document "${item.id}" embedded disallowed host OS font "${fontName}" (matched forbidden: "${forbidden}")`
+            ).toBe(false);
+          }
+
+          const cleanName = fontName.replace(/^[A-Z]{6}\+/, '').toLowerCase();
+          const matchesAllowlist = SELF_HOSTED_FONT_FAMILIES.some((fam) => {
+            const fClean = fam.toLowerCase().replace(/[\s-]+/g, '');
+            const targetClean = cleanName.replace(/[\s-]+/g, '');
+            return targetClean.includes(fClean);
+          });
+
+          expect(
+            matchesAllowlist,
+            `Document "${item.id}" embedded non-allowlisted font "${fontName}". Allowed families: ${SELF_HOSTED_FONT_FAMILIES.join(', ')}`
+          ).toBe(true);
+        }
+      }
+    }, 90000);
   });
 });
