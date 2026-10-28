@@ -1,9 +1,5 @@
 import React from 'react';
-import type {
-  NewspaperPage,
-  Article,
-  NewspaperPresetId,
-} from '@epaper-studio/document-schema';
+import type { NewspaperPage, Article, NewspaperPresetId } from '@epaper-studio/document-schema';
 import { getAllNewspaperPresets } from '@epaper-studio/template-engine';
 import { ElementsPanel } from './ElementsPanel';
 import { LayoutBuilderRow } from './LayoutBuilderRow';
@@ -56,8 +52,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onApplyLayoutRow,
 }) => {
   const presets = getAllNewspaperPresets();
-
-
 
   return (
     <aside
@@ -384,9 +378,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
          * ==================================================================== */}
         {activeTab === 'templates' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {onApplyLayoutRow && (
-              <LayoutBuilderRow onApplyLayoutRow={onApplyLayoutRow} />
-            )}
+            {onApplyLayoutRow && <LayoutBuilderRow onApplyLayoutRow={onApplyLayoutRow} />}
 
             <div>
               <div style={{ marginBottom: '12px' }}>
@@ -399,99 +391,99 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {presets.map((preset) => {
-                const isSelected = preset.id === currentPresetId;
+                {presets.map((preset) => {
+                  const isSelected = preset.id === currentPresetId;
 
-                return (
-                  <div
-                    key={preset.id}
-                    onClick={() => onSelectPreset(preset.id)}
-                    style={{
-                      border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
+                  return (
                     <div
+                      key={preset.id}
+                      onClick={() => onSelectPreset(preset.id)}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '4px',
+                        border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <span
+                      <div
                         style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#0f172a',
-                          fontFamily: "'Noto Serif Devanagari', serif",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '4px',
                         }}
                       >
-                        {preset.name}
-                      </span>
-
-                      {isSelected && (
                         <span
                           style={{
-                            fontSize: '10px',
+                            fontSize: '13px',
                             fontWeight: 700,
-                            backgroundColor: '#b91c1c',
-                            color: '#ffffff',
+                            color: '#0f172a',
+                            fontFamily: "'Noto Serif Devanagari', serif",
+                          }}
+                        >
+                          {preset.name}
+                        </span>
+
+                        {isSelected && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              backgroundColor: '#b91c1c',
+                              color: '#ffffff',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            ACTIVE
+                          </span>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          color: '#64748b',
+                          marginBottom: '8px',
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {preset.description}
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '6px',
+                          fontSize: '10px',
+                          color: '#475569',
+                        }}
+                      >
+                        <span
+                          style={{
+                            backgroundColor: '#f1f5f9',
                             padding: '2px 6px',
                             borderRadius: '4px',
                           }}
                         >
-                          ACTIVE
+                          {preset.defaultColumns} Cols
                         </span>
-                      )}
+                        <span
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {preset.recommendedPageSize}
+                        </span>
+                      </div>
                     </div>
-
-                    <div
-                      style={{
-                        fontSize: '11px',
-                        color: '#64748b',
-                        marginBottom: '8px',
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {preset.description}
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '6px',
-                        fontSize: '10px',
-                        color: '#475569',
-                      }}
-                    >
-                      <span
-                        style={{
-                          backgroundColor: '#f1f5f9',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                        }}
-                      >
-                        {preset.defaultColumns} Cols
-                      </span>
-                      <span
-                        style={{
-                          backgroundColor: '#f1f5f9',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {preset.recommendedPageSize}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
             </div>
           </div>

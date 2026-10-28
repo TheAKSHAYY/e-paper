@@ -50,7 +50,9 @@ async function main() {
 
     console.log('Rendering vector PDF...');
     const pdfResult = await worker.renderToPdf(doc);
-    const pdfPath = path.resolve('C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper.pdf');
+    const pdfPath = path.resolve(
+      'C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper.pdf'
+    );
     fs.writeFileSync(pdfPath, pdfResult.pdfBuffer);
     console.log(`Saved PDF to ${pdfPath} (${pdfResult.fileSizeBytes} bytes)`);
 
@@ -59,10 +61,11 @@ async function main() {
 
     console.log('Rendering raster PNG preview of printed page...');
     const previewResult = await worker.renderPreviewPng(doc, { pageIndex: 0, scale: 1.0 });
-    const pngPath = path.resolve('C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper_page1.png');
+    const pngPath = path.resolve(
+      'C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper_page1.png'
+    );
     fs.writeFileSync(pngPath, previewResult.pngBuffer);
     console.log(`Saved PNG preview to ${pngPath} (${previewResult.fileSizeBytes} bytes)`);
-
   } finally {
     await worker.close();
   }

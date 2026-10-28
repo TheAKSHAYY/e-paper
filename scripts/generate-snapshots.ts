@@ -5,16 +5,10 @@ import {
   createNewspaperDocument,
   getAllNewspaperPresets,
 } from '../packages/template-engine/src/index';
-import {
-  getPageDimensions,
-  type NewspaperDocument,
-} from '../packages/document-schema/src/index';
+import { getPageDimensions, type NewspaperDocument } from '../packages/document-schema/src/index';
 import { RendererWorker } from '../apps/renderer/src/index';
 
-const TARGET_DIR = path.resolve(
-  process.cwd(),
-  process.env.SNAPSHOT_DIR || 'tests/baseline'
-);
+const TARGET_DIR = path.resolve(process.cwd(), process.env.SNAPSHOT_DIR || 'tests/baseline');
 
 describe('E-Paper Designer Snapshot Generator', () => {
   const worker = new RendererWorker({ timeoutMs: 60000 });
@@ -53,7 +47,8 @@ describe('E-Paper Designer Snapshot Generator', () => {
     const testArticles = [
       {
         id: 'hf-lead-story',
-        title: 'प्रधानमंत्री नरेंद्र मोदी द्वारा क्षत्रिय और श्रद्धा का सम्मान: पूर्ण संघर्ष की गाथा',
+        title:
+          'प्रधानमंत्री नरेंद्र मोदी द्वारा क्षत्रिय और श्रद्धा का सम्मान: पूर्ण संघर्ष की गाथा',
         kicker: 'कर्त्ता एवं संघर्ष',
         byline: 'विशेष संवाददाता, नई दिल्ली',
         dateline: 'नई दिल्ली —',
@@ -91,7 +86,6 @@ describe('E-Paper Designer Snapshot Generator', () => {
       },
     ];
 
-
     // Assign to pages
     if (hindiFixtureDoc.pages && hindiFixtureDoc.pages.length > 0) {
       hindiFixtureDoc.pages[0].articles = testArticles;
@@ -100,7 +94,9 @@ describe('E-Paper Designer Snapshot Generator', () => {
 
     documentsToRender.push({ id: 'hindi-fixture', doc: hindiFixtureDoc });
 
-    console.log(`\n================ SNAPSHOT REPORT (${path.basename(TARGET_DIR)}) ================`);
+    console.log(
+      `\n================ SNAPSHOT REPORT (${path.basename(TARGET_DIR)}) ================`
+    );
     console.log(`Destination: ${TARGET_DIR}\n`);
 
     for (const item of documentsToRender) {

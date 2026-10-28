@@ -213,7 +213,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
               flex: 1,
               padding: '12px 16px',
               border: 'none',
-              borderBottom: activeTab === 'templates' ? '3px solid #b91c1c' : '3px solid transparent',
+              borderBottom:
+                activeTab === 'templates' ? '3px solid #b91c1c' : '3px solid transparent',
               backgroundColor: activeTab === 'templates' ? '#ffffff' : '#f8fafc',
               color: activeTab === 'templates' ? '#111827' : '#64748b',
               fontWeight: 700,
@@ -283,7 +284,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                   एक क्लिक में प्रमाणित समाचार पत्र शैली से शुरुआत करें
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  किसी भी टेम्पलेट पर क्लिक करके सीधे संपादक में जाएं—मास्टहेड, हेडिंग्स और ग्रिड पहले से तैयार मिलेंगे।
+                  किसी भी टेम्पलेट पर क्लिक करके सीधे संपादक में जाएं—मास्टहेड, हेडिंग्स और ग्रिड
+                  पहले से तैयार मिलेंगे।
                 </div>
               </div>
 
@@ -339,14 +341,29 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                           {preset.defaultMasthead.title}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>
-                          {preset.recommendedPageSize.toUpperCase()} • {preset.defaultColumns} COLUMNS
+                          {preset.recommendedPageSize.toUpperCase()} • {preset.defaultColumns}{' '}
+                          COLUMNS
                         </div>
                       </div>
 
-                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>
+                      <div
+                        style={{
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          color: '#111827',
+                          marginBottom: '4px',
+                        }}
+                      >
                         {preset.name}
                       </div>
-                      <p style={{ fontSize: '11.5px', color: '#4b5563', lineHeight: 1.5, margin: '0 0 12px 0' }}>
+                      <p
+                        style={{
+                          fontSize: '11.5px',
+                          color: '#4b5563',
+                          lineHeight: 1.5,
+                          margin: '0 0 12px 0',
+                        }}
+                      >
                         {preset.description}
                       </p>
                     </div>
@@ -417,7 +434,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                 {/* Subtitle & Tagline */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       उप-शीर्षक / ध्येय वाक्य (Tagline)
                     </label>
                     <input
@@ -435,7 +460,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       संस्करण विवरण (Edition)
                     </label>
                     <input
@@ -457,7 +490,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                 {/* Date & Language */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       प्रकाशन तिथि (Date)
                     </label>
                     <input
@@ -475,7 +516,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       प्रकाशन भाषा (Language)
                     </label>
                     <select
@@ -501,7 +550,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                 {/* Page Size & Orientation */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       पृष्ठ आकार (Physical Newspaper Standard)
                     </label>
                     <select
@@ -526,7 +583,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#374151',
+                        marginBottom: '4px',
+                      }}
+                    >
                       दिशानिर्देश (Orientation)
                     </label>
                     <select
@@ -578,7 +643,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
 
                 {/* Page Count */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#374151',
+                      marginBottom: '4px',
+                    }}
+                  >
                     प्रारंभिक पृष्ठ संख्या (Initial Pages)
                   </label>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -606,7 +679,14 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                 </div>
 
                 {/* Submit Action */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '12px',
+                    marginTop: '12px',
+                  }}
+                >
                   <button
                     type="button"
                     onClick={onClose}
@@ -665,7 +745,14 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                   }}
                 >
                   <div style={{ fontSize: '28px', marginBottom: '8px' }}>📂</div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: '#111827',
+                      marginBottom: '4px',
+                    }}
+                  >
                     कोई सुरक्षित ड्राफ्ट नहीं मिला
                   </div>
                   <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
@@ -706,7 +793,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                           {draft.title || 'अनाम समाचार पत्र'}
                         </div>
                         <div style={{ fontSize: '11.5px', color: '#64748b' }}>
-                          अंतिम संशोधन: {new Date(draft.updatedAt).toLocaleString('en-IN')} • {draft.articleCount} समाचार • {draft.pageSize.toUpperCase()}
+                          अंतिम संशोधन: {new Date(draft.updatedAt).toLocaleString('en-IN')} •{' '}
+                          {draft.articleCount} समाचार • {draft.pageSize.toUpperCase()}
                         </div>
                       </div>
 

@@ -76,7 +76,10 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
     await page.goto('/');
 
     // Ensure we are on Pages tab
-    await page.getByRole('button', { name: /पेज|Pages/i }).first().click();
+    await page
+      .getByRole('button', { name: /पेज|Pages/i })
+      .first()
+      .click();
 
     // Click "+ Add Page"
     await page.getByRole('button', { name: /\+ नया पेज|\+ Add Page/i }).click();

@@ -739,9 +739,7 @@ export function findUnsupportedCharacters(
 ): UnsupportedCharacterInfo[] {
   if (!text) return [];
 
-  const familiesLower = fontFamilies.map((f) =>
-    f.toLowerCase().replace(/['"]/g, '').trim()
-  );
+  const familiesLower = fontFamilies.map((f) => f.toLowerCase().replace(/['"]/g, '').trim());
 
   // If any self-hosted Devanagari font or generic Devanagari stack is in the list, use full Devanagari+Latin ranges
   const hasDevanagari =
@@ -790,4 +788,3 @@ export function findUnsupportedCharacters(
 
   return unsupported;
 }
-

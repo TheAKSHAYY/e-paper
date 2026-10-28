@@ -339,7 +339,9 @@ test.describe('Canvas vs PDF Physical Coordinate Parity Specs', () => {
         const deltaX = Math.abs(cMm.x - pMm.x);
         const deltaY = Math.abs(cMm.y - pMm.y);
 
-        console.log(`  Article ${i + 1} deltas (mm): W=${deltaW.toFixed(2)}, H=${deltaH.toFixed(2)}, X=${deltaX.toFixed(2)}, Y=${deltaY.toFixed(2)}`);
+        console.log(
+          `  Article ${i + 1} deltas (mm): W=${deltaW.toFixed(2)}, H=${deltaH.toFixed(2)}, X=${deltaX.toFixed(2)}, Y=${deltaY.toFixed(2)}`
+        );
 
         expect(deltaW).toBeLessThanOrEqual(1.0);
         expect(deltaH).toBeLessThanOrEqual(1.0);
@@ -352,7 +354,9 @@ test.describe('Canvas vs PDF Physical Coordinate Parity Specs', () => {
       const pdfTotalContentHeightMm = pdfFtMm.y + pdfFtMm.height - pdfMhMm.y;
       const deltaContentH = Math.abs(canvasTotalContentHeightMm - pdfTotalContentHeightMm);
 
-      console.log(`[${template.id}] Total Content Height: Canvas=${canvasTotalContentHeightMm.toFixed(2)}mm, PDF=${pdfTotalContentHeightMm.toFixed(2)}mm, Delta=${deltaContentH.toFixed(2)}mm`);
+      console.log(
+        `[${template.id}] Total Content Height: Canvas=${canvasTotalContentHeightMm.toFixed(2)}mm, PDF=${pdfTotalContentHeightMm.toFixed(2)}mm, Delta=${deltaContentH.toFixed(2)}mm`
+      );
       expect(deltaContentH).toBeLessThanOrEqual(1.0);
 
       await pdfPage.close();

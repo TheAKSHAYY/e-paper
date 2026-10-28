@@ -56,7 +56,9 @@ test.describe('Authentic Hindi Daily Newspaper Masthead & PDF Verification', () 
     const pdfResult = await worker.renderToPdf(doc);
     expect(pdfResult.fileSizeBytes).toBeGreaterThan(15000);
 
-    const pdfPath = path.resolve('C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper.pdf');
+    const pdfPath = path.resolve(
+      'C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper.pdf'
+    );
     fs.writeFileSync(pdfPath, pdfResult.pdfBuffer);
 
     const pdfInfo = inspectPdf(pdfResult.pdfBuffer);
@@ -68,7 +70,9 @@ test.describe('Authentic Hindi Daily Newspaper Masthead & PDF Verification', () 
     const pngBuffer = await worker.renderToImage(doc, { pageNumber: 1, scale: 1.0 });
     expect(pngBuffer.length).toBeGreaterThan(20000);
 
-    const pngPath = path.resolve('C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper_page1.png');
+    const pngPath = path.resolve(
+      'C:/Users/Pc/.gemini/antigravity-ide/brain/1c9bef0a-f8de-40ce-aa81-af1362a42da4/exported_hindi_newspaper_page1.png'
+    );
     fs.writeFileSync(pngPath, pngBuffer);
   });
 });

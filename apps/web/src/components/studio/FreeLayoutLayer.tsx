@@ -105,12 +105,10 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
       const container = sheetContainerRef.current;
       if (!container) return { xMm: 0, yMm: 0, isInside: false };
       const rect = container.getBoundingClientRect();
-      return screenToPageMm(
-        { clientX: e.clientX, clientY: e.clientY },
-        rect,
-        scale,
-        { widthMm: doc.metadata.pageSize === 'broadsheet' ? 381 : 280, heightMm: 578 }
-      );
+      return screenToPageMm({ clientX: e.clientX, clientY: e.clientY }, rect, scale, {
+        widthMm: doc.metadata.pageSize === 'broadsheet' ? 381 : 280,
+        heightMm: 578,
+      });
     },
     [sheetContainerRef, scale, doc.metadata.pageSize]
   );
@@ -151,6 +149,7 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
         }
       }
 
+      longPressTimerRef.current = null;
       setDragState({
         type: 'move',
         articleId: art.id,
@@ -598,7 +597,9 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
        * ========================================================== */}
       {page.articles.map((art) => {
         const isDraggingThis = dragState?.articleId === art.id;
-        const frame = isDraggingThis ? dragState.currentFrame : (art.frame ?? { x: bounds.minX, y: bounds.minY, w: 80, h: 50, z: 1 });
+        const frame = isDraggingThis
+          ? dragState.currentFrame
+          : (art.frame ?? { x: bounds.minX, y: bounds.minY, w: 80, h: 50, z: 1 });
         const isSelected = selectedArticleId === art.id;
         const isOverflowing = overflowingArticles[art.id] ?? false;
         const isSwapSource = swapSourceId === art.id;
@@ -606,6 +607,7 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
         return (
           <div
             key={art.id}
+            data-testid={`free-article-${art.id}`}
             data-article-id={art.id}
             ref={(el) => {
               if (el) articleRefs.current.set(art.id, el);
@@ -627,14 +629,14 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
               outline: isSelected
                 ? '2px solid #2563eb'
                 : isSwapSource
-                ? '2px dashed #9333ea'
-                : '1px solid transparent',
+                  ? '2px dashed #9333ea'
+                  : '1px solid transparent',
               outlineOffset: '2px',
               boxShadow: isDraggingThis
                 ? '0 12px 28px rgba(0,0,0,0.22)'
                 : isSelected
-                ? '0 4px 12px rgba(37,99,235,0.18)'
-                : 'none',
+                  ? '0 4px 12px rgba(37,99,235,0.18)'
+                  : 'none',
               backgroundColor: art.backgroundColor || '#ffffff',
               transition: isDraggingThis ? 'none' : 'box-shadow 0.15s ease',
             }}
@@ -705,54 +707,91 @@ export const FreeLayoutLayer: React.FC<FreeLayoutLayerProps> = ({
             zIndex: 35,
           }}
         >
-          {/* 8-Point Resize Handles (44px min touch target) */}
-          {(['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as ResizeDirection[]).map((dir) => {
-            let top = '50%';
-            let left = '50%';
-            let cursor = 'default';
+          {/* 8-Point Resize Handles (guaranteed >= 44px touch target on physical screen regardless of zoom scale) */}
+          {(() => {
+            const handleTouchSize = Math.max(44, Math.round(44 / Math.max(0.1, scale)));
+            return (['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as ResizeDirection[]).map(
+              (dir) => {
+                let top = '50%';
+                let left = '50%';
+                let cursor = 'default';
 
-            if (dir === 'nw') { top = '0%'; left = '0%'; cursor = 'nwse-resize'; }
-            if (dir === 'n')  { top = '0%'; left = '50%'; cursor = 'ns-resize'; }
-            if (dir === 'ne') { top = '0%'; left = '100%'; cursor = 'nesw-resize'; }
-            if (dir === 'e')  { top = '50%'; left = '100%'; cursor = 'ew-resize'; }
-            if (dir === 'se') { top = '100%'; left = '100%'; cursor = 'nwse-resize'; }
-            if (dir === 's')  { top = '100%'; left = '50%'; cursor = 'ns-resize'; }
-            if (dir === 'sw') { top = '100%'; left = '0%'; cursor = 'nesw-resize'; }
-            if (dir === 'w')  { top = '50%'; left = '0%'; cursor = 'ew-resize'; }
+                if (dir === 'nw') {
+                  top = '0%';
+                  left = '0%';
+                  cursor = 'nwse-resize';
+                }
+                if (dir === 'n') {
+                  top = '0%';
+                  left = '50%';
+                  cursor = 'ns-resize';
+                }
+                if (dir === 'ne') {
+                  top = '0%';
+                  left = '100%';
+                  cursor = 'nesw-resize';
+                }
+                if (dir === 'e') {
+                  top = '50%';
+                  left = '100%';
+                  cursor = 'ew-resize';
+                }
+                if (dir === 'se') {
+                  top = '100%';
+                  left = '100%';
+                  cursor = 'nwse-resize';
+                }
+                if (dir === 's') {
+                  top = '100%';
+                  left = '50%';
+                  cursor = 'ns-resize';
+                }
+                if (dir === 'sw') {
+                  top = '100%';
+                  left = '0%';
+                  cursor = 'nesw-resize';
+                }
+                if (dir === 'w') {
+                  top = '50%';
+                  left = '0%';
+                  cursor = 'ew-resize';
+                }
 
-            return (
-              <div
-                key={dir}
-                data-testid={`handle-${dir}`}
-                onPointerDown={(e) => handlePointerDownResize(e, selectedArticle, dir)}
-                style={{
-                  position: 'absolute',
-                  top,
-                  left,
-                  transform: 'translate(-50%, -50%)',
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'auto',
-                  cursor,
-                  zIndex: 40,
-                }}
-              >
-                <div
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #2563eb',
-                    borderRadius: dir.length === 2 ? '1px' : '9999px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-                  }}
-                />
-              </div>
+                return (
+                  <div
+                    key={dir}
+                    data-testid={`handle-${dir}`}
+                    onPointerDown={(e) => handlePointerDownResize(e, selectedArticle, dir)}
+                    style={{
+                      position: 'absolute',
+                      top,
+                      left,
+                      transform: 'translate(-50%, -50%)',
+                      width: `${handleTouchSize}px`,
+                      height: `${handleTouchSize}px`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pointerEvents: 'auto',
+                      cursor,
+                      zIndex: 40,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: '#ffffff',
+                        border: '2px solid #2563eb',
+                        borderRadius: dir.length === 2 ? '1px' : '9999px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                      }}
+                    />
+                  </div>
+                );
+              }
             );
-          })}
+          })()}
 
           {/* Floating Action Toolbar: Nudge & Swap Buttons */}
           <div

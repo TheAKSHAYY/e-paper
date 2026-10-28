@@ -108,9 +108,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   const paddingVal = usePhysicalCanvasCoordinates
     ? `${physicalMetrics.paddingPt}pt`
     : `${legacyPaddingPx}px`;
-  const gapVal = usePhysicalCanvasCoordinates
-    ? `${physicalMetrics.gapPt}pt`
-    : `${legacyGapPx}px`;
+  const gapVal = usePhysicalCanvasCoordinates ? `${physicalMetrics.gapPt}pt` : `${legacyGapPx}px`;
   const colRuleGutter = usePhysicalCanvasCoordinates
     ? `${physicalMetrics.gapPt / 2}pt`
     : `${Math.round(legacyGapPx / 2)}px`;
@@ -302,9 +300,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
       Boolean(article.subheadline?.match(/[\u0900-\u097F]/)) ||
       layout.headlineFont?.toLowerCase().includes('devanagari') ||
       layout.bodyFont?.toLowerCase().includes('devanagari') ||
-      ['Gotu', 'Hind', 'Mukta', 'Rozha One', 'Yatra One', 'Tiro Devanagari Hindi', 'Noto Serif Devanagari'].some(
-        (f) => layout.bodyFont?.includes(f) || layout.headlineFont?.includes(f)
-      );
+      [
+        'Gotu',
+        'Hind',
+        'Mukta',
+        'Rozha One',
+        'Yatra One',
+        'Tiro Devanagari Hindi',
+        'Noto Serif Devanagari',
+      ].some((f) => layout.bodyFont?.includes(f) || layout.headlineFont?.includes(f));
 
     return (
       <article
@@ -334,7 +338,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           transition: 'outline 0.15s ease',
           hyphens: isHindi ? 'manual' : undefined,
           WebkitHyphens: isHindi ? 'manual' : undefined,
-          ...(!isFreeLayout && columnRule && (usePhysicalCanvasCoordinates || span < columnCount) && !customBorders?.right
+          ...(!isFreeLayout &&
+          columnRule &&
+          (usePhysicalCanvasCoordinates || span < columnCount) &&
+          !customBorders?.right
             ? {
                 paddingRight: colRuleGutter,
               }
@@ -479,14 +486,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         {article.imagePlacement === 'middle' && renderPhoto()}
 
         {/* SPECIALIZED ELEMENT RENDERING: Short News, Advertisement, or Rashifal */}
-        {article.elementType === 'short-news' && article.shortNewsItems && article.shortNewsItems.length > 0 ? (
+        {article.elementType === 'short-news' &&
+        article.shortNewsItems &&
+        article.shortNewsItems.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '4px 0' }}>
             {article.shortNewsItems.map((item, snIdx) => (
               <div
                 key={snIdx}
                 style={{
                   paddingBottom: '6px',
-                  borderBottom: snIdx < (article.shortNewsItems?.length ?? 0) - 1 ? '1px dotted #ccc' : 'none',
+                  borderBottom:
+                    snIdx < (article.shortNewsItems?.length ?? 0) - 1 ? '1px dotted #ccc' : 'none',
                 }}
               >
                 <h4
@@ -569,7 +579,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               </div>
             )}
           </div>
-        ) : article.elementType === 'rashifal' && article.rashifalItems && article.rashifalItems.length > 0 ? (
+        ) : article.elementType === 'rashifal' &&
+          article.rashifalItems &&
+          article.rashifalItems.length > 0 ? (
           <div
             style={{
               display: 'grid',
@@ -674,9 +686,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   {article.dateline}{' '}
                 </span>
               ) : (
-                <strong style={{ color: '#111', marginRight: '4px' }}>
-                  {article.dateline}
-                </strong>
+                <strong style={{ color: '#111', marginRight: '4px' }}>{article.dateline}</strong>
               ))}
             {article.body.split(/\n\s*\n/).map((para, pIdx) => (
               <p
@@ -830,616 +840,655 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             transition: 'transform 0.2s ease',
           }}
         >
-        {/* ==========================================================
-         * 1. PAGE HEADER: MASTHEAD ON PAGE 1, FOLIO ON PAGE 2+
-         * ========================================================== */}
-        {isFirstPage ? (
-          <header
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectMasthead?.();
-            }}
-            data-testid="masthead-section"
-            className="masthead-section"
-            style={{
-              ...getRuleBorderStyle(),
-              paddingBottom: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.spacingPt.mastheadPaddingBottomPt}pt`
-                : '8px',
-              marginBottom: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
-                : '16px',
-              flexShrink: 0,
-              cursor: 'pointer',
-              position: 'relative',
-              outline: isMastheadSelected
-                ? `${visualMastheadOutline}px solid #2563eb`
-                : '1px dashed transparent',
-              outlineOffset: `${visualMastheadOffset}px`,
-              borderRadius: isMastheadSelected ? '4px' : '0px',
-              transition: 'outline 0.15s ease',
-            }}
-          >
-            {/* Top Metadata Row (Ear Strip) */}
-            {masthead.showTopStrip !== false && (
-              <div
-                className="masthead-top-strip"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: '1px solid #222222',
-                  paddingBottom: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.topStripPaddingBottomPt}pt`
-                    : '3px',
-                  marginBottom: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
-                    : '6px',
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
-                    : '10.5px',
-                  color: '#333333',
-                  fontFamily: usePhysicalCanvasCoordinates
-                    ? "'Hind', 'Noto Serif Devanagari', sans-serif"
-                    : "'Inter', sans-serif",
-                  letterSpacing: usePhysicalCanvasCoordinates ? '0.2pt' : '0.02em',
-                  lineHeight: usePhysicalCanvasCoordinates ? 1.25 : undefined,
-                }}
-              >
-                {/* Weather & AQI */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {masthead.showWeather !== false && (
-                    <div>
-                      <strong style={{
-                        color: '#111111',
-                        fontSize: usePhysicalCanvasCoordinates
-                          ? `${physicalMetrics.typographyPt.weatherLabelFontSizePt}pt`
-                          : undefined
-                      }}>मौसम: </strong>
-                      <span>
-                        {masthead.weatherCity || 'नई दिल्ली'} {masthead.temperature || '25°C'} •{' '}
-                        {masthead.weatherCondition || 'साफ़ आसमान'}
-                      </span>
-                    </div>
-                  )}
-                  {masthead.showAirQuality !== false && masthead.airQuality && (
-                    <div style={{
-                      color: '#475569',
-                      fontSize: usePhysicalCanvasCoordinates
-                        ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
-                        : '10px'
-                    }}>
-                      <span>{masthead.airQuality}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tagline & Establishment */}
+          {/* ==========================================================
+           * 1. PAGE HEADER: MASTHEAD ON PAGE 1, FOLIO ON PAGE 2+
+           * ========================================================== */}
+          {isFirstPage ? (
+            <header
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectMasthead?.();
+              }}
+              data-testid="masthead-section"
+              className="masthead-section"
+              style={{
+                ...getRuleBorderStyle(),
+                paddingBottom: usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.spacingPt.mastheadPaddingBottomPt}pt`
+                  : '8px',
+                marginBottom: usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
+                  : '16px',
+                flexShrink: 0,
+                cursor: 'pointer',
+                position: 'relative',
+                outline: isMastheadSelected
+                  ? `${visualMastheadOutline}px solid #2563eb`
+                  : '1px dashed transparent',
+                outlineOffset: `${visualMastheadOffset}px`,
+                borderRadius: isMastheadSelected ? '4px' : '0px',
+                transition: 'outline 0.15s ease',
+              }}
+            >
+              {/* Top Metadata Row (Ear Strip) */}
+              {masthead.showTopStrip !== false && (
                 <div
+                  className="masthead-top-strip"
                   style={{
-                    fontFamily: "'Noto Serif Devanagari', serif",
-                    fontSize: usePhysicalCanvasCoordinates
-                      ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
-                      : '11px',
-                    color: '#333333',
                     display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: usePhysicalCanvasCoordinates ? '4pt' : '6px',
+                    borderBottom: '1px solid #222222',
+                    paddingBottom: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.topStripPaddingBottomPt}pt`
+                      : '3px',
+                    marginBottom: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                      : '6px',
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                      : '10.5px',
+                    color: '#333333',
+                    fontFamily: usePhysicalCanvasCoordinates
+                      ? "'Hind', 'Noto Serif Devanagari', sans-serif"
+                      : "'Inter', sans-serif",
+                    letterSpacing: usePhysicalCanvasCoordinates ? '0.2pt' : '0.02em',
+                    lineHeight: usePhysicalCanvasCoordinates ? 1.25 : undefined,
                   }}
                 >
-                  {masthead.showTagline !== false && (
-                    <span style={{ fontStyle: 'italic' }}>
-                      {masthead.tagline || masthead.subtitle || 'सत्य, निष्पक्षता और जनसेवा का प्रतीक'}
-                    </span>
-                  )}
-                  {masthead.showTagline !== false && masthead.showEstablishment !== false && (
-                    <span style={{ color: '#888888', fontSize: usePhysicalCanvasCoordinates ? '7pt' : undefined }}>•</span>
-                  )}
-                  {masthead.showEstablishment !== false && (
-                    <strong style={{
-                      color: '#111111',
-                      fontSize: usePhysicalCanvasCoordinates
-                        ? `${physicalMetrics.typographyPt.establishmentFontSizePt}pt`
-                        : undefined
-                    }}>
-                      स्थापना {masthead.establishmentYear || '1947'}
-                    </strong>
-                  )}
-                </div>
+                  {/* Weather & AQI */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {masthead.showWeather !== false && (
+                      <div>
+                        <strong
+                          style={{
+                            color: '#111111',
+                            fontSize: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.typographyPt.weatherLabelFontSizePt}pt`
+                              : undefined,
+                          }}
+                        >
+                          मौसम:{' '}
+                        </strong>
+                        <span>
+                          {masthead.weatherCity || 'नई दिल्ली'} {masthead.temperature || '25°C'} •{' '}
+                          {masthead.weatherCondition || 'साफ़ आसमान'}
+                        </span>
+                      </div>
+                    )}
+                    {masthead.showAirQuality !== false && masthead.airQuality && (
+                      <div
+                        style={{
+                          color: '#475569',
+                          fontSize: usePhysicalCanvasCoordinates
+                            ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
+                            : '10px',
+                        }}
+                      >
+                        <span>{masthead.airQuality}</span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Price & Registration */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: usePhysicalCanvasCoordinates ? '8pt' : '8px' }}>
-                  {masthead.showPrice !== false && (
-                    <div>
-                      <strong style={{ color: '#111111' }}>{masthead.price || 'मूल्य ₹5.00'}</strong>
-                    </div>
-                  )}
-                  {masthead.showPostalReg !== false && masthead.postalRegNumber && (
-                    <div style={{
-                      color: '#64748b',
+                  {/* Tagline & Establishment */}
+                  <div
+                    style={{
+                      fontFamily: "'Noto Serif Devanagari', serif",
                       fontSize: usePhysicalCanvasCoordinates
-                        ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
-                        : '10px'
-                    }}>
-                      <span>{masthead.postalRegNumber}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                        ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
+                        : '11px',
+                      color: '#333333',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: usePhysicalCanvasCoordinates ? '4pt' : '6px',
+                    }}
+                  >
+                    {masthead.showTagline !== false && (
+                      <span style={{ fontStyle: 'italic' }}>
+                        {masthead.tagline ||
+                          masthead.subtitle ||
+                          'सत्य, निष्पक्षता और जनसेवा का प्रतीक'}
+                      </span>
+                    )}
+                    {masthead.showTagline !== false && masthead.showEstablishment !== false && (
+                      <span
+                        style={{
+                          color: '#888888',
+                          fontSize: usePhysicalCanvasCoordinates ? '7pt' : undefined,
+                        }}
+                      >
+                        •
+                      </span>
+                    )}
+                    {masthead.showEstablishment !== false && (
+                      <strong
+                        style={{
+                          color: '#111111',
+                          fontSize: usePhysicalCanvasCoordinates
+                            ? `${physicalMetrics.typographyPt.establishmentFontSizePt}pt`
+                            : undefined,
+                        }}
+                      >
+                        स्थापना {masthead.establishmentYear || '1947'}
+                      </strong>
+                    )}
+                  </div>
 
-            {/* 2. Main Masthead Row */}
-            <div
-              className="masthead-main-row"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent:
-                  masthead.alignment === 'left'
-                    ? 'flex-start'
-                    : masthead.alignment === 'justified'
-                      ? 'space-between'
-                      : 'center',
-                gap: usePhysicalCanvasCoordinates ? '14pt' : '16px',
-                padding: usePhysicalCanvasCoordinates ? '4pt 0 6pt 0' : undefined,
-                margin: usePhysicalCanvasCoordinates ? 0 : '4px 0 8px',
-                textAlign:
-                  masthead.alignment === 'left'
-                    ? 'left'
-                    : masthead.alignment === 'justified'
-                      ? 'justify'
-                      : 'center',
-              }}
-            >
-              {masthead.showEmblem && emblemSvg && (
-                <div
-                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                  dangerouslySetInnerHTML={{ __html: emblemSvg }}
-                />
+                  {/* Price & Registration */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: usePhysicalCanvasCoordinates ? '8pt' : '8px',
+                    }}
+                  >
+                    {masthead.showPrice !== false && (
+                      <div>
+                        <strong style={{ color: '#111111' }}>
+                          {masthead.price || 'मूल्य ₹5.00'}
+                        </strong>
+                      </div>
+                    )}
+                    {masthead.showPostalReg !== false && masthead.postalRegNumber && (
+                      <div
+                        style={{
+                          color: '#64748b',
+                          fontSize: usePhysicalCanvasCoordinates
+                            ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                            : '10px',
+                        }}
+                      >
+                        <span>{masthead.postalRegNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-              <h1
-                data-testid="masthead-title"
-                style={{
-                  fontFamily: masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${masthead.fontSizePt || 48}pt`
-                    : `${masthead.fontSizePt || 52}px`,
-                  fontWeight: 900,
-                  lineHeight: 1.05,
-                  margin: 0,
-                  color: THEME_TOKENS.inkPrimary,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {masthead.title}
-              </h1>
-            </div>
 
-            {/* 3. Masthead Bottom Folio Strip */}
-            {masthead.showBottomStrip !== false && (
+              {/* 2. Main Masthead Row */}
               <div
-                className="masthead-bottom-strip"
+                className="masthead-main-row"
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  borderTop: '1px solid #111111',
-                  paddingTop: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
-                    : '4px',
-                  marginTop: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.bottomStripMarginTopPt}pt`
-                    : undefined,
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
-                    : '11px',
-                  fontFamily: usePhysicalCanvasCoordinates
-                    ? "'Hind', 'Noto Serif Devanagari', sans-serif"
-                    : undefined,
-                  lineHeight: usePhysicalCanvasCoordinates ? 1.5 : undefined,
-                  fontWeight: 600,
-                  color: '#222222',
-                  letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
+                  justifyContent:
+                    masthead.alignment === 'left'
+                      ? 'flex-start'
+                      : masthead.alignment === 'justified'
+                        ? 'space-between'
+                        : 'center',
+                  gap: usePhysicalCanvasCoordinates ? '14pt' : '16px',
+                  padding: usePhysicalCanvasCoordinates ? '4pt 0 6pt 0' : undefined,
+                  margin: usePhysicalCanvasCoordinates ? 0 : '4px 0 8px',
+                  textAlign:
+                    masthead.alignment === 'left'
+                      ? 'left'
+                      : masthead.alignment === 'justified'
+                        ? 'justify'
+                        : 'center',
                 }}
               >
-                <div>
-                  {masthead.showVolumeIssue !== false && (
-                    <span>
-                      {masthead.issueNumber ||
-                        `${masthead.volumeYear || 'वर्ष 78'} • ${masthead.issueCount || 'अंक 142'}`}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  {masthead.showDate !== false && (
-                    <span style={{ fontSize: usePhysicalCanvasCoordinates ? undefined : '11.5px', fontFamily: "'Noto Serif Devanagari', serif" }}>
-                      {masthead.dayOfWeek ? `${masthead.dayOfWeek}, ` : ''}
-                      {masthead.date || '28 अक्टूबर 2026'}
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {masthead.showEdition !== false && (
-                    <span>{masthead.edition || 'प्रातःकालीन मुख्य संस्करण'}</span>
-                  )}
-                  {masthead.showPostalReg !== false && masthead.pageCountLabel && (
-                    <span style={{ color: '#64748b', fontSize: '10px' }}>
-                      • {masthead.pageCountLabel}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 4. Secondary Header / Sub-Banner (Requirement 3) */}
-            {masthead.showSecondaryHeader && masthead.secondaryHeaderTitle && (
-              <div
-                style={{
-                  borderTop: '1px solid #111111',
-                  borderBottom: '1px solid #111111',
-                  marginTop: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
-                    : '5px',
-                  padding: usePhysicalCanvasCoordinates ? '2pt 4pt' : '3px 6px',
-                  backgroundColor: '#f8fafc',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
-                    : '11px',
-                  fontWeight: 700,
-                  color: '#0f172a',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                <span>{masthead.secondaryHeaderTitle}</span>
-                {masthead.secondaryHeaderSubtitle && (
-                  <span style={{
-                    fontSize: usePhysicalCanvasCoordinates
-                      ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
-                      : '10px',
-                    fontWeight: 500,
-                    color: '#475569'
-                  }}>
-                    {masthead.secondaryHeaderSubtitle}
-                  </span>
+                {masthead.showEmblem && emblemSvg && (
+                  <div
+                    style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                    dangerouslySetInnerHTML={{ __html: emblemSvg }}
+                  />
                 )}
+                <h1
+                  data-testid="masthead-title"
+                  style={{
+                    fontFamily: masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${masthead.fontSizePt || 48}pt`
+                      : `${masthead.fontSizePt || 52}px`,
+                    fontWeight: 900,
+                    lineHeight: 1.05,
+                    margin: 0,
+                    color: THEME_TOKENS.inkPrimary,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {masthead.title}
+                </h1>
               </div>
-            )}
 
-            {/* 5. Highlighted Announcement / Breaking Strip (Requirement 3) */}
-            {masthead.showAnnouncementStrip && masthead.announcementStripText && (
-              <div
-                style={{
-                  marginTop: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
-                    : '5px',
-                  backgroundColor: '#b91c1c',
-                  color: '#ffffff',
-                  padding: usePhysicalCanvasCoordinates ? '3pt 8pt' : '3px 10px',
-                  borderRadius: '2px',
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
-                    : '10.5px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 1px 2px rgba(185,28,28,0.2)',
-                }}
-              >
-                <span style={{
-                  backgroundColor: '#ffffff',
-                  color: '#b91c1c',
-                  padding: '1px 4px',
-                  borderRadius: '2px',
-                  fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9px'
-                }}>
-                  विशेष
-                </span>
-                <span>{masthead.announcementStripText}</span>
-              </div>
-            )}
-          </header>
-        ) : (
-          /* Inside Page Running Folio */
-          <header
-            style={{
-              borderBottom: '2px solid #111111',
-              paddingBottom: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
-                : '6px',
-              marginBottom: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
-                : '16px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
-                : '12px',
-              fontWeight: 600,
-              color: '#111',
-              flexShrink: 0,
-            }}
-          >
-            <div
+              {/* 3. Masthead Bottom Folio Strip */}
+              {masthead.showBottomStrip !== false && (
+                <div
+                  className="masthead-bottom-strip"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #111111',
+                    paddingTop: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
+                      : '4px',
+                    marginTop: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.bottomStripMarginTopPt}pt`
+                      : undefined,
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
+                      : '11px',
+                    fontFamily: usePhysicalCanvasCoordinates
+                      ? "'Hind', 'Noto Serif Devanagari', sans-serif"
+                      : undefined,
+                    lineHeight: usePhysicalCanvasCoordinates ? 1.5 : undefined,
+                    fontWeight: 600,
+                    color: '#222222',
+                    letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
+                  }}
+                >
+                  <div>
+                    {masthead.showVolumeIssue !== false && (
+                      <span>
+                        {masthead.issueNumber ||
+                          `${masthead.volumeYear || 'वर्ष 78'} • ${masthead.issueCount || 'अंक 142'}`}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    {masthead.showDate !== false && (
+                      <span
+                        style={{
+                          fontSize: usePhysicalCanvasCoordinates ? undefined : '11.5px',
+                          fontFamily: "'Noto Serif Devanagari', serif",
+                        }}
+                      >
+                        {masthead.dayOfWeek ? `${masthead.dayOfWeek}, ` : ''}
+                        {masthead.date || '28 अक्टूबर 2026'}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {masthead.showEdition !== false && (
+                      <span>{masthead.edition || 'प्रातःकालीन मुख्य संस्करण'}</span>
+                    )}
+                    {masthead.showPostalReg !== false && masthead.pageCountLabel && (
+                      <span style={{ color: '#64748b', fontSize: '10px' }}>
+                        • {masthead.pageCountLabel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Secondary Header / Sub-Banner (Requirement 3) */}
+              {masthead.showSecondaryHeader && masthead.secondaryHeaderTitle && (
+                <div
+                  style={{
+                    borderTop: '1px solid #111111',
+                    borderBottom: '1px solid #111111',
+                    marginTop: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                      : '5px',
+                    padding: usePhysicalCanvasCoordinates ? '2pt 4pt' : '3px 6px',
+                    backgroundColor: '#f8fafc',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
+                      : '11px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <span>{masthead.secondaryHeaderTitle}</span>
+                  {masthead.secondaryHeaderSubtitle && (
+                    <span
+                      style={{
+                        fontSize: usePhysicalCanvasCoordinates
+                          ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
+                          : '10px',
+                        fontWeight: 500,
+                        color: '#475569',
+                      }}
+                    >
+                      {masthead.secondaryHeaderSubtitle}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 5. Highlighted Announcement / Breaking Strip (Requirement 3) */}
+              {masthead.showAnnouncementStrip && masthead.announcementStripText && (
+                <div
+                  style={{
+                    marginTop: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                      : '5px',
+                    backgroundColor: '#b91c1c',
+                    color: '#ffffff',
+                    padding: usePhysicalCanvasCoordinates ? '3pt 8pt' : '3px 10px',
+                    borderRadius: '2px',
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                      : '10.5px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 1px 2px rgba(185,28,28,0.2)',
+                  }}
+                >
+                  <span
+                    style={{
+                      backgroundColor: '#ffffff',
+                      color: '#b91c1c',
+                      padding: '1px 4px',
+                      borderRadius: '2px',
+                      fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9px',
+                    }}
+                  >
+                    विशेष
+                  </span>
+                  <span>{masthead.announcementStripText}</span>
+                </div>
+              )}
+            </header>
+          ) : (
+            /* Inside Page Running Folio */
+            <header
               style={{
-                fontFamily: layout.mastheadFont || "'Rozha One', serif",
-                fontSize: usePhysicalCanvasCoordinates ? '12pt' : '15px'
-              }}
-            >
-              {masthead.title}
-            </div>
-            <div
-              style={{
-                fontFamily: "'Noto Serif Devanagari', serif",
+                borderBottom: '2px solid #111111',
+                paddingBottom: usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
+                  : '6px',
+                marginBottom: usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
+                  : '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: usePhysicalCanvasCoordinates
                   ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
                   : '12px',
-                color: '#333',
+                fontWeight: 600,
+                color: '#111',
+                flexShrink: 0,
               }}
             >
-              {page.sectionTitle ? `${page.sectionTitle} • ` : ''}पृष्ठ {pageNumber} / {totalPages}
-            </div>
-            <div style={{
-              fontSize: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
-                : '11px',
-              color: '#555'
-            }}>
-              {masthead.date} • {masthead.edition || 'अंदर के पृष्ठ'}
-            </div>
-          </header>
-        )}
+              <div
+                style={{
+                  fontFamily: layout.mastheadFont || "'Rozha One', serif",
+                  fontSize: usePhysicalCanvasCoordinates ? '12pt' : '15px',
+                }}
+              >
+                {masthead.title}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Noto Serif Devanagari', serif",
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                    : '12px',
+                  color: '#333',
+                }}
+              >
+                {page.sectionTitle ? `${page.sectionTitle} • ` : ''}पृष्ठ {pageNumber} /{' '}
+                {totalPages}
+              </div>
+              <div
+                style={{
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
+                    : '11px',
+                  color: '#555',
+                }}
+              >
+                {masthead.date} • {masthead.edition || 'अंदर के पृष्ठ'}
+              </div>
+            </header>
+          )}
 
-        {/* 1.5 LAYOUT SWITCHER PILL (when useFreeLayout is enabled) */}
-        {useFreeLayout && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              marginBottom: '6px',
-              gap: '8px',
-              zIndex: 35,
-              position: 'relative',
-            }}
-          >
+          {/* 1.5 LAYOUT SWITCHER PILL (when useFreeLayout is enabled) */}
+          {useFreeLayout && (
             <div
               style={{
-                display: 'inline-flex',
-                backgroundColor: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                overflow: 'hidden',
-                fontSize: '11px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                marginBottom: '6px',
+                gap: '8px',
+                zIndex: 35,
+                position: 'relative',
               }}
             >
-              <button
-                onClick={() => onTogglePageLayoutMode?.('auto')}
-                data-testid="page-layout-auto-btn"
-                style={{
-                  padding: '3px 9px',
-                  backgroundColor: page.layoutMode !== 'free' ? '#2563eb' : 'transparent',
-                  color: page.layoutMode !== 'free' ? '#ffffff' : '#475569',
-                  border: 'none',
-                  fontWeight: page.layoutMode !== 'free' ? 700 : 500,
-                  cursor: 'pointer',
-                }}
-              >
-                📄 ऑटो-ग्रिड
-              </button>
-              <button
-                onClick={() => onTogglePageLayoutMode?.('free')}
-                data-testid="page-layout-free-btn"
-                style={{
-                  padding: '3px 9px',
-                  backgroundColor: page.layoutMode === 'free' ? '#2563eb' : 'transparent',
-                  color: page.layoutMode === 'free' ? '#ffffff' : '#475569',
-                  border: 'none',
-                  fontWeight: page.layoutMode === 'free' ? 700 : 500,
-                  cursor: 'pointer',
-                }}
-              >
-                📐 मुक्त लेआउट (mm)
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ==========================================================
-         * 2. ARTICLES LAYER: FREE-PLACEMENT OR AUTO-FLOW MULTI-COLUMN GRID
-         * ========================================================== */}
-        {useFreeLayout && page.layoutMode === 'free' ? (
-          <FreeLayoutLayer
-            page={page}
-            doc={
-              doc ?? {
-                version: '1.1.0',
-                schemaVersion: '1.1.0',
-                id: 'doc',
-                metadata: {
-                  id: 'meta-doc',
-                  title: masthead.title,
-                  language: 'hi',
-                  direction: 'ltr',
-                  pageSize,
-                  orientation,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-                masthead,
-                layout,
-                pages: [page],
-                articles: page.articles,
-              }
-            }
-            pageSize={pageSize}
-            orientation={orientation}
-            scale={scale}
-            selectedArticleId={selectedArticleId}
-            onSelectArticle={onSelectArticle}
-            onUpdateArticleFrame={onUpdateArticleFrame ?? (() => {})}
-            onSwapArticles={onSwapArticles ?? (() => {})}
-            onToggleLayoutMode={onTogglePageLayoutMode}
-            onAddBlock={onAddBlock}
-            onAddPage={onAddPage}
-            sheetContainerRef={sheetCanvasRef}
-            renderArticleContent={(art, isSel) => renderArticleCard(art, isSel, true)}
-          />
-        ) : (
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {page.articles.length === 0 ? (
               <div
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  backgroundColor: isDraggingOver ? '#eff6ff' : 'rgba(0,0,0,0.015)',
-                  border: isDraggingOver
-                    ? `${visualDropBorderWidth}px dashed #2563eb`
-                    : '2px dashed #d5d0c4',
-                  borderRadius: '6px',
-                  margin: '20px 0',
-                  transition: 'all 0.15s ease',
+                  display: 'inline-flex',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  fontSize: '11px',
                 }}
               >
-                <div style={{ fontSize: '28px', marginBottom: '8px' }}>
-                  {isDraggingOver ? '📥' : '📰'}
-                </div>
-                <div
+                <button
+                  onClick={() => onTogglePageLayoutMode?.('auto')}
+                  data-testid="page-layout-auto-btn"
                   style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: isDraggingOver ? '#1d4ed8' : '#475569',
-                    fontFamily: "'Noto Serif Devanagari', serif",
+                    padding: '3px 9px',
+                    backgroundColor: page.layoutMode !== 'free' ? '#2563eb' : 'transparent',
+                    color: page.layoutMode !== 'free' ? '#ffffff' : '#475569',
+                    border: 'none',
+                    fontWeight: page.layoutMode !== 'free' ? 700 : 500,
+                    cursor: 'pointer',
                   }}
                 >
-                  {isDraggingOver
-                    ? 'इस पृष्ठ पर ब्लॉक छोड़ने के लिए तैयार'
-                    : 'इस पृष्ठ पर अभी कोई समाचार नहीं है'}
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                  Drag and drop a block from the left Blocks library, or click "+ Add to Page".
-                </div>
+                  📄 ऑटो-ग्रिड
+                </button>
+                <button
+                  onClick={() => onTogglePageLayoutMode?.('free')}
+                  data-testid="page-layout-free-btn"
+                  style={{
+                    padding: '3px 9px',
+                    backgroundColor: page.layoutMode === 'free' ? '#2563eb' : 'transparent',
+                    color: page.layoutMode === 'free' ? '#ffffff' : '#475569',
+                    border: 'none',
+                    fontWeight: page.layoutMode === 'free' ? 700 : 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  📐 मुक्त लेआउट (mm)
+                </button>
               </div>
-            ) : (
-              <main
-                data-testid="newspaper-articles-grid"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-                  columnGap: gapVal,
-                  rowGap: gapVal,
-                  alignContent: 'start',
-                  flex: 1,
-                  position: 'relative',
-                }}
-              >
-                {/* Drag Placement Ghost Overlay (Requirement 2) */}
-                {isDraggingOver && (
+            </div>
+          )}
+
+          {/* ==========================================================
+           * 2. ARTICLES LAYER: FREE-PLACEMENT OR AUTO-FLOW MULTI-COLUMN GRID
+           * ========================================================== */}
+          {useFreeLayout && page.layoutMode === 'free' ? (
+            <FreeLayoutLayer
+              page={page}
+              doc={
+                doc ?? {
+                  version: '1.1.0',
+                  schemaVersion: '1.1.0',
+                  id: 'doc',
+                  metadata: {
+                    id: 'meta-doc',
+                    title: masthead.title,
+                    language: 'hi',
+                    direction: 'ltr',
+                    pageSize,
+                    orientation,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                  masthead,
+                  layout,
+                  pages: [page],
+                  articles: page.articles,
+                }
+              }
+              pageSize={pageSize}
+              orientation={orientation}
+              scale={scale}
+              selectedArticleId={selectedArticleId}
+              onSelectArticle={onSelectArticle}
+              onUpdateArticleFrame={onUpdateArticleFrame ?? (() => {})}
+              onSwapArticles={onSwapArticles ?? (() => {})}
+              onToggleLayoutMode={onTogglePageLayoutMode}
+              onAddBlock={onAddBlock}
+              onAddPage={onAddPage}
+              sheetContainerRef={sheetCanvasRef}
+              renderArticleContent={(art, isSel) => renderArticleCard(art, isSel, true)}
+            />
+          ) : (
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {page.articles.length === 0 ? (
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    backgroundColor: isDraggingOver ? '#eff6ff' : 'rgba(0,0,0,0.015)',
+                    border: isDraggingOver
+                      ? `${visualDropBorderWidth}px dashed #2563eb`
+                      : '2px dashed #d5d0c4',
+                    borderRadius: '6px',
+                    margin: '20px 0',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>
+                    {isDraggingOver ? '📥' : '📰'}
+                  </div>
                   <div
                     style={{
-                      gridColumn: `span ${columnCount}`,
-                      border: `${visualDropBorderWidth}px dashed #2563eb`,
-                      backgroundColor: 'rgba(239, 246, 255, 0.92)',
-                      borderRadius: '6px',
-                      padding: '16px',
-                      textAlign: 'center',
-                      color: '#1d4ed8',
+                      fontSize: '14px',
                       fontWeight: 600,
-                      fontSize: '13px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      marginBottom: '8px',
-                      boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
-                      zIndex: 20,
+                      color: isDraggingOver ? '#1d4ed8' : '#475569',
+                      fontFamily: "'Noto Serif Devanagari', serif",
                     }}
                   >
-                    <span style={{ fontSize: '18px' }}>📥</span>
-                    <span>
-                      Drop block to insert into Page {pageNumber} ({columnCount}-column grid)
-                    </span>
+                    {isDraggingOver
+                      ? 'इस पृष्ठ पर ब्लॉक छोड़ने के लिए तैयार'
+                      : 'इस पृष्ठ पर अभी कोई समाचार नहीं है'}
                   </div>
-                )}
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                    Drag and drop a block from the left Blocks library, or click "+ Add to Page".
+                  </div>
+                </div>
+              ) : (
+                <main
+                  data-testid="newspaper-articles-grid"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                    columnGap: gapVal,
+                    rowGap: gapVal,
+                    alignContent: 'start',
+                    flex: 1,
+                    position: 'relative',
+                  }}
+                >
+                  {/* Drag Placement Ghost Overlay (Requirement 2) */}
+                  {isDraggingOver && (
+                    <div
+                      style={{
+                        gridColumn: `span ${columnCount}`,
+                        border: `${visualDropBorderWidth}px dashed #2563eb`,
+                        backgroundColor: 'rgba(239, 246, 255, 0.92)',
+                        borderRadius: '6px',
+                        padding: '16px',
+                        textAlign: 'center',
+                        color: '#1d4ed8',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        marginBottom: '8px',
+                        boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
+                        zIndex: 20,
+                      }}
+                    >
+                      <span style={{ fontSize: '18px' }}>📥</span>
+                      <span>
+                        Drop block to insert into Page {pageNumber} ({columnCount}-column grid)
+                      </span>
+                    </div>
+                  )}
 
-                {page.articles.map((article) =>
-                  renderArticleCard(article, selectedArticleId === article.id, false)
-                )}
-              </main>
-            )}
-          </div>
-        )}
+                  {page.articles.map((article) =>
+                    renderArticleCard(article, selectedArticleId === article.id, false)
+                  )}
+                </main>
+              )}
+            </div>
+          )}
 
-        {/* ==========================================================
-         * 3. PAGE FOLIO FOOTER
-         * ========================================================== */}
-        <footer
-          className="newspaper-folio-footer"
-          data-testid="newspaper-folio-footer"
-          style={{
-            marginTop: 'auto',
-            paddingTop: usePhysicalCanvasCoordinates ? '6pt' : '6px',
-            borderTop: usePhysicalCanvasCoordinates ? undefined : '1px solid #111',
-            flexShrink: 0,
-          }}
-        >
-          {usePhysicalCanvasCoordinates ? (
-            <>
-              <div
-                style={{
-                  height: '1px',
-                  backgroundColor: '#121212',
-                  marginBottom: '4pt',
-                }}
-              />
+          {/* ==========================================================
+           * 3. PAGE FOLIO FOOTER
+           * ========================================================== */}
+          <footer
+            className="newspaper-folio-footer"
+            data-testid="newspaper-folio-footer"
+            style={{
+              marginTop: 'auto',
+              paddingTop: usePhysicalCanvasCoordinates ? '6pt' : '6px',
+              borderTop: usePhysicalCanvasCoordinates ? undefined : '1px solid #111',
+              flexShrink: 0,
+            }}
+          >
+            {usePhysicalCanvasCoordinates ? (
+              <>
+                <div
+                  style={{
+                    height: '1px',
+                    backgroundColor: '#121212',
+                    marginBottom: '4pt',
+                  }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '7pt',
+                    fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
+                    textTransform: 'uppercase',
+                    color: '#666',
+                    letterSpacing: '0.5pt',
+                  }}
+                >
+                  <span>{masthead.title}</span>
+                  <span>
+                    पृष्ठ {pageNumber} / {totalPages}
+                  </span>
+                  <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+                </div>
+              </>
+            ) : (
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontSize: '7pt',
-                  fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
-                  textTransform: 'uppercase',
-                  color: '#666',
-                  letterSpacing: '0.5pt',
+                  fontSize: '11px',
+                  color: '#444',
                 }}
               >
                 <span>{masthead.title}</span>
-                <span>
+                <span style={{ fontWeight: 600 }}>
                   पृष्ठ {pageNumber} / {totalPages}
                 </span>
                 <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
               </div>
-            </>
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: '11px',
-                color: '#444',
-              }}
-            >
-              <span>{masthead.title}</span>
-              <span style={{ fontWeight: 600 }}>
-                पृष्ठ {pageNumber} / {totalPages}
-              </span>
-              <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
-            </div>
-          )}
-        </footer>
+            )}
+          </footer>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };

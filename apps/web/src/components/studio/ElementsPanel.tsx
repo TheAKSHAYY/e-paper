@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import type {
-  Article,
-  ElementType,
-} from '@epaper-studio/document-schema';
+import type { Article, ElementType } from '@epaper-studio/document-schema';
 
 export interface ElementsPanelProps {
   articles: Article[];
@@ -39,13 +36,17 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
     defaultSpan: 12,
     data: {
       elementType: 'block',
-      headline: 'संसद में ऐतिहासिक नीति पर मुहर: ग्रामीण विकास व किसान कल्याण के लिए विशेष आर्थिक पैकेज',
-      subheadline: 'सभी वर्गों के प्रतिनिधियों ने किया सर्वसम्मति से समर्थन, देश भर में स्वागत की लहर',
+      headline:
+        'संसद में ऐतिहासिक नीति पर मुहर: ग्रामीण विकास व किसान कल्याण के लिए विशेष आर्थिक पैकेज',
+      subheadline:
+        'सभी वर्गों के प्रतिनिधियों ने किया सर्वसम्मति से समर्थन, देश भर में स्वागत की लहर',
       body: 'नई दिल्ली — संसद के विशेष सत्र में आज ग्रामीण भारत की अर्थव्यवस्था को गति देने के लिए एक ऐतिहासिक विधेयक पारित किया गया। इस योजना के तहत सिंचाई, कृषि उपकरण, और न्यूनतम समर्थन मूल्य की सुदृढ़ व्यवस्था सुनिश्चित की जाएगी।\n\nकेंद्रीय कृषि मंत्री ने सदन को संबोधित करते हुए कहा कि यह निर्णय देश के अन्नदाताओं की आय को दोगुना करने की दिशा में मील का पत्थर साबित होगा। उन्होंने स्पष्ट किया कि आधुनिक तकनीक और उपग्रह आधारित मौसम पूर्वानुमान को भी इस योजना का अभिन्न हिस्सा बनाया गया है।',
       byline: 'विशेष संवाददाता',
       dateline: 'नई दिल्ली —',
-      imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
-      imageCaption: 'संसद भवन के बाहर नई नीति के पारित होने के बाद मीडिया से बातचीत करते केंद्रीय मंत्री।',
+      imageUrl:
+        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
+      imageCaption:
+        'संसद भवन के बाहर नई नीति के पारित होने के बाद मीडिया से बातचीत करते केंद्रीय मंत्री।',
       imageCredit: 'छायाचित्र: विशेष छायाकार',
       imagePlacement: 'top',
       columnSpan: 12,
@@ -93,7 +94,8 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
       body: 'शताब्दियों पुराने स्मारकों को प्राकृतिक क्षरण से बचाने के लिए विशेषज्ञों की टीम ने विशेष रासायनिक उपचार और थ्री-डी मैपिंग का कार्य प्रारंभ किया है। पर्यटकों के लिए नए सूचना केंद्र भी स्थापित किए जा रहे हैं।',
       byline: 'छायाचित्र: विशेष छायाकार',
       dateline: 'वाराणसी —',
-      imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
       imageCaption: 'संरक्षण कार्य के दौरान प्राचीन नक्काशी का सूक्ष्म निरीक्षण करते विशेषज्ञ।',
       imageCredit: 'छाया: पुरातत्व विभाग',
       imagePlacement: 'top',
@@ -138,8 +140,10 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
     data: {
       elementType: 'top-headline',
       kickerText: '🚨 ब्रेकिंग न्यूज़ / विशेष बुलेटिन',
-      headline: 'राष्ट्रीय आपदा प्रबंधन दल ने शुरू किया राहत अभियान: 10 हजार नागरिकों को सुरक्षित स्थानों पर पहुँचाया',
-      subheadline: 'प्रधानमंत्री ने प्रभावित राज्यों के मुख्यमंत्रियों से की सीधी बातचीत, हरसंभव केंद्र सहायता का भरोसा',
+      headline:
+        'राष्ट्रीय आपदा प्रबंधन दल ने शुरू किया राहत अभियान: 10 हजार नागरिकों को सुरक्षित स्थानों पर पहुँचाया',
+      subheadline:
+        'प्रधानमंत्री ने प्रभावित राज्यों के मुख्यमंत्रियों से की सीधी बातचीत, हरसंभव केंद्र सहायता का भरोसा',
       body: 'नई दिल्ली — भारी वर्षा और आकस्मिक बाढ़ की स्थिति को देखते हुए सेना और एनडीआरएफ की 15 अतिरिक्त बटालियनें तैनात कर दी गई हैं। वायुसेना के हेलीकॉप्टर खाद्य सामग्री और दवाइयाँ पहुँचाने में निरंतर लगे हुए हैं।',
       byline: 'विशेष रिपोर्टर',
       dateline: 'नई दिल्ली —',
@@ -165,7 +169,8 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
       elementType: 'top-headline',
       kickerText: '• राष्ट्रीय परिप्रेक्ष्य •',
       headline: 'अंतरिक्ष अनुसंधान में भारत की एक और छलांग: नए उपग्रह का सफल प्रक्षेपण',
-      subheadline: 'पर्यावरण निगरानी, मौसम पूर्वानुमान और समुद्री सुरक्षा में मील का पत्थर साबित होगा नया मिशन',
+      subheadline:
+        'पर्यावरण निगरानी, मौसम पूर्वानुमान और समुद्री सुरक्षा में मील का पत्थर साबित होगा नया मिशन',
       body: 'श्रीहरिकोटा — भारतीय अंतरिक्ष अनुसंधान संगठन (इसरो) ने आज सुबह ठीक 6:30 बजे अपनी नवीनतम निगरानी उपग्रह श्रृंखला को सफलतापूर्वक कक्षा में स्थापित किया।',
       byline: 'विज्ञान प्रतिनिधि',
       dateline: 'श्रीहरिकोटा —',
@@ -188,8 +193,10 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
     data: {
       elementType: 'top-headline',
       kickerText: 'विशेष पड़ताल',
-      headline: 'देश के 500 शहरों में स्वच्छ वायु का लक्ष्य: पर्यावरण मंत्रालय ने जारी की वार्षिक रिपोर्ट',
-      subheadline: 'प्रदूषण स्तर में 18 प्रतिशत की कमी दर्ज, इलेक्ट्रिक वाहनों के विस्तार को मिली गति',
+      headline:
+        'देश के 500 शहरों में स्वच्छ वायु का लक्ष्य: पर्यावरण मंत्रालय ने जारी की वार्षिक रिपोर्ट',
+      subheadline:
+        'प्रदूषण स्तर में 18 प्रतिशत की कमी दर्ज, इलेक्ट्रिक वाहनों के विस्तार को मिली गति',
       body: 'पर्यावरण एवं वन मंत्रालय द्वारा आज जारी राष्ट्रीय स्वच्छ वायु समीक्षा में उत्साहजनक परिणाम सामने आए हैं।',
       byline: 'पर्यावरण डेस्क',
       dateline: 'नई दिल्ली —',
@@ -374,7 +381,8 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
       body: 'क्लब हाउस, स्विमिंग पूल, 24 घंटे सुरक्षा और खुला हरित क्षेत्र। बुकिंग मात्र ₹1 लाख से प्रारंभ। तुरंत रजिस्ट्री व कब्जा।',
       byline: 'प्रायोजक: ग्रीन इंफ्राटेक',
       dateline: 'नोएडा —',
-      imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80',
       imageCaption: 'सैंपल फ्लैट का वास्तविक दृश्य',
       imagePlacement: 'side',
       columnSpan: 6,
@@ -414,18 +422,66 @@ export const ELEMENT_PRESETS: ElementPreset[] = [
       columnSpan: 12,
       priority: 'major',
       rashifalItems: [
-        { rashi: 'मेष (Aries)', sign: '♈', prediction: 'कार्यक्षेत्र में प्रगति होगी। नए मित्रों का सहयोग मिलेगा।' },
-        { rashi: 'वृषभ (Taurus)', sign: '♉', prediction: 'आर्थिक मामलों में सावधानी बरतें। पारिवारिक सुख बढ़ेगा।' },
-        { rashi: 'मिथुन (Gemini)', sign: '♊', prediction: 'रचनात्मक कार्यों में रुचि बढ़ेगी। यात्रा के योग बन रहे हैं।' },
-        { rashi: 'कर्क (Cancer)', sign: '♋', prediction: 'मानसिक शांति का अनुभव होगा। अटके हुए काम पूरे होंगे।' },
-        { rashi: 'सिंह (Leo)', sign: '♌', prediction: 'व्यापार में लाभ के अवसर मिलेंगे। आत्मविश्वास में वृद्धि होगी।' },
-        { rashi: 'कन्या (Virgo)', sign: '♍', prediction: 'स्वास्थ्य का ध्यान रखें। वाणी पर संयम रखना लाभकारी रहेगा।' },
-        { rashi: 'तुला (Libra)', sign: '♎', prediction: 'साझेदारी के काम में सफलता। घर में मांगलिक कार्य के योग।' },
-        { rashi: 'वृश्चिक (Scorpio)', sign: '♏', prediction: 'पराक्रम में वृद्धि होगी। विरोधी शांत रहेंगे, उन्नति होगी।' },
-        { rashi: 'धनु (Sagittarius)', sign: '♐', prediction: 'विद्यार्थियों के लिए उत्तम समय। धन लाभ के नए स्रोत खुलेंगे।' },
-        { rashi: 'मकर (Capricorn)', sign: '♑', prediction: 'परिश्रम का पूरा फल मिलेगा। अचल संपत्ति से लाभ संभव।' },
-        { rashi: 'कुंभ (Aquarius)', sign: '♒', prediction: 'सामाजिक प्रतिष्ठा में वृद्धि। संतान पक्ष से शुभ समाचार।' },
-        { rashi: 'मीन (Pisces)', sign: '♓', prediction: 'धार्मिक कार्यों में मन लगेगा। रुका हुआ धन प्राप्त होने के योग।' },
+        {
+          rashi: 'मेष (Aries)',
+          sign: '♈',
+          prediction: 'कार्यक्षेत्र में प्रगति होगी। नए मित्रों का सहयोग मिलेगा।',
+        },
+        {
+          rashi: 'वृषभ (Taurus)',
+          sign: '♉',
+          prediction: 'आर्थिक मामलों में सावधानी बरतें। पारिवारिक सुख बढ़ेगा।',
+        },
+        {
+          rashi: 'मिथुन (Gemini)',
+          sign: '♊',
+          prediction: 'रचनात्मक कार्यों में रुचि बढ़ेगी। यात्रा के योग बन रहे हैं।',
+        },
+        {
+          rashi: 'कर्क (Cancer)',
+          sign: '♋',
+          prediction: 'मानसिक शांति का अनुभव होगा। अटके हुए काम पूरे होंगे।',
+        },
+        {
+          rashi: 'सिंह (Leo)',
+          sign: '♌',
+          prediction: 'व्यापार में लाभ के अवसर मिलेंगे। आत्मविश्वास में वृद्धि होगी।',
+        },
+        {
+          rashi: 'कन्या (Virgo)',
+          sign: '♍',
+          prediction: 'स्वास्थ्य का ध्यान रखें। वाणी पर संयम रखना लाभकारी रहेगा।',
+        },
+        {
+          rashi: 'तुला (Libra)',
+          sign: '♎',
+          prediction: 'साझेदारी के काम में सफलता। घर में मांगलिक कार्य के योग।',
+        },
+        {
+          rashi: 'वृश्चिक (Scorpio)',
+          sign: '♏',
+          prediction: 'पराक्रम में वृद्धि होगी। विरोधी शांत रहेंगे, उन्नति होगी।',
+        },
+        {
+          rashi: 'धनु (Sagittarius)',
+          sign: '♐',
+          prediction: 'विद्यार्थियों के लिए उत्तम समय। धन लाभ के नए स्रोत खुलेंगे।',
+        },
+        {
+          rashi: 'मकर (Capricorn)',
+          sign: '♑',
+          prediction: 'परिश्रम का पूरा फल मिलेगा। अचल संपत्ति से लाभ संभव।',
+        },
+        {
+          rashi: 'कुंभ (Aquarius)',
+          sign: '♒',
+          prediction: 'सामाजिक प्रतिष्ठा में वृद्धि। संतान पक्ष से शुभ समाचार।',
+        },
+        {
+          rashi: 'मीन (Pisces)',
+          sign: '♓',
+          prediction: 'धार्मिक कार्यों में मन लगेगा। रुका हुआ धन प्राप्त होने के योग।',
+        },
       ],
       borders: {
         top: { width: 2, style: 'solid', color: '#b45309' },
@@ -644,7 +700,14 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                       boxShadow: isSelected ? '0 2px 6px rgba(185,28,28,0.12)' : 'none',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px',
+                      }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span
                           style={{
@@ -664,7 +727,10 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                       </div>
 
                       {/* Quick Action Icons */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} onClick={(e) => e.stopPropagation()}>
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
                           type="button"
                           disabled={idx === 0}
@@ -763,7 +829,15 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
        * TAB 2: SELECT ELEMENTS CATALOG (तत्व जोड़ें)
        * ============================================================== */}
       {activeTab === 'catalog' && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '14px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {/* Category Filter Tabs */}
           <div
             style={{
@@ -849,7 +923,13 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                     gap: '6px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '16px' }}>{preset.icon}</span>
                       <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#0f172a' }}>
@@ -874,7 +954,14 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                     {preset.description}
                   </p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: '4px',
+                    }}
+                  >
                     <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: 600 }}>
                       अनुशंसित: {preset.defaultSpan}/12 कॉलम
                     </span>

@@ -57,7 +57,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '13px' }}>▤</span>
-        <span>पेज {currentPageNumber}/{totalPages}</span>
+        <span>
+          पेज {currentPageNumber}/{totalPages}
+        </span>
       </button>
 
       {/* 2. Add Block Button */}

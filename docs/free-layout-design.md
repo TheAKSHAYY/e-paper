@@ -4,7 +4,7 @@
 **Author:** Antigravity Senior Engineering Team  
 **Date:** 2026-10-29  
 **Target Milestone:** E-Paper Studio — Phase 2/3 Free-Form Layout Engine  
-**Target File:** `docs/free-layout-design.md`  
+**Target File:** `docs/free-layout-design.md`
 
 ---
 
@@ -13,6 +13,7 @@
 Currently, E-Paper Studio uses an **auto-flow CSS Grid layout** where articles occupy discrete column spans (1 to 12) within an automated document flow. Content wraps down the page row by row based on `orderIndex`.
 
 While this model is robust for structured periodicals, professional newspaper designers and e-paper publishing houses require **free-placement layout (desktop publishing / CAD-style)**:
+
 1. **Unconstrained Placement**: Users can drag and position any block anywhere on a fixed-size page (left, right, top, bottom, corners, or custom floating coordinates).
 2. **Interactive Manipulation**: Direct block swapping, 8-point bounding-box resizing, and multi-axis alignment.
 3. **Strict Page Boundary Clamping**: The page geometry is fixed; blocks and their contents **can never overflow or extend beyond physical printable page margins**.
@@ -44,9 +45,10 @@ export interface FrameMm {
 ```
 
 #### Coordinate Space Origin Rule
+
 The origin `(x = 0, y = 0)` represents the **top-left corner of the printable content area** (inside page margins, and directly below the masthead on Page 1 or running folio header on Page 2+).
 
-$$\begin{aligned}
+$$ \begin{aligned}
 x_{\text{canvas}} &= \text{margin}_{\text{left}} + x \\
 y_{\text{canvas}} &= \text{header}_{\text{bottom}} + y \\
 x + w &\le W_{\text{content}} \\
@@ -131,7 +133,7 @@ export function convertPageAutoToFree(
 
     const xMm = currentXCol * (singleColWidthMm + gapMm);
     const wMm = span * singleColWidthMm + (span - 1) * gapMm;
-    
+
     // Estimate or measure height based on text content and image
     const hMm = art.frame?.h ?? estimateBlockHeightMm(art, wMm, metrics);
 
@@ -276,7 +278,7 @@ In free layout, frame height $h$ is fixed. If editorial text exceeds the frame v
 
 #### Editor-Side Detection
 ```typescript
-const isOverflowing = 
+const isOverflowing =
   element.scrollHeight > element.clientHeight + 1 ||
   element.scrollWidth > element.clientWidth + 1;
 ```
@@ -352,7 +354,7 @@ Devanagari script presents unique typographic requirements that dictate strict b
 2. **Long-Press (300ms) with Haptic Feedback**: Activates and "picks up" the targeted block for movement.
 3. **Pinch-to-Zoom**: Two-finger zoom scaling the canvas between 25% and 300%.
 4. **Nudge Controls**: Precision D-pad in the inspector and floating toolbar allows shifting selected blocks by $\pm 0.5\text{ mm}$, $\pm 1\text{ mm}$, and $\pm 5\text{ mm}$ without finger occlusion.
-5. **Tap-to-Swap Mode**: 
+5. **Tap-to-Swap Mode**:
    - User taps the "Swap" icon on Block $A$.
    - User taps Block $B$.
    - The engine instantly swaps the positions of $A$ and $B$, avoiding error-prone dragging on touchscreen displays.
@@ -431,3 +433,4 @@ Activation triggers:
    - Having 30+ interactive moveable handles on a single page could cause frame drops during zoom transformations on mobile e-ink browsers. Virtualizing or showing handles only on the *active* selected block mitigates this.
 3. **Multi-Column Text Flow within a Single Frame [Open Spike]**:
    - In traditional broadsheets, a single article block spanning 3 columns has internal text balancing across those 3 sub-columns (`column-count: 3`). In free mode, the frame width $w$ must dynamically derive internal column counts to prevent excessively long text lines.
+$$

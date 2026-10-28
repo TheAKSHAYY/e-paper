@@ -15,6 +15,7 @@ When rendering the same newspaper document (Page 1), three significant visual di
 3. **Vertical Fill Divergence (Bottom 20%+ Empty):** In the PDF, article content occupies substantially less vertical height than on canvas, leaving large white space at the bottom of the page.
 
 All three discrepancies stem from **diverging layout implementations** between `NewspaperCanvas.tsx` and `packages/template-engine/src/index.ts`, specifically:
+
 - A hardcoded 4-column vs. 12-column grid-resolution mismatch and column clamping bug in single-page documents.
 - CSS flexbox overflow clipping (`overflow: hidden` on a fixed-height page) that clips the folio footer when content or print pagination margins exceed the page box.
 - Divergent coordinate spaces: Canvas renders on a synthetic 800px base with 13px fonts, whereas PDF renders on a 1440px (1080pt) broadsheet grid with 10pt (13.33px) fonts, causing text to occupy 45% less proportional height.
@@ -24,6 +25,7 @@ All three discrepancies stem from **diverging layout implementations** between `
 ## Investigation Findings
 
 ### 1. Row Placement Logic in `NewspaperCanvas.tsx`
+
 **File:** [NewspaperCanvas.tsx](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/components/studio/NewspaperCanvas.tsx)
 
 - **Grid Resolution Calculation (Line 60):**
@@ -68,10 +70,11 @@ All three discrepancies stem from **diverging layout implementations** between `
 ---
 
 ### 2. Element Placement in `renderNewspaperDocumentToHtml()`
+
 **File:** [packages/template-engine/src/index.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts)
 
 - **Grid Mechanism:**
-  Like the canvas, `renderNewspaperDocumentToHtml()` uses CSS Grid (`display: grid;`). It does *not* use CSS multi-column (`column-count`), floats, or flex-wrap for overall article layout.
+  Like the canvas, `renderNewspaperDocumentToHtml()` uses CSS Grid (`display: grid;`). It does _not_ use CSS multi-column (`column-count`), floats, or flex-wrap for overall article layout.
 - **Root Column Count Definition (Line 1200):**
   ```ts
   const columnCount = Math.max(2, Math.min(12, doc.layout.columnCount || 12));
@@ -119,9 +122,11 @@ All three discrepancies stem from **diverging layout implementations** between `
   ```
 
 #### Why a 3-Col Element Does Not Share a Row with a 9-Col Element:
+
 In the document preset (`classic-hindi-broadsheet`), `doc.layout.columnCount` is `4`.
 However, the UI allows selecting 1..12 columns (e.g. via `ContextualInspector.tsx:516` or `LayoutBuilderRow.tsx:16` which offers `9 + 3`).
 When the document is exported to PDF:
+
 1. `doc.layout.columnCount` is `4`. The CSS Grid is generated with `grid-template-columns: repeat(4, 1fr)`.
 2. For the Lead story (`columnSpan: 9`), line 1427 clamps it:
    $$\text{span} = \min(4, \max(1, 9)) = 4$$
@@ -130,12 +135,14 @@ When the document is exported to PDF:
    $$\text{span} = \min(4, \max(1, 3)) = 3$$
 4. Because Row 1 is completely occupied by the Lead story, CSS Grid auto-placement pushes the Gaganyaan story to **Row 2**.
 5. On Row 2, the Gaganyaan story spans 3 out of 4 columns (75%). Column 4 is empty, creating the observed **empty right ~25%**.
-*(Alternatively, if the lead story had `columnSpan: 3` and Gaganyaan had `columnSpan: 3` in a 4-column grid: Lead takes cols 1–3 [75%]. Column 4 is empty [25%]. Gaganyaan [`span 3`] cannot fit in the 1 remaining column of Row 1, so it wraps to Row 2, leaving the right 25% beside the lead story empty).*
+   _(Alternatively, if the lead story had `columnSpan: 3` and Gaganyaan had `columnSpan: 3` in a 4-column grid: Lead takes cols 1–3 [75%]. Column 4 is empty [25%]. Gaganyaan [`span 3`] cannot fit in the 1 remaining column of Row 1, so it wraps to Row 2, leaving the right 25% beside the lead story empty)._
 
 ---
 
 ### 3. Why the Footer is Missing in the PDF
+
 **Files:**
+
 - [packages/template-engine/src/index.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1589-L1655) (Lines 1589–1596, 1643–1655, 2035–2055)
 - [apps/renderer/src/index.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/renderer/src/index.ts#L318-L361) (Lines 318–321, 355–361)
 
@@ -180,21 +187,24 @@ When the document is exported to PDF:
 ---
 
 ### 4. Paper Dimensions & Scaling: Canvas vs. PDF HTML
+
 **Files:**
+
 - [NewspaperCanvas.tsx](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/components/studio/NewspaperCanvas.tsx#L64-L75) (Lines 64–75, 870–876, 1043)
 - [packages/template-engine/src/index.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1196-L1228) (Lines 1196–1228, 1631–1641)
 
-| Dimension / Metric | Editor Canvas (`NewspaperCanvas.tsx`) | PDF Export (`renderNewspaperDocumentToHtml`) | Ratio / Difference |
-| :--- | :--- | :--- | :--- |
-| **Physical Sheet (Broadsheet)** | $381.0 \times 577.85\text{ mm}$ ($15 \times 22.75\text{ in}$) | $381.0 \times 577.85\text{ mm}$ ($15 \times 22.75\text{ in}$) | Same physical target |
-| **DOM CSS Coordinate Width** | Fixed `baseWidth = 800px` | `1080pt` = **`1440px`** (at 96 DPI) | **$1.80\times$ wider in PDF** |
-| **DOM CSS Coordinate Height** | Fixed `baseHeight = 1213px` | `1638pt` = **`2184px`** (at 96 DPI) | **$1.80\times$ taller in PDF** |
-| **Body Font Size** | `13px` (explicit inline style) | `10pt` = **`13.33px`** | Nearly identical in absolute pixels |
-| **Body Font Proportion** | $13\text{px} / 800\text{px} =$ **$1.625\%$ of width** | $13.33\text{px} / 1440\text{px} =$ **$0.925\%$ of width** | **$43\%$ smaller relative size in PDF** |
-| **Headline Size (Lead)** | `30px` (or `24px` for major) | `26pt`–`36pt` ($34.6\text{px}$–$48\text{px}$) | Disproportionate vertical height |
-| **Padding / Gap** | Padding: `28px`, Gap: `16px` | Padding: `24pt` ($32\text{px}$), Gap: `14pt` ($18.6\text{px}$) | Roughly similar |
+| Dimension / Metric              | Editor Canvas (`NewspaperCanvas.tsx`)                         | PDF Export (`renderNewspaperDocumentToHtml`)                   | Ratio / Difference                      |
+| :------------------------------ | :------------------------------------------------------------ | :------------------------------------------------------------- | :-------------------------------------- |
+| **Physical Sheet (Broadsheet)** | $381.0 \times 577.85\text{ mm}$ ($15 \times 22.75\text{ in}$) | $381.0 \times 577.85\text{ mm}$ ($15 \times 22.75\text{ in}$)  | Same physical target                    |
+| **DOM CSS Coordinate Width**    | Fixed `baseWidth = 800px`                                     | `1080pt` = **`1440px`** (at 96 DPI)                            | **$1.80\times$ wider in PDF**           |
+| **DOM CSS Coordinate Height**   | Fixed `baseHeight = 1213px`                                   | `1638pt` = **`2184px`** (at 96 DPI)                            | **$1.80\times$ taller in PDF**          |
+| **Body Font Size**              | `13px` (explicit inline style)                                | `10pt` = **`13.33px`**                                         | Nearly identical in absolute pixels     |
+| **Body Font Proportion**        | $13\text{px} / 800\text{px} =$ **$1.625\%$ of width**         | $13.33\text{px} / 1440\text{px} =$ **$0.925\%$ of width**      | **$43\%$ smaller relative size in PDF** |
+| **Headline Size (Lead)**        | `30px` (or `24px` for major)                                  | `26pt`–`36pt` ($34.6\text{px}$–$48\text{px}$)                  | Disproportionate vertical height        |
+| **Padding / Gap**               | Padding: `28px`, Gap: `16px`                                  | Padding: `24pt` ($32\text{px}$), Gap: `14pt` ($18.6\text{px}$) | Roughly similar                         |
 
 #### Why the Bottom 20%+ is Empty in the PDF:
+
 On the canvas, 400 words of body text at `13px` in an 800px-wide container wrap into taller column blocks that fill the canvas vertically.
 In the PDF export, the container is **1440px wide** ($1.8\times$ wider), but the font is still only **$13.33\text{px}$**.
 Because column widths in PDF are nearly double those of the canvas while the text size is identical, the text lines wrap far fewer times and occupy less than half the vertical height ($Y \approx 747\text{px}$ out of $2184\text{px}$).
@@ -203,7 +213,9 @@ The articles finish at $\approx 35\%$ of page height, leaving over $60\%$ of the
 ---
 
 ### 5. Document JSON Parity: Canvas vs. `/api/render-pdf`
+
 **Files:**
+
 - [App.tsx](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/App.tsx#L770-L784) (Lines 770–784)
 - [pdfExport.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/utils/pdfExport.ts#L13-L20) (Lines 13–20)
 - [vite.config.ts](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/vite.config.ts#L22-L28) (Lines 22–28)
@@ -222,18 +234,20 @@ The articles finish at $\approx 35\%$ of page height, leaving over $60\%$ of the
 
 ## Root Causes Summary
 
-| Observed Difference | Primary Root Cause | Exact Code Locations | Verification Status |
-| :--- | :--- | :--- | :--- |
-| **1. Gaganyaan story moved below & right 25% empty** | Single-page renderer discards `page.columnCount` and falls back to `doc.layout.columnCount: 4`. In a 4-col CSS grid, `columnSpan: 9` clamps to 4 (filling Row 1), pushing Gaganyaan (`span: 3`) to Row 2, where it spans 3 of 4 columns, leaving column 4 (25%) empty. | [template-engine/src/index.ts:1239-1272](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1239-L1272), [template-engine/src/index.ts:1427](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1427), [template-engine/src/index.ts:1841](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1841) | **Verified** (reproduced empirically via Playwright) |
-| **2. Folio footer missing in PDF** | `.newspaper-page` has `height: ${heightPt}pt; max-height: ${heightPt}pt; overflow: hidden;` while `.newspaper-folio-footer` lacks `flex-shrink: 0`. Any slight overflow or print margin pagination pushes the footer out of the bounding box where it is clipped. | [template-engine/src/index.ts:1643-1655](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1643-L1655), [template-engine/src/index.ts:2035-2038](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L2035-L2038), [apps/renderer/src/index.ts:318-321](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/renderer/src/index.ts#L318-L321) | **Verified** |
-| **3. Bottom 20%+ of PDF page is empty** | Coordinate scaling divergence: Canvas uses fixed 800px base with 13px font ($1.625\%$ width), whereas PDF uses 1440px (1080pt) broadsheet with 10pt (13.33px) font ($0.925\%$ width). Text wraps far less in PDF, occupying $\approx 35\%$ of height instead of filling the sheet. | [NewspaperCanvas.tsx:67-70, 1043](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/components/studio/NewspaperCanvas.tsx#L67-L70), [template-engine/src/index.ts:1196, 1637](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1196) | **Verified** |
+| Observed Difference                                  | Primary Root Cause                                                                                                                                                                                                                                                                 | Exact Code Locations                                                                                                                                                                                                                                                                                                                                                                                                          | Verification Status                                  |
+| :--------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| **1. Gaganyaan story moved below & right 25% empty** | Single-page renderer discards `page.columnCount` and falls back to `doc.layout.columnCount: 4`. In a 4-col CSS grid, `columnSpan: 9` clamps to 4 (filling Row 1), pushing Gaganyaan (`span: 3`) to Row 2, where it spans 3 of 4 columns, leaving column 4 (25%) empty.             | [template-engine/src/index.ts:1239-1272](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1239-L1272), [template-engine/src/index.ts:1427](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1427), [template-engine/src/index.ts:1841](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1841)      | **Verified** (reproduced empirically via Playwright) |
+| **2. Folio footer missing in PDF**                   | `.newspaper-page` has `height: ${heightPt}pt; max-height: ${heightPt}pt; overflow: hidden;` while `.newspaper-folio-footer` lacks `flex-shrink: 0`. Any slight overflow or print margin pagination pushes the footer out of the bounding box where it is clipped.                  | [template-engine/src/index.ts:1643-1655](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1643-L1655), [template-engine/src/index.ts:2035-2038](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L2035-L2038), [apps/renderer/src/index.ts:318-321](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/renderer/src/index.ts#L318-L321) | **Verified**                                         |
+| **3. Bottom 20%+ of PDF page is empty**              | Coordinate scaling divergence: Canvas uses fixed 800px base with 13px font ($1.625\%$ width), whereas PDF uses 1440px (1080pt) broadsheet with 10pt (13.33px) font ($0.925\%$ width). Text wraps far less in PDF, occupying $\approx 35\%$ of height instead of filling the sheet. | [NewspaperCanvas.tsx:67-70, 1043](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/apps/web/src/components/studio/NewspaperCanvas.tsx#L67-L70), [template-engine/src/index.ts:1196, 1637](file:///c:/Users/Pc/OneDrive/Desktop/News%20Banner/packages/template-engine/src/index.ts#L1196)                                                                                                                                   | **Verified**                                         |
 
 ---
 
 ## Smallest Possible Fix Proposals (Report Diff Proposals Only — Not Applied)
 
 ### Fix Proposal 1: Honor `page.columnCount` and Apply Inline CSS Grid Columns
+
 In `packages/template-engine/src/index.ts`:
+
 1. Use `pageUnit.columnCount` when constructing each page's articles grid.
 2. Render `grid-template-columns: repeat(${effectiveColumnCount}, 1fr)` as an inline style on `.newspaper-grid` for each page (matching `NewspaperCanvas.tsx:562`), rather than a static global class.
 3. In the single-page branch, inherit `page.columnCount` from `doc.pages[0]` if present.
@@ -286,7 +300,9 @@ In `packages/template-engine/src/index.ts`:
 ---
 
 ### Fix Proposal 2: Prevent Footer Clipping in PDF Flex Container
+
 In `packages/template-engine/src/index.ts` and `apps/renderer/src/index.ts`:
+
 1. Add `flex-shrink: 0;` to `.newspaper-folio-footer` so it cannot be collapsed by sibling flex expansion.
 2. In `apps/renderer/src/index.ts`, set viewport dimensions using CSS 96-DPI pixels (`widthPt * (96/72)`) instead of 72-DPI points, preventing subpixel clipping.
 
@@ -315,6 +331,7 @@ In `packages/template-engine/src/index.ts` and `apps/renderer/src/index.ts`:
 ---
 
 ### Fix Proposal 3: Align Typography Scale Between Canvas & PDF
+
 In `packages/template-engine/src/index.ts` (or `NewspaperCanvas.tsx`):
 Derive body font size and headline sizes proportionally from page width or allow template-specified broadsheet pt sizing (e.g. 11.5pt–13pt for broadsheet body text and 42pt–54pt for lead headlines) so that text density matches the editor preview.
 
@@ -332,4 +349,5 @@ Derive body font size and headline sizes proportionally from page width or allow
 ---
 
 ## Unverified Items
+
 - **Unverified:** Exact printer driver margins on physical hardware devices when opening the vector PDF outside Chromium's PDF preview. (The investigation verified Chromium's headless rendering pipeline and Playwright vector PDF output).

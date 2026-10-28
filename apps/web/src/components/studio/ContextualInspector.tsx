@@ -278,9 +278,18 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}
+                  >
                     <div>
-                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                      <label
+                        style={{
+                          fontSize: '10px',
+                          color: '#4b5563',
+                          display: 'block',
+                          marginBottom: '2px',
+                        }}
+                      >
                         X (mm)
                       </label>
                       <input
@@ -307,7 +316,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                      <label
+                        style={{
+                          fontSize: '10px',
+                          color: '#4b5563',
+                          display: 'block',
+                          marginBottom: '2px',
+                        }}
+                      >
                         Y (mm)
                       </label>
                       <input
@@ -334,7 +350,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                      <label
+                        style={{
+                          fontSize: '10px',
+                          color: '#4b5563',
+                          display: 'block',
+                          marginBottom: '2px',
+                        }}
+                      >
                         W (mm)
                       </label>
                       <input
@@ -361,7 +384,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginBottom: '2px' }}>
+                      <label
+                        style={{
+                          fontSize: '10px',
+                          color: '#4b5563',
+                          display: 'block',
+                          marginBottom: '2px',
+                        }}
+                      >
                         H (mm)
                       </label>
                       <input
@@ -390,7 +420,15 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </div>
 
                   {/* Nudge Buttons */}
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '2px', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '6px',
+                      marginTop: '2px',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <div style={{ display: 'flex', gap: '3px' }}>
                       <button
                         type="button"
@@ -402,7 +440,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '11px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="4mm बाएँ"
                       >
                         ←
@@ -417,7 +462,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '11px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="4mm दाएँ"
                       >
                         →
@@ -432,7 +484,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '11px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="4mm ऊपर"
                       >
                         ↑
@@ -447,7 +506,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '11px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '11px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="4mm नीचे"
                       >
                         ↓
@@ -461,11 +527,21 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                           if (selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, w: Math.max(10, selectedArticle.frame.w - 4) },
+                              frame: {
+                                ...selectedArticle.frame,
+                                w: Math.max(10, selectedArticle.frame.w - 4),
+                              },
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="चौड़ाई कम करें"
                       >
                         -W
@@ -480,7 +556,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="चौड़ाई बढ़ाएं"
                       >
                         +W
@@ -491,11 +574,21 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                           if (selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, h: Math.max(10, selectedArticle.frame.h - 4) },
+                              frame: {
+                                ...selectedArticle.frame,
+                                h: Math.max(10, selectedArticle.frame.h - 4),
+                              },
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="ऊंचाई कम करें"
                       >
                         -H
@@ -510,7 +603,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             });
                           }
                         }}
-                        style={{ padding: '3px 6px', fontSize: '10px', borderRadius: '3px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff' }}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          background: '#fff',
+                        }}
                         title="ऊंचाई बढ़ाएं"
                       >
                         +H
@@ -611,7 +711,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   किकर (Kicker)
                 </label>
                 {(() => {
-                  const unsupp = findUnsupportedCharacters(selectedArticle.kickerText ?? '', [layout.bodyFont]);
+                  const unsupp = findUnsupportedCharacters(selectedArticle.kickerText ?? '', [
+                    layout.bodyFont,
+                  ]);
                   return (
                     <div style={{ position: 'relative' }}>
                       <input
@@ -648,7 +750,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             fontWeight: 500,
                           }}
                         >
-                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                          ⚠️ असमर्थित वर्ण:{' '}
+                          {unsupp
+                            .map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`)
+                            .slice(0, 3)
+                            .join(', ')}
                         </div>
                       )}
                     </div>
@@ -670,7 +776,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   मुख्य शीर्षक (Headline) *
                 </label>
                 {(() => {
-                  const unsupp = findUnsupportedCharacters(selectedArticle.headline, [layout.headlineFont]);
+                  const unsupp = findUnsupportedCharacters(selectedArticle.headline, [
+                    layout.headlineFont,
+                  ]);
                   return (
                     <div style={{ position: 'relative' }}>
                       <textarea
@@ -707,7 +815,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             fontWeight: 500,
                           }}
                         >
-                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                          ⚠️ असमर्थित वर्ण:{' '}
+                          {unsupp
+                            .map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`)
+                            .slice(0, 3)
+                            .join(', ')}
                         </div>
                       )}
                     </div>
@@ -729,10 +841,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   उप-शीर्षक (Deck)
                 </label>
                 {(() => {
-                  const unsupp = findUnsupportedCharacters(
-                    selectedArticle.subheadline ?? '',
-                    [layout.subheadlineFont || layout.headlineFont]
-                  );
+                  const unsupp = findUnsupportedCharacters(selectedArticle.subheadline ?? '', [
+                    layout.subheadlineFont || layout.headlineFont,
+                  ]);
                   return (
                     <div style={{ position: 'relative' }}>
                       <input
@@ -767,7 +878,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             fontWeight: 500,
                           }}
                         >
-                          ⚠️ असमर्थित वर्ण: {unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).slice(0, 3).join(', ')}
+                          ⚠️ असमर्थित वर्ण:{' '}
+                          {unsupp
+                            .map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`)
+                            .slice(0, 3)
+                            .join(', ')}
                         </div>
                       )}
                     </div>
@@ -1701,7 +1816,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       <textarea
                         rows={8}
                         value={selectedArticle.body}
-                        onChange={(e) => onUpdateArticle({ ...selectedArticle, body: e.target.value })}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, body: e.target.value })
+                        }
                         title={
                           unsupp.length > 0
                             ? `असमर्थित वर्ण (${unsupp.length}): ${unsupp.map((u: UnsupportedCharacterInfo) => `${u.char} (${u.codePoint})`).join(', ')}`

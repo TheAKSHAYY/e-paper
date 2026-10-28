@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createNewspaperDocument,
-  type NewspaperPage,
-} from './index';
+import { createNewspaperDocument, type NewspaperPage } from './index';
 import {
   autoToFree,
   freeToAuto,
@@ -190,5 +187,42 @@ describe('freeLayout Unit Tests', () => {
     const snapped = snapFrame(candidate, testPage, doc, undefined, 4.0);
     expect(snapped.activeGuides.length).toBeGreaterThan(0);
     expect(snapped.frame.x).toBeGreaterThanOrEqual(8.4);
+  });
+
+  it('should round-trip autoToFree and freeToAuto on every newspaper template without crashing', () => {
+    const presetIds = [
+      'classic-hindi-broadsheet',
+      'hindi-compact-daily',
+      'classic-broadsheet',
+      'modern-editorial',
+      'compact-local',
+    ] as const;
+
+    for (const pid of presetIds) {
+      const templateDoc = createNewspaperDocument({
+        presetId: pid,
+        title: `Test ${pid}`,
+      });
+      const firstPage = templateDoc.pages[0];
+      expect(firstPage).toBeDefined();
+
+      // Convert to Free layout
+      const freePage = autoToFree(firstPage, templateDoc);
+      expect(freePage.layoutMode).toBe('free');
+      expect(freePage.articles.length).toBe(firstPage.articles.length);
+
+      // Verify all frames are valid and inside printable bounds
+      for (const article of freePage.articles) {
+        expect(article.frame).toBeDefined();
+        expect(article.frame!.w).toBeGreaterThan(0);
+        expect(article.frame!.h).toBeGreaterThan(0);
+      }
+
+      // Convert back to Auto layout
+      const { page: backToAutoPage, lossyWarnings } = freeToAuto(freePage, templateDoc);
+      expect(backToAutoPage.layoutMode).toBe('auto');
+      expect(backToAutoPage.articles.length).toBe(firstPage.articles.length);
+      expect(Array.isArray(lossyWarnings)).toBe(true);
+    }
   });
 });

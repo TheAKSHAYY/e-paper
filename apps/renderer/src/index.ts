@@ -7,10 +7,7 @@ import {
 } from '@epaper-studio/document-schema';
 import { renderNewspaperDocumentToHtml, getPageDimensionsPt } from '@epaper-studio/template-engine';
 import { readSelfHostedFont } from '@epaper-studio/typography/server';
-import {
-  SELF_HOSTED_FONT_FAMILIES,
-  findUnsupportedCharacters,
-} from '@epaper-studio/typography';
+import { SELF_HOSTED_FONT_FAMILIES, findUnsupportedCharacters } from '@epaper-studio/typography';
 
 export interface RenderJobRequest {
   jobId: string;
@@ -362,11 +359,20 @@ export class RendererWorker {
             if (!isAllowlisted) {
               const info = await page.evaluate((id) => {
                 const el = document.querySelector(`[data-guard-node-id="${id}"]`);
-                if (!el) return { tag: 'unknown', className: '', text: '', pageNumber: 1, elementLabel: '' };
+                if (!el)
+                  return {
+                    tag: 'unknown',
+                    className: '',
+                    text: '',
+                    pageNumber: 1,
+                    elementLabel: '',
+                  };
 
                 // Find closest newspaper-page to identify page number
                 const pageEl = el.closest('.newspaper-page');
-                const pageNumber = pageEl ? Number(pageEl.getAttribute('data-page-number')) || 1 : 1;
+                const pageNumber = pageEl
+                  ? Number(pageEl.getAttribute('data-page-number')) || 1
+                  : 1;
 
                 // Find closest article or masthead to get headline or element context
                 const articleEl = el.closest('.newspaper-article');
@@ -374,8 +380,8 @@ export class RendererWorker {
                 const elementLabel = headlineEl?.textContent?.trim()
                   ? `Headline: "${headlineEl.textContent.trim().slice(0, 45)}..."`
                   : el.closest('.masthead-section')
-                  ? 'Masthead Section'
-                  : `<${el.tagName.toLowerCase()}${el.className ? '.' + el.className.split(' ').join('.') : ''}>`;
+                    ? 'Masthead Section'
+                    : `<${el.tagName.toLowerCase()}${el.className ? '.' + el.className.split(' ').join('.') : ''}>`;
 
                 return {
                   tag: el.tagName.toLowerCase(),
@@ -388,7 +394,9 @@ export class RendererWorker {
               }, i);
 
               // Find the exact unsupported characters with code points
-              const unsupp = findUnsupportedCharacters(info.fullText || info.text, [font.familyName]);
+              const unsupp = findUnsupportedCharacters(info.fullText || info.text, [
+                font.familyName,
+              ]);
               const unsuppSummary =
                 unsupp.length > 0
                   ? unsupp

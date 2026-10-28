@@ -667,16 +667,28 @@ export function validateFrameInsidePrintableArea(
   toleranceMm: number = 0.5
 ): { valid: boolean; reason?: string } {
   if (frame.x < bounds.minX - toleranceMm) {
-    return { valid: false, reason: `Frame x (${frame.x}mm) exceeds left margin (${bounds.minX}mm)` };
+    return {
+      valid: false,
+      reason: `Frame x (${frame.x}mm) exceeds left margin (${bounds.minX}mm)`,
+    };
   }
   if (frame.y < bounds.minY - toleranceMm) {
-    return { valid: false, reason: `Frame y (${frame.y}mm) encroaches into header zone (${bounds.minY}mm)` };
+    return {
+      valid: false,
+      reason: `Frame y (${frame.y}mm) encroaches into header zone (${bounds.minY}mm)`,
+    };
   }
   if (frame.x + frame.w > bounds.maxX + toleranceMm) {
-    return { valid: false, reason: `Frame right edge (${(frame.x + frame.w).toFixed(1)}mm) exceeds right margin (${bounds.maxX}mm)` };
+    return {
+      valid: false,
+      reason: `Frame right edge (${(frame.x + frame.w).toFixed(1)}mm) exceeds right margin (${bounds.maxX}mm)`,
+    };
   }
   if (frame.y + frame.h > bounds.maxY + toleranceMm) {
-    return { valid: false, reason: `Frame bottom edge (${(frame.y + frame.h).toFixed(1)}mm) exceeds bottom margin/footer (${bounds.maxY}mm)` };
+    return {
+      valid: false,
+      reason: `Frame bottom edge (${(frame.y + frame.h).toFixed(1)}mm) exceeds bottom margin/footer (${bounds.maxY}mm)`,
+    };
   }
   return { valid: true };
 }
@@ -684,10 +696,7 @@ export function validateFrameInsidePrintableArea(
 /**
  * Strictly clamps an article frame to lie completely inside the printable area.
  */
-export function clampFrameToPrintableArea(
-  frame: FrameMm,
-  bounds: PrintableAreaBoundsMm
-): FrameMm {
+export function clampFrameToPrintableArea(frame: FrameMm, bounds: PrintableAreaBoundsMm): FrameMm {
   const maxW = Math.max(10, bounds.contentWidth);
   const maxH = Math.max(10, bounds.contentHeight);
   const w = Math.min(Math.max(10, frame.w), maxW);

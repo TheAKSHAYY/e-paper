@@ -24,8 +24,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       columns: '8–12 Columns',
       tag: 'राष्ट्रीय मानक',
       accentColor: '#b91c1c',
-      headline: 'वैश्विक ऊर्जा शिखर सम्मेलन: 68 देशों के बीच स्वच्छ ऊर्जा गलियारे पर ऐतिहासिक समझौता',
-      description: 'राष्ट्रीय दैनिक समाचार पत्र का प्रामाणिक विन्यास। मुख्य समाचार बैनर, उप-शीर्षक डेक, और विस्तृत संपादकीय स्तंभ।',
+      headline:
+        'वैश्विक ऊर्जा शिखर सम्मेलन: 68 देशों के बीच स्वच्छ ऊर्जा गलियारे पर ऐतिहासिक समझौता',
+      description:
+        'राष्ट्रीय दैनिक समाचार पत्र का प्रामाणिक विन्यास। मुख्य समाचार बैनर, उप-शीर्षक डेक, और विस्तृत संपादकीय स्तंभ।',
     },
     {
       id: 'regional-hindi-tabloid' as NewspaperPresetId,
@@ -37,7 +39,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       tag: 'कॉम्पैक्ट टैब्लॉइड',
       accentColor: '#0369a1',
       headline: 'हाईटेक एक्सप्रेसवे परियोजना के तीसरे चरण को मिली अंतिम पर्यावरणीय मंजूरी',
-      description: 'सघन, सुलभ और फ़ोटो-केंद्रित लेआउट। नगर बुलेटिन और त्वरित पठन के लिए आदर्श प्रारूप।',
+      description:
+        'सघन, सुलभ और फ़ोटो-केंद्रित लेआउट। नगर बुलेटिन और त्वरित पठन के लिए आदर्श प्रारूप।',
     },
     {
       id: 'editorial-opinion-broadsheet' as NewspaperPresetId,
@@ -49,13 +52,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       tag: 'संपादकीय समीक्षा',
       accentColor: '#334155',
       headline: 'संपादकीय: डिजिटल युग में क्षेत्रीय भाषाओं का संरक्षण और ज्ञान का लोकतंत्रीकरण',
-      description: 'गहन नीतिगत विश्लेषण, साहित्यिक स्तंभ और वैचारिक विमर्श के लिए सुरुचिपूर्ण डिज़ाइन।',
+      description:
+        'गहन नीतिगत विश्लेषण, साहित्यिक स्तंभ और वैचारिक विमर्श के लिए सुरुचिपूर्ण डिज़ाइन।',
     },
   ];
 
-  const filtered = selectedFormat === 'all'
-    ? templates
-    : templates.filter((t) => t.formatType === selectedFormat);
+  const filtered =
+    selectedFormat === 'all' ? templates : templates.filter((t) => t.formatType === selectedFormat);
 
   return (
     <div
@@ -240,11 +243,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               lineHeight: 1.6,
             }}
           >
-            Broadsheet और Tabloid के वास्तविक प्रिंट मानकों पर आधारित। 12-कॉलम मॉड्यूलर ग्रिड, प्रामाणिक देवनागरी मास्टहेड, और 300 DPI प्रेस-रेडी वेक्टर PDF एक्सपोर्ट।
+            Broadsheet और Tabloid के वास्तविक प्रिंट मानकों पर आधारित। 12-कॉलम मॉड्यूलर ग्रिड,
+            प्रामाणिक देवनागरी मास्टहेड, और 300 DPI प्रेस-रेडी वेक्टर PDF एक्सपोर्ट।
           </p>
 
           {/* Primary Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
+              marginBottom: '40px',
+            }}
+          >
             <button
               onClick={onStartCreating}
               style={{
@@ -321,7 +333,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               >
                 जनवाणी समाचार
               </div>
-              <div style={{ fontSize: '11px', color: '#6b7280', letterSpacing: '0.04em', marginBottom: '6px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: '#6b7280',
+                  letterSpacing: '0.04em',
+                  marginBottom: '6px',
+                }}
+              >
                 सत्य, निष्पक्षता और राष्ट्र सेवा का प्रतीक • स्थापना 1947
               </div>
               <div
@@ -344,8 +363,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Lead Story Headline */}
-            <div style={{ borderBottom: '1px solid #111827', paddingBottom: '8px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', color: '#b91c1c', fontWeight: 800, textTransform: 'uppercase' }}>
+            <div
+              style={{
+                borderBottom: '1px solid #111827',
+                paddingBottom: '8px',
+                marginBottom: '10px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: '#b91c1c',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                }}
+              >
                 लीड स्टोरी • राष्ट्रीय सम्मेलन
               </div>
               <div
@@ -361,20 +393,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Content snippet */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '14px',
+              }}
+            >
               <div>
-                <p style={{ fontSize: '11px', lineHeight: 1.55, color: '#374151', margin: 0, textAlign: 'justify' }}>
-                  नई दिल्ली। ऊर्जा संरक्षण और हरित प्रौद्योगिकी के क्षेत्र में भारत ने आज एक नया वैश्विक मानक स्थापित किया है। अंतरराष्ट्रीय सम्मेलन में 68 देशों के प्रतिनिधियों ने सर्वसम्मति से साझा निवेश और अनुसंधान हेतु रूपरेखा तैयार की है...
+                <p
+                  style={{
+                    fontSize: '11px',
+                    lineHeight: 1.55,
+                    color: '#374151',
+                    margin: 0,
+                    textAlign: 'justify',
+                  }}
+                >
+                  नई दिल्ली। ऊर्जा संरक्षण और हरित प्रौद्योगिकी के क्षेत्र में भारत ने आज एक नया
+                  वैश्विक मानक स्थापित किया है। अंतरराष्ट्रीय सम्मेलन में 68 देशों के प्रतिनिधियों
+                  ने सर्वसम्मति से साझा निवेश और अनुसंधान हेतु रूपरेखा तैयार की है...
                 </p>
               </div>
               <div style={{ borderLeft: '1px solid #e5e7eb', paddingLeft: '14px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#111827',
+                    marginBottom: '4px',
+                  }}
+                >
                   प्रादेशिक समाचार संक्षेप
                 </div>
                 <p style={{ fontSize: '10.5px', lineHeight: 1.5, color: '#4b5563', margin: 0 }}>
                   • प्रयागराज-वाराणसी सिक्स-लेन परियोजना को मिली अंतिम मंजूरी।
-                  <br />
-                  • कृषि विज्ञान केंद्र द्वारा रबी फसलों हेतु एडवाइजरी जारी।
+                  <br />• कृषि विज्ञान केंद्र द्वारा रबी फसलों हेतु एडवाइजरी जारी।
                 </p>
               </div>
             </div>
@@ -458,7 +512,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                  }}
+                >
                   <span
                     style={{
                       fontSize: '10px',
@@ -491,7 +552,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   {tmpl.englishTitle} • {tmpl.format}
                 </div>
 
-                <p style={{ fontSize: '12.5px', color: '#4b5563', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                <p
+                  style={{
+                    fontSize: '12.5px',
+                    color: '#4b5563',
+                    lineHeight: 1.5,
+                    margin: '0 0 16px 0',
+                  }}
+                >
                   {tmpl.description}
                 </p>
               </div>
@@ -607,10 +675,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 >
                   {step.num}
                 </div>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '2px' }}>
+                <div
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    color: '#111827',
+                    marginBottom: '2px',
+                  }}
+                >
                   {step.title}
                 </div>
-                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '8px' }}>{step.sub}</div>
+                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '8px' }}>
+                  {step.sub}
+                </div>
                 <p style={{ fontSize: '12.5px', color: '#4b5563', lineHeight: 1.5, margin: 0 }}>
                   {step.desc}
                 </p>
@@ -632,9 +709,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           backgroundColor: '#ffffff',
         }}
       >
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div
+          style={{
+            maxWidth: '1000px',
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
+          }}
+        >
           <div>
-            <strong style={{ color: '#111827' }}>E-Paper Studio</strong> — XRounder Newspaper Publishing System
+            <strong style={{ color: '#111827' }}>E-Paper Studio</strong> — XRounder Newspaper
+            Publishing System
           </div>
           <div>Broadsheet & Tabloid Standards • Press-Ready 300 DPI PDF</div>
         </div>

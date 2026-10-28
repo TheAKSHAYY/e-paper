@@ -23,7 +23,14 @@ export interface SnapGuide {
   type: 'x' | 'y';
   positionMm: number;
   label?: string;
-  source: 'page-margin' | 'page-center' | 'grid-column' | 'vertical-module' | 'sibling-edge' | 'sibling-center' | 'equal-gap';
+  source:
+    | 'page-margin'
+    | 'page-center'
+    | 'grid-column'
+    | 'vertical-module'
+    | 'sibling-edge'
+    | 'sibling-center'
+    | 'equal-gap';
 }
 
 export interface SnapResult {
@@ -140,7 +147,7 @@ export function autoToFree(
     const isLead = art.priority === 'lead';
     const hasPhoto = Boolean(art.imageUrl && art.imagePlacement !== 'none');
     const wordCount = art.body.trim().split(/\s+/).filter(Boolean).length;
-    
+
     // Baseline heights in mm
     let estimatedHeightMm = 45;
     if (hasPhoto) estimatedHeightMm += 40;
@@ -183,10 +190,7 @@ export function autoToFree(
  * Converts a free-placement page back into sequential 12-column auto-flow (freeToAuto).
  * Sorts articles topologically by y (with row tolerance) then x, and projects width to column spans.
  */
-export function freeToAuto(
-  page: NewspaperPage,
-  doc: NewspaperDocument
-): FreeToAutoResult {
+export function freeToAuto(page: NewspaperPage, doc: NewspaperDocument): FreeToAutoResult {
   const bounds = getPageLayoutBounds(page, doc);
   const metrics = getPhysicalPageMetrics(
     doc.metadata.pageSize,
@@ -290,7 +294,7 @@ export function calculatePageFullness(
       const colCount = page.columnCount ?? doc.layout.columnCount ?? 12;
       const spanFraction = Math.min(1, art.columnSpan / colCount);
       // Rough estimation: each standard block takes ~50mm height
-      const estimatedBlockArea = (bounds.contentWidth * spanFraction) * 45;
+      const estimatedBlockArea = bounds.contentWidth * spanFraction * 45;
       usedAreaMm2 += estimatedBlockArea;
     }
   }
@@ -483,13 +487,22 @@ export function snapFrame(
     if (delta < minDeltaX) {
       minDeltaX = delta;
       bestX = target.pos;
-      activeGuides.push({ type: 'x', positionMm: target.pos, label: target.label, source: target.source });
+      activeGuides.push({
+        type: 'x',
+        positionMm: target.pos,
+        label: target.label,
+        source: target.source,
+      });
     }
   }
 
   const pageYTargets: Array<{ pos: number; label: string; source: SnapGuide['source'] }> = [
     { pos: bounds.minY, label: 'शीर्ष मार्जिन', source: 'page-margin' },
-    { pos: bounds.minY + bounds.contentHeight / 2, label: 'ऊर्ध्वाधर केंद्र', source: 'page-center' },
+    {
+      pos: bounds.minY + bounds.contentHeight / 2,
+      label: 'ऊर्ध्वाधर केंद्र',
+      source: 'page-center',
+    },
     { pos: bounds.maxY - candidate.h, label: 'निचला मार्जिन', source: 'page-margin' },
   ];
 
@@ -498,7 +511,12 @@ export function snapFrame(
     if (delta < minDeltaY) {
       minDeltaY = delta;
       bestY = target.pos;
-      activeGuides.push({ type: 'y', positionMm: target.pos, label: target.label, source: target.source });
+      activeGuides.push({
+        type: 'y',
+        positionMm: target.pos,
+        label: target.label,
+        source: target.source,
+      });
     }
   }
 
@@ -535,7 +553,8 @@ export function snapFrame(
 
   // 3. 4mm Vertical Module Grid
   const moduleStepMm = 4.0;
-  const nearestModuleY = Math.round((candidate.y - bounds.minY) / moduleStepMm) * moduleStepMm + bounds.minY;
+  const nearestModuleY =
+    Math.round((candidate.y - bounds.minY) / moduleStepMm) * moduleStepMm + bounds.minY;
   const deltaModuleY = Math.abs(candidate.y - nearestModuleY);
   if (deltaModuleY < minDeltaY && deltaModuleY < 2.0) {
     minDeltaY = deltaModuleY;
@@ -567,7 +586,12 @@ export function snapFrame(
       if (delta < minDeltaX) {
         minDeltaX = delta;
         bestX = st.pos;
-        activeGuides.push({ type: 'x', positionMm: st.pos, label: st.label, source: 'sibling-edge' });
+        activeGuides.push({
+          type: 'x',
+          positionMm: st.pos,
+          label: st.label,
+          source: 'sibling-edge',
+        });
       }
     }
 
@@ -585,16 +609,18 @@ export function snapFrame(
       if (delta < minDeltaY) {
         minDeltaY = delta;
         bestY = st.pos;
-        activeGuides.push({ type: 'y', positionMm: st.pos, label: st.label, source: 'sibling-edge' });
+        activeGuides.push({
+          type: 'y',
+          positionMm: st.pos,
+          label: st.label,
+          source: 'sibling-edge',
+        });
       }
     }
   }
 
   // Strict clamp to printable area bounds
-  const clamped = clampFrameToPrintableArea(
-    { ...candidate, x: bestX, y: bestY },
-    bounds
-  );
+  const clamped = clampFrameToPrintableArea({ ...candidate, x: bestX, y: bestY }, bounds);
 
   return {
     frame: clamped,

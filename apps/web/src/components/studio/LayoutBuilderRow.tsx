@@ -17,7 +17,12 @@ export const LAYOUT_PRESET_OPTIONS: LayoutPresetOption[] = [
   { id: '5-7', name: 'असममित 5 + 7', columns: [5, 7], label: '5 + 7' },
   { id: '7-5', name: 'असममित 7 + 5', columns: [7, 5], label: '7 + 5' },
   { id: '4-4-4', name: 'तीन समान कॉलम (Tri-Column)', columns: [4, 4, 4], label: '4 + 4 + 4' },
-  { id: '3-3-3-3', name: 'चार कॉलम ग्रिड (Quarter Grid)', columns: [3, 3, 3, 3], label: '3 + 3 + 3 + 3' },
+  {
+    id: '3-3-3-3',
+    name: 'चार कॉलम ग्रिड (Quarter Grid)',
+    columns: [3, 3, 3, 3],
+    label: '3 + 3 + 3 + 3',
+  },
   { id: '2-8-2', name: 'केंद्रित समाचार + दो गटर', columns: [2, 8, 2], label: '2 + 8 + 2' },
 ];
 
@@ -103,9 +108,7 @@ export const LayoutBuilderRow: React.FC<LayoutBuilderRowProps> = ({ onApplyLayou
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
                 {opt.label}
               </span>
-              <span style={{ fontSize: '9.5px', color: '#64748b' }}>
-                {opt.columns.length} कॉलम
-              </span>
+              <span style={{ fontSize: '9.5px', color: '#64748b' }}>{opt.columns.length} कॉलम</span>
             </div>
           </button>
         ))}

@@ -104,7 +104,9 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* ========================================================
        * LEFT: Brand, Sidebar Toggle, Document Title & Save Status
        * ======================================================== */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1 }}
+      >
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
@@ -131,7 +133,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div
           onClick={() => onViewModeChange('landing')}
           title="मुख्य पृष्ठ पर लौटें (Return to Home)"
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
         >
           <div
             style={{
@@ -286,7 +294,14 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
 
-        <span style={{ fontSize: '10.5px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 700 }}>
+        <span
+          style={{
+            fontSize: '10.5px',
+            color: '#9ca3af',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+          }}
+        >
           {pageSize}
         </span>
 

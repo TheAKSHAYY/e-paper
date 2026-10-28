@@ -66,7 +66,8 @@ export const MASTHEAD_GALLERY_PRESETS: MastheadPresetItem[] = [
     id: 'monochrome-broadsheet',
     name: 'शास्त्रीय ब्लैक & व्हाइट ब्रॉडशीट (Monochrome Heritage)',
     category: 'monochrome',
-    description: 'प्योर ब्लैक इंक, सिंगल हेयरलाइन रूल, कलम का प्रतीक और सुरुचिपूर्ण सेरिफ़ टाइपोग्राफी।',
+    description:
+      'प्योर ब्लैक इंक, सिंगल हेयरलाइन रूल, कलम का प्रतीक और सुरुचिपूर्ण सेरिफ़ टाइपोग्राफी।',
     config: {
       title: 'THE CHRONICLE',
       tagline: 'Founded on Truth, Independent in Discourse',
@@ -301,7 +302,9 @@ export const MastheadGalleryModal: React.FC<MastheadGalleryModalProps> = ({
                 gap: '8px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <div>
                   <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                     {item.name}
@@ -374,7 +377,10 @@ export const MastheadGalleryModal: React.FC<MastheadGalleryModalProps> = ({
                     marginBottom: '4px',
                   }}
                 >
-                  <span>मौसम: {item.config.weatherCity || 'नई दिल्ली'} {item.config.temperature || '25°C'}</span>
+                  <span>
+                    मौसम: {item.config.weatherCity || 'नई दिल्ली'}{' '}
+                    {item.config.temperature || '25°C'}
+                  </span>
                   <span style={{ fontStyle: 'italic' }}>{item.config.tagline}</span>
                   <span>{item.config.price || 'मूल्य ₹5.00'}</span>
                 </div>
@@ -386,7 +392,8 @@ export const MastheadGalleryModal: React.FC<MastheadGalleryModalProps> = ({
                     fontWeight: 900,
                     color: '#111111',
                     margin: '2px 0',
-                    textAlign: (item.config.alignment as React.CSSProperties['textAlign']) || 'center',
+                    textAlign:
+                      (item.config.alignment as React.CSSProperties['textAlign']) || 'center',
                   }}
                 >
                   {item.config.title}

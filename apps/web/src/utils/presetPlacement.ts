@@ -17,8 +17,7 @@ export function createArticleFromPreset(
   blockTemplate: Partial<Article>,
   options: CreateArticleFromPresetOptions = {}
 ): Article {
-  const newId =
-    options.newId ?? `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const newId = options.newId ?? `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const defaultCols = options.defaultColumnCount ?? 6;
 
   return {

@@ -1097,7 +1097,9 @@ export function getPhysicalPageMetrics(
 
   const bodyFontSizePt = Math.max(7, Math.min(24, Number(customBodyFontSizePt) || 10));
 
-  const baseLead = customHeadlineFontSizePt ? Math.max(16, Math.min(72, Number(customHeadlineFontSizePt))) : 26;
+  const baseLead = customHeadlineFontSizePt
+    ? Math.max(16, Math.min(72, Number(customHeadlineFontSizePt)))
+    : 26;
 
   return {
     widthPt,
@@ -1168,10 +1170,7 @@ export function screenToPageMm(
   const yMm = pixelY * mmPerPx;
 
   const isInside =
-    xMm >= 0 &&
-    xMm <= pageDimensionsMm.widthMm &&
-    yMm >= 0 &&
-    yMm <= pageDimensionsMm.heightMm;
+    xMm >= 0 && xMm <= pageDimensionsMm.widthMm && yMm >= 0 && yMm <= pageDimensionsMm.heightMm;
 
   return { xMm, yMm, isInside };
 }

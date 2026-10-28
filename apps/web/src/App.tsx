@@ -125,9 +125,11 @@ export const App: React.FC = () => {
 
   // Modals for page full and export preflight
   const [showPageFullModal, setShowPageFullModal] = useState<boolean>(false);
-  const [preflightWarnings, setPreflightWarnings] = useState<
-    Array<{ pageIndex: number; articleId: string; headline: string }> | null
-  >(null);
+  const [preflightWarnings, setPreflightWarnings] = useState<Array<{
+    pageIndex: number;
+    articleId: string;
+    headline: string;
+  }> | null>(null);
 
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
   const canvasViewportRef = useRef<HTMLDivElement>(null);
@@ -236,7 +238,8 @@ export const App: React.FC = () => {
       const rect = canvasViewportRef.current.getBoundingClientRect();
       availableW = Math.max(260, rect.width - 32);
     } else if (typeof window !== 'undefined') {
-      availableW = window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+      availableW =
+        window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
     }
     const scaleW = availableW / widthPx;
     return Math.max(0.25, Math.min(3.0, Math.round(scaleW * 100) / 100));
@@ -252,7 +255,8 @@ export const App: React.FC = () => {
       availableW = Math.max(260, rect.width - 32);
       availableH = Math.max(260, rect.height - 32);
     } else if (typeof window !== 'undefined') {
-      availableW = window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+      availableW =
+        window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
       availableH = Math.max(300, window.innerHeight - 120);
     }
     const scaleW = availableW / widthPx;
@@ -1110,7 +1114,9 @@ export const App: React.FC = () => {
         );
       } catch (err) {
         console.error('PDF export error:', err);
-        showNotification(`PDF डाउनलोड विफल: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`);
+        showNotification(
+          `PDF डाउनलोड विफल: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`
+        );
       } finally {
         setIsExportingPdf(false);
       }
@@ -1772,11 +1778,16 @@ export const App: React.FC = () => {
             }}
           >
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄⚠️</div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#111827' }}>
+            <h3
+              style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#111827' }}
+            >
               Page bhar gaya - naya page jodein?
             </h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.5 }}>
-              इस पृष्ठ पर और नया ब्लॉक जोड़ने के लिए पर्याप्त खाली जगह नहीं बची है। क्या आप अगला पृष्ठ जोड़ना चाहते हैं?
+            <p
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.5 }}
+            >
+              इस पृष्ठ पर और नया ब्लॉक जोड़ने के लिए पर्याप्त खाली जगह नहीं बची है। क्या आप अगला
+              पृष्ठ जोड़ना चाहते हैं?
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
@@ -1842,14 +1853,24 @@ export const App: React.FC = () => {
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}
+            >
               <span style={{ fontSize: '24px' }}>⚠️</span>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#991b1b' }}>
                 एक्सपोर्ट प्रीफ़्लाइट: टेक्स्ट कटने की चेतावनी (Text Overflow)
               </h3>
             </div>
-            <p style={{ margin: '0 0 14px 0', fontSize: '12.5px', color: '#4b5563', lineHeight: 1.4 }}>
-              निम्नलिखित समाचार ब्लॉकों में पाठ्य सामग्री उनके निर्धारित फ़्रेम से अधिक है और प्रिंट में कट सकती है:
+            <p
+              style={{
+                margin: '0 0 14px 0',
+                fontSize: '12.5px',
+                color: '#4b5563',
+                lineHeight: 1.4,
+              }}
+            >
+              निम्नलिखित समाचार ब्लॉकों में पाठ्य सामग्री उनके निर्धारित फ़्रेम से अधिक है और प्रिंट
+              में कट सकती है:
             </p>
             <div
               style={{

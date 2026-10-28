@@ -241,7 +241,15 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               >
                 ध्येय वाक्य (Tagline / Motto)
               </label>
-              <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <label
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={masthead.showTagline !== false}
@@ -273,7 +281,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           {/* Establishment Year */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <label
                   style={{
                     fontSize: '11px',
@@ -284,7 +294,15 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 >
                   स्थापना वर्ष (Est. Year)
                 </label>
-                <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={masthead.showEstablishment !== false}
@@ -312,7 +330,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
             {/* Edition Label */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <label
                   style={{
                     fontSize: '11px',
@@ -323,7 +343,15 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 >
                   संस्करण (Edition)
                 </label>
-                <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={masthead.showEdition !== false}
@@ -378,7 +406,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               >
                 <option value="'Rozha One', serif">रोज़ा वन (Rozha One - पारंपरिक)</option>
                 <option value="'Yatra One', serif">यात्रा वन (Yatra One - बोल्ड स्लैब)</option>
-                <option value="'Tiro Devanagari Hindi', serif">टिरो देवनागरी (Tiro Devanagari)</option>
+                <option value="'Tiro Devanagari Hindi', serif">
+                  टिरो देवनागरी (Tiro Devanagari)
+                </option>
                 <option value="'Noto Serif Devanagari', serif">नोतो सेरिफ़ (Noto Serif)</option>
                 <option value="'Poppins', sans-serif">पॉपिन्स (Poppins - समकालीन)</option>
                 <option value="'Mukta', sans-serif">मुक्ता (Mukta - आधुनिक)</option>
@@ -387,7 +417,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <label
                   style={{
                     fontSize: '11px',
@@ -442,8 +474,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                       fontWeight: (masthead.alignment || 'center') === item.id ? 700 : 500,
                       backgroundColor:
                         (masthead.alignment || 'center') === item.id ? '#0f172a' : '#f1f5f9',
-                      color:
-                        (masthead.alignment || 'center') === item.id ? '#ffffff' : '#475569',
+                      color: (masthead.alignment || 'center') === item.id ? '#ffffff' : '#475569',
                       border: 'none',
                       borderRadius: '5px',
                       cursor: 'pointer',
@@ -456,7 +487,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <label
                   style={{
                     fontSize: '11px',
@@ -467,7 +500,15 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 >
                   प्रतीक चिन्ह (Emblem)
                 </label>
-                <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={masthead.showEmblem === true}
@@ -539,11 +580,26 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Weather Section Header */}
           <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '6px',
+              }}
+            >
               <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e293b' }}>
                 🌤️ मौसम व तापमान (Weather Strip)
               </span>
-              <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <label
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={masthead.showWeather !== false}
@@ -555,7 +611,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1fr', gap: '6px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>शहर (City)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  शहर (City)
+                </label>
                 <input
                   type="text"
                   value={masthead.weatherCity ?? 'नई दिल्ली'}
@@ -573,7 +631,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>तापमान (Temp)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  तापमान (Temp)
+                </label>
                 <input
                   type="text"
                   value={masthead.temperature ?? '25°C'}
@@ -591,7 +651,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>स्थिति (Sky)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  स्थिति (Sky)
+                </label>
                 <input
                   type="text"
                   value={masthead.weatherCondition ?? 'साफ़ आसमान'}
@@ -611,9 +673,21 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
             {/* AQI */}
             <div style={{ marginTop: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: '10px', color: '#64748b' }}>वायु गुणवत्ता (Air Quality / AQI)</label>
-                <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <label style={{ fontSize: '10px', color: '#64748b' }}>
+                  वायु गुणवत्ता (Air Quality / AQI)
+                </label>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={masthead.showAirQuality !== false}
@@ -641,15 +715,33 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
           {/* Price & Registration Section */}
           <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e293b', display: 'block', marginBottom: '6px' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#1e293b',
+                display: 'block',
+                marginBottom: '6px',
+              }}
+            >
               💰 मूल्य व पंजीयन (Price & Reg.)
             </span>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <label style={{ fontSize: '10px', color: '#64748b' }}>मूल्य (Cover Price)</label>
-                  <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <label
+                    style={{
+                      fontSize: '10px',
+                      color: '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={masthead.showPrice !== false}
@@ -675,9 +767,21 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10px', color: '#64748b' }}>पंजीयन संख्या (Reg. No.)</label>
-                  <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <label style={{ fontSize: '10px', color: '#64748b' }}>
+                    पंजीयन संख्या (Reg. No.)
+                  </label>
+                  <label
+                    style={{
+                      fontSize: '10px',
+                      color: '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={masthead.showPostalReg !== false}
@@ -706,13 +810,30 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
           {/* Date, Volume & Issue */}
           <div>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e293b', display: 'block', marginBottom: '6px' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#1e293b',
+                display: 'block',
+                marginBottom: '6px',
+              }}
+            >
               📅 दिनांक व अंक संख्या (Date & Volume)
             </span>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr', gap: '6px', marginBottom: '6px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '0.8fr 1.2fr',
+                gap: '6px',
+                marginBottom: '6px',
+              }}
+            >
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>वार (Day)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  वार (Day)
+                </label>
                 <input
                   type="text"
                   value={masthead.dayOfWeek ?? 'बुधवार'}
@@ -730,9 +851,19 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <label style={{ fontSize: '10px', color: '#64748b' }}>दिनांक (Date)</label>
-                  <label style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <label
+                    style={{
+                      fontSize: '10px',
+                      color: '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={masthead.showDate !== false}
@@ -760,7 +891,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>वर्ष (Volume)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  वर्ष (Volume)
+                </label>
                 <input
                   type="text"
                   value={masthead.volumeYear ?? 'वर्ष 78'}
@@ -782,7 +915,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>अंक (Issue)</label>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  अंक (Issue)
+                </label>
                 <input
                   type="text"
                   value={masthead.issueCount ?? 'अंक 142'}

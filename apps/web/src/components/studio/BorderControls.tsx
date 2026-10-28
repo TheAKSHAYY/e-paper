@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import type { ElementBorders, SingleBorderConfig, BorderStyle } from '@epaper-studio/document-schema';
+import type {
+  ElementBorders,
+  SingleBorderConfig,
+  BorderStyle,
+} from '@epaper-studio/document-schema';
 
 export interface BorderControlsProps {
   borders?: ElementBorders;
@@ -53,8 +57,7 @@ export const BorderControls: React.FC<BorderControlsProps> = ({ borders = {}, on
     });
   };
 
-  const currentConfig =
-    activeSide === 'all' ? getSideBorder('top') : getSideBorder(activeSide);
+  const currentConfig = activeSide === 'all' ? getSideBorder('top') : getSideBorder(activeSide);
 
   return (
     <div
@@ -176,7 +179,8 @@ export const BorderControls: React.FC<BorderControlsProps> = ({ borders = {}, on
             value={currentConfig.width}
             onChange={(e) => {
               const width = parseInt(e.target.value, 10);
-              const style = width > 0 && currentConfig.style === 'none' ? 'solid' : currentConfig.style;
+              const style =
+                width > 0 && currentConfig.style === 'none' ? 'solid' : currentConfig.style;
               if (activeSide === 'all') {
                 handleApplyToAll({ width, style });
               } else {
@@ -193,7 +197,15 @@ export const BorderControls: React.FC<BorderControlsProps> = ({ borders = {}, on
 
       {/* Style Dropdown */}
       <div>
-        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: '#334155',
+            marginBottom: '4px',
+          }}
+        >
           बॉर्डर प्रकार (Style)
         </label>
         <select
@@ -229,7 +241,15 @@ export const BorderControls: React.FC<BorderControlsProps> = ({ borders = {}, on
 
       {/* Color Presets & Picker */}
       <div>
-        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: '#334155',
+            marginBottom: '4px',
+          }}
+        >
           रंग (Color)
         </label>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
