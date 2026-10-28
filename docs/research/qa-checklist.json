@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "viewportTests": [
+    { "width": 360, "height": 800, "device": "small Android phone" },
+    { "width": 390, "height": 844, "device": "common phone" },
+    { "width": 768, "height": 1024, "device": "tablet portrait" },
+    { "width": 1280, "height": 800, "device": "laptop" },
+    { "width": 1440, "height": 900, "device": "desktop" }
+  ],
+  "hindiProofText": [
+    "हिन्दी समाचार",
+    "कृषि और अर्थव्यवस्था",
+    "शिक्षा",
+    "प्रौद्योगिकी",
+    "क्योंकि",
+    "श्रद्धांजलि",
+    "क्षेत्र",
+    "त्रिकोण",
+    "श्री",
+    "दृष्टि",
+    "केंद्र",
+    "निःशुल्क",
+    "ज़िला",
+    "क़ानून",
+    "भारत।",
+    "भारत॥"
+  ],
+  "checks": [
+    {
+      "id": "font-loaded",
+      "requirement": "Wait for document.fonts.ready and verify expected faces; export must not silently use fallback fonts."
+    },
+    {
+      "id": "font-embedded",
+      "requirement": "Inspect PDF font inventory; ensure required fonts are embedded/subsetted as supported by the export path."
+    },
+    {
+      "id": "text-selectable",
+      "requirement": "Hindi text must remain searchable/selectable in exported PDF; page must not be rasterized as a single image."
+    },
+    {
+      "id": "devanagari-shaping",
+      "requirement": "Visual inspect all proof strings; no broken matras, conjuncts, nukta marks or detached half forms."
+    },
+    {
+      "id": "danda-linebreak",
+      "requirement": "Danda/double danda never sit alone at the beginning of a line."
+    },
+    {
+      "id": "overflow-detected",
+      "requirement": "Long headlines/body copy trigger a specific overflow warning and recovery suggestion."
+    },
+    {
+      "id": "content-preserved",
+      "requirement": "Switching templates preserves stories, images, captions, credits and publication metadata."
+    },
+    {
+      "id": "image-fidelity",
+      "requirement": "Images load, use intended crop, preserve aspect ratio and include captions/credit where entered."
+    },
+    {
+      "id": "page-dimensions",
+      "requirement": "PDF media/trim dimensions match the selected format and orientation."
+    },
+    {
+      "id": "multi-page",
+      "requirement": "Story continuation and folios reference real page numbers; no empty trailing page."
+    },
+    {
+      "id": "offline",
+      "requirement": "Test export after fonts/assets are locally available and without a warm remote cache."
+    },
+    {
+      "id": "screen-breakpoints",
+      "requirement": "No horizontal page-level overflow; controls remain usable on all listed viewports."
+    },
+    {
+      "id": "touch-targets",
+      "requirement": "Primary mobile touch targets aim for 44-48 CSS px/dp where practical; keyboard focus also visible."
+    },
+    {
+      "id": "print-proof",
+      "requirement": "Render every exported page to PNG and visually inspect at fit-page and 100% size."
+    }
+  ],
+  "requiredTestArtifacts": [
+    "PDF output for every paper format",
+    "PNG rendering of every PDF page",
+    "PDF page dimensions report",
+    "PDF font inventory/embedding report",
+    "overflow report",
+    "screenshots at each viewport",
+    "test report including failures and skipped checks"
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "version": 1,
+  "units": { "page": "mm", "type": "pt", "screen": "css-px" },
+  "gridMath": "columnWidth = (pageWidth - leftMargin - rightMargin - gutter * (columns - 1)) / columns",
+  "presets": [
+    {
+      "id": "classic-hindi-broadsheet",
+      "nameHi": "क्लासिक हिंदी दैनिक",
+      "nameEn": "Classic Hindi Broadsheet",
+      "paperFormatId": "us-broadsheet-configurable",
+      "columns": 8,
+      "outerMarginsMm": { "top": 9, "right": 9, "bottom": 10, "left": 9 },
+      "gutterMm": 3.2,
+      "baselineGridMm": 4,
+      "headerHeightMm": 46,
+      "footerHeightMm": 8,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#111111",
+        "muted": "#5A5A5A",
+        "rule": "#A8A8A8",
+        "accent": "#9F151B"
+      },
+      "typeScalePt": {
+        "masthead": 52,
+        "leadHeadline": 32,
+        "secondaryHeadline": 18,
+        "briefHeadline": 12,
+        "deck": 11,
+        "body": 9.5,
+        "byline": 8,
+        "caption": 8,
+        "folio": 8
+      },
+      "storyModules": [
+        "lead-4-col",
+        "lead-photo-4-col",
+        "secondary-2-col",
+        "brief-2-col",
+        "sidebar-briefs",
+        "photo-caption",
+        "fact-box",
+        "advertisement"
+      ],
+      "designRules": [
+        "one clear lead story",
+        "support stories use consistent spans",
+        "keep captions attached to photos",
+        "use strong horizontal rules sparingly",
+        "do not force all content onto one page"
+      ],
+      "recommendedFontPairingId": "classic-hindi-daily",
+      "recommendationStatus": "design-baseline-to-test"
+    },
+    {
+      "id": "classic-berliner",
+      "nameHi": "क्लासिक बर्लिनर",
+      "nameEn": "Classic Berliner",
+      "paperFormatId": "berliner-315x470",
+      "columns": 6,
+      "outerMarginsMm": { "top": 8, "right": 8, "bottom": 9, "left": 8 },
+      "gutterMm": 3,
+      "baselineGridMm": 4,
+      "headerHeightMm": 42,
+      "footerHeightMm": 7,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#111111",
+        "muted": "#5C5C5C",
+        "rule": "#B7B7B7",
+        "accent": "#A71920"
+      },
+      "typeScalePt": {
+        "masthead": 46,
+        "leadHeadline": 30,
+        "secondaryHeadline": 17,
+        "briefHeadline": 11.5,
+        "deck": 10.5,
+        "body": 9.2,
+        "byline": 8,
+        "caption": 7.8,
+        "folio": 8
+      },
+      "storyModules": [
+        "lead-3-col",
+        "lead-photo-3-col",
+        "secondary-2-col",
+        "brief-1-col",
+        "sidebar-briefs",
+        "photo-caption"
+      ],
+      "recommendedFontPairingId": "classic-hindi-daily",
+      "recommendationStatus": "design-baseline-to-test"
+    },
+    {
+      "id": "modern-hindi-daily",
+      "nameHi": "आधुनिक हिंदी दैनिक",
+      "nameEn": "Modern Hindi Daily",
+      "paperFormatId": "berliner-315x470",
+      "columns": 6,
+      "outerMarginsMm": { "top": 10, "right": 9, "bottom": 10, "left": 9 },
+      "gutterMm": 4,
+      "baselineGridMm": 4,
+      "headerHeightMm": 38,
+      "footerHeightMm": 7,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#161616",
+        "muted": "#606060",
+        "rule": "#D1D1D1",
+        "accent": "#B51E2B"
+      },
+      "typeScalePt": {
+        "masthead": 42,
+        "leadHeadline": 29,
+        "secondaryHeadline": 17,
+        "briefHeadline": 12,
+        "deck": 11,
+        "body": 9.8,
+        "byline": 8,
+        "caption": 8,
+        "folio": 8
+      },
+      "storyModules": [
+        "lead-3-col",
+        "hero-image-3-col",
+        "secondary-3-col",
+        "brief-cards",
+        "section-colour-bar",
+        "pull-quote"
+      ],
+      "recommendedFontPairingId": "modern-hindi-daily",
+      "recommendationStatus": "design-baseline-to-test"
+    },
+    {
+      "id": "local-news-compact",
+      "nameHi": "स्थानीय समाचार पत्र",
+      "nameEn": "Local News Compact",
+      "paperFormatId": "tabloid-280x430-configurable",
+      "columns": 4,
+      "outerMarginsMm": { "top": 8, "right": 8, "bottom": 8, "left": 8 },
+      "gutterMm": 3,
+      "baselineGridMm": 4,
+      "headerHeightMm": 34,
+      "footerHeightMm": 7,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#151515",
+        "muted": "#595959",
+        "rule": "#B5B5B5",
+        "accent": "#9E2025"
+      },
+      "typeScalePt": {
+        "masthead": 36,
+        "leadHeadline": 26,
+        "secondaryHeadline": 15,
+        "briefHeadline": 11,
+        "deck": 10,
+        "body": 9.2,
+        "byline": 7.8,
+        "caption": 7.8,
+        "folio": 7.8
+      },
+      "storyModules": [
+        "lead-2-col",
+        "lead-photo-2-col",
+        "brief-1-col",
+        "local-notice",
+        "small-ad",
+        "photo-caption"
+      ],
+      "recommendedFontPairingId": "local-news",
+      "recommendationStatus": "design-baseline-to-test"
+    },
+    {
+      "id": "a3-special-edition",
+      "nameHi": "A3 विशेषांक",
+      "nameEn": "A3 Special Edition",
+      "paperFormatId": "a3-297x420",
+      "columns": 4,
+      "outerMarginsMm": { "top": 9, "right": 9, "bottom": 9, "left": 9 },
+      "gutterMm": 3,
+      "baselineGridMm": 4,
+      "headerHeightMm": 36,
+      "footerHeightMm": 7,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#151515",
+        "muted": "#5B5B5B",
+        "rule": "#BABABA",
+        "accent": "#184E77"
+      },
+      "typeScalePt": {
+        "masthead": 36,
+        "leadHeadline": 25,
+        "secondaryHeadline": 15,
+        "briefHeadline": 11.5,
+        "deck": 10.5,
+        "body": 9.5,
+        "byline": 8,
+        "caption": 8,
+        "folio": 8
+      },
+      "storyModules": [
+        "lead-2-col",
+        "results-table",
+        "announcement",
+        "student-profile",
+        "photo-grid",
+        "caption"
+      ],
+      "recommendedFontPairingId": "editorial-special",
+      "recommendationStatus": "design-baseline-to-test"
+    },
+    {
+      "id": "a4-digest",
+      "nameHi": "A4 समाचार डाइजेस्ट",
+      "nameEn": "A4 Digest",
+      "paperFormatId": "a4-210x297",
+      "columns": 3,
+      "outerMarginsMm": { "top": 9, "right": 9, "bottom": 9, "left": 9 },
+      "gutterMm": 3,
+      "baselineGridMm": 4,
+      "headerHeightMm": 30,
+      "footerHeightMm": 6,
+      "palette": {
+        "paper": "#FFFFFF",
+        "ink": "#151515",
+        "muted": "#5A5A5A",
+        "rule": "#C0C0C0",
+        "accent": "#174A6E"
+      },
+      "typeScalePt": {
+        "masthead": 28,
+        "leadHeadline": 20,
+        "secondaryHeadline": 13.5,
+        "briefHeadline": 10.5,
+        "deck": 10,
+        "body": 9,
+        "byline": 7.5,
+        "caption": 7.5,
+        "folio": 7.5
+      },
+      "storyModules": [
+        "digest-lead",
+        "two-column-story",
+        "quick-brief",
+        "announcement",
+        "small-photo"
+      ],
+      "recommendedFontPairingId": "editorial-special",
+      "recommendationStatus": "design-baseline-to-test"
+    }
+  ],
+  "sharedRules": {
+    "allowCustomPageDimensions": true,
+    "preserveStoriesOnTemplateSwitch": true,
+    "warnOnOverflow": true,
+    "neverSilentlyCropText": true,
+    "gridOverlayVisibleInEditorOnly": true,
+    "devaDropCapsDefault": false,
+    "devaLetterSpacingDefault": 0,
+    "headlineTextWrap": "balance-if-supported-and-visually-verified",
+    "bodyTextWrap": "normal-word-boundary-based",
+    "neverUseWordBreakBreakAll": true
+  }
+}

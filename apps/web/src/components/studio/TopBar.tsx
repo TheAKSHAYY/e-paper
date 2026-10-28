@@ -1,0 +1,473 @@
+import React, { useState, useEffect } from 'react';
+import type { PageSizePreset } from '@epaper-studio/document-schema';
+
+export type ViewMode = 'landing' | 'split' | 'preview';
+
+export interface TopBarProps {
+  publicationTitle: string;
+  onRenameTitle: (newTitle: string) => void;
+  currentPageNumber: number;
+  totalPages: number;
+  onSelectPage: (pageNumber: number) => void;
+  pageSize: PageSizePreset;
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
+  onSaveDraft: () => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  scale: number;
+  onScaleChange: (scale: number) => void;
+  onFitPage?: () => void;
+  onNewPublication: () => void;
+  onOpenTemplates: () => void;
+  onOpenMastheadGallery?: () => void;
+  onOpenDrafts: () => void;
+  onExportPdf: () => void;
+  isExportingPdf: boolean;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleInspector?: () => void;
+  isInspectorOpen?: boolean;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({
+  publicationTitle,
+  onRenameTitle,
+  currentPageNumber,
+  totalPages,
+  onSelectPage,
+  pageSize,
+  hasUnsavedChanges,
+  isSaving,
+  onSaveDraft,
+  onViewModeChange,
+  scale,
+  onScaleChange,
+  onFitPage,
+  onNewPublication,
+  onOpenTemplates,
+  onExportPdf,
+  isExportingPdf,
+  onToggleSidebar,
+  isSidebarOpen = true,
+  onToggleInspector,
+  isInspectorOpen = true,
+}) => {
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(publicationTitle);
+
+  useEffect(() => {
+    setEditedTitle(publicationTitle);
+  }, [publicationTitle]);
+
+  const handleFinishRename = () => {
+    setIsRenaming(false);
+    if (editedTitle.trim() && editedTitle !== publicationTitle) {
+      onRenameTitle(editedTitle.trim());
+    } else {
+      setEditedTitle(publicationTitle);
+    }
+  };
+
+  const roundedScale = Math.round(scale * 100) / 100;
+  const standardScales = [0.25, 0.35, 0.5, 0.65, 0.75, 1.0, 1.25, 1.5];
+
+  return (
+    <header
+      style={{
+        backgroundColor: '#111827',
+        color: '#f8fafc',
+        height: '48px',
+        borderBottom: '1px solid #1f2937',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 12px',
+        boxSizing: 'border-box',
+        gap: '8px',
+        userSelect: 'none',
+        zIndex: 50,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {/* ========================================================
+       * LEFT: Brand, Sidebar Toggle, Document Title & Save Status
+       * ======================================================== */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 1 }}>
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            title={isSidebarOpen ? 'साइडबार छिपाएं' : 'साइडबार दिखाएं'}
+            aria-label="Toggle sidebar"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#9ca3af',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+            }}
+          >
+            {isSidebarOpen ? '◀' : '☰'}
+          </button>
+        )}
+
+        {/* Brand Crest */}
+        <div
+          onClick={() => onViewModeChange('landing')}
+          title="मुख्य पृष्ठ पर लौटें (Return to Home)"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0 }}
+        >
+          <div
+            style={{
+              width: '22px',
+              height: '22px',
+              backgroundColor: '#b91c1c',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 900,
+              fontSize: '13px',
+              fontFamily: "'Noto Serif Devanagari', serif",
+              borderRadius: '2px',
+            }}
+          >
+            प
+          </div>
+          <span
+            style={{
+              fontSize: '14px',
+              fontWeight: 800,
+              color: '#ffffff',
+              fontFamily: "'Noto Serif Devanagari', 'Playfair Display', serif",
+            }}
+          >
+            E-Paper Studio
+          </span>
+        </div>
+
+        <div style={{ height: '14px', width: '1px', backgroundColor: '#374151', flexShrink: 0 }} />
+
+        {/* Editable Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0 }}>
+          {isRenaming ? (
+            <input
+              type="text"
+              value={editedTitle}
+              autoFocus
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleFinishRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFinishRename();
+                if (e.key === 'Escape') {
+                  setEditedTitle(publicationTitle);
+                  setIsRenaming(false);
+                }
+              }}
+              style={{
+                backgroundColor: '#1f2937',
+                color: '#ffffff',
+                border: '1px solid #3b82f6',
+                borderRadius: '2px',
+                padding: '2px 6px',
+                fontSize: '12px',
+                fontFamily: "'Noto Serif Devanagari', serif",
+                fontWeight: 700,
+                outline: 'none',
+              }}
+            />
+          ) : (
+            <span
+              onClick={() => setIsRenaming(true)}
+              title="नाम बदलने के लिए क्लिक करें"
+              style={{
+                fontSize: '12.5px',
+                color: '#e5e7eb',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'Noto Serif Devanagari', serif",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '180px',
+              }}
+            >
+              {publicationTitle}
+            </span>
+          )}
+
+          {/* Save Status Badge */}
+          {hasUnsavedChanges ? (
+            <button
+              onClick={onSaveDraft}
+              disabled={isSaving}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '11px',
+                color: '#f59e0b',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                flexShrink: 0,
+              }}
+            >
+              {isSaving ? '...' : '● सेव करें'}
+            </button>
+          ) : (
+            <span style={{ fontSize: '11px', color: '#10b981', flexShrink: 0 }}>✓</span>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================
+       * CENTER: Page Switcher, Paper Standard & Zoom
+       * ======================================================== */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          backgroundColor: '#1f2937',
+          padding: '2px 8px',
+          borderRadius: '3px',
+          flexShrink: 0,
+        }}
+      >
+        <button
+          disabled={currentPageNumber <= 1}
+          onClick={() => onSelectPage(currentPageNumber - 1)}
+          title="पिछला पेज"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: currentPageNumber <= 1 ? '#4b5563' : '#d1d5db',
+            cursor: currentPageNumber <= 1 ? 'not-allowed' : 'pointer',
+            padding: '2px 4px',
+            fontSize: '11px',
+          }}
+        >
+          ◀
+        </button>
+
+        <span style={{ fontSize: '11.5px', color: '#f3f4f6', fontWeight: 600 }}>
+          {currentPageNumber} / {totalPages}
+        </span>
+
+        <button
+          disabled={currentPageNumber >= totalPages}
+          onClick={() => onSelectPage(currentPageNumber + 1)}
+          title="अगला पेज"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: currentPageNumber >= totalPages ? '#4b5563' : '#d1d5db',
+            cursor: currentPageNumber >= totalPages ? 'not-allowed' : 'pointer',
+            padding: '2px 4px',
+            fontSize: '11px',
+          }}
+        >
+          ▶
+        </button>
+
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+
+        <span style={{ fontSize: '10.5px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 700 }}>
+          {pageSize}
+        </span>
+
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+
+        {/* Inline Zoom Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+          <button
+            onClick={() => onScaleChange(Math.max(0.25, Math.round((scale - 0.1) * 100) / 100))}
+            title="ज़ूम कम करें"
+            style={{
+              backgroundColor: '#1f2937',
+              border: '1px solid #374151',
+              color: '#d1d5db',
+              borderRadius: '2px',
+              fontSize: '12px',
+              fontWeight: 700,
+              padding: '1px 6px',
+              cursor: 'pointer',
+              lineHeight: 1.2,
+            }}
+          >
+            −
+          </button>
+
+          <select
+            value={roundedScale}
+            onChange={(e) => onScaleChange(parseFloat(e.target.value))}
+            style={{
+              backgroundColor: '#1f2937',
+              color: '#f3f4f6',
+              border: '1px solid #374151',
+              borderRadius: '2px',
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: '2px 4px',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            {!standardScales.includes(roundedScale) && (
+              <option value={roundedScale}>{Math.round(scale * 100)}% (फ़िट)</option>
+            )}
+            {standardScales.map((val) => (
+              <option key={val} value={val}>
+                {Math.round(val * 100)}%
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => onScaleChange(Math.min(2.0, Math.round((scale + 0.1) * 100) / 100))}
+            title="ज़ूम बढ़ाएं"
+            style={{
+              backgroundColor: '#1f2937',
+              border: '1px solid #374151',
+              color: '#d1d5db',
+              borderRadius: '2px',
+              fontSize: '12px',
+              fontWeight: 700,
+              padding: '1px 6px',
+              cursor: 'pointer',
+              lineHeight: 1.2,
+            }}
+          >
+            +
+          </button>
+
+          {onFitPage && (
+            <button
+              onClick={onFitPage}
+              title="पूरा पेज फ़िट करें"
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #374151',
+                color: '#9ca3af',
+                borderRadius: '2px',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                padding: '2px 5px',
+                cursor: 'pointer',
+                marginLeft: '2px',
+              }}
+            >
+              फ़िट
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================
+       * RIGHT: Return to Home, Templates, Export PDF & Inspector
+       * ======================================================== */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <button
+          onClick={() => onViewModeChange('landing')}
+          title="मुख्य पृष्ठ पर लौटें"
+          style={{
+            backgroundColor: 'transparent',
+            color: '#9ca3af',
+            border: 'none',
+            padding: '5px 8px',
+            fontSize: '11.5px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          ← मुख्य पृष्ठ
+        </button>
+
+        <button
+          onClick={onNewPublication}
+          title="नया अख़बार बनाएं"
+          style={{
+            backgroundColor: '#1f2937',
+            color: '#e5e7eb',
+            border: '1px solid #374151',
+            borderRadius: '2px',
+            padding: '5px 8px',
+            fontSize: '11.5px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          + नया
+        </button>
+
+        <button
+          onClick={onOpenTemplates}
+          title="टेम्पलेट प्रारूप"
+          style={{
+            backgroundColor: '#1f2937',
+            color: '#e5e7eb',
+            border: '1px solid #374151',
+            borderRadius: '2px',
+            padding: '5px 8px',
+            fontSize: '11.5px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          प्रारूप
+        </button>
+
+        {/* Primary PDF Download Button */}
+        <button
+          onClick={onExportPdf}
+          disabled={isExportingPdf}
+          title="300 DPI प्रेस-रेडी वेक्टर PDF डाउनलोड करें"
+          style={{
+            backgroundColor: '#b91c1c',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '2px',
+            padding: '5px 12px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            cursor: isExportingPdf ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span>📥</span>
+          <span>{isExportingPdf ? 'डाउनलोड...' : 'PDF'}</span>
+        </button>
+
+        {onToggleInspector && (
+          <button
+            onClick={onToggleInspector}
+            title={isInspectorOpen ? 'पैनल छिपाएं' : 'पैनल दिखाएं'}
+            style={{
+              backgroundColor: isInspectorOpen ? '#1e293b' : 'transparent',
+              border: '1px solid',
+              borderColor: isInspectorOpen ? '#475569' : '#374151',
+              color: isInspectorOpen ? '#60a5fa' : '#9ca3af',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>⚙</span>
+            <span>पैनल</span>
+          </button>
+        )}
+      </div>
+    </header>
+  );
+};

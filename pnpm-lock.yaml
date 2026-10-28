@@ -237,6 +237,9 @@ importers:
         specifier: ^19.0.0
         version: 19.3.1(react@19.3.1)
     devDependencies:
+      '@epaper-studio/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       '@types/react':
         specifier: ^19.0.10
         version: 19.3.0
@@ -274,6 +277,9 @@ importers:
       '@epaper-studio/document-schema':
         specifier: workspace:*
         version: link:../document-schema
+      '@epaper-studio/typography':
+        specifier: workspace:*
+        version: link:../typography
     devDependencies:
       typescript:
         specifier: ^5.7.3

@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+/* ====================================================================
+ * Existing Device Profiles & Geometry Specifications
+ * ==================================================================== */
+
 export const SupportedDeviceSchema = z.enum([
   'kindle-scribe',
   'remarkable-2',
@@ -20,6 +24,12 @@ export type PageOrientation = z.infer<typeof PageOrientationSchema>;
 export const PageDimensionsSchema = z.object({
   widthPt: z.number().positive(),
   heightPt: z.number().positive(),
+  widthMm: z.number().optional(),
+  heightMm: z.number().optional(),
+  widthIn: z.number().optional(),
+  heightIn: z.number().optional(),
+  aspectRatio: z.number().optional(),
+  aspectRatioLabel: z.string().optional(),
   dpi: z.number().int().positive().default(300),
   grayscaleLevels: z.number().int().min(2).max(256).default(16),
 });
@@ -46,3 +56,486 @@ export const MinimalDocumentSchema = z.object({
 });
 
 export type MinimalDocument = z.infer<typeof MinimalDocumentSchema>;
+
+/* ====================================================================
+ * Newspaper Publishing Document Schema (Phase 1)
+ * ==================================================================== */
+
+export const PageSizePresetSchema = z.enum(['broadsheet', 'tabloid', 'berliner', 'a3', 'a4']);
+
+export type PageSizePreset = z.infer<typeof PageSizePresetSchema>;
+
+export interface PageSizeDefinition {
+  name: string;
+  widthPt: number;
+  heightPt: number;
+  widthMm: number;
+  heightMm: number;
+  aspectRatio: string;
+  description: string;
+}
+
+export const PAGE_SIZE_DEFINITIONS: Record<PageSizePreset, PageSizeDefinition> = {
+  broadsheet: {
+    name: 'Broadsheet (15" × 22.75")',
+    widthPt: 1080,
+    heightPt: 1638,
+    widthMm: 381,
+    heightMm: 578,
+    aspectRatio: '1:1.52',
+    description: 'Traditional full-format newspaper for major national and international dailies.',
+  },
+  berliner: {
+    name: 'Berliner / Midi (12.4" × 18.5")',
+    widthPt: 892.8,
+    heightPt: 1332,
+    widthMm: 315,
+    heightMm: 470,
+    aspectRatio: '1:1.49',
+    description: 'Mid-sized European format balancing multi-column density with reader comfort.',
+  },
+  tabloid: {
+    name: 'Tabloid / Compact (11" × 17")',
+    widthPt: 792,
+    heightPt: 1224,
+    widthMm: 280,
+    heightMm: 432,
+    aspectRatio: '1:1.55',
+    description:
+      'Modern compact format popular for local gazettes, campus papers, and periodicals.',
+  },
+  a3: {
+    name: 'ISO A3 (297mm × 420mm)',
+    widthPt: 841.89,
+    heightPt: 1190.55,
+    widthMm: 297,
+    heightMm: 420,
+    aspectRatio: '1:1.41',
+    description: 'Standard international archival poster and institutional newspaper size.',
+  },
+  a4: {
+    name: 'ISO A4 (210mm × 297mm)',
+    widthPt: 595.28,
+    heightPt: 841.89,
+    widthMm: 210,
+    heightMm: 297,
+    aspectRatio: '1:1.41',
+    description: 'Universal office print format, ideal for desktop printing and digital bulletins.',
+  },
+};
+
+export const ArticlePrioritySchema = z.enum(['lead', 'major', 'minor', 'brief']);
+export type ArticlePriority = z.infer<typeof ArticlePrioritySchema>;
+
+export const ImagePlacementSchema = z.enum(['top', 'middle', 'side', 'bottom', 'none']);
+export type ImagePlacement = z.infer<typeof ImagePlacementSchema>;
+
+export const ImageLayoutSchema = z.enum(['full', 'side', 'thumbnail', 'card']);
+export type ImageLayout = z.infer<typeof ImageLayoutSchema>;
+
+export const ImageAspectSchema = z.enum(['wide', 'standard', 'square', 'portrait', 'original']);
+export type ImageAspect = z.infer<typeof ImageAspectSchema>;
+
+export const ImageFitSchema = z.enum(['cover', 'contain', 'fill']);
+export type ImageFit = z.infer<typeof ImageFitSchema>;
+
+export const ImageFocalPointSchema = z.enum([
+  'center',
+  'top',
+  'bottom',
+  'left',
+  'right',
+  'top left',
+  'top right',
+  'bottom left',
+  'bottom right',
+]);
+export type ImageFocalPoint = z.infer<typeof ImageFocalPointSchema>;
+
+export const ElementTypeSchema = z.enum([
+  'block',
+  'top-headline',
+  'short-news',
+  'advertisement',
+  'rashifal',
+]);
+export type ElementType = z.infer<typeof ElementTypeSchema>;
+
+export const BorderStyleSchema = z.enum(['solid', 'double', 'dashed', 'dotted', 'none']);
+export type BorderStyle = z.infer<typeof BorderStyleSchema>;
+
+export const SingleBorderConfigSchema = z.object({
+  width: z.number().min(0).max(12).default(0),
+  style: BorderStyleSchema.default('none'),
+  color: z.string().default('#111111'),
+});
+export type SingleBorderConfig = z.infer<typeof SingleBorderConfigSchema>;
+
+export const ElementBordersSchema = z.object({
+  top: SingleBorderConfigSchema.optional(),
+  right: SingleBorderConfigSchema.optional(),
+  bottom: SingleBorderConfigSchema.optional(),
+  left: SingleBorderConfigSchema.optional(),
+});
+export type ElementBorders = z.infer<typeof ElementBordersSchema>;
+
+export const RashifalItemSchema = z.object({
+  rashi: z.string(),
+  sign: z.string(),
+  prediction: z.string(),
+});
+export type RashifalItem = z.infer<typeof RashifalItemSchema>;
+
+export const ShortNewsItemSchema = z.object({
+  title: z.string(),
+  snippet: z.string(),
+});
+export type ShortNewsItem = z.infer<typeof ShortNewsItemSchema>;
+
+export const AdvertisementDataSchema = z.object({
+  sponsor: z.string().optional(),
+  callToAction: z.string().optional(),
+  phone: z.string().optional(),
+  website: z.string().optional(),
+});
+export type AdvertisementData = z.infer<typeof AdvertisementDataSchema>;
+
+export const ArticleSchema = z.object({
+  id: z.string().min(1),
+  elementType: ElementTypeSchema.optional(),
+  headline: z.string().min(1, 'Headline is required'),
+  subheadline: z.string().optional().default(''),
+  body: z.string().min(1, 'Body text is required'),
+  byline: z.string().optional().default(''),
+  dateline: z.string().optional().default(''),
+  imageUrl: z.string().optional(),
+  imageCaption: z.string().optional().default(''),
+  imageCredit: z.string().optional(),
+  imagePlacement: ImagePlacementSchema.default('top'),
+  imageLayout: ImageLayoutSchema.optional(),
+  imageAspect: ImageAspectSchema.optional(),
+  /** How the image fills its frame. 'cover' crops; 'contain' letterboxes; 'fill' stretches. */
+  imageFit: ImageFitSchema.optional(),
+  /**
+   * Coarse 9-point focal-point preset, compatible with CSS object-position values.
+   * Prefer imageFocalX / imageFocalY for precise positioning.
+   */
+  imageFocalPoint: ImageFocalPointSchema.optional(),
+  /**
+   * Precise horizontal focal point as a normalized value 0.0 (left) → 1.0 (right).
+   * Overrides the coarse imageFocalPoint when present.
+   */
+  imageFocalX: z.number().min(0).max(1).optional(),
+  /**
+   * Precise vertical focal point as a normalized value 0.0 (top) → 1.0 (bottom).
+   * Overrides the coarse imageFocalPoint when present.
+   */
+  imageFocalY: z.number().min(0).max(1).optional(),
+  /** Column span within the 12-column grid engine (1 to 12) */
+  columnSpan: z.number().int().min(1).max(12).default(6),
+  priority: ArticlePrioritySchema.default('major'),
+  orderIndex: z.number().int().default(0),
+
+  // Independent 4-side borders
+  borders: ElementBordersSchema.optional(),
+
+  // Custom typography & styling
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  paddingPx: z.number().min(0).max(64).optional(),
+  kickerText: z.string().optional(),
+
+  // Specialized element payload
+  rashifalItems: z.array(RashifalItemSchema).optional(),
+  shortNewsItems: z.array(ShortNewsItemSchema).optional(),
+  advertisementData: AdvertisementDataSchema.optional(),
+});
+
+export type Article = z.infer<typeof ArticleSchema>;
+
+/**
+ * Computes the CSS `object-position` value from an Article's focal point fields.
+ * Precise X/Y values (0-1) take priority over the coarse 9-point preset.
+ * Falls back to 'center' when no focal point is set.
+ */
+export function getImageObjectPosition(
+  article: Pick<Article, 'imageFocalX' | 'imageFocalY' | 'imageFocalPoint'>
+): string {
+  const hasExact = article.imageFocalX !== undefined || article.imageFocalY !== undefined;
+  if (hasExact) {
+    const x = Math.round((article.imageFocalX ?? 0.5) * 100);
+    const y = Math.round((article.imageFocalY ?? 0.5) * 100);
+    return `${x}% ${y}%`;
+  }
+  return article.imageFocalPoint ?? 'center';
+}
+
+/**
+ * Returns the CSS `aspect-ratio` string for a given ImageAspect preset.
+ */
+export function getImageAspectRatio(aspect: Article['imageAspect']): string {
+  switch (aspect) {
+    case 'wide':
+      return '16 / 9';
+    case 'square':
+      return '1 / 1';
+    case 'portrait':
+      return '3 / 4';
+    case 'original':
+      return 'auto';
+    case 'standard':
+    default:
+      return '4 / 3';
+  }
+}
+
+export function getPageDimensions(
+  pageSize: PageSizePreset,
+  orientation: PageOrientation = 'portrait'
+): PageDimensions {
+  const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
+  const isLandscape = orientation === 'landscape';
+  const widthPt = isLandscape ? def.heightPt : def.widthPt;
+  const heightPt = isLandscape ? def.widthPt : def.heightPt;
+  const widthMm = isLandscape ? def.heightMm : def.widthMm;
+  const heightMm = isLandscape ? def.widthMm : def.heightMm;
+  const widthIn = Number((widthPt / 72).toFixed(4));
+  const heightIn = Number((heightPt / 72).toFixed(4));
+  const aspectRatio = widthPt / heightPt;
+  return {
+    widthPt,
+    heightPt,
+    widthMm,
+    heightMm,
+    widthIn,
+    heightIn,
+    aspectRatio,
+    aspectRatioLabel: isLandscape
+      ? `${def.heightMm}×${def.widthMm}mm`
+      : `${def.widthMm}×${def.heightMm}mm`,
+    dpi: 300,
+    grayscaleLevels: 16,
+  };
+}
+
+export const MastheadRuleStyleSchema = z.enum([
+  'ornate-double',
+  'oxford-thick-thin',
+  'classic-double',
+  'single-hairline',
+  'none',
+]);
+export type MastheadRuleStyle = z.infer<typeof MastheadRuleStyleSchema>;
+
+export const MastheadAlignmentSchema = z.enum(['center', 'left', 'justified']);
+export type MastheadAlignment = z.infer<typeof MastheadAlignmentSchema>;
+
+export const MastheadEmblemSchema = z.enum([
+  'none',
+  'ashoka-chakra',
+  'sun',
+  'quill',
+  'lion-capital',
+  'custom',
+]);
+export type MastheadEmblem = z.infer<typeof MastheadEmblemSchema>;
+
+export const MastheadConfigSchema = z.object({
+  // Core title & branding
+  title: z.string().min(1, 'Publication name is required').default('जनवाणी समाचार'),
+  tagline: z.string().default('सत्य, निष्पक्षता और जनसेवा का प्रतीक'),
+  subtitle: z.string().optional().default('सत्य, निष्पक्षता और जनसेवा का प्रतीक • स्थापना 1947'),
+  establishmentYear: z.string().default('1947'),
+
+  // Typography & Styling
+  fontFamily: z.string().default("'Rozha One', serif"),
+  fontSizePt: z.number().default(52),
+  alignment: MastheadAlignmentSchema.default('center'),
+  ruleStyle: MastheadRuleStyleSchema.default('ornate-double'),
+  emblem: MastheadEmblemSchema.default('none'),
+  customEmblemUrl: z.string().optional().default(''),
+
+  // Weather & Air Quality
+  weatherCity: z.string().default('नई दिल्ली'),
+  temperature: z.string().default('25°C'),
+  weatherCondition: z.string().default('साफ़ आसमान'),
+  weatherNotice: z.string().optional().default('मौसम: साफ़ आसमान, 25°C'),
+  airQuality: z.string().default('AQI 128 • मध्यम'),
+
+  // Price & Registration
+  price: z.string().optional().default('मूल्य ₹5.00'),
+  postalRegNumber: z.string().default('पंजीयन सं. DL-11001/2026'),
+  pageCountLabel: z.string().default('कुल पृष्ठ 8'),
+
+  // Date, Volume & Edition
+  dayOfWeek: z.string().default('बुधवार'),
+  date: z.string().default(() => '28 अक्टूबर 2026'),
+  volumeYear: z.string().default('वर्ष 78'),
+  issueNumber: z.string().default('वर्ष 78 • अंक 142'),
+  issueCount: z.string().default('अंक 142'),
+  edition: z.string().default('प्रातःकालीन मुख्य संस्करण'),
+
+  // Secondary header, announcement & publication metadata
+  presetStyleId: z.string().optional(),
+  announcementStripText: z.string().optional(),
+  showAnnouncementStrip: z.boolean().optional(),
+  websiteUrl: z.string().optional(),
+  secondaryHeaderTitle: z.string().optional(),
+  secondaryHeaderSubtitle: z.string().optional(),
+  showSecondaryHeader: z.boolean().optional(),
+
+  // Visibility toggles
+  showTopStrip: z.boolean().default(true),
+  showWeather: z.boolean().default(true),
+  showAirQuality: z.boolean().default(true),
+  showTagline: z.boolean().default(true),
+  showEstablishment: z.boolean().default(true),
+  showPrice: z.boolean().default(true),
+  showPostalReg: z.boolean().default(true),
+  showBottomStrip: z.boolean().default(true),
+  showVolumeIssue: z.boolean().default(true),
+  showDate: z.boolean().default(true),
+  showEdition: z.boolean().default(true),
+  showEmblem: z.boolean().default(false),
+});
+
+export type MastheadConfig = z.infer<typeof MastheadConfigSchema>;
+
+export const NewspaperPresetIdSchema = z.enum([
+  'classic-hindi-broadsheet',
+  'modern-hindi-daily',
+  'local-hindi-gazette',
+  'classic-broadsheet',
+  'modern-editorial',
+  'compact-local',
+]);
+
+export type NewspaperPresetId = z.infer<typeof NewspaperPresetIdSchema>;
+
+export const SpacingDensitySchema = z.enum(['compact', 'normal', 'spacious']);
+export type SpacingDensity = z.infer<typeof SpacingDensitySchema>;
+
+export const NewspaperLayoutConfigSchema = z.object({
+  presetId: NewspaperPresetIdSchema.default('classic-hindi-broadsheet'),
+  /** Standard 12-column newspaper layout engine (2 to 12 columns) */
+  columnCount: z.number().int().min(2).max(12).default(12),
+  columnRule: z.boolean().default(true),
+  gridRowLayouts: z.array(z.string()).optional(),
+  mastheadFont: z.string().default("'Rozha One', serif"),
+  headlineFont: z.string().default("'Noto Serif Devanagari', serif"),
+  subheadlineFont: z.string().default("'Noto Serif Devanagari', serif"),
+  bodyFont: z.string().default("'Noto Serif Devanagari', serif"),
+  headlineWeight: z.number().int().min(300).max(900).default(700),
+  bodyFontSizePt: z.number().min(8).max(16).default(10),
+  spacingDensity: SpacingDensitySchema.default('normal'),
+  showFooter: z.boolean().default(true),
+  footerText: z.string().optional().default(''),
+});
+
+export type NewspaperLayoutConfig = z.infer<typeof NewspaperLayoutConfigSchema>;
+
+export const NewspaperMetadataSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1, 'Project title is required').default('दैनिक नवप्रभात'),
+  language: z.string().default('hi'),
+  direction: z.enum(['ltr', 'rtl']).default('ltr'),
+  pageSize: PageSizePresetSchema.default('broadsheet'),
+  orientation: PageOrientationSchema.default('portrait'),
+  dimensions: PageDimensionsSchema.optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type NewspaperMetadata = z.infer<typeof NewspaperMetadataSchema>;
+
+export const NewspaperBlockTypeSchema = z.enum([
+  'masthead',
+  'lead',
+  'major',
+  'minor',
+  'brief',
+  'photo',
+  'editorial',
+  'notice',
+]);
+export type NewspaperBlockType = z.infer<typeof NewspaperBlockTypeSchema>;
+
+export const NewspaperPageSchema = z.object({
+  id: z.string().min(1),
+  pageNumber: z.number().int().positive(),
+  sectionTitle: z.string().optional().default('मुख्य पृष्ठ'),
+  articles: z.array(ArticleSchema).default([]),
+  columnCount: z.number().int().min(2).max(6).optional(),
+});
+
+export type NewspaperPage = z.infer<typeof NewspaperPageSchema>;
+
+export const NewspaperDocumentSchema = z.object({
+  version: z.literal('1.0.0'),
+  id: z.string().min(1),
+  metadata: NewspaperMetadataSchema,
+  masthead: MastheadConfigSchema,
+  layout: NewspaperLayoutConfigSchema,
+  articles: z.array(ArticleSchema).default([]),
+  pages: z.array(NewspaperPageSchema).optional(),
+});
+
+export type NewspaperDocument = z.infer<typeof NewspaperDocumentSchema>;
+
+/**
+ * Returns an array of discrete pages from a NewspaperDocument.
+ * If explicit `pages` exist and are non-empty, returns `doc.pages`.
+ * Otherwise, wraps root `doc.articles` in a single page model for backward compatibility.
+ */
+export function getPublicationPages(doc: NewspaperDocument): NewspaperPage[] {
+  if (doc.pages && doc.pages.length > 0) {
+    return doc.pages;
+  }
+  return [
+    {
+      id: 'page-1',
+      pageNumber: 1,
+      sectionTitle: doc.metadata.language === 'hi' ? 'मुख्य पृष्ठ' : 'Front Page',
+      articles: doc.articles,
+      columnCount: doc.layout.columnCount,
+    },
+  ];
+}
+
+/**
+ * Creates a new blank NewspaperPage with a unique ID and designated page number.
+ */
+export function createNewBlankPage(
+  pageNumber: number,
+  options: { sectionTitle?: string; language?: string } = {}
+): NewspaperPage {
+  const isHindi = options.language === 'hi';
+  const defaultTitle =
+    options.sectionTitle ??
+    (isHindi
+      ? pageNumber === 1
+        ? 'मुख्य पृष्ठ'
+        : pageNumber === 2
+          ? 'संपादकीय एवं विचार'
+          : pageNumber === 3
+            ? 'देश एवं विदेश'
+            : pageNumber === 4
+              ? 'व्यापार एवं खेल'
+              : `पृष्ठ ${pageNumber}`
+      : pageNumber === 1
+        ? 'Front Page'
+        : pageNumber === 2
+          ? 'Opinion & Editorial'
+          : pageNumber === 3
+            ? 'National & World'
+            : pageNumber === 4
+              ? 'Business & Sports'
+              : `Page ${pageNumber}`);
+
+  return {
+    id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    pageNumber,
+    sectionTitle: defaultTitle,
+    articles: [],
+  };
+}

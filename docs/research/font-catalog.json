@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "locale": "hi-IN",
+  "previewText": "हिन्दी समाचार | शिक्षा, कृषि और अर्थव्यवस्था | भारत की नई दिशा",
+  "fontFamilies": [
+    {
+      "id": "noto-serif-devanagari",
+      "name": "Noto Serif Devanagari",
+      "category": "classic-editorial",
+      "roles": ["masthead", "leadHeadline", "secondaryHeadline", "body"],
+      "recommendedDefaultFor": ["classic-hindi-daily", "editorial-special"],
+      "designNote": "Serif Devanagari face suited to a classic editorial tone; test available weights and body sizes in real exported PDFs.",
+      "weightsToOffer": [400, 500, 600, 700, 800],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://notofonts.github.io/noto-docs/specimen/NotoSerifDevanagari/",
+      "specimenUrl": "https://fonts.google.com/specimen/Noto+Serif+Devanagari",
+      "license": "Verify and bundle the distributed font's license file from the official source; Noto font distributions commonly use OFL, but validate the exact build.",
+      "useForBody": true
+    },
+    {
+      "id": "noto-sans-devanagari",
+      "name": "Noto Sans Devanagari",
+      "category": "neutral-sans",
+      "roles": ["secondaryHeadline", "briefHeadline", "body", "caption", "metadata"],
+      "recommendedDefaultFor": ["modern-hindi-daily", "local-news"],
+      "designNote": "Unmodulated sans-serif Devanagari design with broad script support.",
+      "weightsToOffer": [400, 500, 600, 700, 800],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://github.com/notofonts/noto-docs/blob/main/docs/specimen/NotoSansDevanagari.md",
+      "specimenUrl": "https://fonts.google.com/specimen/Noto+Sans+Devanagari",
+      "license": "Verify bundled font license and retain the license file.",
+      "useForBody": true
+    },
+    {
+      "id": "noto-sans-devanagari-ui",
+      "name": "Noto Sans Devanagari UI",
+      "category": "interface",
+      "roles": ["ui", "button", "input", "toolbar", "metadata"],
+      "recommendedDefaultFor": ["all-presets-ui"],
+      "designNote": "Noto describes this face specifically for user interfaces and websites; keep editor controls visually distinct from printed page text.",
+      "weightsToOffer": [400, 500, 600, 700],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://notofonts.github.io/noto-docs/specimen/NotoSansDevanagariUI/",
+      "specimenUrl": "https://fonts.google.com/specimen/Noto+Sans+Devanagari+UI",
+      "license": "Verify bundled font license and retain the license file.",
+      "useForBody": false
+    },
+    {
+      "id": "hind",
+      "name": "Hind",
+      "category": "humanist-sans",
+      "roles": ["body", "secondaryHeadline", "caption", "byline", "metadata", "ui"],
+      "recommendedDefaultFor": ["modern-hindi-daily", "local-news", "all-presets-ui"],
+      "designNote": "Open-source Devanagari/Latin family developed with UI legibility in mind; the official family description lists five styles.",
+      "weightsToOffer": [300, 400, 500, 600, 700],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://github.com/google/fonts/blob/main/ofl/hind/DESCRIPTION.en_us.html",
+      "specimenUrl": "https://fonts.google.com/specimen/Hind",
+      "license": "The Google Fonts repository includes the family metadata/license; verify and retain the exact OFL file in the packaged source.",
+      "useForBody": true
+    },
+    {
+      "id": "mukta",
+      "name": "Mukta",
+      "category": "modern-humanist",
+      "roles": ["masthead", "leadHeadline", "secondaryHeadline", "body", "caption"],
+      "recommendedDefaultFor": ["modern-hindi-daily", "education-special"],
+      "designNote": "Contemporary humanist multi-script family; the official description lists seven weights and support for several Indian scripts plus Latin.",
+      "weightsToOffer": [200, 300, 400, 500, 600, 700, 800],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://github.com/google/fonts/blob/main/ofl/mukta/DESCRIPTION.en_us.html",
+      "specimenUrl": "https://fonts.google.com/specimen/Mukta",
+      "license": "The Google Fonts repository includes the family metadata/license; verify and retain the exact OFL file in the packaged source.",
+      "useForBody": true
+    },
+    {
+      "id": "yatra-one",
+      "name": "Yatra One",
+      "category": "display-accent",
+      "roles": ["mastheadAccent", "sectionBadge", "shortDisplay"],
+      "recommendedDefaultFor": [],
+      "designNote": "Heavy display face inspired by hand-painted Mumbai local railway signage; use for short accents only, not body text.",
+      "weightsToOffer": [400],
+      "weightsMustBeVerifiedAgainstBundledFiles": true,
+      "sourceUrl": "https://github.com/cathschmidt/yatra-one",
+      "specimenUrl": "https://fonts.google.com/specimen/Yatra+One",
+      "license": "Repository contains OFL.txt; include the license and required notices when bundling the font.",
+      "useForBody": false
+    }
+  ],
+  "fontPairings": [
+    {
+      "id": "classic-hindi-daily",
+      "label": "क्लासिक हिंदी दैनिक",
+      "masthead": "noto-serif-devanagari",
+      "leadHeadline": "noto-serif-devanagari",
+      "secondaryHeadline": "noto-serif-devanagari",
+      "body": "noto-serif-devanagari",
+      "metadata": "hind",
+      "ui": "noto-sans-devanagari-ui"
+    },
+    {
+      "id": "modern-hindi-daily",
+      "label": "आधुनिक हिंदी दैनिक",
+      "masthead": "mukta",
+      "leadHeadline": "mukta",
+      "secondaryHeadline": "noto-sans-devanagari",
+      "body": "hind",
+      "metadata": "hind",
+      "ui": "noto-sans-devanagari-ui"
+    },
+    {
+      "id": "editorial-special",
+      "label": "संपादकीय / विशेषांक",
+      "masthead": "noto-serif-devanagari",
+      "leadHeadline": "noto-serif-devanagari",
+      "secondaryHeadline": "noto-sans-devanagari",
+      "body": "noto-serif-devanagari",
+      "metadata": "hind",
+      "ui": "noto-sans-devanagari-ui"
+    },
+    {
+      "id": "local-news",
+      "label": "स्थानीय समाचार",
+      "masthead": "noto-serif-devanagari",
+      "leadHeadline": "noto-serif-devanagari",
+      "secondaryHeadline": "hind",
+      "body": "hind",
+      "metadata": "hind",
+      "ui": "noto-sans-devanagari-ui"
+    }
+  ],
+  "pickerRequirements": {
+    "roleBased": true,
+    "searchable": true,
+    "categoryFilters": ["Classic", "Readable", "Modern", "Display"],
+    "previewMustUseDevanagari": true,
+    "previewMustShowActualWeight": true,
+    "livePageUpdate": true,
+    "recommendationLabel": "इस टेम्पलेट के लिए सुझाया गया",
+    "neverAdvertiseUnavailableWeights": true,
+    "fontLoadStatus": true,
+    "offlineFallbackStatus": true
+  }
+}

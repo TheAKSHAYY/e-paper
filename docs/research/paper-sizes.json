@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "unit": "mm",
+  "formats": [
+    {
+      "id": "berliner-315x470",
+      "label": "Berliner",
+      "width": 315,
+      "height": 470,
+      "kind": "newspaper-format",
+      "status": "published-printer-spec-example",
+      "caveat": "Printer/publisher printable area and bleed are separate; verify the chosen printer's spec.",
+      "sourceUrl": "https://www.mafraprint.cz/priprava-dat.aspx?lng=en"
+    },
+    {
+      "id": "us-broadsheet-configurable",
+      "label": "US Broadsheet (configurable baseline)",
+      "width": 381,
+      "height": 578,
+      "kind": "newspaper-format",
+      "status": "approximate-preset-not-universal",
+      "caveat": "Published sources give different dimensions for US Broadsheet (e.g. 381×533 mm and 381×578 mm). Treat this as a named starting preset only; verify the printer spec and always allow custom dimensions.",
+      "sourceUrl": "https://origamijapan.net/newspaper-paper-sizes/",
+      "alternatePublishedDimensionsMm": [
+        [381, 533],
+        [381, 578]
+      ]
+    },
+    {
+      "id": "tabloid-280x430-configurable",
+      "label": "Newspaper Tabloid / Compact (configurable baseline)",
+      "width": 280,
+      "height": 430,
+      "kind": "newspaper-format",
+      "status": "approximate-preset-not-universal",
+      "caveat": "Newspaper tabloid and office/ANSI tabloid aren't interchangeable across all regions.",
+      "sourceUrl": "https://print.wiki/data/paper-sizes/"
+    },
+    {
+      "id": "a3-297x420",
+      "label": "A3",
+      "width": 297,
+      "height": 420,
+      "kind": "iso-paper-size",
+      "status": "iso-216-size",
+      "caveat": "Add bleed outside trim size only for a print profile that requires it.",
+      "sourceUrl": "https://support.hp.com/in-en/document/bpq04022"
+    },
+    {
+      "id": "a4-210x297",
+      "label": "A4",
+      "width": 210,
+      "height": 297,
+      "kind": "iso-paper-size",
+      "status": "iso-216-size",
+      "caveat": "Add bleed outside trim size only for a print profile that requires it.",
+      "sourceUrl": "https://support.hp.com/in-en/document/bpq04022"
+    },
+    {
+      "id": "custom",
+      "label": "Custom",
+      "width": null,
+      "height": null,
+      "kind": "custom",
+      "status": "user-defined",
+      "minWidthMm": 100,
+      "maxWidthMm": 1000,
+      "minHeightMm": 100,
+      "maxHeightMm": 1400,
+      "validation": "positive-finite-dimensions-with-practical-print-bounds"
+    }
+  ],
+  "exportProfiles": [
+    {
+      "id": "digital-pdf",
+      "label": "PDF डाउनलोड",
+      "bleedMm": 0,
+      "cropMarks": false,
+      "description": "Ordinary downloadable PDF; exact page size, fonts, images and readable text are required."
+    },
+    {
+      "id": "commercial-print-configurable",
+      "label": "प्रिंटिंग प्रेस के लिए PDF",
+      "bleedMm": null,
+      "cropMarks": "printer-dependent",
+      "description": "Require the chosen printer's trim, bleed, safe-area, colour-profile and PDF/X rules; don't assume one universal value."
+    }
+  ]
+}
