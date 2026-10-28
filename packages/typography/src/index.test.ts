@@ -20,8 +20,8 @@ describe('Typography', () => {
     expect(resolveFontFallback('devanagari')).toBe('Noto Serif Devanagari');
   });
 
-  it('should export all 8 required self-hosted font families and valid @font-face CSS', () => {
-    expect(SELF_HOSTED_FONT_FAMILIES).toHaveLength(8);
+  it('should export all 10 required self-hosted font families and valid @font-face CSS', () => {
+    expect(SELF_HOSTED_FONT_FAMILIES).toHaveLength(10);
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Rozha One');
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Yatra One');
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Noto Serif Devanagari');
@@ -30,6 +30,8 @@ describe('Typography', () => {
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Mukta');
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Hind');
     expect(SELF_HOSTED_FONT_FAMILIES).toContain('Gotu');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Playfair Display');
+    expect(SELF_HOSTED_FONT_FAMILIES).toContain('Source Serif 4');
 
     expect(SELF_HOSTED_FONTS_CSS).toContain('font-display: swap;');
     expect(SELF_HOSTED_FONTS_CSS).toContain('/fonts/');

@@ -454,8 +454,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 4,
     columnRule: true,
     mastheadStyle: 'ornate-double-rule',
-    headlineFont: "'Rozha One', 'Noto Serif Devanagari', serif",
-    bodyFont: "'Noto Serif Devanagari', serif",
+    headlineFont: "'Playfair Display', serif",
+    bodyFont: "'Source Serif 4', serif",
     bodyFontSizePt: 10,
     spacingDensity: 'normal',
     accentColor: '#1a1a1a',
@@ -464,7 +464,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'The Inviolable Record of National & International Affairs',
       subtitle: 'The Inviolable Record of National & International Affairs • Founded 1888',
       establishmentYear: '1888',
-      fontFamily: "'Rozha One', 'Noto Serif Devanagari', serif",
+      fontFamily: "'Playfair Display', serif",
       fontSizePt: 48,
       alignment: 'center',
       ruleStyle: 'ornate-double',
@@ -571,8 +571,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 3,
     columnRule: false,
     mastheadStyle: 'clean-minimal',
-    headlineFont: "'Noto Serif Devanagari', serif",
-    bodyFont: "'Noto Serif Devanagari', serif",
+    headlineFont: "'Playfair Display', serif",
+    bodyFont: "'Source Serif 4', serif",
     bodyFontSizePt: 10.5,
     spacingDensity: 'spacious',
     accentColor: '#8b0000',
@@ -581,7 +581,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'Culture, Architecture, Ideas & Global Discourse',
       subtitle: 'Culture, Architecture, Ideas & Global Discourse • Est. 1998',
       establishmentYear: '1998',
-      fontFamily: "'Noto Serif Devanagari', serif",
+      fontFamily: "'Playfair Display', serif",
       fontSizePt: 46,
       alignment: 'center',
       ruleStyle: 'single-hairline',
@@ -673,8 +673,8 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
     defaultColumns: 4,
     columnRule: true,
     mastheadStyle: 'bold-slab',
-    headlineFont: "'Poppins', sans-serif",
-    bodyFont: "'Hind', sans-serif",
+    headlineFont: "'Playfair Display', serif",
+    bodyFont: "'Source Serif 4', serif",
     bodyFontSizePt: 9.5,
     spacingDensity: 'compact',
     accentColor: '#104e8b',
@@ -683,7 +683,7 @@ export const NEWSPAPER_PRESETS: Record<NewspaperPresetId, NewspaperPreset> = {
       tagline: 'Your Independent Daily Community Voice',
       subtitle: 'Your Independent Daily Community Voice Since 1921',
       establishmentYear: '1921',
-      fontFamily: "'Poppins', sans-serif",
+      fontFamily: "'Playfair Display', serif",
       fontSizePt: 46,
       alignment: 'center',
       ruleStyle: 'classic-double',
@@ -808,7 +808,7 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
   const now = new Date().toISOString();
   const title = options.title ?? preset.defaultMasthead.title;
   const pageSize = options.pageSize ?? preset.recommendedPageSize;
-  const language = options.language ?? 'hi';
+  const language = options.language ?? (presetId.includes('hindi') ? 'hi' : 'en');
   const direction = options.direction ?? 'ltr';
 
   const defaultDate =
@@ -821,10 +821,16 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
           day: 'numeric',
         });
 
+  const defaultMastheadFont =
+    language === 'hi' && !presetId.includes('hindi')
+      ? "'Rozha One', 'Noto Serif Devanagari', serif"
+      : preset.defaultMasthead.fontFamily;
+
   const masthead: MastheadConfig = {
     ...preset.defaultMasthead,
     title,
     date: defaultDate,
+    fontFamily: defaultMastheadFont,
   };
 
   const layout: NewspaperLayoutConfig = {
@@ -833,9 +839,19 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
     columnRule: preset.columnRule,
     mastheadFont:
       preset.mastheadFont ?? (language === 'hi' ? "'Rozha One', serif" : preset.headlineFont),
-    headlineFont: preset.headlineFont,
-    subheadlineFont: preset.subheadlineFont ?? preset.headlineFont,
-    bodyFont: preset.bodyFont,
+    headlineFont:
+      language === 'hi' && !presetId.includes('hindi')
+        ? "'Noto Serif Devanagari', serif"
+        : preset.headlineFont,
+    subheadlineFont:
+      preset.subheadlineFont ??
+      (language === 'hi' && !presetId.includes('hindi')
+        ? "'Noto Serif Devanagari', serif"
+        : preset.headlineFont),
+    bodyFont:
+      language === 'hi' && !presetId.includes('hindi')
+        ? "'Noto Serif Devanagari', serif"
+        : preset.bodyFont,
     headlineWeight: preset.headlineWeight ?? 700,
     bodyFontSizePt: preset.bodyFontSizePt,
     spacingDensity: preset.spacingDensity,
@@ -1018,6 +1034,31 @@ export function sanitizeCssValue(value: string | undefined, fallback: string = '
   if (!value) return fallback;
   const cleaned = value.replace(/[;{}<>"'\\]/g, '').trim();
   return cleaned || fallback;
+}
+
+/**
+ * Sanitizes CSS font-family stacks against injection while preserving quotes around
+ * multi-word or alphanumeric font family names (e.g. 'Source Serif 4', 'Noto Serif Devanagari').
+ */
+export function sanitizeCssFontFamily(value: string | undefined, fallback: string = ''): string {
+  if (!value) return fallback;
+  if (/[;{}<>\\]/.test(value)) return fallback;
+
+  const parts = value
+    .split(',')
+    .map((part) => {
+      const raw = part.trim();
+      if (!raw) return '';
+      const unquoted = raw.replace(/^['"]|['"]$/g, '').trim();
+      if (!unquoted) return '';
+      if (/^(serif|sans-serif|monospace|cursive|fantasy|system-ui)$/i.test(unquoted)) {
+        return unquoted;
+      }
+      return `'${unquoted}'`;
+    })
+    .filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : fallback;
 }
 
 /**
@@ -1206,16 +1247,22 @@ export function renderNewspaperDocumentToHtml(
   const direction = doc.metadata.direction ?? 'ltr';
 
   // Sanitize CSS properties against injection attacks
-  const mastheadFont = sanitizeCssValue(
+  const mastheadFont = sanitizeCssFontFamily(
     doc.layout.mastheadFont || doc.layout.headlineFont,
     "'Rozha One', 'Noto Serif Devanagari', serif"
   );
-  const headlineFont = sanitizeCssValue(doc.layout.headlineFont, "'Noto Serif Devanagari', serif");
-  const subheadlineFont = sanitizeCssValue(
+  const headlineFont = sanitizeCssFontFamily(
+    doc.layout.headlineFont,
+    "'Noto Serif Devanagari', serif"
+  );
+  const subheadlineFont = sanitizeCssFontFamily(
     doc.layout.subheadlineFont || doc.layout.headlineFont,
     "'Noto Serif Devanagari', serif"
   );
-  const bodyFont = sanitizeCssValue(doc.layout.bodyFont, "'Noto Serif Devanagari', 'Hind', serif");
+  const bodyFont = sanitizeCssFontFamily(
+    doc.layout.bodyFont,
+    "'Noto Serif Devanagari', 'Hind', serif"
+  );
   const headlineWeight = Math.max(300, Math.min(900, Number(doc.layout.headlineWeight) || 700));
   const bodyFontSizePt = Math.max(7, Math.min(24, Number(doc.layout.bodyFontSizePt) || 10));
 
@@ -1313,7 +1360,7 @@ export function renderNewspaperDocumentToHtml(
         const emblemSvg = getMastheadEmblemSvg(mh.emblem, mh.customEmblemUrl);
         const emblemHtml =
           mh.showEmblem && emblemSvg ? `<div class="masthead-emblem-box">${emblemSvg}</div>` : '';
-        const effectiveFont = mh.fontFamily || mastheadFont;
+        const effectiveFont = sanitizeCssFontFamily(mh.fontFamily, mastheadFont);
         const effectiveFontSize = mh.fontSizePt || 48;
 
         const showTopStrip = mh.showTopStrip !== false;
