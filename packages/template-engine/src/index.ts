@@ -1399,8 +1399,7 @@ export function renderNewspaperDocumentToHtml(
     doc.metadata.pageSize,
     doc.metadata.orientation,
     doc.layout.spacingDensity,
-    doc.layout.bodyFontSizePt,
-    doc.layout.headlineFontSizePt
+    doc.layout.bodyFontSizePt
   );
   const { widthPt, heightPt, paddingPt, gapPt, bodyFontSizePt } = metrics;
   const columnCount = resolvePageColumnCount(doc);

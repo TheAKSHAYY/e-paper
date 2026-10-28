@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type {
   NewspaperPage,
   MastheadConfig,
@@ -14,7 +14,11 @@ import {
   resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
 import { THEME_TOKENS } from '@epaper-studio/ui';
-import { getMastheadEmblemSvg } from '@epaper-studio/template-engine';
+import {
+  getMastheadEmblemSvg,
+  getPhysicalPageMetrics,
+  screenToPageMm,
+} from '@epaper-studio/template-engine';
 
 export interface NewspaperCanvasProps {
   page: NewspaperPage;
@@ -26,6 +30,7 @@ export interface NewspaperCanvasProps {
   orientation: PageOrientation;
   scale?: number;
   selectedArticleId: string | null;
+  usePhysicalCanvasCoordinates?: boolean;
   onSelectArticle: (articleId: string) => void;
   onMoveArticleUp: (articleId: string) => void;
   onMoveArticleDown: (articleId: string) => void;
@@ -46,6 +51,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   orientation,
   scale = 1.0,
   selectedArticleId,
+  usePhysicalCanvasCoordinates = false,
   onSelectArticle,
   onMoveArticleUp: _onMoveArticleUp,
   onMoveArticleDown: _onMoveArticleDown,
@@ -55,6 +61,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   isMastheadSelected = false,
   onSelectMasthead,
 }) => {
+  const sheetCanvasRef = useRef<HTMLDivElement>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const isFirstPage = pageIndex === 0;
   const pageNumber = page.pageNumber ?? pageIndex + 1;
@@ -62,17 +69,45 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   const columnRule = layout.columnRule;
   const density = layout.spacingDensity;
 
+  // Physical coordinates derived via template-engine shared metrics
+  const physicalMetrics = getPhysicalPageMetrics(
+    pageSize,
+    orientation,
+    density,
+    layout.bodyFontSizePt
+  );
+
   // Strict Physical Page Dimensions & Fixed Aspect Ratio (Requirement 1)
   const dimensions = getPageDimensions(pageSize, orientation);
   const aspectRatio = dimensions.aspectRatio ?? dimensions.widthPt / dimensions.heightPt;
-  const baseWidth = orientation === 'landscape' ? 1080 : 800;
-  const baseHeight = Math.round(baseWidth / aspectRatio);
-  const exactWidthPx = Math.round(baseWidth * scale);
-  const exactHeightPx = Math.round(baseHeight * scale);
+  const legacyBaseWidth = orientation === 'landscape' ? 1080 : 800;
+  const legacyBaseHeight = Math.round(legacyBaseWidth / aspectRatio);
+
+  const canvasWidthPx = usePhysicalCanvasCoordinates ? physicalMetrics.widthPx : legacyBaseWidth;
+  const canvasHeightPx = usePhysicalCanvasCoordinates ? physicalMetrics.heightPx : legacyBaseHeight;
+  const exactWidthPx = Math.round(canvasWidthPx * scale);
+  const exactHeightPx = Math.round(canvasHeightPx * scale);
 
   // Spacing scales cleanly with visual zoom
-  const paddingPx = density === 'compact' ? 22 : density === 'spacious' ? 38 : 28;
-  const gapPx = density === 'compact' ? 12 : density === 'spacious' ? 22 : 16;
+  const legacyPaddingPx = density === 'compact' ? 22 : density === 'spacious' ? 38 : 28;
+  const legacyGapPx = density === 'compact' ? 12 : density === 'spacious' ? 22 : 16;
+
+  const paddingVal = usePhysicalCanvasCoordinates
+    ? `${physicalMetrics.paddingPt}pt`
+    : `${legacyPaddingPx}px`;
+  const gapVal = usePhysicalCanvasCoordinates
+    ? `${physicalMetrics.gapPt}pt`
+    : `${legacyGapPx}px`;
+  const colRuleGutter = usePhysicalCanvasCoordinates
+    ? `${physicalMetrics.gapPt / 2}pt`
+    : `${Math.round(legacyGapPx / 2)}px`;
+
+  // Scale-independent visual borders & outlines (~1.5px constant visual size)
+  const visualOutlineWidth = Math.max(0.5, 1.5 / scale);
+  const visualOutlineOffset = Math.max(1, 2 / scale);
+  const visualMastheadOutline = Math.max(1, 2 / scale);
+  const visualMastheadOffset = Math.max(1, 4 / scale);
+  const visualDropBorderWidth = Math.max(1, 2 / scale);
 
   // Estimate content capacity
   const totalWords = page.articles.reduce(
@@ -91,11 +126,24 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           : 1800;
   const exceedsBudget = totalWords > wordBudget || page.articles.length > 7;
 
-  // Drag and drop handler
+  // Drag and drop handler with physical screen-to-page coordinate conversion
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDraggingOver(false);
     try {
+      if (sheetCanvasRef.current) {
+        const rect = sheetCanvasRef.current.getBoundingClientRect();
+        const pagePointMm = screenToPageMm(
+          { clientX: e.clientX, clientY: e.clientY },
+          rect,
+          scale,
+          { widthMm: physicalMetrics.widthMm, heightMm: physicalMetrics.heightMm }
+        );
+        if (process.env.NODE_ENV !== 'production') {
+          // Log or use point if debugging drop placement
+          console.debug('Dropped block at page coordinate (mm):', pagePointMm);
+        }
+      }
       const dataStr = e.dataTransfer.getData('application/json');
       if (dataStr && onAddBlock) {
         const block = JSON.parse(dataStr);
@@ -205,6 +253,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
       >
         {/* The Physical Newspaper Sheet Canvas (Strict Fixed Size & Pure White Background) */}
         <div
+          ref={sheetCanvasRef}
           className="newspaper-sheet-canvas"
           data-testid="newspaper-sheet-canvas"
           onDragOver={(e) => {
@@ -218,12 +267,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           }}
           onDrop={handleDrop}
           style={{
-            width: `${baseWidth}px`,
-            height: `${baseHeight}px`,
-            minWidth: `${baseWidth}px`,
-            maxWidth: `${baseWidth}px`,
-            minHeight: `${baseHeight}px`,
-            maxHeight: `${baseHeight}px`,
+            width: `${canvasWidthPx}px`,
+            height: `${canvasHeightPx}px`,
+            minWidth: `${canvasWidthPx}px`,
+            maxWidth: `${canvasWidthPx}px`,
+            minHeight: `${canvasHeightPx}px`,
+            maxHeight: `${canvasHeightPx}px`,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
             backgroundColor: '#ffffff', // Requirement 4: Pure White Print Paper
@@ -231,7 +280,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             fontFamily: layout.bodyFont,
             boxShadow: '0 12px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.12)',
             border: '1px solid #d1d5db',
-            padding: `${paddingPx}px`,
+            padding: paddingVal,
             boxSizing: 'border-box',
             position: 'absolute',
             top: 0,
@@ -254,13 +303,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             data-testid="masthead-section"
             style={{
               ...getRuleBorderStyle(),
-              paddingBottom: '8px',
-              marginBottom: '16px',
+              paddingBottom: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.spacingPt.mastheadPaddingBottomPt}pt`
+                : '8px',
+              marginBottom: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
+                : '16px',
               flexShrink: 0,
               cursor: 'pointer',
               position: 'relative',
-              outline: isMastheadSelected ? '2px solid #2563eb' : '1px dashed transparent',
-              outlineOffset: '4px',
+              outline: isMastheadSelected
+                ? `${visualMastheadOutline}px solid #2563eb`
+                : '1px dashed transparent',
+              outlineOffset: `${visualMastheadOffset}px`,
               borderRadius: isMastheadSelected ? '4px' : '0px',
               transition: 'outline 0.15s ease',
             }}
@@ -273,19 +328,31 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   borderBottom: '1px solid #222222',
-                  paddingBottom: '3px',
-                  marginBottom: '6px',
-                  fontSize: '10.5px',
+                  paddingBottom: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.topStripPaddingBottomPt}pt`
+                    : '3px',
+                  marginBottom: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                    : '6px',
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                    : '10.5px',
                   color: '#333333',
                   fontFamily: "'Inter', sans-serif",
-                  letterSpacing: '0.02em',
+                  letterSpacing: usePhysicalCanvasCoordinates ? '0.2pt' : '0.02em',
+                  lineHeight: usePhysicalCanvasCoordinates ? 1.25 : undefined,
                 }}
               >
                 {/* Weather & AQI */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {masthead.showWeather !== false && (
                     <div>
-                      <strong style={{ color: '#111111' }}>मौसम: </strong>
+                      <strong style={{
+                        color: '#111111',
+                        fontSize: usePhysicalCanvasCoordinates
+                          ? `${physicalMetrics.typographyPt.weatherLabelFontSizePt}pt`
+                          : undefined
+                      }}>मौसम: </strong>
                       <span>
                         {masthead.weatherCity || 'नई दिल्ली'} {masthead.temperature || '25°C'} •{' '}
                         {masthead.weatherCondition || 'साफ़ आसमान'}
@@ -293,7 +360,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     </div>
                   )}
                   {masthead.showAirQuality !== false && masthead.airQuality && (
-                    <div style={{ color: '#475569', fontSize: '10px' }}>
+                    <div style={{
+                      color: '#475569',
+                      fontSize: usePhysicalCanvasCoordinates
+                        ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
+                        : '10px'
+                    }}>
                       <span>{masthead.airQuality}</span>
                     </div>
                   )}
@@ -303,11 +375,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <div
                   style={{
                     fontFamily: "'Noto Serif Devanagari', serif",
-                    fontSize: '11px',
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.taglineFontSizePt}pt`
+                      : '11px',
                     color: '#333333',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: usePhysicalCanvasCoordinates ? '4pt' : '6px',
                   }}
                 >
                   {masthead.showTagline !== false && (
@@ -316,24 +390,34 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     </span>
                   )}
                   {masthead.showTagline !== false && masthead.showEstablishment !== false && (
-                    <span style={{ color: '#888888' }}>•</span>
+                    <span style={{ color: '#888888', fontSize: usePhysicalCanvasCoordinates ? '7pt' : undefined }}>•</span>
                   )}
                   {masthead.showEstablishment !== false && (
-                    <strong style={{ color: '#111111' }}>
+                    <strong style={{
+                      color: '#111111',
+                      fontSize: usePhysicalCanvasCoordinates
+                        ? `${physicalMetrics.typographyPt.establishmentFontSizePt}pt`
+                        : undefined
+                    }}>
                       स्थापना {masthead.establishmentYear || '1947'}
                     </strong>
                   )}
                 </div>
 
                 {/* Price & Registration */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: usePhysicalCanvasCoordinates ? '8pt' : '8px' }}>
                   {masthead.showPrice !== false && (
                     <div>
                       <strong style={{ color: '#111111' }}>{masthead.price || 'मूल्य ₹5.00'}</strong>
                     </div>
                   )}
                   {masthead.showPostalReg !== false && masthead.postalRegNumber && (
-                    <div style={{ color: '#64748b', fontSize: '10px' }}>
+                    <div style={{
+                      color: '#64748b',
+                      fontSize: usePhysicalCanvasCoordinates
+                        ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                        : '10px'
+                    }}>
                       <span>{masthead.postalRegNumber}</span>
                     </div>
                   )}
@@ -352,8 +436,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     : masthead.alignment === 'justified'
                       ? 'space-between'
                       : 'center',
-                gap: '16px',
-                margin: '4px 0 8px',
+                gap: usePhysicalCanvasCoordinates ? '14pt' : '16px',
+                margin: usePhysicalCanvasCoordinates ? '4pt 0 6pt' : '4px 0 8px',
                 textAlign:
                   masthead.alignment === 'left'
                     ? 'left'
@@ -372,7 +456,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 data-testid="masthead-title"
                 style={{
                   fontFamily: masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",
-                  fontSize: `${masthead.fontSizePt || 52}px`,
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${masthead.fontSizePt || 48}pt`
+                    : `${masthead.fontSizePt || 52}px`,
                   fontWeight: 900,
                   lineHeight: 1.05,
                   margin: 0,
@@ -392,11 +478,18 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   borderTop: '1px solid #111111',
-                  paddingTop: '4px',
-                  fontSize: '11px',
+                  paddingTop: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
+                    : '4px',
+                  marginTop: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.bottomStripMarginTopPt}pt`
+                    : undefined,
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
+                    : '11px',
                   fontWeight: 600,
                   color: '#222222',
-                  letterSpacing: '0.03em',
+                  letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
                 }}
               >
                 <div>
@@ -434,13 +527,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 style={{
                   borderTop: '1px solid #111111',
                   borderBottom: '1px solid #111111',
-                  marginTop: '5px',
-                  padding: '3px 6px',
+                  marginTop: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                    : '5px',
+                  padding: usePhysicalCanvasCoordinates ? '2pt 4pt' : '3px 6px',
                   backgroundColor: '#f8fafc',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontSize: '11px',
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
+                    : '11px',
                   fontWeight: 700,
                   color: '#0f172a',
                   letterSpacing: '0.02em',
@@ -448,7 +545,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               >
                 <span>{masthead.secondaryHeaderTitle}</span>
                 {masthead.secondaryHeaderSubtitle && (
-                  <span style={{ fontSize: '10px', fontWeight: 500, color: '#475569' }}>
+                  <span style={{
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
+                      : '10px',
+                    fontWeight: 500,
+                    color: '#475569'
+                  }}>
                     {masthead.secondaryHeaderSubtitle}
                   </span>
                 )}
@@ -459,12 +562,16 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             {masthead.showAnnouncementStrip && masthead.announcementStripText && (
               <div
                 style={{
-                  marginTop: '5px',
+                  marginTop: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
+                    : '5px',
                   backgroundColor: '#b91c1c',
                   color: '#ffffff',
-                  padding: '3px 10px',
+                  padding: usePhysicalCanvasCoordinates ? '3pt 8pt' : '3px 10px',
                   borderRadius: '2px',
-                  fontSize: '10.5px',
+                  fontSize: usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                    : '10.5px',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
@@ -472,7 +579,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   boxShadow: '0 1px 2px rgba(185,28,28,0.2)',
                 }}
               >
-                <span style={{ backgroundColor: '#ffffff', color: '#b91c1c', padding: '1px 4px', borderRadius: '2px', fontSize: '9px' }}>
+                <span style={{
+                  backgroundColor: '#ffffff',
+                  color: '#b91c1c',
+                  padding: '1px 4px',
+                  borderRadius: '2px',
+                  fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9px'
+                }}>
                   विशेष
                 </span>
                 <span>{masthead.announcementStripText}</span>
@@ -484,32 +597,48 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           <header
             style={{
               borderBottom: '2px solid #111111',
-              paddingBottom: '6px',
-              marginBottom: '16px',
+              paddingBottom: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
+                : '6px',
+              marginBottom: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
+                : '16px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              fontSize: '12px',
+              fontSize: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                : '12px',
               fontWeight: 600,
               color: '#111',
               flexShrink: 0,
             }}
           >
             <div
-              style={{ fontFamily: layout.mastheadFont || "'Rozha One', serif", fontSize: '15px' }}
+              style={{
+                fontFamily: layout.mastheadFont || "'Rozha One', serif",
+                fontSize: usePhysicalCanvasCoordinates ? '12pt' : '15px'
+              }}
             >
               {masthead.title}
             </div>
             <div
               style={{
                 fontFamily: "'Noto Serif Devanagari', serif",
-                fontSize: '12px',
+                fontSize: usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.typographyPt.topStripFontSizePt}pt`
+                  : '12px',
                 color: '#333',
               }}
             >
               {page.sectionTitle ? `${page.sectionTitle} • ` : ''}पृष्ठ {pageNumber} / {totalPages}
             </div>
-            <div style={{ fontSize: '11px', color: '#555' }}>
+            <div style={{
+              fontSize: usePhysicalCanvasCoordinates
+                ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
+                : '11px',
+              color: '#555'
+            }}>
               {masthead.date} • {masthead.edition || 'अंदर के पृष्ठ'}
             </div>
           </header>
@@ -530,7 +659,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 padding: '40px 20px',
                 textAlign: 'center',
                 backgroundColor: isDraggingOver ? '#eff6ff' : 'rgba(0,0,0,0.015)',
-                border: isDraggingOver ? '2px dashed #2563eb' : '2px dashed #d5d0c4',
+                border: isDraggingOver
+                  ? `${visualDropBorderWidth}px dashed #2563eb`
+                  : '2px dashed #d5d0c4',
                 borderRadius: '6px',
                 margin: '20px 0',
                 transition: 'all 0.15s ease',
@@ -561,8 +692,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-                columnGap: `${gapPx}px`,
-                rowGap: `${Math.round(gapPx * 1.1)}px`,
+                columnGap: gapVal,
+                rowGap: gapVal,
                 alignContent: 'start',
                 flex: 1,
                 position: 'relative',
@@ -573,7 +704,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <div
                   style={{
                     gridColumn: `span ${columnCount}`,
-                    border: '2px dashed #2563eb',
+                    border: `${visualDropBorderWidth}px dashed #2563eb`,
                     backgroundColor: 'rgba(239, 246, 255, 0.92)',
                     borderRadius: '6px',
                     padding: '16px',
@@ -810,7 +941,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     : undefined,
                   borderRight: customBorders?.right && customBorders.right.style !== 'none'
                     ? `${customBorders.right.width}px ${customBorders.right.style} ${customBorders.right.color}`
-                    : (columnRule && span < columnCount ? '1px solid #d5d0c4' : undefined),
+                    : (columnRule && span < columnCount ? (usePhysicalCanvasCoordinates ? '1px solid #c8c5bc' : '1px solid #d5d0c4') : undefined),
                   borderBottom: customBorders?.bottom && customBorders.bottom.style !== 'none'
                     ? `${customBorders.bottom.width}px ${customBorders.bottom.style} ${customBorders.bottom.color}`
                     : '1px solid #e0ded6',
@@ -839,12 +970,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       display: 'flex',
                       flexDirection: 'column',
                       padding: article.paddingPx ? `${article.paddingPx}px` : undefined,
-                      paddingBottom: '12px',
+                      paddingBottom: usePhysicalCanvasCoordinates ? undefined : '12px',
                       ...borderStyles,
                       position: 'relative',
                       cursor: 'pointer',
-                      outline: isSelected ? '1.5px solid #2563eb' : 'none',
-                      outlineOffset: '2px',
+                      outline: isSelected ? `${visualOutlineWidth}px solid #2563eb` : 'none',
+                      outlineOffset: `${visualOutlineOffset}px`,
                       backgroundColor: article.backgroundColor ?? 'transparent',
                       borderRadius: '1px',
                       transition: 'outline 0.15s ease',
@@ -852,7 +983,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       WebkitHyphens: isHindi ? 'manual' : undefined,
                       ...(columnRule && span < columnCount && !customBorders?.right
                         ? {
-                            paddingRight: `${Math.round(gapPx / 2)}px`,
+                            paddingRight: colRuleGutter,
                           }
                         : {}),
                     }}
@@ -861,11 +992,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     {article.imagePlacement === 'top' && renderPhoto()}
 
                     {/* Headline, Subheadline & Byline */}
-                    <header style={{ marginBottom: '6px' }}>
+                    <header style={{
+                      marginBottom: usePhysicalCanvasCoordinates
+                        ? `${physicalMetrics.spacingPt.articleHeaderMarginBottomPt}pt`
+                        : '6px'
+                    }}>
                       {article.kickerText && (
                         <div
                           style={{
-                            fontSize: '10.5px',
+                            fontSize: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.typographyPt.kickerFontSizePt}pt`
+                              : '10.5px',
                             fontWeight: 800,
                             color: '#b91c1c',
                             textTransform: 'uppercase',
@@ -880,18 +1017,26 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       <h2
                         style={{
                           fontFamily: layout.headlineFont,
-                          fontSize: isLead
-                            ? '30px'
-                            : article.priority === 'major'
-                              ? '22px'
-                              : article.priority === 'minor'
-                                ? '15px'
-                                : '18px',
+                          fontSize: usePhysicalCanvasCoordinates
+                            ? isLead
+                              ? `${physicalMetrics.headlineSizesPt.lead}pt`
+                              : article.priority === 'major'
+                                ? `${physicalMetrics.headlineSizesPt.major}pt`
+                                : article.priority === 'minor'
+                                  ? `${physicalMetrics.headlineSizesPt.minor}pt`
+                                  : `${physicalMetrics.headlineSizesPt.brief}pt`
+                            : isLead
+                              ? '30px'
+                              : article.priority === 'major'
+                                ? '22px'
+                                : article.priority === 'minor'
+                                  ? '15px'
+                                  : '18px',
                           fontWeight: headlineWeight,
                           lineHeight: 1.15,
                           margin: '0 0 4px 0',
                           color: article.textColor ?? THEME_TOKENS.inkPrimary,
-                          letterSpacing: '-0.01em',
+                          letterSpacing: isLead && usePhysicalCanvasCoordinates ? '-0.3pt' : '-0.01em',
                         }}
                       >
                         {article.headline}
@@ -900,8 +1045,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       {article.subheadline && (
                         <p
                           style={{
-                            margin: '3px 0 5px 0',
-                            fontSize: isLead ? '13px' : '11.5px',
+                            margin: usePhysicalCanvasCoordinates
+                              ? `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`
+                              : '3px 0 5px 0',
+                            fontSize: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.typographyPt.deckFontSizePt}pt`
+                              : isLead
+                                ? '13px'
+                                : '11.5px',
                             lineHeight: 1.35,
                             fontFamily: layout.subheadlineFont || layout.headlineFont,
                             fontStyle: 'italic',
@@ -915,13 +1066,18 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       {(article.byline || article.dateline) && (
                         <div
                           style={{
-                            fontSize: '10.5px',
+                            fontSize: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
+                              : '10.5px',
                             color: '#555',
                             fontWeight: 600,
                             textTransform: 'uppercase',
                             letterSpacing: '0.03em',
-                            borderTop: isLead ? '1px solid #222' : 'none',
-                            paddingTop: isLead ? '3px' : 0,
+                            borderTop: isLead && !usePhysicalCanvasCoordinates ? '1px solid #222' : 'none',
+                            paddingTop: isLead && !usePhysicalCanvasCoordinates ? '3px' : 0,
+                            marginTop: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.spacingPt.bylineMarginTopPt}pt`
+                              : undefined,
                             marginBottom: '6px',
                           }}
                         >
@@ -947,14 +1103,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                             <h4
                               style={{
                                 margin: '0 0 2px 0',
-                                fontSize: '12px',
+                                fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '12px',
                                 fontWeight: 700,
                                 color: '#111',
                               }}
                             >
                               {item.title}
                             </h4>
-                            <p style={{ margin: 0, fontSize: '11px', color: '#444', lineHeight: 1.35 }}>
+                            <p style={{
+                              margin: 0,
+                              fontSize: usePhysicalCanvasCoordinates ? '7pt' : '11px',
+                              color: '#444',
+                              lineHeight: 1.35
+                            }}>
                               {item.snippet}
                             </p>
                           </div>
@@ -967,7 +1128,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            fontSize: '9px',
+                            fontSize: usePhysicalCanvasCoordinates ? '6.5pt' : '9px',
                             textTransform: 'uppercase',
                             color: '#666',
                             fontWeight: 700,
@@ -983,7 +1144,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                           )}
                         </div>
                         {article.body && (
-                          <p style={{ margin: '4px 0', fontSize: '12px', lineHeight: 1.4, color: '#222' }}>
+                          <p style={{
+                            margin: '4px 0',
+                            fontSize: usePhysicalCanvasCoordinates
+                              ? `${physicalMetrics.bodyFontSizePt}pt`
+                              : '12px',
+                            lineHeight: 1.4,
+                            color: '#222'
+                          }}>
                             {article.body}
                           </p>
                         )}
@@ -995,7 +1163,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                               backgroundColor: '#f1f5f9',
                               border: '1px solid #cbd5e1',
                               borderRadius: '3px',
-                              fontSize: '11px',
+                              fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
                               fontWeight: 700,
                               color: '#0f172a',
                               display: 'flex',
@@ -1035,15 +1203,25 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                                 borderBottom: '1px solid #f1f5f9',
                                 paddingBottom: '2px',
                                 marginBottom: '3px',
-                                fontSize: '11px',
+                                fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
                                 fontWeight: 700,
                                 color: '#b45309',
                               }}
                             >
                               <span>{rashi.rashi}</span>
-                              <span style={{ fontSize: '10px', color: '#64748b' }}>({rashi.sign})</span>
+                              <span style={{
+                                fontSize: usePhysicalCanvasCoordinates ? '7pt' : '10px',
+                                color: '#64748b'
+                              }}>
+                                ({rashi.sign})
+                              </span>
                             </div>
-                            <p style={{ margin: 0, fontSize: '9.5px', lineHeight: 1.3, color: '#334155' }}>
+                            <p style={{
+                              margin: 0,
+                              fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9.5px',
+                              lineHeight: 1.3,
+                              color: '#334155'
+                            }}>
                               {rashi.prediction}
                             </p>
                           </div>
@@ -1054,7 +1232,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       <div
                         lang={isHindi ? 'hi' : 'en'}
                         style={{
-                          fontSize: `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
+                          fontSize: usePhysicalCanvasCoordinates
+                            ? `${physicalMetrics.bodyFontSizePt}pt`
+                            : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
                           lineHeight: 1.45,
                           color: article.textColor ?? THEME_TOKENS.inkSecondary,
                           fontFamily: layout.bodyFont,
@@ -1067,12 +1247,27 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                         {article.imagePlacement === 'side' && renderPhoto()}
 
                         {article.dateline && (
-                          <strong style={{ color: '#111', marginRight: '4px' }}>
+                          <strong style={{
+                            color: '#111',
+                            marginRight: '4px',
+                            textTransform: usePhysicalCanvasCoordinates ? 'uppercase' : undefined,
+                            fontSize: usePhysicalCanvasCoordinates ? '0.9em' : undefined,
+                          }}>
                             {article.dateline}
                           </strong>
                         )}
                         {article.body.split(/\n\s*\n/).map((para, pIdx) => (
-                          <p key={pIdx} style={{ margin: '0 0 7px 0' }}>
+                          <p
+                            key={pIdx}
+                            style={{
+                              margin: usePhysicalCanvasCoordinates
+                                ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
+                                : '0 0 7px 0',
+                              textIndent: usePhysicalCanvasCoordinates
+                                ? `${physicalMetrics.spacingPt.paraTextIndentPt}pt`
+                                : undefined,
+                            }}
+                          >
                             {para}
                           </p>
                         ))}
@@ -1096,12 +1291,16 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         <footer
           style={{
             borderTop: '1px solid #111',
-            paddingTop: '6px',
+            paddingTop: usePhysicalCanvasCoordinates
+              ? `${physicalMetrics.spacingPt.footerPaddingTopPt}pt`
+              : '6px',
             marginTop: 'auto',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: '11px',
+            fontSize: usePhysicalCanvasCoordinates
+              ? `${physicalMetrics.typographyPt.footerFontSizePt}pt`
+              : '11px',
             color: '#444',
             flexShrink: 0,
           }}
