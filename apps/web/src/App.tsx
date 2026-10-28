@@ -28,6 +28,7 @@ import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { LandingPage } from './components/landing/LandingPage';
 import { draftStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
+import { createArticleFromPreset } from './utils/presetPlacement';
 
 export const App: React.FC = () => {
   // Main publication state initialized with authentic classic Hindi broadsheet preset
@@ -381,20 +382,11 @@ export const App: React.FC = () => {
   const handleAddBlock = useCallback(
     (blockTemplate: Partial<Article>) => {
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const newArticle: Article = {
-        id: newId,
-        headline: blockTemplate.headline ?? 'यहाँ समाचार का शीर्षक लिखें',
-        subheadline: blockTemplate.subheadline ?? '',
-        body: blockTemplate.body ?? 'समाचार का विवरण यहाँ लिखें...',
-        byline: blockTemplate.byline ?? 'विशेष संवाददाता',
-        dateline: blockTemplate.dateline ?? 'नई दिल्ली —',
-        imageUrl: blockTemplate.imageUrl ?? '',
-        imageCaption: blockTemplate.imageCaption ?? '',
-        imagePlacement: blockTemplate.imagePlacement ?? (blockTemplate.imageUrl ? 'top' : 'none'),
-        columnSpan: blockTemplate.columnSpan ?? Math.min(2, document.layout.columnCount),
-        priority: blockTemplate.priority ?? 'major',
+      const newArticle = createArticleFromPreset(blockTemplate, {
+        newId,
+        defaultColumnCount: document.layout.columnCount,
         orderIndex: currentPage.articles.length,
-      };
+      });
 
       setDocument((prev) => {
         const currentPages = getPublicationPages(prev);
