@@ -16,12 +16,24 @@ out/
 .env.local
 .env.*.local
 !.env.example
+apps/*/.env*
+!apps/*/.env.example
 
 # Test and coverage outputs
 coverage/
 playwright-report/
 test-results/
 blob-report/
+artifacts/
+scratch/
+tests/after*/
+devanagari-rasterized-200pct.png
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
 
 # Logs
 logs/
