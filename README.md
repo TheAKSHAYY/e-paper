@@ -1,26 +1,44 @@
-# E-Paper Studio
+# Samachar Live 24 — Hindi Newspaper Page Builder
 
-> Scalable, multilingual e-paper publishing and document studio tailored for Kindle Scribe, reMarkable, Kobo, Boox, Supernote, and high-resolution print.
+> High-performance Hindi newspaper page builder and publishing studio tailored for **Samachar Live 24**. Features an intuitive editorial editor, intelligent auto-fit multi-column layout engine, drag-and-drop & free-layout positioning, customizable editorial themes, and print-ready vector PDF export powered by a dedicated headless Chromium rendering service with self-hosted Devanagari typography.
 
-[![CI](https://github.com/organization/epaper-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/organization/epaper-studio/actions)
+[![CI](https://github.com/TheAKSHAYY/e-paper/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAKSHAYY/e-paper/actions)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## 1. Prerequisites
+## 1. Key Features
+
+- **Hindi & Multilingual Typography First**: Native, self-hosted Devanagari fonts (Gotu, Hind, Mukta, Noto Serif Devanagari, Poppins, Rozha One, Tiro Devanagari Hindi, Yatra One) with 100% conjunct and matra preservation.
+- **Dual Layout Engines**:
+  - **Grid & Auto-Fit Engine**: Calculates column spans, balances vertical column heights, and paginates multi-story news across physical page dimensions.
+  - **Free Layout Mode**: Precise millimeter-based drag, drop, resize, and positioning for front-page leads, ads, and breaking news alerts.
+- **Theme & Palette Customization**: Authentic newspaper themes (Classic Broadsheet, Modern Editorial, Pink Financial, Warm Sepia, Vintage Newspaper, Dark Mode) with per-block color overrides.
+- **Print-Ready Vector PDF Export**: Generates authentic vector PDFs with selectable text matching physical paper dimensions (A4, Tabloid, Berliner, Broadsheet) via a containerized Playwright rendering worker.
+- **Split Cloud Architecture**: Static frontend deployable on Cloudflare Pages; dedicated Docker rendering microservice deployable on Render.com.
+
+---
+
+## 2. Security Notice
+
+> [!IMPORTANT]
+> - **Never commit `.env` or `.env.local` files** containing private secrets, database keys, or production tokens to version control.
+> - **`VITE_*` environment variables are public**: In Vite applications (`apps/web`), any variable prefixed with `VITE_` (such as `VITE_RENDERER_URL` or `VITE_RENDERER_API_KEY`) is statically baked into client-side JavaScript bundles during compilation and can be inspected by any visitor. Never store sensitive private keys in `VITE_*` variables.
+
+---
+
+## 3. Prerequisites
 
 Ensure you have the following installed on your workstation:
 
-- **Node.js**: `v20.x` or higher (`v22.x` or `v24.x` recommended)
+- **Node.js**: `v20.x` or higher (`v22.x` recommended)
 - **pnpm**: `v9.x` or higher (`v12.x` supported)
 - **Git**: `v2.40+`
-- **Chromium / Playwright Dependencies** (for PDF and visual rendering tests)
-- **Docker Desktop** (optional, required if running local Supabase stack)
+- **Chromium / Playwright Dependencies** (for vector PDF and visual rendering tests)
 
 ---
 
-## 2. Quick Start & Installation
+## 4. Quick Start & Installation
 
 Clone the repository and install all workspace dependencies:
 
@@ -37,9 +55,15 @@ pnpm dev
 
 The Web Studio will be available at [http://localhost:5173](http://localhost:5173).
 
+To start the standalone PDF rendering worker locally:
+```bash
+pnpm --filter @epaper-studio/renderer start
+```
+The renderer listens on [http://localhost:4000](http://localhost:4000).
+
 ---
 
-## 3. Workspace Scripts
+## 5. Workspace Scripts
 
 | Command             | Description                                                    |
 | ------------------- | -------------------------------------------------------------- |
@@ -48,69 +72,38 @@ The Web Studio will be available at [http://localhost:5173](http://localhost:517
 | `pnpm typecheck`    | Runs strict TypeScript validation across the entire workspace  |
 | `pnpm lint`         | Runs ESLint across all packages and apps                       |
 | `pnpm lint:fix`     | Automatically fixes auto-fixable ESLint warnings               |
-| `pnpm test`         | Runs all unit test suites using Vitest                         |
+| `pnpm test`         | Runs all unit & integration test suites using Vitest           |
 | `pnpm test:watch`   | Runs Vitest in interactive watch mode                          |
-| `pnpm test:e2e`     | Runs Playwright browser end-to-end and visual regression tests |
+| `pnpm test:e2e`     | Runs Playwright browser end-to-end user flows                  |
 | `pnpm format`       | Formats all files using Prettier                               |
 | `pnpm format:check` | Validates formatting consistency without modifying files       |
 
 ---
 
-## 4. Monorepo Architecture
+## 6. Monorepo Architecture
 
 ```
-epaper-studio/
+e-paper/
 ├── apps/
-│   ├── web/                     # React 19 + TypeScript + Vite interactive studio
-│   └── renderer/                # Node.js + Playwright worker for vector PDF & e-ink bitmap generation
+│   ├── web/                     # React 19 + TypeScript + Vite interactive studio (Cloudflare Pages)
+│   └── renderer/                # Node.js + Playwright microservice for vector PDF generation (Render.com)
 ├── packages/
-│   ├── document-schema/         # Canonical Zod schemas, hardware device profiles, and AST definitions
-│   ├── template-engine/         # Layout calculation, multi-column balance, and data interpolation
-│   ├── typography/              # Multilingual font metrics, e-ink optical weight tuners, fallback cascades
+│   ├── document-schema/         # Canonical Zod schemas, device profiles, and AST definitions
+│   ├── template-engine/         # Grid calculations, auto-fit, free layout, and data interpolation
+│   ├── typography/              # Multilingual font metrics, self-hosted Devanagari font cascades
 │   ├── ui/                      # Shared paper aesthetic tokens, preview components, contrast inspectors
 │   └── test-fixtures/           # Standard documents, mock hardware profiles, test suites
-├── supabase/
-│   ├── migrations/              # PostgreSQL schema migrations and RLS policies
-│   └── tests/                   # pgTAP database tests
 ├── tests/
-│   ├── e2e/                     # End-to-end browser user flows
-│   ├── visual/                  # Visual regression & 16-level grayscale dithering validation
+│   ├── e2e/                     # End-to-end browser user flows (Playwright)
+│   ├── visual/                  # Visual regression & physical coordinate parity assertions
 │   └── pdf/                     # PDF geometry and print dimension assertions
 ├── docs/                        # Architecture, PRD, Roadmap, and ADR records
-└── .agent/rules/                # Modular agent behavior rules
+├── DEPLOY.md                    # Step-by-step split deployment guide for Cloudflare Pages & Render
+└── render.yaml                  # Render.com Blueprint specification for containerized renderer
 ```
 
 ---
 
-## 5. Architecture & Subsystems
+## 7. Deployment
 
-Detailed documentation is available in the [`docs/`](./docs) directory:
-
-- [**Product Requirements (PRD)**](./docs/PRD.md): Functional and non-functional requirements.
-- [**System Architecture**](./docs/ARCHITECTURE.md): Microservice topology, Supabase RLS, rendering pipeline.
-- [**Implementation Roadmap**](./docs/ROADMAP.md): Phased delivery milestones and dependencies.
-- [**Architecture Decision Records (ADR)**](./docs/ADR.md): Key decisions and tradeoffs.
-- [**Agent Guidelines (AGENTS.md)**](./AGENTS.md): Coding standards and security guardrails.
-
----
-
-## 6. Local Supabase Setup (Optional)
-
-To run the local database and storage services:
-
-```bash
-# Start local Supabase containers (requires Docker)
-supabase start
-
-# Apply local migrations
-supabase migration up
-
-# Run database tests
-supabase test db
-```
-
----
-
-## 7. License
-
-MIT
+For complete, step-by-step instructions on deploying the renderer microservice to **Render.com** (Docker) and the studio frontend to **Cloudflare Pages**, see [**DEPLOY.md**](./DEPLOY.md).
