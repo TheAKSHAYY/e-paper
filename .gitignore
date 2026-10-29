@@ -7,6 +7,9 @@ dist/
 build/
 .turbo/
 out/
+*.tsbuildinfo
+.vite/
+.cache/
 
 # Environment variables
 .env
@@ -31,10 +34,20 @@ pnpm-debug.log*
 # OS and Editor files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+*.swp
+*.swo
+*~
+*.tmp
 .idea/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Temporary directories
+tmp/
+temp/
 
 # Supabase local state
 .supabase/
