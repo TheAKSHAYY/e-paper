@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RendererWorker } from '@epaper-studio/renderer';
 import { getTypographyFontsDir } from '@epaper-studio/typography/server';
+import { copyFonts } from './scripts/copy-fonts.js';
 
 function typographyFontsPlugin(): Plugin {
   const fontsDir = getTypographyFontsDir();
@@ -24,12 +25,15 @@ function typographyFontsPlugin(): Plugin {
 
   return {
     name: 'typography-fonts-server',
+    buildStart() {
+      // Ensure all self-hosted font assets are synchronized into public/fonts before bundling
+      copyFonts();
+    },
     configureServer(server) {
       server.middlewares.use('/fonts', serveFont);
     },
-    configurePreviewServer(server) {
-      server.middlewares.use('/fonts', serveFont);
-    },
+    // Note: configurePreviewServer middleware is intentionally omitted so vite preview
+    // serves purely from the static dist/ build artifacts, matching Vercel's production behavior.
     generateBundle() {
       if (fs.existsSync(fontsDir)) {
         const files = fs.readdirSync(fontsDir);

@@ -13,6 +13,9 @@ export function getTypographyFontsDir(): string {
     path.resolve(__dirname, '../fonts'),
     path.resolve(__dirname, '../../fonts'),
     path.resolve(process.cwd(), 'packages/typography/fonts'),
+    path.resolve(process.cwd(), '../packages/typography/fonts'),
+    path.resolve(process.cwd(), '../../packages/typography/fonts'),
+    path.resolve(__dirname, '../../../packages/typography/fonts'),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
