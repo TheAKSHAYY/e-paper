@@ -66,14 +66,16 @@ Once Render completes building the container:
 
 ---
 
-## Part 2: Deploy the Web Frontend (Cloudflare Pages)
+## Part 2: Deploy the Web Frontend (Cloudflare Pages or Vercel)
 
-### Step 2.1: Create a Cloudflare Pages Project
+### Option A: Cloudflare Pages
+
+#### Step 2.1: Create a Cloudflare Pages Project
 1. Sign in to the [Cloudflare Dashboard](https://dash.cloudflare.com/) and navigate to **Workers & Pages**.
 2. Click **Create Application** > **Pages** > **Connect to Git**.
 3. Select your GitHub repository (`e-paper`) and branch (`main`).
 
-### Step 2.2: Configure Build Settings
+#### Step 2.2: Configure Build Settings
 Fill in the exact build configuration:
 
 - **Project name**: `epaper-studio`
@@ -83,16 +85,12 @@ Fill in the exact build configuration:
   ```bash
   pnpm build
   ```
-  *(Or explicitly build packages in order:)*
-  ```bash
-  pnpm --filter @epaper-studio/document-schema build && pnpm --filter @epaper-studio/typography build && pnpm --filter @epaper-studio/template-engine build && pnpm --filter @epaper-studio/web build
-  ```
 - **Build output directory**:
   ```
   apps/web/dist
   ```
 
-### Step 2.3: Set Frontend Environment Variables
+#### Step 2.3: Set Frontend Environment Variables
 In the Cloudflare Pages settings under **Environment Variables**, add:
 
 | Variable | Value | Description |
@@ -101,7 +99,23 @@ In the Cloudflare Pages settings under **Environment Variables**, add:
 | `VITE_RENDERER_URL` | `https://epaper-renderer.onrender.com` | Live URL of your Render backend service |
 | `VITE_RENDERER_API_KEY` | *(Optional)* | Must match `RENDER_API_KEY` on Render if enabled |
 
-Click **Save and Deploy**. Cloudflare Pages will build the packages and publish your frontend to `https://<your-project>.pages.dev`.
+---
+
+### Option B: Vercel
+
+If deploying the frontend on Vercel:
+
+1. Import your GitHub repository (`e-paper`) in the [Vercel Dashboard](https://vercel.com/new).
+2. Set **Root Directory** to `apps/web`.
+3. Vercel will automatically detect `Vite` and run `pnpm run build`.
+   - The updated build script in `apps/web/package.json` (`pnpm --filter "@epaper-studio/web^..." build && tsc -p tsconfig.json --noEmit && vite build`) will automatically compile the internal monorepo packages first, even on a fresh clone.
+4. Set **Output Directory** to `dist` (default for Vite).
+5. In **Environment Variables**, add:
+   - `VITE_RENDERER_URL`: `https://epaper-renderer.onrender.com`
+   - `VITE_RENDERER_API_KEY`: *(Optional shared key matching Render)*
+6. Click **Deploy**.
+
+---
 
 ### Step 2.4: Update Renderer CORS
 Once you have your live Cloudflare Pages URL (e.g. `https://epaper-studio.pages.dev`), return to Render.com and update:
