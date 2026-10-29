@@ -42,6 +42,8 @@ import { ThemeModal } from './components/studio/ThemeModal';
 import { LandingPage } from './components/landing/LandingPage';
 import { draftStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
+import { printDocumentViaIframe } from './utils/browserPrintExport';
+import { PrintInstructionsModal } from './components/studio/PrintInstructionsModal';
 import { createArticleFromPreset } from './utils/presetPlacement';
 
 declare global {
@@ -1462,8 +1464,18 @@ export const App: React.FC = () => {
         );
       } catch (err) {
         console.error('PDF export error:', err);
+        const errMsg = err instanceof Error ? err.message : 'सर्वर से संपर्क नहीं हो सका';
+        setPrintErrorMessage(errMsg);
+        setIsPrintModalOpen(true);
         showNotification(
-          `PDF डाउनलोड विफल: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`
+          `सर्वर रेंडरर से PDF डाउनलोड विफल (${errMsg})। आप सीधे 'प्रिंट / Save as PDF' का उपयोग कर सकते हैं।`,
+          {
+            label: '🖨️ प्रिंट विकल्प',
+            onClick: () => {
+              setPrintErrorMessage(errMsg);
+              setIsPrintModalOpen(true);
+            },
+          }
         );
       } finally {
         setIsExportingPdf(false);
@@ -1471,6 +1483,34 @@ export const App: React.FC = () => {
     },
     [document, pages, showNotification]
   );
+
+  // Fallback Browser Print State and Handlers
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printErrorMessage, setPrintErrorMessage] = useState<string | null>(null);
+  const [isPrintingPdf, setIsPrintingPdf] = useState(false);
+
+  const handleOpenPrintModal = useCallback((errorMsg?: string | null) => {
+    setPrintErrorMessage(errorMsg || null);
+    setIsPrintModalOpen(true);
+  }, []);
+
+  const handleConfirmPrint = useCallback(async () => {
+    setIsPrintingPdf(true);
+    showNotification('प्रिंट लेआउट तैयार किया जा रहा है...');
+    try {
+      await printDocumentViaIframe(document);
+      setIsPrintModalOpen(false);
+      setPrintErrorMessage(null);
+      showNotification('✓ प्रिंट डायलॉग प्रारंभ किया गया');
+    } catch (err) {
+      console.error('Print export error:', err);
+      showNotification(
+        `प्रिंट त्रुटि: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`
+      );
+    } finally {
+      setIsPrintingPdf(false);
+    }
+  }, [document, showNotification]);
 
   // Create new newspaper from setup modal
   const handleCreateNewspaper = useCallback(
@@ -1628,6 +1668,8 @@ export const App: React.FC = () => {
               onSave={handleSaveDraft}
               onExportPdf={() => handleExportPdf(false)}
               isExportingPdf={isExportingPdf}
+              onPrintPdf={() => handleOpenPrintModal(null)}
+              isPrintingPdf={isPrintingPdf}
               isFullscreen={Boolean(
                 typeof window !== 'undefined' && window.document.fullscreenElement
               )}
@@ -1692,6 +1734,8 @@ export const App: React.FC = () => {
               onOpenDrafts={() => setIsDraftsOpen(true)}
               onExportPdf={handleExportPdf}
               isExportingPdf={isExportingPdf}
+              onPrintPdf={() => handleOpenPrintModal(null)}
+              isPrintingPdf={isPrintingPdf}
               isSidebarOpen={isSidebarOpen}
               onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
               isInspectorOpen={isInspectorOpen}
@@ -2265,6 +2309,20 @@ export const App: React.FC = () => {
         onClose={() => setIsThemeModalOpen(false)}
         theme={document.layout.theme}
         onUpdateTheme={handleApplyTheme}
+      />
+
+      <PrintInstructionsModal
+        isOpen={isPrintModalOpen}
+        onClose={() => {
+          setIsPrintModalOpen(false);
+          setPrintErrorMessage(null);
+        }}
+        onConfirmPrint={handleConfirmPrint}
+        pageSize={document.metadata.pageSize}
+        orientation={document.metadata.orientation}
+        isMobile={isMobile}
+        errorMessage={printErrorMessage}
+        isPreparing={isPrintingPdf}
       />
 
       {/* Page Deletion Confirmation Dialog */}

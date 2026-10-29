@@ -29,6 +29,8 @@ export interface TopBarProps {
   onOpenDrafts: () => void;
   onExportPdf: () => void;
   isExportingPdf: boolean;
+  onPrintPdf?: () => void;
+  isPrintingPdf?: boolean;
   onAutoFit?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -66,6 +68,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenTemplates,
   onExportPdf,
   isExportingPdf,
+  onPrintPdf,
+  isPrintingPdf = false,
   onAutoFit,
   onUndo,
   onRedo,
@@ -717,6 +721,32 @@ export const TopBar: React.FC<TopBarProps> = ({
           <span>📥</span>
           <span>{isExportingPdf ? 'डाउनलोड...' : 'PDF'}</span>
         </button>
+
+        {/* Fallback Browser Print / Save as PDF Button */}
+        {onPrintPdf && (
+          <button
+            data-testid="btn-print-pdf"
+            onClick={onPrintPdf}
+            disabled={isPrintingPdf}
+            title="ब्राउज़र प्रिंट / PDF के रूप में सहेजें (बिना सर्वर)"
+            style={{
+              backgroundColor: '#1e293b',
+              color: '#f8fafc',
+              border: '1px solid #475569',
+              borderRadius: '2px',
+              padding: '5px 10px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              cursor: isPrintingPdf ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>🖨️</span>
+            <span>{isPrintingPdf ? 'तैयार...' : 'प्रिंट / PDF'}</span>
+          </button>
+        )}
 
         {onToggleInspector && (
           <button

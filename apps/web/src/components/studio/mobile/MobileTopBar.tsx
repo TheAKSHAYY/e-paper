@@ -7,6 +7,8 @@ export interface MobileTopBarProps {
   onSave?: () => void;
   onExportPdf: () => void;
   isExportingPdf: boolean;
+  onPrintPdf?: () => void;
+  isPrintingPdf?: boolean;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   onBack: () => void;
@@ -30,6 +32,8 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
   onSave,
   onExportPdf,
   isExportingPdf,
+  onPrintPdf,
+  isPrintingPdf = false,
   isFullscreen,
   onToggleFullscreen,
   onBack,
@@ -347,6 +351,32 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
         >
           {isFullscreen ? '⤢' : '⛶'}
         </button>
+
+        {onPrintPdf && (
+          <button
+            type="button"
+            onClick={onPrintPdf}
+            disabled={isPrintingPdf}
+            aria-label="ब्राउज़र प्रिंट या PDF सहेजें"
+            data-testid="btn-print-pdf"
+            style={{
+              minWidth: '40px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1e293b',
+              border: '1px solid #475569',
+              borderRadius: '6px',
+              color: '#f8fafc',
+              cursor: isPrintingPdf ? 'wait' : 'pointer',
+              fontSize: '13px',
+              padding: '0 6px',
+            }}
+          >
+            🖨️
+          </button>
+        )}
 
         <button
           type="button"
