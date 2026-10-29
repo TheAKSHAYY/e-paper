@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('E-Paper Studio Comprehensive QA & Audit', () => {
-  test('Desktop & Mobile: Run through all workflows, edge cases and console checks', async ({ page }) => {
+  test('Desktop & Mobile: Run through all workflows, edge cases and console checks', async ({
+    page,
+  }) => {
     const consoleLogs: { type: string; text: string }[] = [];
     page.on('console', (msg) => {
       consoleLogs.push({ type: msg.type(), text: msg.text() });
@@ -48,7 +50,7 @@ test.describe('E-Paper Studio Comprehensive QA & Audit', () => {
 
     // Click Deep Blue preset
     const deepBluePreset = page.getByRole('button', { name: /गहरा नीला|Deep Editorial Blue/i });
-    if (await deepBluePreset.count() > 0) {
+    if ((await deepBluePreset.count()) > 0) {
       await deepBluePreset.click();
       await page.waitForTimeout(300);
     }
@@ -95,18 +97,19 @@ test.describe('E-Paper Studio Comprehensive QA & Audit', () => {
       const box = await navButtons.nth(i).boundingBox();
       const text = await navButtons.nth(i).innerText();
       if (box && (box.width < 44 || box.height < 44)) {
-        tapTargetIssues.push(`Button "${text.replace(/\n/g, ' ')}" is ${box.width}x${box.height}px (< 44px)`);
+        tapTargetIssues.push(
+          `Button "${text.replace(/\n/g, ' ')}" is ${box.width}x${box.height}px (< 44px)`
+        );
       }
     }
     console.log('Mobile tap target issues:', tapTargetIssues);
 
     // Check console errors
-    const errors = consoleLogs.filter(l => l.type === 'error');
-    const warnings = consoleLogs.filter(l => l.type === 'warning');
+    const errors = consoleLogs.filter((l) => l.type === 'error');
+    const warnings = consoleLogs.filter((l) => l.type === 'warning');
     console.log('Total console errors:', errors.length, errors);
     console.log('Total console warnings:', warnings.length);
 
     expect(errors.length).toBe(0);
   });
 });
-

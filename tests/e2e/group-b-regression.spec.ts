@@ -90,6 +90,44 @@ test.describe('Group B Regression & Mobile UX Verification in Real Browser', () 
 
     // Capture mobile viewport screenshot
     await page.screenshot({ path: path.join(screenshotsDir, 'mobile-viewport-390px.png') });
+
+    // Open '+ ब्लॉक' drawer
+    const blockBtn = bottomNav.locator('button', { hasText: /ब्लॉक/i });
+    await blockBtn.click();
+    await page.waitForTimeout(600);
+
+    // Capture drawer screenshot
+    await page.screenshot({ path: path.join(screenshotsDir, 'mobile-drawer-blocks.png') });
+
+    // Open 'पेज' drawer
+    const pageBtn = bottomNav.locator('button', { hasText: /पेज/i }).first();
+    await pageBtn.click();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(screenshotsDir, 'mobile-drawer-pages.png') });
+
+    // Open 'प्रारूप' drawer
+    const presetBtn = bottomNav.locator('button', { hasText: /प्रारूप/i });
+    await presetBtn.click();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(screenshotsDir, 'mobile-drawer-presets.png') });
+
+    // Open 'गुण' drawer
+    const inspectorBtn = bottomNav.locator('button', { hasText: /गुण/i });
+    await inspectorBtn.click();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(screenshotsDir, 'mobile-drawer-inspector.png') });
+
+    // Close drawer
+    const closeBtn = page.locator('button[aria-label="बंद करें (Close)"]');
+    await closeBtn.click();
+    await page.waitForTimeout(400);
+
+    // Click first article to open inspector for an article
+    const firstArticle = page.locator('[data-testid^="article-card-"]').first();
+    await firstArticle.click();
+    await page.waitForTimeout(600);
+    await page.screenshot({
+      path: path.join(screenshotsDir, 'mobile-drawer-article-inspector.png'),
+    });
   });
 });
-

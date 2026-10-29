@@ -51,6 +51,7 @@ export interface ContextualInspectorProps {
   onSelectMasthead?: () => void;
   onCloseMasthead?: () => void;
   isMobile?: boolean;
+  hideHeader?: boolean;
   width?: string | number;
 }
 
@@ -78,8 +79,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onSelectMasthead: _onSelectMasthead,
   onCloseMasthead,
   isMobile = false,
+  hideHeader,
   width,
 }) => {
+  const shouldHideHeader = hideHeader ?? isMobile;
   const [activeInspectorTab, setActiveInspectorTab] = useState<'content' | 'typography'>('content');
   const isPage1 = currentPageIndex === 0;
   const pageColumnCount = resolvePageColumnCount({ layout }, currentPage);
@@ -135,68 +138,72 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         flexShrink: 0,
       }}
     >
-      {/* Inspector Header */}
-      <div
-        style={{
-          padding: '10px 14px',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '13px' }}>{selectedArticle ? '📝' : isPage1 ? '🗞️' : '📄'}</span>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
-            {selectedArticle
-              ? 'खबर संपादक'
-              : isPage1
-                ? 'मास्टहेड व पेज सेटिंग्स'
-                : `पेज ${currentPageIndex + 1} सेटिंग्स`}
-          </span>
-        </div>
+      {/* Inspector Header (Hidden on Mobile Drawer where Drawer Header is already present) */}
+      {!shouldHideHeader && (
+        <div
+          style={{
+            padding: '10px 14px',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px' }}>
+              {selectedArticle ? '📝' : isPage1 ? '🗞️' : '📄'}
+            </span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+              {selectedArticle
+                ? 'खबर संपादक'
+                : isPage1
+                  ? 'मास्टहेड व पेज सेटिंग्स'
+                  : `पेज ${currentPageIndex + 1} सेटिंग्स`}
+            </span>
+          </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {selectedArticle && (
-            <button
-              onClick={onDeselect}
-              title="चयन हटाएँ"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#64748b',
-                cursor: 'pointer',
-                fontSize: '11px',
-                padding: '2px 6px',
-                borderRadius: '4px',
-              }}
-            >
-              चयन हटाएँ ✕
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {selectedArticle && (
+              <button
+                onClick={onDeselect}
+                title="चयन हटाएँ"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                }}
+              >
+                चयन हटाएँ ✕
+              </button>
+            )}
 
-          {onCloseInspector && (
-            <button
-              onClick={onCloseInspector}
-              title="Collapse inspector (इंस्पेक्टर छुपाएँ)"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#94a3b8',
-                cursor: 'pointer',
-                padding: '4px 6px',
-                borderRadius: '4px',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              ▶
-            </button>
-          )}
+            {onCloseInspector && (
+              <button
+                onClick={onCloseInspector}
+                title="Collapse inspector (इंस्पेक्टर छुपाएँ)"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                ▶
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Sub-tabs: Content vs Typography */}
       <div
@@ -1013,7 +1020,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </div>
 
                   {/* Quick Span Presets */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(4, 1fr)',
+                      gap: '4px',
+                      marginBottom: '6px',
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={() => onUpdateArticle({ ...selectedArticle, columnSpan: 1 })}
@@ -1022,7 +1036,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         fontSize: '10px',
                         fontWeight: 600,
                         borderRadius: '4px',
-                        border: selectedArticle.columnSpan === 1 ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        border:
+                          selectedArticle.columnSpan === 1
+                            ? '2px solid #2563eb'
+                            : '1px solid #cbd5e1',
                         backgroundColor: selectedArticle.columnSpan === 1 ? '#eff6ff' : '#ffffff',
                         color: selectedArticle.columnSpan === 1 ? '#1d4ed8' : '#334155',
                         cursor: 'pointer',
@@ -1038,7 +1055,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         fontSize: '10px',
                         fontWeight: 600,
                         borderRadius: '4px',
-                        border: selectedArticle.columnSpan === 2 ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        border:
+                          selectedArticle.columnSpan === 2
+                            ? '2px solid #2563eb'
+                            : '1px solid #cbd5e1',
                         backgroundColor: selectedArticle.columnSpan === 2 ? '#eff6ff' : '#ffffff',
                         color: selectedArticle.columnSpan === 2 ? '#1d4ed8' : '#334155',
                         cursor: 'pointer',
@@ -1060,15 +1080,18 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         fontWeight: 600,
                         borderRadius: '4px',
                         border:
-                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                          selectedArticle.columnSpan ===
+                          Math.max(1, Math.floor(pageColumnCount / 2))
                             ? '2px solid #2563eb'
                             : '1px solid #cbd5e1',
                         backgroundColor:
-                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                          selectedArticle.columnSpan ===
+                          Math.max(1, Math.floor(pageColumnCount / 2))
                             ? '#eff6ff'
                             : '#ffffff',
                         color:
-                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                          selectedArticle.columnSpan ===
+                          Math.max(1, Math.floor(pageColumnCount / 2))
                             ? '#1d4ed8'
                             : '#334155',
                         cursor: 'pointer',
@@ -1092,7 +1115,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             : '1px solid #cbd5e1',
                         backgroundColor:
                           selectedArticle.columnSpan === pageColumnCount ? '#eff6ff' : '#ffffff',
-                        color: selectedArticle.columnSpan === pageColumnCount ? '#1d4ed8' : '#334155',
+                        color:
+                          selectedArticle.columnSpan === pageColumnCount ? '#1d4ed8' : '#334155',
                         cursor: 'pointer',
                       }}
                     >
@@ -1127,10 +1151,25 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
 
                 {/* Height Mode Controls */}
                 <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#334155',
+                      display: 'block',
+                      marginBottom: '4px',
+                    }}
+                  >
                     ऊँचाई मोड (Height Mode)
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '4px',
+                      marginBottom: '6px',
+                    }}
+                  >
                     {(['auto', 'min-height', 'fixed'] as const).map((mode) => {
                       const isModeActive = (selectedArticle.heightMode ?? 'auto') === mode;
                       return (
@@ -1158,7 +1197,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             cursor: 'pointer',
                           }}
                         >
-                          {mode === 'auto' ? 'ऑटो (Auto)' : mode === 'min-height' ? 'न्यूनतम (Min)' : 'निश्चित (Fixed)'}
+                          {mode === 'auto'
+                            ? 'ऑटो (Auto)'
+                            : mode === 'min-height'
+                              ? 'न्यूनतम (Min)'
+                              : 'निश्चित (Fixed)'}
                         </button>
                       );
                     })}
@@ -1193,7 +1236,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 </div>
 
                 {/* Fill Remaining Space Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}
+                >
                   <input
                     type="checkbox"
                     id="fill-remaining-space"
@@ -1204,11 +1249,21 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         fillSpace: e.target.checked,
                       })
                     }
-                    style={{ cursor: 'pointer', accentColor: '#2563eb', width: '15px', height: '15px' }}
+                    style={{
+                      cursor: 'pointer',
+                      accentColor: '#2563eb',
+                      width: '15px',
+                      height: '15px',
+                    }}
                   />
                   <label
                     htmlFor="fill-remaining-space"
-                    style={{ fontSize: '11px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      cursor: 'pointer',
+                    }}
                   >
                     खाली जगह भरें (Fill remaining space)
                   </label>
@@ -1871,7 +1926,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     )}
 
                     {/* ── PLACEMENT & ASPECT ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                    <div
+                      style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}
+                    >
                       <div>
                         <label
                           style={{
@@ -2314,9 +2371,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         const val = parseInt(e.target.value, 10);
                         onUpdateArticle({
                           ...selectedArticle,
-                          customFontSizePt: isNaN(val)
-                            ? undefined
-                            : Math.max(6, Math.min(48, val)),
+                          customFontSizePt: isNaN(val) ? undefined : Math.max(6, Math.min(48, val)),
                         });
                       }}
                       style={{

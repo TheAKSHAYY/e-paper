@@ -11,11 +11,11 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
       }
     });
 
-    await page.goto('/');
+    await page.goto('/#editor');
 
     // Check title and branding
     await expect(page).toHaveTitle(/E-Paper Studio/);
-    await expect(page.getByText('E-Paper Studio')).toBeVisible();
+    await expect(page.getByText('E-Paper Studio').first()).toBeVisible();
 
     // Check authentic Hindi masthead rendering on canvas
     const mastheadTitle = page.locator('[data-testid="masthead-title"]');
@@ -32,7 +32,7 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
   test('should edit an article headline via contextual inspector and update canvas immediately', async ({
     page,
   }) => {
-    await page.goto('/');
+    await page.goto('/#editor');
 
     // Click on the first article card to select it
     const firstArticleCard = page.locator('[data-testid^="article-card-"]').first();
@@ -53,10 +53,15 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
   test('should add a newspaper block from the block library and display it on the page', async ({
     page,
   }) => {
-    await page.goto('/');
+    await page.goto('/#editor');
+    await page.waitForTimeout(1000);
 
-    // Click "Blocks" tab in left sidebar
-    await page.getByRole('button', { name: /ब्लॉक|Blocks/i }).click();
+    // Click "तत्व (Catalog)" tab in left sidebar
+    await page
+      .getByRole('button', { name: /तत्व|Catalog|Blocks/i })
+      .first()
+      .click();
+    await page.waitForTimeout(500);
 
     // Count initial articles on canvas
     const initialCount = await page.locator('[data-testid^="article-card-"]').count();
@@ -64,6 +69,7 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
     // Click "+ Add to Page 1" button on the first block template card
     const addBtn = page.getByRole('button', { name: /\+ पेज 1 पर जोड़ें|\+ Add to Page/i }).first();
     await addBtn.click();
+    await page.waitForTimeout(500);
 
     // Verify article count incremented on canvas
     const newCount = await page.locator('[data-testid^="article-card-"]').count();
@@ -73,16 +79,26 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
   test('should manage multiple pages and render inside running folios on page 2', async ({
     page,
   }) => {
-    await page.goto('/');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/#editor');
+    await page.waitForTimeout(1000);
 
-    // Ensure we are on Pages tab
-    await page
-      .getByRole('button', { name: /पेज|Pages/i })
-      .first()
-      .click();
+    const leftSidebar = page.locator('[data-testid="left-sidebar"]');
+    if (!(await leftSidebar.isVisible())) {
+      const pageRailBtn = page.locator('button:has-text("▤ पेज")');
+      if (await pageRailBtn.isVisible()) {
+        await pageRailBtn.click();
+      } else {
+        await page.locator('button[title*="sidebar"], button:has-text("☰")').first().click();
+      }
+      await page.waitForTimeout(500);
+    }
 
     // Click "+ Add Page"
-    await page.getByRole('button', { name: /\+ नया पेज|\+ Add Page/i }).click();
+    const addPageBtn = page.locator('[data-testid="add-page-btn"]').first();
+    await expect(addPageBtn).toBeVisible();
+    await addPageBtn.click();
+    await page.waitForTimeout(500);
 
     // Top bar should now show Page 2
     await expect(page.getByText(/पेज 2|Page 2/i).first()).toBeVisible();
@@ -92,7 +108,8 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
   });
 
   test('should save draft locally and persist edits across page reload', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#editor');
+    await page.waitForTimeout(1000);
 
     // Select first article and edit headline
     await page.locator('[data-testid^="article-card-"]').first().click();
@@ -100,17 +117,14 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
     const persistedTitle = 'स्थानीय समाचार: शहर में नए पुस्तकालय का लोकार्पण';
     await headlineInput.fill(persistedTitle);
 
-    // Click save in top bar
-    const saveTrigger = page.locator('button:has-text("Unsaved")');
-    if ((await saveTrigger.count()) > 0) {
-      await saveTrigger.click();
-    }
-
-    // Wait for saved confirmation toast
-    await expect(page.getByRole('status')).toBeVisible();
+    // Verify Autosave badge or notification toast indicates status
+    await page.waitForTimeout(1500);
+    const saveBadge = page.locator('[data-testid="autosave-status-badge"]');
+    await expect(saveBadge).toBeVisible();
 
     // Reload browser page
     await page.reload();
+    await page.waitForTimeout(1000);
 
     // Verify the persisted headline survived reload
     const reloadedHeading = page.locator('[data-testid="newspaper-articles-grid"] h2').first();
@@ -119,7 +133,7 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
 
   test('should trigger Export PDF action and download print-ready PDF', async ({ page }) => {
     test.slow();
-    await page.goto('/');
+    await page.goto('/#editor');
 
     const exportBtn = page.locator(
       '[data-testid="btn-export-pdf"], [data-testid="export-pdf-button"]'

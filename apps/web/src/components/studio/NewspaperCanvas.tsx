@@ -225,14 +225,20 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             marginBottom: isSide ? '4px' : '8px',
             clear: article.imagePlacement === 'bottom' ? 'both' : 'none',
             flexShrink: 0,
-            ...(article.fillSpace && !isSide ? { flex: 1, display: 'flex', flexDirection: 'column' } : {}),
+            ...(article.fillSpace && !isSide
+              ? { flex: 1, display: 'flex', flexDirection: 'column' }
+              : {}),
           }}
         >
           <div
             style={{
               width: '100%',
               aspectRatio: article.customImageHeight ? undefined : photoAspect,
-              height: article.customImageHeight ? `${article.customImageHeight}px` : article.fillSpace && !isSide ? '100%' : undefined,
+              height: article.customImageHeight
+                ? `${article.customImageHeight}px`
+                : article.fillSpace && !isSide
+                  ? '100%'
+                  : undefined,
               flex: article.fillSpace && !isSide ? 1 : undefined,
               overflow: 'hidden',
               border: `1px solid ${article.customColors?.borderColor || '#222'}`,
@@ -247,7 +253,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: article.fillSpace ? 'cover' : photoObjectFit === 'fill' ? 'fill' : photoObjectFit,
+                objectFit: article.fillSpace
+                  ? 'cover'
+                  : photoObjectFit === 'fill'
+                    ? 'fill'
+                    : photoObjectFit,
                 objectPosition: photoObjectPosition,
                 display: 'block',
               }}
@@ -285,8 +295,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
     };
 
     const customBorders = article.borders;
-    const fallbackBorderColor =
-      article.customColors?.borderColor || 'var(--border-color, #c8c5bc)';
+    const fallbackBorderColor = article.customColors?.borderColor || 'var(--border-color, #c8c5bc)';
     const borderStyles: React.CSSProperties = {
       borderTop:
         customBorders?.top && customBorders.top.style !== 'none'
@@ -540,7 +549,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     fontSize: `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
-                    color: article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #444444)',
+                    color:
+                      article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #444444)',
                   }}
                 >
                   {article.subheadline}
@@ -562,7 +572,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   fontWeight: headlineWeight,
                   lineHeight: 1.15,
                   margin: 0,
-                  color: article.customColors?.headlineColor ?? article.textColor ?? 'var(--headline-color, #111111)',
+                  color:
+                    article.customColors?.headlineColor ??
+                    article.textColor ??
+                    'var(--headline-color, #111111)',
                   letterSpacing: isLead ? '-0.3pt' : undefined,
                 }}
               >
@@ -616,7 +629,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   fontWeight: headlineWeight,
                   lineHeight: 1.15,
                   margin: '0 0 4px 0',
-                  color: article.customColors?.headlineColor ?? article.textColor ?? 'var(--headline-color, #111111)',
+                  color:
+                    article.customColors?.headlineColor ??
+                    article.textColor ??
+                    'var(--headline-color, #111111)',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -630,7 +646,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
                     fontStyle: 'italic',
-                    color: article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #333333)',
+                    color:
+                      article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #333333)',
                   }}
                 >
                   {article.subheadline}

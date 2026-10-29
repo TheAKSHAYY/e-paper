@@ -11,7 +11,9 @@ test.describe('Pre-Group A: Complete Audit Verification', () => {
     }
   });
 
-  test('1 & 2. Auto Fit verification on empty, short, long, and overflow pages', async ({ page }) => {
+  test('1 & 2. Auto Fit verification on empty, short, long, and overflow pages', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/#editor');
     await page.waitForTimeout(1000);

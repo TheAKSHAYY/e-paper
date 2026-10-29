@@ -696,6 +696,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Primary PDF Download Button */}
         <button
+          data-testid="btn-export-pdf"
           onClick={onExportPdf}
           disabled={isExportingPdf}
           title="300 DPI प्रेस-रेडी वेक्टर PDF डाउनलोड करें"

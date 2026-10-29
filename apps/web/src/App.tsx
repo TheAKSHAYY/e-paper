@@ -167,9 +167,12 @@ export const App: React.FC = () => {
     (msg: string, action?: { label: string; onClick: () => void }) => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       setStatusToast({ message: msg, action });
-      toastTimerRef.current = setTimeout(() => {
-        setStatusToast(null);
-      }, action ? 6000 : 3000);
+      toastTimerRef.current = setTimeout(
+        () => {
+          setStatusToast(null);
+        },
+        action ? 6000 : 3000
+      );
     },
     []
   );
@@ -401,9 +404,19 @@ export const App: React.FC = () => {
 
   const handleFitWidth = useCallback(() => {
     const fit = calculateFitWidthScale();
-    setScale(fit);
-    showNotification(`चौड़ाई फ़िट: ${Math.round(fit * 100)}%`);
-  }, [calculateFitWidthScale, showNotification]);
+    if (isMobile) {
+      if (scale <= fit + 0.05) {
+        setScale(0.85);
+        showNotification('पढ़ने योग्य ज़ूम: 85%');
+      } else {
+        setScale(fit);
+        showNotification(`चौड़ाई फ़िट: ${Math.round(fit * 100)}%`);
+      }
+    } else {
+      setScale(fit);
+      showNotification(`चौड़ाई फ़िट: ${Math.round(fit * 100)}%`);
+    }
+  }, [calculateFitWidthScale, isMobile, scale, showNotification]);
 
   // Automatically fit on initial mount or when view transitions to studio
   useEffect(() => {
@@ -1613,9 +1626,9 @@ export const App: React.FC = () => {
               onSave={handleSaveDraft}
               onExportPdf={() => handleExportPdf(false)}
               isExportingPdf={isExportingPdf}
-              isFullscreen={
-                Boolean(typeof window !== 'undefined' && window.document.fullscreenElement)
-              }
+              isFullscreen={Boolean(
+                typeof window !== 'undefined' && window.document.fullscreenElement
+              )}
               onToggleFullscreen={() => {
                 if (typeof window !== 'undefined') {
                   if (!window.document.fullscreenElement) {
@@ -2052,10 +2065,13 @@ export const App: React.FC = () => {
                     <div
                       style={{
                         flex: 1,
+                        minHeight: 0,
                         overflowY: 'auto',
                         WebkitOverflowScrolling: 'touch',
                         width: '100%',
                         boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
                       }}
                     >
                       {mobileDrawer === 'pages' && (
@@ -2087,6 +2103,7 @@ export const App: React.FC = () => {
                             setMobileDrawer('none');
                           }}
                           isMobile={true}
+                          hideTabs={true}
                           width="100%"
                         />
                       )}
@@ -2113,6 +2130,7 @@ export const App: React.FC = () => {
                           currentPresetId={document.layout.presetId}
                           onSelectPreset={() => {}}
                           isMobile={true}
+                          hideTabs={true}
                           width="100%"
                         />
                       )}
@@ -2143,6 +2161,7 @@ export const App: React.FC = () => {
                             setMobileDrawer('none');
                           }}
                           isMobile={true}
+                          hideTabs={true}
                           width="100%"
                         />
                       )}
@@ -2288,8 +2307,11 @@ export const App: React.FC = () => {
             >
               ⚠️ पेज हटाएं (Confirm Page Deletion)
             </h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}>
-              क्या आप वाकई पृष्ठ {pageToDelete + 1} हटाना चाहते हैं? इस पृष्ठ की सभी सामग्री व लेआउट हटा दिए जाएंगे।
+            <p
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}
+            >
+              क्या आप वाकई पृष्ठ {pageToDelete + 1} हटाना चाहते हैं? इस पृष्ठ की सभी सामग्री व लेआउट
+              हटा दिए जाएंगे।
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button

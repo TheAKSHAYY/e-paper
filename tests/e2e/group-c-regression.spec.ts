@@ -43,7 +43,10 @@ test.describe('Group C: Accessibility & Hindi Terminology Verification in Real B
     await page.waitForTimeout(500);
 
     // Check Hindi labels in inspector
-    const inspector = page.locator('aside').filter({ hasText: /संपादक|गुण/i }).first();
+    const inspector = page
+      .locator('aside')
+      .filter({ hasText: /संपादक|गुण/i })
+      .first();
     await expect(inspector).toBeVisible();
 
     const inspectorText = await inspector.innerText();
@@ -54,7 +57,8 @@ test.describe('Group C: Accessibility & Hindi Terminology Verification in Real B
     expect(inspectorText).toMatch(/शीर्षक/i);
 
     // Screenshot of inspector with Hindi terminology
-    await inspector.screenshot({ path: path.join(screenshotsDir, 'inspector-hindi-terminology.png') });
+    await inspector.screenshot({
+      path: path.join(screenshotsDir, 'inspector-hindi-terminology.png'),
+    });
   });
 });
-

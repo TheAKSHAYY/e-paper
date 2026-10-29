@@ -1,4 +1,8 @@
-import { NewspaperDocumentSchema, type NewspaperDocument, type Article } from '@epaper-studio/document-schema';
+import {
+  NewspaperDocumentSchema,
+  type NewspaperDocument,
+  type Article,
+} from '@epaper-studio/document-schema';
 import type { DraftStorageAdapter, DraftSummary } from './types';
 import { indexedDbAssetStorage } from './IndexedDbAssetStorage';
 
@@ -132,7 +136,9 @@ export class LocalStorageDraftAdapter implements DraftStorageAdapter {
             (storageErr.name === 'QuotaExceededError' || storageErr.code === 22));
 
         if (isQuotaErr) {
-          console.warn('LocalStorage quota exceeded. Offloading images to IndexedDB assets store...');
+          console.warn(
+            'LocalStorage quota exceeded. Offloading images to IndexedDB assets store...'
+          );
           const offloadedDoc = JSON.parse(JSON.stringify(validDoc)) as NewspaperDocument;
           const offloadPromises: Promise<void>[] = [];
 

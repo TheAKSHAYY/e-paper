@@ -20,7 +20,7 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
     const textarea = page.locator('textarea').first();
     await expect(textarea).toBeVisible();
     await textarea.focus();
-    const initialText = await textarea.inputValue();
+    const _initialText = await textarea.inputValue();
 
     // Type additional letters
     await textarea.pressSequentially(' - ताज़ा');
@@ -73,7 +73,9 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
     const cancelBtn = page.locator('[data-testid="cancel-delete-page-btn"]');
     await cancelBtn.click();
     await expect(confirmModal).toBeHidden();
-    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(pagesCountBefore);
+    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(
+      pagesCountBefore
+    );
 
     // 3. Confirm deletion
     await deleteBtn.click();
@@ -84,7 +86,9 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
 
     // Verify page count decreased
     await page.waitForTimeout(300);
-    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(pagesCountBefore - 1);
+    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(
+      pagesCountBefore - 1
+    );
 
     // 4. Verify Toast with Undo button appeared and restore page
     const toastUndoBtn = page.locator('[data-testid="toast-undo-btn"]');
@@ -93,7 +97,9 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
     await page.waitForTimeout(500);
 
     // Verify page was restored!
-    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(pagesCountBefore);
+    expect(await page.locator('[data-testid^="page-thumbnail-card-"]').count()).toBe(
+      pagesCountBefore
+    );
   });
 
   test('4. JSON Backup Export & Import buttons present and active', async ({ page }) => {
@@ -110,7 +116,9 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
     await expect(importBtn).toBeVisible();
 
     // Capture screenshot of TopBar with backup/import
-    const topBar = page.locator('[data-testid="studio-top-bar"]').or(page.locator('header').first());
+    const topBar = page
+      .locator('[data-testid="studio-top-bar"]')
+      .or(page.locator('header').first());
     await topBar.screenshot({ path: path.join(screenshotsDir, 'topbar-group-a-buttons.png') });
   });
 
@@ -126,12 +134,12 @@ test.describe('Group A Regression & Feature Verification in Real Browser', () =>
 
     // Switch to Free placement mode or inspect custom height input if available
     const heightModeSelect = page.getByRole('button', { name: /ऊँचाई.*Min|न्यूनतम/i }).first();
-    if (await heightModeSelect.count() > 0) {
+    if ((await heightModeSelect.count()) > 0) {
       await heightModeSelect.click();
       await page.waitForTimeout(300);
 
       const heightInput = page.locator('input[type="number"][min="50"]').first();
-      if (await heightInput.count() > 0) {
+      if ((await heightInput.count()) > 0) {
         await heightInput.fill('-50');
         await page.keyboard.press('Tab');
         await page.waitForTimeout(300);

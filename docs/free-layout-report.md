@@ -4,7 +4,7 @@
 **Feature**: Free-Placement Layout Mode (`useFreeLayout`)  
 **Monorepo**: `@epaper-studio`  
 **Date**: October 2026  
-**Status**: Completed & Verified  
+**Status**: Completed & Verified
 
 ---
 
@@ -15,6 +15,7 @@ This report documents the implementation and acceptance gate verification of the
 The feature allows users to position, resize, swap, and nudge any content block anywhere across the physical millimeter coordinate grid of a fixed-size newspaper page while strictly clamping all content inside printable area margins (preserving reserved masthead and folio zones).
 
 ### Feature Flag Status
+
 - **Default State**: **OFF (`useFreeLayout = false`)**. Existing auto-flow layout documents and rendering pipelines operate completely untouched without any behavioral changes.
 - **Activation Mechanisms**:
   1. TopBar toggle button: `[ 📐 मुक्त लेआउट: चालू/बंद ]` (`data-testid="toggle-free-layout-button"`).
@@ -27,6 +28,7 @@ The feature allows users to position, resize, swap, and nudge any content block 
 ## 2. Data Model Changes
 
 ### 2.1 Canonical Schema (`@epaper-studio/document-schema`)
+
 The document model was updated to schema version `1.1.0` while maintaining full backward compatibility with `1.0.0`:
 
 ```typescript
@@ -65,7 +67,9 @@ export const NewspaperPageSchema = z.object({
 ```
 
 ### 2.2 Clamping & Boundary Helpers
+
 Hardware device boundaries and printable margins are calculated dynamically:
+
 - `getPrintableAreaBoundsMm(pageSize, orientation, options)`: Computes `minX`, `maxX`, `minY`, `maxY`, printable width, and printable height in physical millimeters.
 - `clampFrameToPrintableArea(frame, bounds)`: Clamps coordinates and shrinks dimensions if necessary so a block can never cross page margins or invade the masthead/folio zones.
 - `validateFrameInsidePrintableArea(frame, bounds)`: Assertion helper returning validation failures with exact millimeter deltas.
@@ -91,20 +95,20 @@ The free layout interaction engine in `packages/template-engine/src/freeLayout.t
    - **Empty Area Drop**: Commits the snapped position.
    - **Swap-on-Drop (`swapFrames`)**: Dropping block A onto block B swaps their slot coordinates. If block sizes differ, a dry-run collision check verifies whether either block would overlap a third obstacle block:
      - If clear, positions swap cleanly.
-     - If obstructed, swap is rejected with notification: *"Swap संभव नहीं है: स्थान कम है।"*
+     - If obstructed, swap is rejected with notification: _"Swap संभव नहीं है: स्थान कम है।"_
 
 4. **Add Block Nearest-Free-Slot Search (`findNearestFreeSlot`)**:
    - Raster scan search (5mm step) from top-left to bottom-right for an unallocated rectangle matching the block's default dimensions.
-   - If no space fits, triggers the Page Full modal: *"Page bhar gaya - naya page jodein?"* (`data-testid="page-full-modal"`).
+   - If no space fits, triggers the Page Full modal: _"Page bhar gaya - naya page jodein?"_ (`data-testid="page-full-modal"`).
 
 ---
 
 ## 4. Bi-directional Conversion & Lossy Behavior
 
-| Conversion Direction | Behavior | Fidelity |
-| :--- | :--- | :--- |
-| **`autoToFree`** | Computes absolute millimeter coordinates `(x, y, w, h)` from the rendered column and row layout. | **100% Lossless**: Retains original auto attributes (`columnSpan`, `rowSpan`) so no data is discarded. |
-| **`freeToAuto`** | Sorts free blocks top-to-bottom, left-to-right. Snaps physical width `w` to the nearest 12-column span (`colSpan = round(w / colWidth)`). | **Lossy Conversion**: Non-column-aligned X offsets and custom heights are collapsed into standard flow rows. Emits warnings in `lossyWarnings` (e.g., *"ब्लॉक चौड़ाई को 4-कॉलम ग्रिड में स्नैप किया गया"*). |
+| Conversion Direction | Behavior                                                                                                                                  | Fidelity                                                                                                                                                                                                    |
+| :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`autoToFree`**     | Computes absolute millimeter coordinates `(x, y, w, h)` from the rendered column and row layout.                                          | **100% Lossless**: Retains original auto attributes (`columnSpan`, `rowSpan`) so no data is discarded.                                                                                                      |
+| **`freeToAuto`**     | Sorts free blocks top-to-bottom, left-to-right. Snaps physical width `w` to the nearest 12-column span (`colSpan = round(w / colWidth)`). | **Lossy Conversion**: Non-column-aligned X offsets and custom heights are collapsed into standard flow rows. Emits warnings in `lossyWarnings` (e.g., _"ब्लॉक चौड़ाई को 4-कॉलम ग्रिड में स्नैप किया गया"_). |
 
 ---
 
@@ -124,7 +128,7 @@ The free layout interaction engine in `packages/template-engine/src/freeLayout.t
 3. **PDF Export Preflight Modal**:
    - Intercepts PDF export when `useFreeLayout` is active.
    - If any free frame has overflowing text, displays preflight warning modal:
-     *"⚠️ प्रिंट पूर्व जांच (Export Preflight): कुछ ब्लॉकों में टेक्स्ट कट रहा है"*.
+     _"⚠️ प्रिंट पूर्व जांच (Export Preflight): कुछ ब्लॉकों में टेक्स्ट कट रहा है"_.
    - Allows user to cancel and resize, or continue to export.
 
 ---
@@ -166,31 +170,34 @@ pnpm build
 ```
 
 ### 7.2 Playwright Free Layout Interaction Tests (`tests/visual/free-layout-interaction.spec.ts`)
+
 Run command: `pnpm playwright test tests/visual/free-layout-interaction.spec.ts`
 
-| Test Case | Description | Result |
-| :--- | :--- | :--- |
-| **Desktop Clamping** | Drag block past top-left, top-right, bottom-left, bottom-right margins | **PASS** (Clamped inside printable margins) |
-| **Swap on Drop** | Drag block A and drop onto block B | **PASS** (Coordinates swap accurately) |
-| **Resize Clamping** | Drag SE resize handle far past page boundaries | **PASS** (Width/height clamped inside margins) |
-| **Page Full Alert** | Add blocks repeatedly until space exhausted | **PASS** (`[data-testid="page-full-modal"]` triggered) |
-| **Mobile (390x844)** | Verify $\ge 44\text{px}$ touch handles, 400ms long-press pickup, and drag | **PASS** (Handle = 88px at 0.5 scale = 44px screen) |
+| Test Case            | Description                                                               | Result                                                 |
+| :------------------- | :------------------------------------------------------------------------ | :----------------------------------------------------- |
+| **Desktop Clamping** | Drag block past top-left, top-right, bottom-left, bottom-right margins    | **PASS** (Clamped inside printable margins)            |
+| **Swap on Drop**     | Drag block A and drop onto block B                                        | **PASS** (Coordinates swap accurately)                 |
+| **Resize Clamping**  | Drag SE resize handle far past page boundaries                            | **PASS** (Width/height clamped inside margins)         |
+| **Page Full Alert**  | Add blocks repeatedly until space exhausted                               | **PASS** (`[data-testid="page-full-modal"]` triggered) |
+| **Mobile (390x844)** | Verify $\ge 44\text{px}$ touch handles, 400ms long-press pickup, and drag | **PASS** (Handle = 88px at 0.5 scale = 44px screen)    |
 
 ### 7.3 Playwright Physical PDF Parity Tests (`tests/visual/free-layout-parity.spec.ts`)
+
 Run command: `pnpm playwright test tests/visual/free-layout-parity.spec.ts`  
 Threshold: Difference $\le 0.5\text{ mm}$ between Editor Canvas and PDF Export HTML.
 
-| Template ID | Template Name | Maximum Delta Measured | Result |
-| :--- | :--- | :--- | :--- |
-| `classic-hindi-broadsheet` | Classic Hindi Broadsheet | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `modern-hindi-daily` | Modern Hindi Daily | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `local-hindi-gazette` | Local Hindi Gazette | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `classic-broadsheet` | Classic Broadsheet | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `modern-editorial` | Modern Editorial | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `compact-local` | Compact Local | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
-| `hindi-fixture` | Hindi Typographic Fixture | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| Template ID                | Template Name             | Maximum Delta Measured                                                                                           | Result   |
+| :------------------------- | :------------------------ | :--------------------------------------------------------------------------------------------------------------- | :------- |
+| `classic-hindi-broadsheet` | Classic Hindi Broadsheet  | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `modern-hindi-daily`       | Modern Hindi Daily        | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `local-hindi-gazette`      | Local Hindi Gazette       | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `classic-broadsheet`       | Classic Broadsheet        | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `modern-editorial`         | Modern Editorial          | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `compact-local`            | Compact Local             | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
+| `hindi-fixture`            | Hindi Typographic Fixture | $\Delta X = 0.000\text{ mm}, \Delta Y = 0.000\text{ mm}, \Delta W = 0.000\text{ mm}, \Delta H = 0.000\text{ mm}$ | **PASS** |
 
 Side-by-side composite comparison PNGs for all 7 templates have been saved to `tests/after-free-layout/`:
+
 - `tests/after-free-layout/classic-hindi-broadsheet_free_side_by_side.png`
 - `tests/after-free-layout/modern-hindi-daily_free_side_by_side.png`
 - `tests/after-free-layout/local-hindi-gazette_free_side_by_side.png`
@@ -204,6 +211,7 @@ Side-by-side composite comparison PNGs for all 7 templates have been saved to `t
 ## 8. Unverified Real-Device Physical Touch Items
 
 While touch interaction was verified programmatically in Chromium under a 390x844 mobile viewport with touch emulation, the following physical device aspects require real hardware testing:
+
 1. **Physical Haptic Motor**: `navigator.vibrate(50)` was triggered and handled safely in code, but physical vibration sensation depends on OS permissions (iOS Safari ignores `navigator.vibrate`, Android Chrome allows it).
 2. **Physical Finger Occlusion**: While 44px minimum target sizes and floating nudge controls prevent occlusion in software, actual user hand biomechanics across physical 5.8" to 6.7" phones should be tested in real-world user studies.
 3. **Pinch-to-Zoom Gesture Smoothing**: Mobile browser native multi-touch gesture contention between canvas pinch-zoom and block drag should be evaluated on physical Android and iOS devices.

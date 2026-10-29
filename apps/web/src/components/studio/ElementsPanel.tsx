@@ -844,6 +844,7 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
           <div
             style={{
               display: 'flex',
+              alignItems: 'center',
               gap: '6px',
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
@@ -851,6 +852,8 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
               marginBottom: '10px',
               borderBottom: '1px solid #e2e8f0',
               flexShrink: 0,
+              minHeight: '44px',
+              scrollbarWidth: 'none',
             }}
           >
             {[
@@ -866,9 +869,9 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                 type="button"
                 onClick={() => setCategoryFilter(cat.id as 'all' | ElementType)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '0 14px',
                   borderRadius: '20px',
-                  fontSize: '11.5px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
@@ -877,10 +880,12 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                   color: categoryFilter === cat.id ? '#ffffff' : '#334155',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
-                  minHeight: '32px',
+                  minHeight: '36px',
+                  height: '36px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxSizing: 'border-box',
                 }}
               >
                 {cat.label}
@@ -889,7 +894,7 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
           </div>
 
           {/* Search bar */}
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '12px', flexShrink: 0 }}>
             <input
               type="text"
               placeholder="तत्व या फॉर्मेट खोजें..."
@@ -898,8 +903,9 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: '7px 10px',
-                fontSize: '11.5px',
+                padding: '8px 12px',
+                height: '38px',
+                fontSize: '12.5px',
                 border: '1px solid #cbd5e1',
                 borderRadius: '6px',
                 outline: 'none',

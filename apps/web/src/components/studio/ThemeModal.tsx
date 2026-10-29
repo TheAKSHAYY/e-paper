@@ -243,9 +243,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
             </div>
           </div>
 
-          <div
-            style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '16px 0' }}
-          />
+          <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '16px 0' }} />
 
           {/* Color Pickers Grid */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -354,4 +352,3 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
     </div>
   );
 };
-

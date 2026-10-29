@@ -1398,16 +1398,17 @@ export function renderNewspaperDocumentToHtml(
   doc: NewspaperDocument,
   _options: RenderHtmlOptions = {}
 ): string {
-  const theme = doc.theme ?? doc.layout.theme ?? {
-    mastheadColor: '#111111',
-    headlineColor: '#111111',
-    subheadlineColor: '#333333',
-    bodyColor: '#222222',
-    bylineColor: '#555555',
-    kickerColor: '#b91c1c',
-    borderColor: '#c8c5bc',
-    pageBackground: '#ffffff',
-  };
+  const theme = doc.theme ??
+    doc.layout.theme ?? {
+      mastheadColor: '#111111',
+      headlineColor: '#111111',
+      subheadlineColor: '#333333',
+      bodyColor: '#222222',
+      bylineColor: '#555555',
+      kickerColor: '#b91c1c',
+      borderColor: '#c8c5bc',
+      pageBackground: '#ffffff',
+    };
 
   const metrics = getPhysicalPageMetrics(
     doc.metadata.pageSize,
@@ -1720,7 +1721,7 @@ export function renderNewspaperDocumentToHtml(
           if (hasImage) {
             const objectPos = getImageObjectPosition(art);
             const aspectStyle = getImageAspectRatio(art.imageAspect);
-            const fit = art.fillSpace ? 'cover' : art.imageFit ?? 'cover';
+            const fit = art.fillSpace ? 'cover' : (art.imageFit ?? 'cover');
             const imgHeightStyle = art.customImageHeight
               ? `height: ${art.customImageHeight}px;`
               : art.fillSpace
@@ -1855,7 +1856,8 @@ export function renderNewspaperDocumentToHtml(
               `-webkit-line-clamp: ${art.maxLines}; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;`
             );
           }
-          const bodyStyleAttr = bodyStylesList.length > 0 ? `style="${bodyStylesList.join(' ')}"` : '';
+          const bodyStyleAttr =
+            bodyStylesList.length > 0 ? `style="${bodyStylesList.join(' ')}"` : '';
 
           const bodyContent = `
             <div class="article-body" ${bodyStyleAttr}>

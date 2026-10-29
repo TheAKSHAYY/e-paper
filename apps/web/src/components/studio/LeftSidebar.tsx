@@ -29,6 +29,7 @@ export interface LeftSidebarProps {
   onMoveArticleDown?: (id: string) => void;
   onApplyLayoutRow?: (columns: number[]) => void;
   isMobile?: boolean;
+  hideTabs?: boolean;
   width?: string | number;
 }
 
@@ -55,6 +56,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onMoveArticleDown = () => {},
   onApplyLayoutRow,
   isMobile = false,
+  hideTabs = false,
   width,
 }) => {
   const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
@@ -62,6 +64,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   return (
     <aside
+      data-testid="left-sidebar"
       style={{
         width: width ?? (isMobile ? '100%' : '280px'),
         backgroundColor: '#ffffff',
@@ -76,103 +79,106 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       }}
     >
       {/* Tab Navigation & Collapse Button */}
-      <div
-        style={{
-          display: 'flex',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          padding: '4px 6px 0',
-          gap: '4px',
-          alignItems: 'center',
-        }}
-      >
-        <button
-          onClick={() => onTabChange('pages')}
+      {!hideTabs && (
+        <div
           style={{
-            flex: 1,
-            padding: '8px 4px',
-            fontSize: '11px',
-            fontWeight: 700,
-            border: 'none',
-            borderBottom: activeTab === 'pages' ? '2px solid #b91c1c' : '2px solid transparent',
-            background: activeTab === 'pages' ? '#ffffff' : 'transparent',
-            color: activeTab === 'pages' ? '#0f172a' : '#64748b',
-            cursor: 'pointer',
-            borderTopLeftRadius: '4px',
-            borderTopRightRadius: '4px',
             display: 'flex',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc',
+            padding: '4px 6px 0',
+            gap: '4px',
             alignItems: 'center',
-            justifyContent: 'center',
           }}
         >
-          पेज ({pages.length})
-        </button>
-
-        <button
-          onClick={() => onTabChange('blocks')}
-          style={{
-            flex: 1,
-            padding: '8px 4px',
-            fontSize: '11px',
-            fontWeight: 700,
-            border: 'none',
-            borderBottom: activeTab === 'blocks' ? '2px solid #b91c1c' : '2px solid transparent',
-            background: activeTab === 'blocks' ? '#ffffff' : 'transparent',
-            color: activeTab === 'blocks' ? '#0f172a' : '#64748b',
-            cursor: 'pointer',
-            borderTopLeftRadius: '4px',
-            borderTopRightRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          तत्व (Catalog)
-        </button>
-
-        <button
-          onClick={() => onTabChange('templates')}
-          style={{
-            flex: 1,
-            padding: '8px 4px',
-            fontSize: '11px',
-            fontWeight: 700,
-            border: 'none',
-            borderBottom: activeTab === 'templates' ? '2px solid #b91c1c' : '2px solid transparent',
-            background: activeTab === 'templates' ? '#ffffff' : 'transparent',
-            color: activeTab === 'templates' ? '#0f172a' : '#64748b',
-            cursor: 'pointer',
-            borderTopLeftRadius: '4px',
-            borderTopRightRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          प्रारूप (Presets)
-        </button>
-
-        {onCloseSidebar && (
           <button
-            onClick={onCloseSidebar}
-            title="Collapse sidebar (साइडबार छुपाएँ)"
+            onClick={() => onTabChange('pages')}
             style={{
-              background: 'transparent',
+              flex: 1,
+              padding: '8px 4px',
+              fontSize: '11px',
+              fontWeight: 700,
               border: 'none',
-              color: '#94a3b8',
+              borderBottom: activeTab === 'pages' ? '2px solid #b91c1c' : '2px solid transparent',
+              background: activeTab === 'pages' ? '#ffffff' : 'transparent',
+              color: activeTab === 'pages' ? '#0f172a' : '#64748b',
               cursor: 'pointer',
-              padding: '6px 8px',
-              fontSize: '13px',
-              borderRadius: '4px',
+              borderTopLeftRadius: '4px',
+              borderTopRightRadius: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            ◀
+            पेज ({pages.length})
           </button>
-        )}
-      </div>
+
+          <button
+            onClick={() => onTabChange('blocks')}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              border: 'none',
+              borderBottom: activeTab === 'blocks' ? '2px solid #b91c1c' : '2px solid transparent',
+              background: activeTab === 'blocks' ? '#ffffff' : 'transparent',
+              color: activeTab === 'blocks' ? '#0f172a' : '#64748b',
+              cursor: 'pointer',
+              borderTopLeftRadius: '4px',
+              borderTopRightRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            तत्व (Catalog)
+          </button>
+
+          <button
+            onClick={() => onTabChange('templates')}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              border: 'none',
+              borderBottom:
+                activeTab === 'templates' ? '2px solid #b91c1c' : '2px solid transparent',
+              background: activeTab === 'templates' ? '#ffffff' : 'transparent',
+              color: activeTab === 'templates' ? '#0f172a' : '#64748b',
+              cursor: 'pointer',
+              borderTopLeftRadius: '4px',
+              borderTopRightRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            प्रारूप (Presets)
+          </button>
+
+          {onCloseSidebar && (
+            <button
+              onClick={onCloseSidebar}
+              title="Collapse sidebar (साइडबार छुपाएँ)"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '6px 8px',
+                fontSize: '13px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ◀
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Content Container */}
       <div
@@ -207,6 +213,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </div>
 
               <button
+                data-testid="add-page-btn"
                 onClick={onAddPage}
                 title="नया पेज जोड़ें"
                 style={{
@@ -286,11 +293,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         : isActive
                           ? '2px solid #b91c1c'
                           : '1px solid #e2e8f0',
-                      backgroundColor: isDropTarget
-                        ? '#eff6ff'
-                        : isActive
-                          ? '#fff5f5'
-                          : '#ffffff',
+                      backgroundColor: isDropTarget ? '#eff6ff' : isActive ? '#fff5f5' : '#ffffff',
                       cursor: 'grab',
                       transition: 'all 0.15s ease',
                       boxShadow: isActive ? '0 2px 6px rgba(185, 28, 28, 0.12)' : 'none',

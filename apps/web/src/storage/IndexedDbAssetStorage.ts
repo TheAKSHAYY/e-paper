@@ -86,4 +86,3 @@ class IndexedDbAssetStorage {
 }
 
 export const indexedDbAssetStorage = new IndexedDbAssetStorage();
-
