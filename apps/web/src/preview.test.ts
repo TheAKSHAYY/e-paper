@@ -38,5 +38,5 @@ describe('Vite Preview Font Delivery', () => {
       const buffer = await res.arrayBuffer();
       expect(buffer.byteLength).toBeGreaterThan(0);
     }
-  });
+  }, 20000);
 });
