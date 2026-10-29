@@ -212,6 +212,108 @@ describe('RendererWorker & PDF Export Engine', () => {
       expect(pngHeader[3]).toBe(0x47); // 'G'
     }, 30000);
 
+    it('should render and rasterize Devanagari Hindi newspaper page at 200% scale', async () => {
+      const doc = createNewspaperDocument({
+        title: 'दैनिक नवप्रभात',
+        presetId: 'classic-hindi-broadsheet',
+        pageSize: 'a4',
+        language: 'hi',
+      });
+
+      doc.masthead.title = 'दैनिक नवप्रभात';
+      doc.masthead.subtitle = 'सत्य, निष्ठा एवं राष्ट्रीय चेतना का संवाहक • स्थापना 1947';
+      doc.masthead.edition = 'प्रभात संस्करण • दिल्ली';
+      doc.articles = [
+        {
+          id: 'lead-hindi-story',
+          title: 'प्रधानमंत्री द्वारा क्षत्रिय और राष्ट्रनिष्ठा का सम्मान: संकल्प से सिद्धि की नई गाथा',
+          kicker: 'राष्ट्रीय विशेष',
+          byline: 'विशेष संवाददाता, नई दिल्ली',
+          dateline: 'नई दिल्ली —',
+          category: 'राष्ट्रीय',
+          columnSpan: 4,
+          rowSpan: 2,
+          orderIndex: 0,
+          enableDropCap: true,
+          body: 'राष्ट्र के नवनिर्माण और सर्वांगीण विकास में क्षत्रिय धर्म, जन-जन की अटूट श्रद्धा तथा निस्वार्थ संघर्ष की महत्ता सर्वोपरि है। नई दिल्ली में आयोजित भव्य राष्ट्रीय संगोष्ठी में प्रधानमंत्री ने कहा कि भारत का ऐतिहासिक दृष्टिकोण हमेशा सत्य और निष्पक्षता पर आधारित रहा है। आधुनिक तकनीकी क्रांति और ग्रामीण विकास के संतुलन से ही भारत सशक्त बनेगा।',
+        },
+      ];
+      if (doc.pages && doc.pages[0]) {
+        doc.pages[0].articles = doc.articles;
+      }
+
+      // Render vector PDF
+      const pdfResult = await worker.renderToPdf(doc);
+      expect(pdfResult.fileSizeBytes).toBeGreaterThan(5000);
+      const pdfMeta = inspectPdf(pdfResult.pdfBuffer);
+      expect(pdfMeta.isValidPdf).toBe(true);
+
+      // Rasterize page 1 at scale 2 (200% DPI)
+      const imageBuffer = await worker.renderToImage(doc, { pageNumber: 1, scale: 2 });
+      expect(imageBuffer.length).toBeGreaterThan(10000);
+
+      // Save to artifact directory
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+      if (fs.existsSync(artifactDir)) {
+        fs.writeFileSync(path.join(artifactDir, 'devanagari-rasterized-200pct.png'), imageBuffer);
+      }
+    }, 45000);
+
+    it('should render a PDF containing 6 data: URI photos and confirm all images are embedded in output', async () => {
+      // 6 distinct valid PNG data URIs (1x1 pixels with distinct color spectra)
+      const photoDataUris = [
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4/5/hPwAG/wH+XQ2jYAAAAABJRU5ErkJggg==',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5/hPwAH/gL+P4B0oAAAAABJRU5ErkJggg==',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAF/AL+137+qgAAAABJRU5ErkJggg==',
+      ];
+
+      const doc = createNewspaperDocument({
+        title: 'दैनिक चित्र समाचार',
+        presetId: 'classic-hindi-broadsheet',
+        pageSize: 'broadsheet',
+        language: 'hi',
+      });
+
+      doc.articles = photoDataUris.map((dataUri, idx) => ({
+        id: `photo-story-${idx + 1}`,
+        title: `फोटो समाचार खंड ${idx + 1}: क्षेत्रीय विकास एवं नागरिक संवाद`,
+        kicker: `फोटो रिपोर्ट ${idx + 1}`,
+        byline: `छायाकार दल ${idx + 1}`,
+        dateline: 'भोपाल —',
+        category: 'चित्र विशेष',
+        columnSpan: 2,
+        rowSpan: 2,
+        orderIndex: idx,
+        enableDropCap: false,
+        imageUrl: dataUri,
+        imageCaption: `चित्र विवरण ${idx + 1}: राष्ट्रीय परियोजना का प्रत्यक्ष दृश्य।`,
+        imagePlacement: 'top' as const,
+        body: `प्रशासनिक दल ने परियोजना स्थल का दौरा किया। स्थानीय नागरिकों से सीधे संवाद के माध्यम से सभी आवश्यक सुझाव दर्ज किए गए।`,
+      }));
+
+      if (doc.pages && doc.pages[0]) {
+        doc.pages[0].articles = doc.articles;
+      }
+
+      const result = await worker.renderToPdf(doc);
+      expect(result).toBeDefined();
+      expect(result.fileSizeBytes).toBeGreaterThan(10000);
+
+      // Verify PDF validity
+      const metadata = inspectPdf(result.pdfBuffer);
+      expect(metadata.isValidPdf).toBe(true);
+
+      // Verify images are embedded into the PDF binary stream as XObjects
+      const binaryPdf = Buffer.from(result.pdfBuffer).toString('binary');
+      const imageOccurrences = (binaryPdf.match(/\/Subtype\s*\/Image/g) || []).length;
+      expect(imageOccurrences).toBeGreaterThanOrEqual(6);
+    }, 45000);
+
     it('should render PDF using self-hosted fonts without Google Fonts CDN dependency', async () => {
       const doc = createNewspaperDocument({
         title: 'दैनिक जनसंदेश',

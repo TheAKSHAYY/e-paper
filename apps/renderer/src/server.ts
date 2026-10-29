@@ -3,15 +3,116 @@ import { fileURLToPath } from 'node:url';
 import { NewspaperDocumentSchema, type NewspaperDocument } from '@epaper-studio/document-schema';
 import { RendererWorker, type RenderPdfResult } from './index.js';
 
-const MAX_PAYLOAD_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+const MAX_PAYLOAD_MB = Number(process.env.MAX_PAYLOAD_MB) || 15;
+const MAX_PAYLOAD_BYTES = MAX_PAYLOAD_MB * 1024 * 1024;
 const DEFAULT_PORT = Number(process.env.PORT) || 4000;
 const MAX_CONCURRENCY = Number(process.env.RENDER_CONCURRENCY) || 4;
 const DEFAULT_TIMEOUT_MS = Number(process.env.RENDER_TIMEOUT_MS) || 35000;
+const RATE_LIMIT_MAX_PER_MINUTE = Number(process.env.RATE_LIMIT_MAX_PER_MINUTE) || 60;
+const EXPECTED_API_KEY = process.env.RENDER_API_KEY || process.env.API_KEY || '';
 
 export interface ServerInstance {
   server: ReturnType<typeof createServer>;
   worker: RendererWorker;
   close: () => Promise<void>;
+}
+
+/**
+ * In-memory sliding window rate limiter per client IP.
+ */
+const ipRateMap = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Safely resolves the true client IP address behind reverse proxies (Render, Cloudflare, etc.).
+ *
+ * Configurable via environment variables:
+ * - TRUST_PROXY:
+ *   - 'false' / '0': Disables proxy trust, strictly uses direct socket remoteAddress.
+ *   - 'true' / unset (default on Render): Resolves client IP from X-Forwarded-For or X-Real-IP.
+ * - TRUST_PROXY_HOPS: Number of reverse proxy layers upstream (default: 1 for Render's edge ingress).
+ *   When an attacker attempts to spoof "X-Forwarded-For: fake-ip", Render's reverse proxy appends
+ *   the attacker's real public IP ("fake-ip, real-client-ip"). Selecting the IP at index
+ *   (length - hops) prevents IP-spoofing rate limit bypasses.
+ */
+export function getClientIp(req: IncomingMessage): string {
+  const trustProxyEnv = process.env.TRUST_PROXY?.trim().toLowerCase();
+  if (trustProxyEnv === 'false' || trustProxyEnv === '0') {
+    return req.socket.remoteAddress || '127.0.0.1';
+  }
+
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.trim()) {
+    const ips = xff
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    if (ips.length > 0) {
+      const hops = Math.max(1, Number(process.env.TRUST_PROXY_HOPS) || 1);
+      const targetIndex = Math.max(0, ips.length - hops);
+      return ips[targetIndex] || ips[0]!;
+    }
+  }
+
+  const xRealIp = req.headers['x-real-ip'];
+  if (typeof xRealIp === 'string' && xRealIp.trim()) {
+    return xRealIp.trim();
+  }
+
+  return req.socket.remoteAddress || '127.0.0.1';
+}
+
+export function resetRateLimitsForTesting(): void {
+  ipRateMap.clear();
+}
+
+export function checkRateLimit(req: IncomingMessage, maxLimitOverride?: number): boolean {
+  const maxLimit = maxLimitOverride ?? RATE_LIMIT_MAX_PER_MINUTE;
+  if (maxLimit <= 0) return true;
+
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const entry = ipRateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipRateMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+
+  if (entry.count >= maxLimit) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
+
+// Periodically clean up expired rate-limit IP records
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of ipRateMap.entries()) {
+    if (now > entry.resetAt) {
+      ipRateMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
+/**
+ * Validates optional API key passed via X-Api-Key or Authorization: Bearer.
+ */
+function validateApiKey(req: IncomingMessage): boolean {
+  if (!EXPECTED_API_KEY) return true;
+  const xApiKey = req.headers['x-api-key'];
+  if (typeof xApiKey === 'string' && xApiKey.trim() === EXPECTED_API_KEY) {
+    return true;
+  }
+  const authHeader = req.headers['authorization'];
+  if (typeof authHeader === 'string') {
+    const bearer = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (bearer === EXPECTED_API_KEY) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -57,10 +158,32 @@ function readJsonBody(req: IncomingMessage, maxBytes: number): Promise<unknown> 
   });
 }
 
-function setCorsHeaders(res: ServerResponse): void {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+/**
+ * Sets CORS headers restricted to ALLOWED_ORIGINS (or fallback in development).
+ */
+function setCorsHeaders(req: IncomingMessage, res: ServerResponse): void {
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS?.trim();
+  const requestOrigin = req.headers.origin;
+
+  if (!allowedOriginsEnv || allowedOriginsEnv === '*') {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin || '*');
+  } else {
+    const allowedList = allowedOriginsEnv
+      .split(',')
+      .map((o) => o.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (requestOrigin && allowedList.includes(requestOrigin.toLowerCase())) {
+      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    }
+    res.setHeader('Vary', 'Origin');
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Api-Key, Accept'
+  );
 }
 
 /**
@@ -76,7 +199,7 @@ export function createRendererServer(
   });
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    setCorsHeaders(res);
+    setCorsHeaders(req, res);
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -87,7 +210,22 @@ export function createRendererServer(
     const parsedUrl = new URL(req.url ?? '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
 
-    // Health check endpoint
+    // Rate limiting check
+    if (!checkRateLimit(req)) {
+      res.writeHead(429, {
+        'Content-Type': 'application/json',
+        'Retry-After': '60',
+      });
+      res.end(
+        JSON.stringify({
+          error: 'Too Many Requests',
+          message: 'Rate limit exceeded. Please wait a minute before retrying.',
+        })
+      );
+      return;
+    }
+
+    // Health check endpoint (always unauthenticated for uptime monitors and orchestrators)
     if (
       req.method === 'GET' &&
       (pathname === '/health' || pathname === '/api/health' || pathname === '/')
@@ -107,6 +245,18 @@ export function createRendererServer(
 
       res.writeHead(isReady ? 200 : 503, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(statusPayload, null, 2));
+      return;
+    }
+
+    // Optional API key enforcement on operational render endpoints
+    if (!validateApiKey(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          error: 'Unauthorized',
+          message: 'Missing or invalid API key.',
+        })
+      );
       return;
     }
 

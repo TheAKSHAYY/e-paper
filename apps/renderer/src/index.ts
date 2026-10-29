@@ -183,8 +183,14 @@ export class RendererWorker {
    */
   private async getBrowser(): Promise<Browser> {
     if (!this.browserInstance || !this.browserInstance.isConnected()) {
+      const executablePath =
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
+        process.env.CHROMIUM_PATH ||
+        undefined;
+
       this.browserInstance = await chromium.launch({
         headless: true,
+        executablePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -232,10 +238,34 @@ export class RendererWorker {
       if (reqUrl.startsWith('data:') || reqUrl.startsWith('about:')) {
         return route.continue();
       }
-      if (!isSafeUrl(reqUrl)) {
-        return route.abort('blockedbyclient');
+
+      // Check allowlisted asset origins for images if configured
+      const rawAllowedOrigins = process.env.ALLOWED_ASSET_ORIGINS;
+      if (rawAllowedOrigins) {
+        const allowed = rawAllowedOrigins
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+        try {
+          const parsed = new URL(reqUrl);
+          const isAllowedHost =
+            (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+            allowed.some(
+              (origin) =>
+                parsed.hostname.toLowerCase() === origin ||
+                parsed.origin.toLowerCase() === origin
+            ) &&
+            isSafeUrl(reqUrl);
+
+          if (isAllowedHost) {
+            return route.continue();
+          }
+        } catch {
+          // invalid url
+        }
       }
-      // Never route.continue() to the network for unhandled external origins
+
+      // Never route.continue() to the network for unhandled or arbitrary external origins (SSRF prevention)
       return route.abort('blockedbyclient');
     });
   }

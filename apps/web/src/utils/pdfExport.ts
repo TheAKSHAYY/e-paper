@@ -12,12 +12,19 @@ export interface ExportPdfResult {
  */
 export async function exportDocumentToPdf(document: NewspaperDocument): Promise<ExportPdfResult> {
   const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
-  const baseUrl = metaEnv?.VITE_RENDERER_URL || '';
+  const baseUrl = (metaEnv?.VITE_RENDERER_URL || '').replace(/\/$/, '');
+  const apiKey = metaEnv?.VITE_RENDERER_API_KEY;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
   const response = await fetch(`${baseUrl}/api/render-pdf`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(document),
   });
 
