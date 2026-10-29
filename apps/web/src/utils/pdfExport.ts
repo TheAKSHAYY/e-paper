@@ -11,7 +11,9 @@ export interface ExportPdfResult {
  * triggers an automated download of the vector PDF, and returns metadata.
  */
 export async function exportDocumentToPdf(document: NewspaperDocument): Promise<ExportPdfResult> {
-  const response = await fetch('/api/render-pdf', {
+  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  const baseUrl = metaEnv?.VITE_RENDERER_URL || '';
+  const response = await fetch(`${baseUrl}/api/render-pdf`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
