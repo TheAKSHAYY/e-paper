@@ -60,7 +60,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
     {
       key: 'mastheadColor',
       label: 'समाचार पत्र का नाम / मास्टहेड (Masthead)',
-      description: 'मुख्य शीर्षक जैसे "समाचार लाइव 24"',
+      description: 'मुख्य शीर्षक जैसे "अखबार का नाम"',
     },
     {
       key: 'headlineColor',

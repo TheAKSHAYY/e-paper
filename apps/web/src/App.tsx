@@ -699,9 +699,11 @@ export const App: React.FC = () => {
     const dataStr =
       'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(document, null, 2));
     const downloadAnchor = window.document.createElement('a');
-    const safeTitle = (document.metadata.title || 'samachar-live-24')
+    const rawTitle = (document.metadata.title || 'newspaper')
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-');
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const safeTitle = rawTitle || 'newspaper';
     downloadAnchor.setAttribute('href', dataStr);
     downloadAnchor.setAttribute('download', `${safeTitle}-backup.json`);
     window.document.body.appendChild(downloadAnchor);

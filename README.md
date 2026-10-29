@@ -1,6 +1,6 @@
-# Samachar Live 24 — Hindi Newspaper Page Builder
+# E-Paper Studio: Hindi & Multilingual Newspaper Page Builder
 
-> High-performance Hindi newspaper page builder and publishing studio tailored for **Samachar Live 24**. Features an intuitive editorial editor, intelligent auto-fit multi-column layout engine, drag-and-drop & free-layout positioning, customizable editorial themes, and print-ready vector PDF export powered by a dedicated headless Chromium rendering service with self-hosted Devanagari typography.
+> A high-performance Hindi & multilingual newspaper page builder and publishing studio. Features an intuitive visual editor, intelligent auto-fit and free layout with drag-and-drop, customizable editorial themes, JSON project backup & restore, and print-ready vector PDF export powered by a dedicated headless Chromium rendering service with self-hosted Devanagari typography.
 
 [![CI](https://github.com/TheAKSHAYY/e-paper/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAKSHAYY/e-paper/actions)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://www.typescriptlang.org/)

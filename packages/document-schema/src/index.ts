@@ -484,7 +484,7 @@ export const NEWSPAPER_THEME_PRESETS: NewspaperThemeConfig[] = [
   },
   {
     id: 'deep-blue',
-    name: 'समाचार लाइव 24 - डीप ब्लू (Deep Blue)',
+    name: 'संपादकीय डीप ब्लू (Editorial Deep Blue)',
     mastheadColor: '#1e3a8a',
     headlineColor: '#1e3a8a',
     subheadlineColor: '#1d4ed8',
