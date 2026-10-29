@@ -2,7 +2,16 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@epaper-studio/document-schema": ["../../packages/document-schema/src"],
+      "@epaper-studio/template-engine": ["../../packages/template-engine/src"],
+      "@epaper-studio/typography": ["../../packages/typography/src"],
+      "@epaper-studio/typography/*": ["../../packages/typography/src/*"],
+      "@epaper-studio/ui": ["../../packages/ui/src"],
+      "@epaper-studio/renderer": ["../renderer/src"]
+    }
   },
   "include": ["src/**/*", "vite.config.ts"],
   "exclude": ["node_modules", "dist"]
