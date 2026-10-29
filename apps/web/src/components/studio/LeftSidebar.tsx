@@ -16,6 +16,7 @@ export interface LeftSidebarProps {
   onDuplicatePage: (pageIndex: number) => void;
   onDeletePage: (pageIndex: number) => void;
   onMovePage: (fromIndex: number, toIndex: number) => void;
+  onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
   onAddBlock: (blockTemplate: Partial<Article>) => void;
   currentPresetId: NewspaperPresetId;
   onSelectPreset: (presetId: NewspaperPresetId) => void;
@@ -27,6 +28,8 @@ export interface LeftSidebarProps {
   onMoveArticleUp?: (id: string) => void;
   onMoveArticleDown?: (id: string) => void;
   onApplyLayoutRow?: (columns: number[]) => void;
+  isMobile?: boolean;
+  width?: string | number;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -39,6 +42,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDuplicatePage,
   onDeletePage,
   onMovePage,
+  onMoveArticleToPage,
   onAddBlock,
   currentPresetId,
   onSelectPreset,
@@ -50,15 +54,18 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onMoveArticleUp = () => {},
   onMoveArticleDown = () => {},
   onApplyLayoutRow,
+  isMobile = false,
+  width,
 }) => {
+  const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
   const presets = getAllNewspaperPresets();
 
   return (
     <aside
       style={{
-        width: '280px',
+        width: width ?? (isMobile ? '100%' : '280px'),
         backgroundColor: '#ffffff',
-        borderRight: '1px solid #e2e8f0',
+        borderRight: isMobile ? 'none' : '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -172,8 +179,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '16px',
+          padding: activeTab === 'blocks' ? '0px' : isMobile ? '12px' : '16px',
           boxSizing: 'border-box',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {/* ====================================================================
@@ -225,10 +233,47 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 const isActive = index === currentPageIndex;
                 const isFirst = index === 0;
                 const isLast = index === pages.length - 1;
+                const isDropTarget = draggedOverPageIndex === index;
 
                 return (
                   <div
                     key={page.id}
+                    data-testid={`page-thumbnail-card-${page.id}`}
+                    draggable={true}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('application/epaper-page-index', String(index));
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                      if (draggedOverPageIndex !== index) {
+                        setDraggedOverPageIndex(index);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      if (draggedOverPageIndex === index) {
+                        setDraggedOverPageIndex(null);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDraggedOverPageIndex(null);
+                      const articleId = e.dataTransfer.getData('application/epaper-article-id');
+                      if (articleId && onMoveArticleToPage) {
+                        onMoveArticleToPage(articleId, index);
+                        return;
+                      }
+                      const fromPageIndexStr = e.dataTransfer.getData(
+                        'application/epaper-page-index'
+                      );
+                      if (fromPageIndexStr) {
+                        const fromPageIndex = parseInt(fromPageIndexStr, 10);
+                        if (!isNaN(fromPageIndex) && fromPageIndex !== index) {
+                          onMovePage(fromPageIndex, index);
+                        }
+                      }
+                    }}
                     onClick={() => onSelectPage(index)}
                     style={{
                       display: 'flex',
@@ -236,14 +281,35 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                       justifyContent: 'space-between',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: isActive ? '2px solid #b91c1c' : '1px solid #e2e8f0',
-                      backgroundColor: isActive ? '#fff5f5' : '#ffffff',
-                      cursor: 'pointer',
+                      border: isDropTarget
+                        ? '2px dashed #2563eb'
+                        : isActive
+                          ? '2px solid #b91c1c'
+                          : '1px solid #e2e8f0',
+                      backgroundColor: isDropTarget
+                        ? '#eff6ff'
+                        : isActive
+                          ? '#fff5f5'
+                          : '#ffffff',
+                      cursor: 'grab',
                       transition: 'all 0.15s ease',
                       boxShadow: isActive ? '0 2px 6px rgba(185, 28, 28, 0.12)' : 'none',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Drag handle */}
+                      <span
+                        title="क्रम बदलने के लिए खींचें"
+                        style={{
+                          fontSize: '13px',
+                          color: '#94a3b8',
+                          cursor: 'grab',
+                          userSelect: 'none',
+                        }}
+                      >
+                        ⋮⋮
+                      </span>
+
                       {/* Page badge */}
                       <div
                         style={{

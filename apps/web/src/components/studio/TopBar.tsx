@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { PageSizePreset } from '@epaper-studio/document-schema';
 
 export type ViewMode = 'landing' | 'split' | 'preview';
@@ -29,6 +29,14 @@ export interface TopBarProps {
   onOpenDrafts: () => void;
   onExportPdf: () => void;
   isExportingPdf: boolean;
+  onAutoFit?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onOpenTheme?: () => void;
+  onExportProjectJson?: () => void;
+  onImportProjectJson?: (file: File) => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onToggleInspector?: () => void;
@@ -58,6 +66,14 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenTemplates,
   onExportPdf,
   isExportingPdf,
+  onAutoFit,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onOpenTheme,
+  onExportProjectJson,
+  onImportProjectJson,
   onToggleSidebar,
   isSidebarOpen = true,
   onToggleInspector,
@@ -65,6 +81,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [editedTitle, setEditedTitle] = useState(publicationTitle);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setEditedTitle(publicationTitle);
@@ -224,6 +241,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <button
               onClick={onSaveDraft}
               disabled={isSaving}
+              data-testid="autosave-status-badge"
               style={{
                 background: 'none',
                 border: 'none',
@@ -232,12 +250,30 @@ export const TopBar: React.FC<TopBarProps> = ({
                 cursor: 'pointer',
                 padding: '2px 4px',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
               }}
             >
-              {isSaving ? '...' : '● सेव करें'}
+              <span>●</span>
+              <span>{isSaving ? 'सहेजा जा रहा है...' : 'अनसेव्ड'}</span>
             </button>
           ) : (
-            <span style={{ fontSize: '11px', color: '#10b981', flexShrink: 0 }}>✓</span>
+            <span
+              data-testid="autosave-status-badge"
+              title="सभी बदलाव स्वतः सहेजे गए हैं"
+              style={{
+                fontSize: '11px',
+                color: '#10b981',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              <span>✓</span>
+              <span>स्वतः सहेजा गया</span>
+            </span>
           )}
         </div>
       </div>
@@ -256,6 +292,44 @@ export const TopBar: React.FC<TopBarProps> = ({
           flexShrink: 0,
         }}
       >
+        {/* Undo / Redo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="पूर्ववत करें / Undo (Ctrl+Z)"
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: canUndo ? '#f3f4f6' : '#4b5563',
+              cursor: canUndo ? 'pointer' : 'not-allowed',
+              padding: '2px 4px',
+              fontSize: '13px',
+              fontWeight: 700,
+            }}
+          >
+            ↶
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="फिर से करें / Redo (Ctrl+Y)"
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: canRedo ? '#f3f4f6' : '#4b5563',
+              cursor: canRedo ? 'pointer' : 'not-allowed',
+              padding: '2px 4px',
+              fontSize: '13px',
+              fontWeight: 700,
+            }}
+          >
+            ↷
+          </button>
+        </div>
+
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+
         <button
           disabled={currentPageNumber <= 1}
           onClick={() => onSelectPage(currentPageNumber - 1)}
@@ -513,6 +587,112 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           प्रारूप
         </button>
+
+        {/* Auto Fit Button */}
+        {onAutoFit && (
+          <button
+            onClick={onAutoFit}
+            title="पेज के आर्टिकल को ऑटो-फ़िट करें और खाली जगह भरें (Auto Fit)"
+            style={{
+              backgroundColor: '#0284c7',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '2px',
+              padding: '5px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            ⚡ ऑटो-फ़िट
+          </button>
+        )}
+
+        {/* Theme & Colors Button */}
+        {onOpenTheme && (
+          <button
+            onClick={onOpenTheme}
+            title="अख़बार का रंग व थीम बदलें (Colors & Themes)"
+            style={{
+              backgroundColor: '#7c3aed',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '2px',
+              padding: '5px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            🎨 रंग / थीम
+          </button>
+        )}
+
+        {/* JSON Backup & Import */}
+        {onExportProjectJson && (
+          <button
+            onClick={onExportProjectJson}
+            title="प्रोजेक्ट का बैकअप JSON डाउनलोड करें (Export Project Backup)"
+            style={{
+              backgroundColor: '#334155',
+              color: '#f8fafc',
+              border: 'none',
+              borderRadius: '2px',
+              padding: '5px 8px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+            }}
+          >
+            📁 बैकअप
+          </button>
+        )}
+
+        {onImportProjectJson && (
+          <>
+            <input
+              type="file"
+              ref={jsonInputRef}
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  onImportProjectJson(f);
+                  e.target.value = '';
+                }
+              }}
+            />
+            <button
+              onClick={() => jsonInputRef.current?.click()}
+              title="बैकअप JSON से प्रोजेक्ट लोड करें (Import Project JSON)"
+              style={{
+                backgroundColor: '#334155',
+                color: '#f8fafc',
+                border: 'none',
+                borderRadius: '2px',
+                padding: '5px 8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              📂 इम्पोर्ट
+            </button>
+          </>
+        )}
 
         {/* Primary PDF Download Button */}
         <button

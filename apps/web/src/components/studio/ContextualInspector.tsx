@@ -25,6 +25,7 @@ import {
 } from '@epaper-studio/typography';
 import { MastheadInspectorPanel } from './MastheadInspectorPanel';
 import { BorderControls } from './BorderControls';
+import { downscaleImageFile } from '../../utils/imageOptimizer';
 
 export interface ContextualInspectorProps {
   selectedArticle: Article | null;
@@ -49,6 +50,8 @@ export interface ContextualInspectorProps {
   isMastheadSelected?: boolean;
   onSelectMasthead?: () => void;
   onCloseMasthead?: () => void;
+  isMobile?: boolean;
+  width?: string | number;
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -74,21 +77,22 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   isMastheadSelected = false,
   onSelectMasthead: _onSelectMasthead,
   onCloseMasthead,
+  isMobile = false,
+  width,
 }) => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<'content' | 'typography'>('content');
   const isPage1 = currentPageIndex === 0;
   const pageColumnCount = resolvePageColumnCount({ layout }, currentPage);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && selectedArticle) {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        const base64 = loadEvent.target?.result as string;
+      try {
+        const compressedBase64 = await downscaleImageFile(file, 1600, 0.85);
         onUpdateArticle({
           ...selectedArticle,
-          imageUrl: base64,
+          imageUrl: compressedBase64,
           imagePlacement:
             selectedArticle.imagePlacement === 'none' ? 'top' : selectedArticle.imagePlacement,
           imageFit: selectedArticle.imageFit ?? 'contain',
@@ -96,17 +100,32 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
           imageFocalX: 0.5,
           imageFocalY: 0.5,
         });
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          const base64 = loadEvent.target?.result as string;
+          onUpdateArticle({
+            ...selectedArticle,
+            imageUrl: base64,
+            imagePlacement:
+              selectedArticle.imagePlacement === 'none' ? 'top' : selectedArticle.imagePlacement,
+            imageFit: selectedArticle.imageFit ?? 'contain',
+            imageAspect: selectedArticle.imageAspect ?? 'standard',
+            imageFocalX: 0.5,
+            imageFocalY: 0.5,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
   return (
     <aside
       style={{
-        width: '300px',
+        width: width ?? (isMobile ? '100%' : '300px'),
         backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e2e8f0',
+        borderLeft: isMobile ? 'none' : '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -295,13 +314,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       <input
                         type="number"
                         step="1"
+                        min="0"
                         value={Math.round(selectedArticle.frame.x)}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
                           if (!isNaN(val) && selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, x: val },
+                              frame: { ...selectedArticle.frame, x: Math.max(0, val) },
                             });
                           }
                         }}
@@ -329,13 +349,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       <input
                         type="number"
                         step="1"
+                        min="0"
                         value={Math.round(selectedArticle.frame.y)}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
                           if (!isNaN(val) && selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, y: val },
+                              frame: { ...selectedArticle.frame, y: Math.max(0, val) },
                             });
                           }
                         }}
@@ -363,13 +384,18 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       <input
                         type="number"
                         step="1"
+                        min="10"
+                        max="2000"
                         value={Math.round(selectedArticle.frame.w)}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
-                          if (!isNaN(val) && val >= 10 && selectedArticle.frame) {
+                          if (!isNaN(val) && selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, w: val },
+                              frame: {
+                                ...selectedArticle.frame,
+                                w: Math.max(10, Math.min(2000, val)),
+                              },
                             });
                           }
                         }}
@@ -397,13 +423,18 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       <input
                         type="number"
                         step="1"
+                        min="10"
+                        max="3000"
                         value={Math.round(selectedArticle.frame.h)}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
-                          if (!isNaN(val) && val >= 10 && selectedArticle.frame) {
+                          if (!isNaN(val) && selectedArticle.frame) {
                             onUpdateArticle({
                               ...selectedArticle,
-                              frame: { ...selectedArticle.frame, h: val },
+                              frame: {
+                                ...selectedArticle.frame,
+                                h: Math.max(10, Math.min(3000, val)),
+                              },
                             });
                           }
                         }}
@@ -955,20 +986,120 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 </div>
               </div>
 
-              {/* Column Span & Priority */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {/* Column Span, Height Mode & Space Filling */}
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
                 <div>
-                  <label
+                  <div
                     style={{
-                      display: 'block',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#475569',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       marginBottom: '4px',
                     }}
                   >
-                    कॉलम ({selectedArticle.columnSpan}/{pageColumnCount})
-                  </label>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                      कॉलम ({selectedArticle.columnSpan}/{pageColumnCount})
+                    </label>
+                  </div>
+
+                  {/* Quick Span Presets */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => onUpdateArticle({ ...selectedArticle, columnSpan: 1 })}
+                      style={{
+                        padding: '4px 2px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        borderRadius: '4px',
+                        border: selectedArticle.columnSpan === 1 ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        backgroundColor: selectedArticle.columnSpan === 1 ? '#eff6ff' : '#ffffff',
+                        color: selectedArticle.columnSpan === 1 ? '#1d4ed8' : '#334155',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      1 Col
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onUpdateArticle({ ...selectedArticle, columnSpan: 2 })}
+                      style={{
+                        padding: '4px 2px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        borderRadius: '4px',
+                        border: selectedArticle.columnSpan === 2 ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        backgroundColor: selectedArticle.columnSpan === 2 ? '#eff6ff' : '#ffffff',
+                        color: selectedArticle.columnSpan === 2 ? '#1d4ed8' : '#334155',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      2 Cols
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          columnSpan: Math.max(1, Math.floor(pageColumnCount / 2)),
+                        })
+                      }
+                      style={{
+                        padding: '4px 2px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        borderRadius: '4px',
+                        border:
+                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                            ? '2px solid #2563eb'
+                            : '1px solid #cbd5e1',
+                        backgroundColor:
+                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                            ? '#eff6ff'
+                            : '#ffffff',
+                        color:
+                          selectedArticle.columnSpan === Math.max(1, Math.floor(pageColumnCount / 2))
+                            ? '#1d4ed8'
+                            : '#334155',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      आधा ({Math.max(1, Math.floor(pageColumnCount / 2))})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateArticle({ ...selectedArticle, columnSpan: pageColumnCount })
+                      }
+                      style={{
+                        padding: '4px 2px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        borderRadius: '4px',
+                        border:
+                          selectedArticle.columnSpan === pageColumnCount
+                            ? '2px solid #2563eb'
+                            : '1px solid #cbd5e1',
+                        backgroundColor:
+                          selectedArticle.columnSpan === pageColumnCount ? '#eff6ff' : '#ffffff',
+                        color: selectedArticle.columnSpan === pageColumnCount ? '#1d4ed8' : '#334155',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      पूरा ({pageColumnCount})
+                    </button>
+                  </div>
+
                   <select
                     value={selectedArticle.columnSpan}
                     onChange={(e) =>
@@ -979,10 +1110,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     }
                     style={{
                       width: '100%',
-                      padding: '6px',
+                      padding: '5px',
                       borderRadius: '4px',
                       border: '1px solid #cbd5e1',
-                      fontSize: '11.5px',
+                      fontSize: '11px',
                       outline: 'none',
                     }}
                   >
@@ -992,6 +1123,95 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Height Mode Controls */}
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                    ऊँचाई मोड (Height Mode)
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                    {(['auto', 'min-height', 'fixed'] as const).map((mode) => {
+                      const isModeActive = (selectedArticle.heightMode ?? 'auto') === mode;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() =>
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              heightMode: mode,
+                              customHeight:
+                                mode !== 'auto' && !selectedArticle.customHeight
+                                  ? 200
+                                  : selectedArticle.customHeight,
+                            })
+                          }
+                          style={{
+                            padding: '4px 2px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            borderRadius: '4px',
+                            border: isModeActive ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                            backgroundColor: isModeActive ? '#eff6ff' : '#ffffff',
+                            color: isModeActive ? '#1d4ed8' : '#334155',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {mode === 'auto' ? 'ऑटो (Auto)' : mode === 'min-height' ? 'न्यूनतम (Min)' : 'निश्चित (Fixed)'}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedArticle.heightMode && selectedArticle.heightMode !== 'auto' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <label style={{ fontSize: '10.5px', color: '#475569' }}>ऊँचाई (px):</label>
+                      <input
+                        type="number"
+                        min={50}
+                        max={2000}
+                        step={10}
+                        value={selectedArticle.customHeight ?? 200}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customHeight: isNaN(val) ? 200 : Math.max(50, Math.min(2000, val)),
+                          });
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Fill Remaining Space Toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                  <input
+                    type="checkbox"
+                    id="fill-remaining-space"
+                    checked={Boolean(selectedArticle.fillSpace)}
+                    onChange={(e) =>
+                      onUpdateArticle({
+                        ...selectedArticle,
+                        fillSpace: e.target.checked,
+                      })
+                    }
+                    style={{ cursor: 'pointer', accentColor: '#2563eb', width: '15px', height: '15px' }}
+                  />
+                  <label
+                    htmlFor="fill-remaining-space"
+                    style={{ fontSize: '11px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
+                  >
+                    खाली जगह भरें (Fill remaining space)
+                  </label>
                 </div>
 
                 <div>
@@ -1016,10 +1236,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     }
                     style={{
                       width: '100%',
-                      padding: '6px',
+                      padding: '5px',
                       borderRadius: '4px',
                       border: '1px solid #cbd5e1',
-                      fontSize: '11.5px',
+                      fontSize: '11px',
                       outline: 'none',
                     }}
                   >
@@ -1440,20 +1660,20 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                           [
                             {
                               value: 'contain',
-                              label: 'Contain',
-                              desc: 'Show full image, letterbox without cutting faces (पूरी दिखाएँ)',
+                              label: 'पूरी फ़ोटो (Contain)',
+                              desc: 'पूरी फ़ोटो बिना कटे दिखाएँ (Letterbox)',
                               icon: '🔲',
                             },
                             {
                               value: 'cover',
-                              label: 'Cover',
-                              desc: 'Fill frame, crop excess (फ्रेम भरें)',
+                              label: 'फ़्रेम भरें (Cover)',
+                              desc: 'फ़्रेम पूरा भरें, अतिरिक्त हिस्सा क्रॉप होगा',
                               icon: '⬛',
                             },
                             {
                               value: 'fill',
-                              label: 'Fill',
-                              desc: 'Stretch to fit (may distort) (खिंचाव)',
+                              label: 'खिंचाव (Stretch)',
+                              desc: 'फ़्रेम के अनुसार खींचे (विकृत हो सकता है)',
                               icon: '⤢',
                             },
                           ] as const
@@ -1651,7 +1871,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     )}
 
                     {/* ── PLACEMENT & ASPECT ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                       <div>
                         <label
                           style={{
@@ -1662,7 +1882,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             marginBottom: '4px',
                           }}
                         >
-                          Placement in Story
+                          फ़ोटो स्थिति (Placement)
                         </label>
                         <select
                           value={selectedArticle.imagePlacement}
@@ -1681,10 +1901,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             outline: 'none',
                           }}
                         >
-                          <option value="top">Above Headline</option>
-                          <option value="middle">Below Headline</option>
-                          <option value="side">Beside Text (Float)</option>
-                          <option value="bottom">Bottom of Story</option>
+                          <option value="top">शीर्षक के ऊपर (Top)</option>
+                          <option value="middle">शीर्षक के नीचे (Below)</option>
+                          <option value="side">टेक्स्ट के बाजू में (Float)</option>
+                          <option value="bottom">खबर के नीचे (Bottom)</option>
                         </select>
                       </div>
 
@@ -1698,7 +1918,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             marginBottom: '4px',
                           }}
                         >
-                          Frame Ratio
+                          फ़ोटो अनुपात (Frame Ratio)
                         </label>
                         <select
                           value={selectedArticle.imageAspect ?? 'standard'}
@@ -1723,6 +1943,45 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                           <option value="portrait">Vertical (3:4 / लंबवत)</option>
                           <option value="original">Original Ratio (मूल अनुपात)</option>
                         </select>
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '4px',
+                          }}
+                        >
+                          ऊँचाई (px)
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="Auto"
+                          min={30}
+                          max={1000}
+                          value={selectedArticle.customImageHeight ?? ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              customImageHeight: isNaN(val)
+                                ? undefined
+                                : Math.max(30, Math.min(1000, val)),
+                            });
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '5px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '11px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                          }}
+                        />
                       </div>
                     </div>
 
@@ -1952,6 +2211,432 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       }
                       style={{ width: '100%', accentColor: '#b91c1c' }}
                     />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '10.5px',
+                        color: '#475569',
+                        marginBottom: '3px',
+                      }}
+                    >
+                      मार्जिन ({selectedArticle.marginPx ?? 0}px)
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={32}
+                      value={selectedArticle.marginPx ?? 0}
+                      onChange={(e) =>
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          marginPx: parseInt(e.target.value, 10),
+                        })
+                      }
+                      style={{ width: '100%', accentColor: '#2563eb' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Typography & Max Lines overrides for this block */}
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                  टाइपोग्राफी व लाइन्स (Typography & Max Lines)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      शीर्षक आकार (Headline pt)
+                    </label>
+                    <input
+                      type="number"
+                      min={8}
+                      max={72}
+                      placeholder="Auto"
+                      value={selectedArticle.customHeadlineFontSizePt ?? ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          customHeadlineFontSizePt: isNaN(val)
+                            ? undefined
+                            : Math.max(8, Math.min(120, val)),
+                        });
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '4px 6px',
+                        fontSize: '11px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      बॉडी आकार (Body pt)
+                    </label>
+                    <input
+                      type="number"
+                      min={6}
+                      max={36}
+                      placeholder="Auto"
+                      value={selectedArticle.customFontSizePt ?? ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          customFontSizePt: isNaN(val)
+                            ? undefined
+                            : Math.max(6, Math.min(48, val)),
+                        });
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '4px 6px',
+                        fontSize: '11px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: '10px',
+                      color: '#64748b',
+                      display: 'block',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    अधिकतम पंक्तियाँ (Max lines clamp):{' '}
+                    {selectedArticle.maxLines
+                      ? `${selectedArticle.maxLines} lines`
+                      : 'असीमित (None)'}
+                  </label>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[0, 3, 5, 8, 12].map((lines) => (
+                      <button
+                        key={lines}
+                        type="button"
+                        onClick={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            maxLines: lines === 0 ? undefined : lines,
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          padding: '3px 0',
+                          fontSize: '10px',
+                          borderRadius: '3px',
+                          border:
+                            (selectedArticle.maxLines ?? 0) === lines
+                              ? '2px solid #2563eb'
+                              : '1px solid #cbd5e1',
+                          backgroundColor:
+                            (selectedArticle.maxLines ?? 0) === lines ? '#eff6ff' : '#ffffff',
+                          color: (selectedArticle.maxLines ?? 0) === lines ? '#1d4ed8' : '#334155',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {lines === 0 ? 'All' : `${lines}L`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Single Block Color Overrides */}
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                    🎨 इस ब्लॉक के रंग (Block Colors Override)
+                  </label>
+                  {selectedArticle.customColors && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateArticle({ ...selectedArticle, customColors: undefined })
+                      }
+                      style={{
+                        fontSize: '10px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      रीसेट
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      शीर्षक (Headline)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="color"
+                        value={selectedArticle.customColors?.headlineColor || '#111111'}
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              headlineColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '3px',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        value={selectedArticle.customColors?.headlineColor || ''}
+                        placeholder="#111111"
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              headlineColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '60px',
+                          padding: '2px 4px',
+                          fontSize: '10px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      बॉडी टेक्स्ट (Body)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="color"
+                        value={selectedArticle.customColors?.bodyColor || '#222222'}
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              bodyColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '3px',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        value={selectedArticle.customColors?.bodyColor || ''}
+                        placeholder="#222222"
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              bodyColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '60px',
+                          padding: '2px 4px',
+                          fontSize: '10px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      पृष्ठभूमि (Background)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="color"
+                        value={selectedArticle.customColors?.backgroundColor || '#ffffff'}
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              backgroundColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '3px',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        value={selectedArticle.customColors?.backgroundColor || ''}
+                        placeholder="#ffffff"
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              backgroundColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '60px',
+                          padding: '2px 4px',
+                          fontSize: '10px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '2px',
+                      }}
+                    >
+                      बॉर्डर (Border)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="color"
+                        value={selectedArticle.customColors?.borderColor || '#cbd5e1'}
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              borderColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '3px',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        value={selectedArticle.customColors?.borderColor || ''}
+                        placeholder="#cbd5e1"
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            customColors: {
+                              ...selectedArticle.customColors,
+                              borderColor: e.target.value,
+                            },
+                          })
+                        }
+                        style={{
+                          width: '60px',
+                          padding: '2px 4px',
+                          fontSize: '10px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

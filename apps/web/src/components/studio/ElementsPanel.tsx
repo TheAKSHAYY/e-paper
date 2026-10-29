@@ -832,10 +832,12 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
         <div
           style={{
             flex: 1,
+            minHeight: 0,
             overflowY: 'auto',
             padding: '14px',
             display: 'flex',
             flexDirection: 'column',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {/* Category Filter Tabs */}
@@ -844,9 +846,11 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
               display: 'flex',
               gap: '6px',
               overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
               paddingBottom: '8px',
               marginBottom: '10px',
               borderBottom: '1px solid #e2e8f0',
+              flexShrink: 0,
             }}
           >
             {[
@@ -862,16 +866,21 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                 type="button"
                 onClick={() => setCategoryFilter(cat.id as 'all' | ElementType)}
                 style={{
-                  padding: '5px 10px',
+                  padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   border: categoryFilter === cat.id ? '1px solid #b91c1c' : '1px solid #cbd5e1',
                   backgroundColor: categoryFilter === cat.id ? '#b91c1c' : '#ffffff',
                   color: categoryFilter === cat.id ? '#ffffff' : '#334155',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  minHeight: '32px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 {cat.label}

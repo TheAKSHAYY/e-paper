@@ -261,7 +261,28 @@ export const ArticleSchema = z.object({
   backgroundColor: z.string().optional(),
   textColor: z.string().optional(),
   paddingPx: z.number().min(0).max(64).optional(),
+  marginPx: z.number().min(0).max(64).optional(),
   kickerText: z.string().optional(),
+
+  // Dynamic Auto-fit & Manual Control per Block (Task 1 & 2)
+  heightMode: z.enum(['auto', 'min-height', 'fixed']).optional(),
+  customHeight: z.number().min(10).max(2500).optional(),
+  maxLines: z.number().int().min(1).max(100).optional(),
+  customFontSizePt: z.number().min(6).max(48).optional(),
+  customHeadlineFontSizePt: z.number().min(10).max(96).optional(),
+  customImageHeight: z.number().min(10).max(1500).optional(),
+  fillSpace: z.boolean().optional(),
+  customColors: z
+    .object({
+      headlineColor: z.string().optional(),
+      subheadlineColor: z.string().optional(),
+      bodyColor: z.string().optional(),
+      bylineColor: z.string().optional(),
+      kickerColor: z.string().optional(),
+      borderColor: z.string().optional(),
+      backgroundColor: z.string().optional(),
+    })
+    .optional(),
 
   // Specialized element payload
   rashifalItems: z.array(RashifalItemSchema).optional(),
@@ -433,6 +454,72 @@ export type NewspaperPresetId = z.infer<typeof NewspaperPresetIdSchema>;
 export const SpacingDensitySchema = z.enum(['compact', 'normal', 'spacious']);
 export type SpacingDensity = z.infer<typeof SpacingDensitySchema>;
 
+export const NewspaperThemeConfigSchema = z.object({
+  id: z.string().default('classic-bw'),
+  name: z.string().default('क्लासिक ब्लैक & वाइट'),
+  mastheadColor: z.string().default('#111111'),
+  headlineColor: z.string().default('#111111'),
+  subheadlineColor: z.string().default('#333333'),
+  bodyColor: z.string().default('#222222'),
+  bylineColor: z.string().default('#555555'),
+  kickerColor: z.string().default('#b91c1c'),
+  borderColor: z.string().default('#c8c5bc'),
+  pageBackground: z.string().default('#ffffff'),
+});
+
+export type NewspaperThemeConfig = z.infer<typeof NewspaperThemeConfigSchema>;
+
+export const NEWSPAPER_THEME_PRESETS: NewspaperThemeConfig[] = [
+  {
+    id: 'classic-bw',
+    name: 'क्लासिक ब्लैक & वाइट (Classic B&W)',
+    mastheadColor: '#111111',
+    headlineColor: '#111111',
+    subheadlineColor: '#333333',
+    bodyColor: '#222222',
+    bylineColor: '#555555',
+    kickerColor: '#b91c1c',
+    borderColor: '#c8c5bc',
+    pageBackground: '#ffffff',
+  },
+  {
+    id: 'deep-blue',
+    name: 'समाचार लाइव 24 - डीप ब्लू (Deep Blue)',
+    mastheadColor: '#1e3a8a',
+    headlineColor: '#1e3a8a',
+    subheadlineColor: '#1d4ed8',
+    bodyColor: '#1e293b',
+    bylineColor: '#475569',
+    kickerColor: '#2563eb',
+    borderColor: '#93c5fd',
+    pageBackground: '#f8fafc',
+  },
+  {
+    id: 'warm-sepia',
+    name: 'प्राचीन सेपिया (Warm Sepia)',
+    mastheadColor: '#451a03',
+    headlineColor: '#78350f',
+    subheadlineColor: '#92400e',
+    bodyColor: '#3f2e1a',
+    bylineColor: '#78350f',
+    kickerColor: '#b45309',
+    borderColor: '#fde68a',
+    pageBackground: '#fffbeb',
+  },
+  {
+    id: 'editorial-crimson',
+    name: 'संपादकीय सुर्ख (Editorial Crimson)',
+    mastheadColor: '#991b1b',
+    headlineColor: '#7f1d1d',
+    subheadlineColor: '#991b1b',
+    bodyColor: '#1c1917',
+    bylineColor: '#57534e',
+    kickerColor: '#dc2626',
+    borderColor: '#fca5a5',
+    pageBackground: '#ffffff',
+  },
+];
+
 export const NewspaperLayoutConfigSchema = z.object({
   presetId: NewspaperPresetIdSchema.default('classic-hindi-broadsheet'),
   /** Standard 12-column newspaper layout engine (2 to 12 columns) */
@@ -448,6 +535,7 @@ export const NewspaperLayoutConfigSchema = z.object({
   spacingDensity: SpacingDensitySchema.default('normal'),
   showFooter: z.boolean().default(true),
   footerText: z.string().optional().default(''),
+  theme: NewspaperThemeConfigSchema.optional(),
 });
 
 export type NewspaperLayoutConfig = z.infer<typeof NewspaperLayoutConfigSchema>;
@@ -502,6 +590,7 @@ export const NewspaperDocumentSchema = z.object({
   metadata: NewspaperMetadataSchema,
   masthead: MastheadConfigSchema,
   layout: NewspaperLayoutConfigSchema,
+  theme: NewspaperThemeConfigSchema.optional(),
   articles: z.array(ArticleSchema).default([]),
   pages: z.array(NewspaperPageSchema).optional(),
 });

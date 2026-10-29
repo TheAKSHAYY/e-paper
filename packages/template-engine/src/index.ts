@@ -1398,6 +1398,17 @@ export function renderNewspaperDocumentToHtml(
   doc: NewspaperDocument,
   _options: RenderHtmlOptions = {}
 ): string {
+  const theme = doc.theme ?? doc.layout.theme ?? {
+    mastheadColor: '#111111',
+    headlineColor: '#111111',
+    subheadlineColor: '#333333',
+    bodyColor: '#222222',
+    bylineColor: '#555555',
+    kickerColor: '#b91c1c',
+    borderColor: '#c8c5bc',
+    pageBackground: '#ffffff',
+  };
+
   const metrics = getPhysicalPageMetrics(
     doc.metadata.pageSize,
     doc.metadata.orientation,
@@ -1709,10 +1720,19 @@ export function renderNewspaperDocumentToHtml(
           if (hasImage) {
             const objectPos = getImageObjectPosition(art);
             const aspectStyle = getImageAspectRatio(art.imageAspect);
-            const fit = art.imageFit ?? 'cover';
+            const fit = art.fillSpace ? 'cover' : art.imageFit ?? 'cover';
+            const imgHeightStyle = art.customImageHeight
+              ? `height: ${art.customImageHeight}px;`
+              : art.fillSpace
+                ? 'height: 100%; flex: 1;'
+                : '';
+            const figStyle = art.fillSpace
+              ? 'style="flex: 1; display: flex; flex-direction: column;"'
+              : '';
+
             imageHtml = `
-              <figure class="article-figure placement-${art.imagePlacement} layout-${art.imageLayout ?? 'full'} aspect-${art.imageAspect ?? 'standard'}">
-                <img src="${escapeHtml(art.imageUrl ?? '')}" alt="${escapeHtml(art.imageCaption ?? art.headline ?? '')}" class="article-image aspect-${art.imageAspect ?? 'standard'}" style="object-fit: ${fit}; object-position: ${objectPos}; aspect-ratio: ${aspectStyle};" onerror="this.style.display='none'" />
+              <figure class="article-figure placement-${art.imagePlacement} layout-${art.imageLayout ?? 'full'} aspect-${art.imageAspect ?? 'standard'}" ${figStyle}>
+                <img src="${escapeHtml(art.imageUrl ?? '')}" alt="${escapeHtml(art.imageCaption ?? art.headline ?? '')}" class="article-image aspect-${art.imageAspect ?? 'standard'}" style="object-fit: ${fit}; object-position: ${objectPos}; aspect-ratio: ${art.customImageHeight ? 'auto' : aspectStyle}; ${imgHeightStyle}" onerror="this.style.display='none'" />
                 ${
                   art.imageCaption || art.imageCredit
                     ? `
@@ -1727,11 +1747,21 @@ export function renderNewspaperDocumentToHtml(
             `;
           }
 
+          const headlineColorStyle = art.customColors?.headlineColor
+            ? `style="color: ${art.customColors.headlineColor};"`
+            : '';
+          const subheadlineColorStyle = art.customColors?.subheadlineColor
+            ? `style="color: ${art.customColors.subheadlineColor};"`
+            : '';
+          const bylineColorStyle = art.customColors?.bylineColor
+            ? `style="color: ${art.customColors.bylineColor};"`
+            : '';
+
           const headlineHtml = `
             <div class="article-header priority-${priority}">
-              ${art.subheadline ? `<p class="article-deck">${escapeHtml(art.subheadline)}</p>` : ''}
-              <h2 class="article-headline">${escapeHtml(art.headline)}</h2>
-              ${art.byline ? `<div class="article-byline">${escapeHtml(art.byline)}</div>` : ''}
+              ${art.subheadline ? `<p class="article-deck" ${subheadlineColorStyle}>${escapeHtml(art.subheadline)}</p>` : ''}
+              <h2 class="article-headline" ${headlineColorStyle}>${escapeHtml(art.headline)}</h2>
+              ${art.byline ? `<div class="article-byline" ${bylineColorStyle}>${escapeHtml(art.byline)}</div>` : ''}
             </div>
           `;
 
@@ -1745,9 +1775,10 @@ export function renderNewspaperDocumentToHtml(
           let specializedExtraHtml = '';
 
           // 1. Kicker Badge for top-headline or custom
+          const kickerColor = art.customColors?.kickerColor || 'var(--kicker-color, #b91c1c)';
           const kickerHtml = art.kickerText
             ? `
-            <div class="article-kicker" style="color: #b91c1c; font-family: 'Hind', 'Noto Serif Devanagari', sans-serif; font-weight: 700; font-size: 8pt; text-transform: uppercase; margin-bottom: 2px;">
+            <div class="article-kicker" style="color: ${kickerColor}; font-family: 'Hind', 'Noto Serif Devanagari', sans-serif; font-weight: 700; font-size: 8pt; text-transform: uppercase; margin-bottom: 2px;">
               ${escapeHtml(art.kickerText)}
             </div>
           `
@@ -1812,8 +1843,22 @@ export function renderNewspaperDocumentToHtml(
             `;
           }
 
+          const bodyStylesList: string[] = [];
+          if (art.customColors?.bodyColor) {
+            bodyStylesList.push(`color: ${art.customColors.bodyColor};`);
+          }
+          if (art.customFontSizePt) {
+            bodyStylesList.push(`font-size: ${art.customFontSizePt}pt;`);
+          }
+          if (art.maxLines) {
+            bodyStylesList.push(
+              `-webkit-line-clamp: ${art.maxLines}; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;`
+            );
+          }
+          const bodyStyleAttr = bodyStylesList.length > 0 ? `style="${bodyStylesList.join(' ')}"` : '';
+
           const bodyContent = `
-            <div class="article-body">
+            <div class="article-body" ${bodyStyleAttr}>
               ${kickerHtml}
               ${art.dateline ? `<span class="article-dateline">${escapeHtml(art.dateline)} </span>` : ''}
               ${formatBodyParagraphsHtml(art.body, enableDropCap, isHindi ? 'hi' : 'en')}
@@ -1839,33 +1884,48 @@ export function renderNewspaperDocumentToHtml(
             ? `position: absolute; left: ${art.frame!.x}mm; top: ${art.frame!.y}mm; width: ${art.frame!.w}mm; height: ${art.frame!.h}mm; z-index: ${art.frame!.z ?? 1}; pointer-events: auto; overflow: hidden; `
             : `grid-column: span ${span}; `;
 
+          if (art.fillSpace) {
+            customStyles += 'flex: 1; height: 100%; display: flex; flex-direction: column; ';
+          }
+          if (art.heightMode === 'fixed' && art.customHeight) {
+            customStyles += `height: ${art.customHeight}px; `;
+          } else if (art.heightMode === 'min-height' && art.customHeight) {
+            customStyles += `min-height: ${art.customHeight}px; `;
+          }
+          if (art.marginPx !== undefined && art.marginPx > 0) {
+            customStyles += `margin: ${art.marginPx}px; `;
+          }
+
           if (art.borders) {
+            const bColor = art.customColors?.borderColor;
             if (art.borders.top && art.borders.top.style !== 'none' && art.borders.top.width > 0) {
-              customStyles += `border-top: ${art.borders.top.width}px ${art.borders.top.style} ${art.borders.top.color}; `;
+              customStyles += `border-top: ${art.borders.top.width}px ${art.borders.top.style} ${bColor || art.borders.top.color}; `;
             }
             if (
               art.borders.right &&
               art.borders.right.style !== 'none' &&
               art.borders.right.width > 0
             ) {
-              customStyles += `border-right: ${art.borders.right.width}px ${art.borders.right.style} ${art.borders.right.color}; `;
+              customStyles += `border-right: ${art.borders.right.width}px ${art.borders.right.style} ${bColor || art.borders.right.color}; `;
             }
             if (
               art.borders.bottom &&
               art.borders.bottom.style !== 'none' &&
               art.borders.bottom.width > 0
             ) {
-              customStyles += `border-bottom: ${art.borders.bottom.width}px ${art.borders.bottom.style} ${art.borders.bottom.color}; `;
+              customStyles += `border-bottom: ${art.borders.bottom.width}px ${art.borders.bottom.style} ${bColor || art.borders.bottom.color}; `;
             }
             if (
               art.borders.left &&
               art.borders.left.style !== 'none' &&
               art.borders.left.width > 0
             ) {
-              customStyles += `border-left: ${art.borders.left.width}px ${art.borders.left.style} ${art.borders.left.color}; `;
+              customStyles += `border-left: ${art.borders.left.width}px ${art.borders.left.style} ${bColor || art.borders.left.color}; `;
             }
           }
-          if (art.backgroundColor) {
+          if (art.customColors?.backgroundColor) {
+            customStyles += `background-color: ${art.customColors.backgroundColor}; `;
+          } else if (art.backgroundColor) {
             customStyles += `background-color: ${art.backgroundColor}; `;
           }
           if (art.textColor) {
@@ -1937,6 +1997,17 @@ export function renderNewspaperDocumentToHtml(
   <style>
     ${SELF_HOSTED_FONTS_CSS}
 
+    :root {
+      --masthead-color: ${theme.mastheadColor || '#111111'};
+      --headline-color: ${theme.headlineColor || '#111111'};
+      --subheadline-color: ${theme.subheadlineColor || '#333333'};
+      --body-color: ${theme.bodyColor || '#222222'};
+      --byline-color: ${theme.bylineColor || '#555555'};
+      --kicker-color: ${theme.kickerColor || '#b91c1c'};
+      --border-color: ${theme.borderColor || '#c8c5bc'};
+      --page-bg: ${theme.pageBackground || '#ffffff'};
+    }
+
     @page {
       size: ${widthPt}pt ${heightPt}pt;
       margin: 0;
@@ -1952,7 +2023,8 @@ export function renderNewspaperDocumentToHtml(
       margin: 0;
       padding: 0;
       background-color: #ffffff;
-      color: #121212;
+      background-color: var(--page-bg, #ffffff);
+      color: var(--body-color, #121212);
       font-family: ${bodyFont}, 'Noto Serif Devanagari', 'Hind', serif;
       font-size: ${bodyFontSizePt}pt;
       line-height: 1.5;
@@ -1966,6 +2038,7 @@ export function renderNewspaperDocumentToHtml(
       max-height: ${heightPt}pt;
       padding: ${paddingPt}pt;
       background-color: #ffffff;
+      background-color: var(--page-bg, #ffffff);
       display: flex;
       flex-direction: column;
       position: relative;
@@ -2111,7 +2184,7 @@ export function renderNewspaperDocumentToHtml(
       font-weight: 900;
       letter-spacing: -0.02em;
       line-height: 1.05;
-      color: #111111;
+      color: var(--masthead-color, #111111);
     }
 
     .masthead-bottom-strip {
@@ -2159,6 +2232,7 @@ export function renderNewspaperDocumentToHtml(
     .newspaper-grid {
       display: grid;
       grid-template-columns: repeat(${columnCount}, 1fr);
+      grid-auto-flow: dense;
       gap: ${gapPt}pt;
       flex: 1;
       align-content: start;
@@ -2176,14 +2250,14 @@ export function renderNewspaperDocumentToHtml(
 
     .has-column-rule {
       padding-right: ${gapPt / 2}pt;
-      border-right: 1px solid #c8c5bc;
+      border-right: 1px solid var(--border-color, #c8c5bc);
     }
 
     [dir="rtl"] .has-column-rule {
       padding-right: 0;
       padding-left: ${gapPt / 2}pt;
       border-right: none;
-      border-left: 1px solid #c8c5bc;
+      border-left: 1px solid var(--border-color, #c8c5bc);
     }
 
     .article-header {
@@ -2193,7 +2267,7 @@ export function renderNewspaperDocumentToHtml(
     .article-deck {
       margin: 0 0 3pt 0;
       font-size: 9.5pt;
-      color: #444;
+      color: var(--subheadline-color, #444);
       font-family: ${subheadlineFont}, ${bodyFont}, 'Noto Serif Devanagari', 'Hind', serif;
       line-height: 1.35;
     }
@@ -2203,7 +2277,7 @@ export function renderNewspaperDocumentToHtml(
       font-family: ${headlineFont}, 'Noto Serif Devanagari', serif;
       font-weight: ${headlineWeight};
       line-height: 1.15;
-      color: #121212;
+      color: var(--headline-color, #121212);
     }
 
     .priority-lead .article-headline {

@@ -9,12 +9,14 @@ import type {
   NewspaperPresetId,
   NewspaperPage,
   FrameMm,
+  NewspaperThemeConfig,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
   createNewBlankPage,
   getPageDimensions,
   resolvePageColumnCount,
+  NewspaperDocumentSchema,
 } from '@epaper-studio/document-schema';
 import {
   createNewspaperDocument,
@@ -27,6 +29,7 @@ import {
 } from '@epaper-studio/template-engine';
 
 import { TopBar, type ViewMode } from './components/studio/TopBar';
+import { MobileTopBar } from './components/studio/mobile/MobileTopBar';
 import { LeftSidebar, type SidebarTab } from './components/studio/LeftSidebar';
 import { ContextualInspector } from './components/studio/ContextualInspector';
 import { NewspaperCanvas } from './components/studio/NewspaperCanvas';
@@ -35,6 +38,7 @@ import { ProjectSetupModal } from './components/studio/ProjectSetupModal';
 import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
+import { ThemeModal } from './components/studio/ThemeModal';
 import { LandingPage } from './components/landing/LandingPage';
 import { draftStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
@@ -152,14 +156,23 @@ export const App: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusToast, setStatusToast] = useState<{
+    message: string;
+    action?: { label: string; onClick: () => void };
+  } | null>(null);
+  const [pageToDelete, setPageToDelete] = useState<number | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showNotification = useCallback((msg: string) => {
-    setStatusMessage(msg);
-    setTimeout(() => {
-      setStatusMessage((cur) => (cur === msg ? null : cur));
-    }, 3000);
-  }, []);
+  const showNotification = useCallback(
+    (msg: string, action?: { label: string; onClick: () => void }) => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      setStatusToast({ message: msg, action });
+      toastTimerRef.current = setTimeout(() => {
+        setStatusToast(null);
+      }, action ? 6000 : 3000);
+    },
+    []
+  );
 
   // Mobile drawer state
   const [mobileDrawer, setMobileDrawer] = useState<MobileDrawerMode>('none');
@@ -196,6 +209,119 @@ export const App: React.FC = () => {
   const [isPresetsOpen, setIsPresetsOpen] = useState<boolean>(false);
   const [isDraftsOpen, setIsDraftsOpen] = useState<boolean>(false);
   const [isMastheadGalleryOpen, setIsMastheadGalleryOpen] = useState<boolean>(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+
+  // Undo / Redo history state stack
+  const [history, setHistory] = useState<NewspaperDocument[]>([document]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const isHistoryNavigating = useRef<boolean>(false);
+  const historyRef = useRef<NewspaperDocument[]>([document]);
+  const historyIndexRef = useRef<number>(0);
+
+  useEffect(() => {
+    historyRef.current = history;
+    historyIndexRef.current = historyIndex;
+  }, [history, historyIndex]);
+
+  useEffect(() => {
+    if (isHistoryNavigating.current) {
+      isHistoryNavigating.current = false;
+      return;
+    }
+    setHistory((prevHistory) => {
+      const currentHead = prevHistory[historyIndex];
+      if (currentHead === document) return prevHistory;
+      const truncated = prevHistory.slice(0, historyIndex + 1);
+      const nextHistory = [...truncated, document].slice(-50);
+      const nextIndex = nextHistory.length - 1;
+      setHistoryIndex(nextIndex);
+      historyRef.current = nextHistory;
+      historyIndexRef.current = nextIndex;
+      return nextHistory;
+    });
+  }, [document, historyIndex]);
+
+  const handleUndo = useCallback(() => {
+    const curIdx = historyIndexRef.current;
+    if (curIdx > 0) {
+      isHistoryNavigating.current = true;
+      const prevIndex = curIdx - 1;
+      const targetDoc = historyRef.current[prevIndex];
+      if (targetDoc) {
+        historyIndexRef.current = prevIndex;
+        setHistoryIndex(prevIndex);
+        setDocument(targetDoc);
+        showNotification('पूर्ववत किया गया (Undo)');
+      }
+    }
+  }, [showNotification]);
+
+  const handleRedo = useCallback(() => {
+    const curIdx = historyIndexRef.current;
+    if (curIdx < historyRef.current.length - 1) {
+      isHistoryNavigating.current = true;
+      const nextIndex = curIdx + 1;
+      const targetDoc = historyRef.current[nextIndex];
+      if (targetDoc) {
+        historyIndexRef.current = nextIndex;
+        setHistoryIndex(nextIndex);
+        setDocument(targetDoc);
+        showNotification('फिर से लागू किया गया (Redo)');
+      }
+    }
+  }, [showNotification]);
+
+  // Keyboard shortcut listener for Ctrl+Z and Ctrl+Y
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts if the user is typing inside an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.getAttribute('contenteditable') === 'true')
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRedo();
+        } else {
+          e.preventDefault();
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
+
+  const handleApplyTheme = useCallback(
+    (theme: NewspaperThemeConfig) => {
+      setDocument((prev) => ({
+        ...prev,
+        theme,
+        layout: {
+          ...prev.layout,
+          theme,
+        },
+        metadata: {
+          ...prev.metadata,
+          updatedAt: new Date().toISOString(),
+        },
+      }));
+      setHasUnsavedChanges(true);
+      showNotification('थीम सफलतापूर्वक लागू की गई (Theme applied)');
+    },
+    [showNotification]
+  );
 
   // Responsive window resize tracking
   useEffect(() => {
@@ -236,14 +362,15 @@ export const App: React.FC = () => {
     let availableW = 1200;
     if (canvasViewportRef.current) {
       const rect = canvasViewportRef.current.getBoundingClientRect();
-      availableW = Math.max(260, rect.width - 32);
+      availableW = Math.max(200, rect.width - (isMobile ? 16 : 32));
     } else if (typeof window !== 'undefined') {
-      availableW =
-        window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+      availableW = isMobile
+        ? window.innerWidth - 16
+        : window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
     }
     const scaleW = availableW / widthPx;
-    return Math.max(0.25, Math.min(3.0, Math.round(scaleW * 100) / 100));
-  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen]);
+    return Math.max(0.1, Math.min(3.0, Math.round(scaleW * 100) / 100));
+  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen, isMobile]);
 
   // Fit to Page (fits both width and height within viewport)
   const calculateFitPageScale = useCallback(() => {
@@ -252,18 +379,19 @@ export const App: React.FC = () => {
     let availableH = 800;
     if (canvasViewportRef.current) {
       const rect = canvasViewportRef.current.getBoundingClientRect();
-      availableW = Math.max(260, rect.width - 32);
-      availableH = Math.max(260, rect.height - 32);
+      availableW = Math.max(200, rect.width - (isMobile ? 16 : 32));
+      availableH = Math.max(200, rect.height - (isMobile ? 80 : 32));
     } else if (typeof window !== 'undefined') {
-      availableW =
-        window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
-      availableH = Math.max(300, window.innerHeight - 120);
+      availableW = isMobile
+        ? window.innerWidth - 16
+        : window.innerWidth - (isSidebarOpen ? 280 : 48) - (isInspectorOpen ? 300 : 0) - 32;
+      availableH = Math.max(200, window.innerHeight - (isMobile ? 120 : 120));
     }
     const scaleW = availableW / widthPx;
     const scaleH = availableH / heightPx;
     const bestFit = Math.min(scaleW, scaleH);
-    return Math.max(0.25, Math.min(3.0, Math.round(bestFit * 100) / 100));
-  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen]);
+    return Math.max(0.1, Math.min(3.0, Math.round(bestFit * 100) / 100));
+  }, [getCanvasBaseDimensions, isSidebarOpen, isInspectorOpen, isMobile]);
 
   const handleFitPage = useCallback(() => {
     const fit = calculateFitPageScale();
@@ -296,7 +424,7 @@ export const App: React.FC = () => {
         e.preventDefault();
         setScale((current) => {
           const delta = -e.deltaY * 0.002;
-          return Math.max(0.25, Math.min(3.0, Math.round((current + delta) * 100) / 100));
+          return Math.max(0.1, Math.min(3.0, Math.round((current + delta) * 100) / 100));
         });
       }
     };
@@ -324,7 +452,7 @@ export const App: React.FC = () => {
           const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
           const factor = dist / touchStartDist;
           const newScale = Math.max(
-            0.25,
+            0.1,
             Math.min(3.0, Math.round(touchStartScale * factor * 100) / 100)
           );
           setScale(newScale);
@@ -514,22 +642,21 @@ export const App: React.FC = () => {
     [pages.length, showNotification]
   );
 
-  // Delete page
+  // Delete page with confirmation & undo
   const handleDeletePage = useCallback(
     (pageIndex: number) => {
       if (pages.length <= 1) {
-        alert('अख़बार में कम से कम एक पेज होना आवश्यक है।');
+        showNotification('अख़बार में कम से कम एक पेज होना आवश्यक है।');
         return;
       }
+      setPageToDelete(pageIndex);
+    },
+    [pages.length, showNotification]
+  );
 
-      if (
-        !window.confirm(
-          `क्या आप पेज ${pageIndex + 1} हटाना चाहते हैं? इस पेज की सभी खबरें हट जाएँगी।`
-        )
-      ) {
-        return;
-      }
-
+  const handleExecuteDeletePage = useCallback(
+    (pageIndex: number) => {
+      setPageToDelete(null);
       setDocument((prev) => {
         const currentPages = getPublicationPages(prev);
         const filtered = currentPages.filter((_, idx) => idx !== pageIndex);
@@ -546,9 +673,57 @@ export const App: React.FC = () => {
       setCurrentPageIndex((prev) => Math.max(0, Math.min(prev, pages.length - 2)));
       setSelectedArticleId(null);
       setHasUnsavedChanges(true);
-      showNotification(`पेज ${pageIndex + 1} हटाया गया`);
+      showNotification(`पेज ${pageIndex + 1} हटाया गया`, {
+        label: 'पूर्ववत करें (Undo)',
+        onClick: () => handleUndo(),
+      });
     },
-    [pages.length, showNotification]
+    [pages.length, showNotification, handleUndo]
+  );
+
+  // Export project as JSON backup
+  const handleExportProjectJson = useCallback(() => {
+    const dataStr =
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(document, null, 2));
+    const downloadAnchor = window.document.createElement('a');
+    const safeTitle = (document.metadata.title || 'samachar-live-24')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `${safeTitle}-backup.json`);
+    window.document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showNotification('प्रोजेक्ट JSON सफलतापूर्वक डाउनलोड किया गया (Project exported)');
+  }, [document, showNotification]);
+
+  // Import project from JSON backup
+  const handleImportProjectJson = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const content = e.target?.result as string;
+          const parsed = JSON.parse(content);
+          const validated = NewspaperDocumentSchema.safeParse(parsed);
+          if (!validated.success) {
+            showNotification('अमान्य प्रोजेक्ट फ़ाइल: JSON स्कीमा सत्यापन विफल रहा');
+            console.error('Validation errors:', validated.error);
+            return;
+          }
+          setDocument(validated.data);
+          setCurrentPageIndex(0);
+          setSelectedArticleId(null);
+          await draftStorage.saveDraft(validated.data);
+          showNotification('प्रोजेक्ट बैकअप सफलतापूर्वक लोड किया गया (Project restored)');
+        } catch (err) {
+          showNotification('प्रोजेक्ट JSON फ़ाइल पढ़ने में त्रुटि');
+          console.error('Import error:', err);
+        }
+      };
+      reader.readAsText(file);
+    },
+    [draftStorage, showNotification]
   );
 
   // Reorder pages
@@ -660,7 +835,7 @@ export const App: React.FC = () => {
     [safePageIndex]
   );
 
-  // Swap articles (free placement)
+  // Swap articles (works seamlessly in both free placement and auto-grid)
   const handleSwapArticles = useCallback(
     (idA: string, idB: string) => {
       setDocument((prev) => {
@@ -668,25 +843,169 @@ export const App: React.FC = () => {
         const targetPage = currentPages[safePageIndex];
         if (!targetPage) return prev;
 
-        const swapRes = swapFrames(targetPage, prev, idA, idB);
-        if (!swapRes.success) {
-          showNotification(swapRes.message ?? 'ब्लॉक की स्थिति आपस में नहीं बदली जा सकी।');
-          return prev;
+        if (targetPage.layoutMode === 'free') {
+          const swapRes = swapFrames(targetPage, prev, idA, idB);
+          if (!swapRes.success) {
+            showNotification(swapRes.message ?? 'ब्लॉक की स्थिति आपस में नहीं बदली जा सकी।');
+            return prev;
+          }
+
+          const updatedPages = currentPages.map((p, idx) =>
+            idx === safePageIndex ? swapRes.page : p
+          );
+
+          return {
+            ...prev,
+            pages: updatedPages,
+            articles: safePageIndex === 0 ? swapRes.page.articles : prev.articles,
+            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+          };
+        } else {
+          const idxA = targetPage.articles.findIndex((a) => a.id === idA);
+          const idxB = targetPage.articles.findIndex((a) => a.id === idB);
+          if (idxA === -1 || idxB === -1) return prev;
+
+          const updatedArticles = [...targetPage.articles];
+          const artA = updatedArticles[idxA];
+          const artB = updatedArticles[idxB];
+          if (!artA || !artB) return prev;
+          updatedArticles[idxA] = artB;
+          updatedArticles[idxB] = artA;
+
+          const reindexedArticles = updatedArticles.map((art, i) => ({
+            ...art,
+            orderIndex: i,
+          }));
+
+          const updatedPages = currentPages.map((p, idx) =>
+            idx === safePageIndex ? { ...p, articles: reindexedArticles } : p
+          );
+
+          return {
+            ...prev,
+            pages: updatedPages,
+            articles: safePageIndex === 0 ? reindexedArticles : prev.articles,
+            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+          };
+        }
+      });
+      setHasUnsavedChanges(true);
+      showNotification('खबरों का स्थान आपस में बदला गया (Swapped)');
+    },
+    [safePageIndex, showNotification]
+  );
+
+  // Auto-fit layout calculation for page: balances column spans, fills remaining space, and handles overflow
+  const handleAutoFitPage = useCallback(
+    (targetPageIndex: number = safePageIndex) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const targetPage = currentPages[targetPageIndex];
+        if (!targetPage) return prev;
+
+        const columnCount = resolvePageColumnCount({ layout: prev.layout }, targetPage);
+        const articles = [...targetPage.articles];
+        if (articles.length === 0) return prev;
+
+        const pageSize = prev.metadata.pageSize;
+        const orientation = prev.metadata.orientation;
+        const wordBudget =
+          pageSize === 'broadsheet'
+            ? orientation === 'landscape'
+              ? 2800
+              : 3500
+            : pageSize === 'berliner'
+              ? 2600
+              : pageSize === 'a3'
+                ? 2800
+                : 1800;
+        const maxArticlesPerPage = pageSize === 'broadsheet' ? 8 : 6;
+
+        let accumulatedWords = 0;
+        let overflowSplitIndex = articles.length;
+        for (let i = 0; i < articles.length; i++) {
+          const article = articles[i];
+          if (!article) continue;
+          const artWords = article.body.trim().split(/\s+/).filter(Boolean).length;
+          accumulatedWords += artWords;
+          if ((accumulatedWords > wordBudget || i >= maxArticlesPerPage) && i > 0) {
+            overflowSplitIndex = i;
+            break;
+          }
         }
 
-        const updatedPages = currentPages.map((p, idx) =>
-          idx === safePageIndex ? swapRes.page : p
-        );
+        const fittingArticles = articles.slice(0, overflowSplitIndex);
+        const overflowArticles = articles.slice(overflowSplitIndex);
+
+        const packedArticles = fittingArticles.map((art, idx) => {
+          let span = art.columnSpan;
+          if (idx === 0 && (art.priority === 'lead' || fittingArticles.length <= 2)) {
+            span = columnCount;
+          } else if (columnCount === 12) {
+            if (fittingArticles.length === 2) {
+              span = 6;
+            } else if (fittingArticles.length === 3) {
+              span = idx === 0 ? 12 : 6;
+            } else if (fittingArticles.length === 4) {
+              span = idx === 0 ? 12 : 4;
+            } else {
+              span = art.priority === 'lead' ? 12 : art.priority === 'major' ? 6 : 4;
+            }
+          }
+          const isTrailing = idx === fittingArticles.length - 1;
+          return {
+            ...art,
+            columnSpan: Math.min(columnCount, Math.max(1, span)),
+            heightMode: 'auto' as const,
+            customHeight: undefined,
+            fillSpace: isTrailing,
+          };
+        });
+
+        const updatedPages = [...currentPages];
+        updatedPages[targetPageIndex] = {
+          ...targetPage,
+          layoutMode: 'auto',
+          articles: packedArticles,
+        };
+
+        if (overflowArticles.length > 0) {
+          const nextPageIndex = targetPageIndex + 1;
+          const existingNextPage = updatedPages[nextPageIndex];
+          if (existingNextPage) {
+            updatedPages[nextPageIndex] = {
+              ...existingNextPage,
+              articles: [...existingNextPage.articles, ...overflowArticles],
+            };
+          } else {
+            const newPage = createNewBlankPage(updatedPages.length + 1, {
+              sectionTitle: `पेज ${updatedPages.length + 1}`,
+            });
+            newPage.articles = overflowArticles;
+            updatedPages.push(newPage);
+          }
+          showNotification(
+            `ऑटो-फ़िट: ${overflowArticles.length} अतिरिक्त खबर(ें) अगले पेज पर भेजी गईं`,
+            {
+              label: 'पूर्ववत करें (Undo)',
+              onClick: () => handleUndo(),
+            }
+          );
+        } else {
+          showNotification('ऑटो-फ़िट लागू: खबरें ग्रिड में संतुलित की गईं', {
+            label: 'पूर्ववत करें (Undo)',
+            onClick: () => handleUndo(),
+          });
+        }
 
         return {
           ...prev,
           pages: updatedPages,
-          articles: safePageIndex === 0 ? swapRes.page.articles : prev.articles,
+          articles: targetPageIndex === 0 ? packedArticles : prev.articles,
           metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
         };
       });
       setHasUnsavedChanges(true);
-      showNotification('दोनों ब्लॉकों की स्थितियां आपस में बदल दी गईं (Swapped)');
     },
     [safePageIndex, showNotification]
   );
@@ -788,65 +1107,79 @@ export const App: React.FC = () => {
   // Move article up
   const handleMoveArticleUp = useCallback(
     (articleId: string) => {
-      const idx = currentPage.articles.findIndex((a) => a.id === articleId);
-      if (idx <= 0) return;
-
-      const sorted = [...currentPage.articles].sort((a, b) => a.orderIndex - b.orderIndex);
-      const curr = sorted[idx];
-      const prev = sorted[idx - 1];
-      if (!curr || !prev) return;
-
-      curr.orderIndex = idx - 1;
-      prev.orderIndex = idx;
-
       setDocument((pDoc) => {
         const currentPages = getPublicationPages(pDoc);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage) return pDoc;
+
+        const articles = [...targetPage.articles];
+        const idx = articles.findIndex((a) => a.id === articleId);
+        if (idx <= 0) return pDoc;
+
+        // Swap positions in array
+        const temp = articles[idx]!;
+        articles[idx] = articles[idx - 1]!;
+        articles[idx - 1] = temp;
+
+        // Re-index orderIndex
+        articles.forEach((a, i) => {
+          a.orderIndex = i;
+        });
+
         const updatedPages = currentPages.map((p, pIdx) =>
-          pIdx === safePageIndex ? { ...p, articles: [...sorted] } : p
+          pIdx === safePageIndex ? { ...p, articles } : p
         );
 
         return {
           ...pDoc,
           pages: updatedPages,
-          articles: safePageIndex === 0 ? sorted : pDoc.articles,
+          articles: safePageIndex === 0 ? articles : pDoc.articles,
           metadata: { ...pDoc.metadata, updatedAt: new Date().toISOString() },
         };
       });
       setHasUnsavedChanges(true);
+      showNotification('खबर ऊपर स्थानांतरित की गई (Moved up)');
     },
-    [currentPage.articles, safePageIndex]
+    [safePageIndex, showNotification]
   );
 
   // Move article down
   const handleMoveArticleDown = useCallback(
     (articleId: string) => {
-      const idx = currentPage.articles.findIndex((a) => a.id === articleId);
-      if (idx < 0 || idx >= currentPage.articles.length - 1) return;
-
-      const sorted = [...currentPage.articles].sort((a, b) => a.orderIndex - b.orderIndex);
-      const curr = sorted[idx];
-      const next = sorted[idx + 1];
-      if (!curr || !next) return;
-
-      curr.orderIndex = idx + 1;
-      next.orderIndex = idx;
-
       setDocument((pDoc) => {
         const currentPages = getPublicationPages(pDoc);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage) return pDoc;
+
+        const articles = [...targetPage.articles];
+        const idx = articles.findIndex((a) => a.id === articleId);
+        if (idx < 0 || idx >= articles.length - 1) return pDoc;
+
+        // Swap positions in array
+        const temp = articles[idx]!;
+        articles[idx] = articles[idx + 1]!;
+        articles[idx + 1] = temp;
+
+        // Re-index orderIndex
+        articles.forEach((a, i) => {
+          a.orderIndex = i;
+        });
+
         const updatedPages = currentPages.map((p, pIdx) =>
-          pIdx === safePageIndex ? { ...p, articles: [...sorted] } : p
+          pIdx === safePageIndex ? { ...p, articles } : p
         );
 
         return {
           ...pDoc,
           pages: updatedPages,
-          articles: safePageIndex === 0 ? sorted : pDoc.articles,
+          articles: safePageIndex === 0 ? articles : pDoc.articles,
           metadata: { ...pDoc.metadata, updatedAt: new Date().toISOString() },
         };
       });
       setHasUnsavedChanges(true);
+      showNotification('खबर नीचे स्थानांतरित की गई (Moved down)');
     },
-    [currentPage.articles, safePageIndex]
+    [safePageIndex, showNotification]
   );
 
   // Adjust column span
@@ -1271,43 +1604,91 @@ export const App: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* 1. TOP APPLICATION BAR */}
-          <TopBar
-            publicationTitle={document.metadata.title}
-            onRenameTitle={handleRenameTitle}
-            currentPageNumber={safePageIndex + 1}
-            totalPages={pages.length}
-            onSelectPage={(pageNum) => handleSelectPage(pageNum - 1)}
-            pageSize={document.metadata.pageSize}
-            hasUnsavedChanges={hasUnsavedChanges}
-            isSaving={isSaving}
-            onSaveDraft={handleSaveDraft}
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            scale={scale}
-            onScaleChange={setScale}
-            onFitPage={handleFitPage}
-            onFitWidth={handleFitWidth}
-            usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
-            onTogglePhysicalCoordinates={() => setUsePhysicalCanvasCoordinates((prev) => !prev)}
-            useFreeLayout={useFreeLayout}
-            onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
-            onNewPublication={() => setIsSetupOpen(true)}
-            onOpenTemplates={() => setIsPresetsOpen(true)}
-            onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
-            onOpenDrafts={() => setIsDraftsOpen(true)}
-            onExportPdf={handleExportPdf}
-            isExportingPdf={isExportingPdf}
-            isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-            isInspectorOpen={isInspectorOpen}
-            onToggleInspector={() => setIsInspectorOpen((prev) => !prev)}
-          />
+          {/* 1. TOP APPLICATION BAR (Responsive Mobile vs Desktop) */}
+          {isMobile ? (
+            <MobileTopBar
+              documentTitle={document.metadata.title}
+              hasUnsavedChanges={hasUnsavedChanges}
+              isSaving={isSaving}
+              onSave={handleSaveDraft}
+              onExportPdf={() => handleExportPdf(false)}
+              isExportingPdf={isExportingPdf}
+              isFullscreen={
+                Boolean(typeof window !== 'undefined' && window.document.fullscreenElement)
+              }
+              onToggleFullscreen={() => {
+                if (typeof window !== 'undefined') {
+                  if (!window.document.fullscreenElement) {
+                    window.document.documentElement.requestFullscreen?.().catch(() => {});
+                  } else {
+                    window.document.exitFullscreen?.().catch(() => {});
+                  }
+                }
+              }}
+              onBack={() => handleViewModeChange('landing')}
+              currentPageNumber={safePageIndex + 1}
+              totalPages={pages.length}
+              onPrevPage={() => {
+                if (safePageIndex > 0) handleSelectPage(safePageIndex - 1);
+              }}
+              onNextPage={() => {
+                if (safePageIndex < pages.length - 1) handleSelectPage(safePageIndex + 1);
+              }}
+              onFitWidth={handleFitWidth}
+              onAutoFit={() => handleAutoFitPage(safePageIndex)}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              canUndo={historyIndex > 0}
+              canRedo={historyIndex < history.length - 1}
+              onOpenTheme={() => setIsThemeModalOpen(true)}
+            />
+          ) : (
+            <TopBar
+              publicationTitle={document.metadata.title}
+              onRenameTitle={handleRenameTitle}
+              currentPageNumber={safePageIndex + 1}
+              totalPages={pages.length}
+              onSelectPage={(pageNum) => handleSelectPage(pageNum - 1)}
+              pageSize={document.metadata.pageSize}
+              hasUnsavedChanges={hasUnsavedChanges}
+              isSaving={isSaving}
+              onSaveDraft={handleSaveDraft}
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              scale={scale}
+              onScaleChange={setScale}
+              onFitPage={handleFitPage}
+              onFitWidth={handleFitWidth}
+              onAutoFit={() => handleAutoFitPage(safePageIndex)}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              canUndo={historyIndex > 0}
+              canRedo={historyIndex < history.length - 1}
+              onOpenTheme={() => setIsThemeModalOpen(true)}
+              onExportProjectJson={handleExportProjectJson}
+              onImportProjectJson={handleImportProjectJson}
+              usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
+              onTogglePhysicalCoordinates={() => setUsePhysicalCanvasCoordinates((prev) => !prev)}
+              useFreeLayout={useFreeLayout}
+              onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
+              onNewPublication={() => setIsSetupOpen(true)}
+              onOpenTemplates={() => setIsPresetsOpen(true)}
+              onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
+              onOpenDrafts={() => setIsDraftsOpen(true)}
+              onExportPdf={handleExportPdf}
+              isExportingPdf={isExportingPdf}
+              isSidebarOpen={isSidebarOpen}
+              onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+              isInspectorOpen={isInspectorOpen}
+              onToggleInspector={() => setIsInspectorOpen((prev) => !prev)}
+            />
+          )}
 
-          {/* Status Notification Toast */}
-          {statusMessage && (
+          {/* Status Notification Toast with Undo Support */}
+          {statusToast && (
             <div
               role="status"
+              data-testid="status-notification-toast"
               style={{
                 position: 'fixed',
                 bottom: isMobile ? '70px' : '24px',
@@ -1323,10 +1704,31 @@ export const App: React.FC = () => {
                 zIndex: 1000,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '12px',
               }}
             >
-              <span>ℹ️</span> {statusMessage}
+              <span>ℹ️</span> <span>{statusToast.message}</span>
+              {statusToast.action && (
+                <button
+                  onClick={() => {
+                    statusToast.action?.onClick();
+                    setStatusToast(null);
+                  }}
+                  data-testid="toast-undo-btn"
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '4px 10px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {statusToast.action.label}
+                </button>
+              )}
             </div>
           )}
 
@@ -1352,6 +1754,7 @@ export const App: React.FC = () => {
                 onDuplicatePage={handleDuplicatePage}
                 onDeletePage={handleDeletePage}
                 onMovePage={handleMovePage}
+                onMoveArticleToPage={handleMoveArticleToPage}
                 onAddBlock={handleAddBlock}
                 currentPresetId={document.layout.presetId}
                 onSelectPreset={(pId) => handleApplyPreset(pId, false)}
@@ -1462,11 +1865,13 @@ export const App: React.FC = () => {
                 justifyContent: 'center',
                 alignItems: 'flex-start',
                 backgroundColor: '#cbd5e1',
-                paddingTop: '24px',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-                paddingBottom: isMobile ? '80px' : '76px',
+                paddingTop: isMobile ? '12px' : '24px',
+                paddingLeft: isMobile ? '8px' : '16px',
+                paddingRight: isMobile ? '8px' : '16px',
+                paddingBottom: isMobile ? '70px' : '76px',
                 position: 'relative',
+                touchAction: 'pan-x pan-y pinch-zoom',
+                WebkitOverflowScrolling: 'touch',
               }}
               onClick={(e) => {
                 // Deselect article if clicking directly on background
@@ -1515,6 +1920,7 @@ export const App: React.FC = () => {
                 onAddPage={handleAddPage}
                 onUpdateArticleFrame={handleUpdateArticleFrame}
                 onSwapArticles={handleSwapArticles}
+                onMoveArticleToPage={handleMoveArticleToPage}
                 onTogglePageLayoutMode={handleTogglePageLayoutMode}
               />
             </div>
@@ -1574,7 +1980,7 @@ export const App: React.FC = () => {
                     position: 'fixed',
                     inset: 0,
                     backgroundColor: 'rgba(0,0,0,0.5)',
-                    zIndex: 90,
+                    zIndex: 95,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-end',
@@ -1586,117 +1992,199 @@ export const App: React.FC = () => {
                       backgroundColor: '#ffffff',
                       borderTopLeftRadius: '16px',
                       borderTopRightRadius: '16px',
-                      maxHeight: '75vh',
-                      overflowY: 'auto',
-                      padding: '16px',
+                      maxHeight: '80vh',
+                      marginBottom: '52px',
+                      display: 'flex',
+                      flexDirection: 'column',
                       boxShadow: '0 -10px 30px rgba(0,0,0,0.3)',
+                      overflow: 'hidden',
+                      width: '100%',
+                      boxSizing: 'border-box',
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
+                    {/* Fixed Top Header with Title and Close Button */}
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: '12px',
-                        paddingBottom: '8px',
+                        padding: '12px 16px',
                         borderBottom: '1px solid #e2e8f0',
+                        backgroundColor: '#f8fafc',
+                        borderTopLeftRadius: '16px',
+                        borderTopRightRadius: '16px',
+                        flexShrink: 0,
                       }}
                     >
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
                         {mobileDrawer === 'pages'
-                          ? 'Pages Manager'
+                          ? `अख़बार के पेज (${pages.length})`
                           : mobileDrawer === 'blocks'
-                            ? 'Add Newspaper Block'
-                            : selectedArticle
-                              ? 'Edit Article'
-                              : 'Page Layout & Settings'}
+                            ? `तत्व व ब्लॉक जोड़ें (पेज ${safePageIndex + 1})`
+                            : mobileDrawer === 'presets'
+                              ? 'प्रारूप व टेम्पलेट्स (Presets)'
+                              : selectedArticle
+                                ? `खबर संपादक: ${selectedArticle.headline || 'अनाम खबर'}`
+                                : isMastheadSelected
+                                  ? 'मास्टहेड व पेज सेटिंग्स'
+                                  : `पेज ${safePageIndex + 1} सेटिंग्स`}
                       </span>
                       <button
+                        type="button"
                         onClick={() => setMobileDrawer('none')}
+                        aria-label="बंद करें (Close)"
                         style={{
                           background: 'none',
                           border: 'none',
-                          fontSize: '16px',
+                          fontSize: '18px',
                           color: '#64748b',
                           cursor: 'pointer',
+                          padding: '4px 8px',
+                          lineHeight: 1,
                         }}
                       >
                         ✕
                       </button>
                     </div>
 
-                    {mobileDrawer === 'pages' && (
-                      <LeftSidebar
-                        activeTab="pages"
-                        onTabChange={() => {}}
-                        pages={pages}
-                        currentPageIndex={safePageIndex}
-                        onSelectPage={(idx) => {
-                          handleSelectPage(idx);
-                          setMobileDrawer('none');
-                        }}
-                        onAddPage={handleAddPage}
-                        onDuplicatePage={handleDuplicatePage}
-                        onDeletePage={handleDeletePage}
-                        onMovePage={handleMovePage}
-                        onAddBlock={handleAddBlock}
-                        currentPresetId={document.layout.presetId}
-                        onSelectPreset={() => {}}
-                      />
-                    )}
+                    {/* Scrollable Content Container */}
+                    <div
+                      style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        WebkitOverflowScrolling: 'touch',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {mobileDrawer === 'pages' && (
+                        <LeftSidebar
+                          activeTab="pages"
+                          onTabChange={(tab) => {
+                            if (tab === 'pages') setMobileDrawer('pages');
+                            else if (tab === 'blocks') setMobileDrawer('blocks');
+                            else if (tab === 'templates') setMobileDrawer('presets');
+                          }}
+                          pages={pages}
+                          currentPageIndex={safePageIndex}
+                          onSelectPage={(idx) => {
+                            handleSelectPage(idx);
+                            setMobileDrawer('none');
+                          }}
+                          onAddPage={handleAddPage}
+                          onDuplicatePage={handleDuplicatePage}
+                          onDeletePage={handleDeletePage}
+                          onMovePage={handleMovePage}
+                          onMoveArticleToPage={handleMoveArticleToPage}
+                          onAddBlock={(tmpl) => {
+                            handleAddBlock(tmpl);
+                            setMobileDrawer('none');
+                          }}
+                          currentPresetId={document.layout.presetId}
+                          onSelectPreset={(pId) => {
+                            handleApplyPreset(pId, false);
+                            setMobileDrawer('none');
+                          }}
+                          isMobile={true}
+                          width="100%"
+                        />
+                      )}
 
-                    {mobileDrawer === 'blocks' && (
-                      <LeftSidebar
-                        activeTab="blocks"
-                        onTabChange={() => {}}
-                        pages={pages}
-                        currentPageIndex={safePageIndex}
-                        onSelectPage={() => {}}
-                        onAddPage={() => {}}
-                        onDuplicatePage={() => {}}
-                        onDeletePage={() => {}}
-                        onMovePage={() => {}}
-                        onAddBlock={(tmpl) => {
-                          handleAddBlock(tmpl);
-                          setMobileDrawer('none');
-                        }}
-                        currentPresetId={document.layout.presetId}
-                        onSelectPreset={() => {}}
-                      />
-                    )}
+                      {mobileDrawer === 'blocks' && (
+                        <LeftSidebar
+                          activeTab="blocks"
+                          onTabChange={(tab) => {
+                            if (tab === 'pages') setMobileDrawer('pages');
+                            else if (tab === 'blocks') setMobileDrawer('blocks');
+                            else if (tab === 'templates') setMobileDrawer('presets');
+                          }}
+                          pages={pages}
+                          currentPageIndex={safePageIndex}
+                          onSelectPage={() => {}}
+                          onAddPage={() => {}}
+                          onDuplicatePage={() => {}}
+                          onDeletePage={() => {}}
+                          onMovePage={() => {}}
+                          onAddBlock={(tmpl) => {
+                            handleAddBlock(tmpl);
+                            setMobileDrawer('none');
+                          }}
+                          currentPresetId={document.layout.presetId}
+                          onSelectPreset={() => {}}
+                          isMobile={true}
+                          width="100%"
+                        />
+                      )}
 
-                    {mobileDrawer === 'inspector' && (
-                      <ContextualInspector
-                        selectedArticle={selectedArticle}
-                        currentPage={currentPage}
-                        onUpdateArticle={handleUpdateArticle}
-                        onDeleteArticle={handleDeleteArticle}
-                        onMoveArticleUp={handleMoveArticleUp}
-                        onMoveArticleDown={handleMoveArticleDown}
-                        onMoveArticleToPage={handleMoveArticleToPage}
-                        totalPages={pages.length}
-                        currentPageIndex={safePageIndex}
-                        masthead={document.masthead}
-                        onUpdateMasthead={handleUpdateMasthead}
-                        layout={document.layout}
-                        onUpdateLayout={handleUpdateLayout}
-                        pageSize={document.metadata.pageSize}
-                        onPageSizeChange={handlePageSizeChange}
-                        orientation={document.metadata.orientation}
-                        onOrientationChange={handleOrientationChange}
-                        onDeselect={() => {
-                          setSelectedArticleId(null);
-                          setIsMastheadSelected(false);
-                        }}
-                        isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-                        onSelectMasthead={() => {
-                          setIsMastheadSelected(true);
-                          setSelectedArticleId(null);
-                        }}
-                        onCloseMasthead={() => setIsMastheadSelected(false)}
-                      />
-                    )}
+                      {mobileDrawer === 'presets' && (
+                        <LeftSidebar
+                          activeTab="templates"
+                          onTabChange={(tab) => {
+                            if (tab === 'pages') setMobileDrawer('pages');
+                            else if (tab === 'blocks') setMobileDrawer('blocks');
+                            else if (tab === 'templates') setMobileDrawer('presets');
+                          }}
+                          pages={pages}
+                          currentPageIndex={safePageIndex}
+                          onSelectPage={() => {}}
+                          onAddPage={() => {}}
+                          onDuplicatePage={() => {}}
+                          onDeletePage={() => {}}
+                          onMovePage={() => {}}
+                          onAddBlock={() => {}}
+                          currentPresetId={document.layout.presetId}
+                          onSelectPreset={(pId) => {
+                            handleApplyPreset(pId, false);
+                            setMobileDrawer('none');
+                          }}
+                          onApplyLayoutRow={(cols) => {
+                            handleApplyLayoutRow(cols);
+                            setMobileDrawer('none');
+                          }}
+                          isMobile={true}
+                          width="100%"
+                        />
+                      )}
+
+                      {mobileDrawer === 'inspector' && (
+                        <ContextualInspector
+                          selectedArticle={selectedArticle}
+                          currentPage={currentPage}
+                          onUpdateArticle={handleUpdateArticle}
+                          onDeleteArticle={(id) => {
+                            handleDeleteArticle(id);
+                            setMobileDrawer('none');
+                          }}
+                          onMoveArticleUp={handleMoveArticleUp}
+                          onMoveArticleDown={handleMoveArticleDown}
+                          onMoveArticleToPage={handleMoveArticleToPage}
+                          totalPages={pages.length}
+                          currentPageIndex={safePageIndex}
+                          masthead={document.masthead}
+                          onUpdateMasthead={handleUpdateMasthead}
+                          layout={document.layout}
+                          onUpdateLayout={handleUpdateLayout}
+                          pageSize={document.metadata.pageSize}
+                          onPageSizeChange={handlePageSizeChange}
+                          orientation={document.metadata.orientation}
+                          onOrientationChange={handleOrientationChange}
+                          onDeselect={() => {
+                            setSelectedArticleId(null);
+                            setIsMastheadSelected(false);
+                            setMobileDrawer('none');
+                          }}
+                          isMastheadSelected={isMastheadSelected && safePageIndex === 0}
+                          onSelectMasthead={() => {
+                            setIsMastheadSelected(true);
+                            setSelectedArticleId(null);
+                          }}
+                          onCloseMasthead={() => setIsMastheadSelected(false)}
+                          isMobile={true}
+                          width="100%"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1750,6 +2238,98 @@ export const App: React.FC = () => {
           setIsSetupOpen(true);
         }}
       />
+
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        theme={document.layout.theme}
+        onUpdateTheme={handleApplyTheme}
+      />
+
+      {/* Page Deletion Confirmation Dialog */}
+      {pageToDelete !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="delete-page-confirm-dialog"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '16px',
+          }}
+          onClick={() => setPageToDelete(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#991b1b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              ⚠️ पेज हटाएं (Confirm Page Deletion)
+            </h3>
+            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}>
+              क्या आप वाकई पृष्ठ {pageToDelete + 1} हटाना चाहते हैं? इस पृष्ठ की सभी सामग्री व लेआउट हटा दिए जाएंगे।
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                data-testid="cancel-delete-page-btn"
+                onClick={() => setPageToDelete(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  color: '#475569',
+                }}
+              >
+                रद्द करें (Cancel)
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-delete-page-btn"
+                onClick={() => handleExecuteDeletePage(pageToDelete)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#dc2626',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  color: '#ffffff',
+                }}
+              >
+                पेज हटाएं (Delete)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 5. PAGE FULL ALERT MODAL (TASK 3) */}
       {showPageFullModal && (

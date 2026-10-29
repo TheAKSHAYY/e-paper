@@ -15,7 +15,6 @@ import {
   getImageAspectRatio,
   resolvePageColumnCount,
 } from '@epaper-studio/document-schema';
-import { THEME_TOKENS } from '@epaper-studio/ui';
 import {
   getMastheadEmblemSvg,
   getPhysicalPageMetrics,
@@ -46,6 +45,7 @@ export interface NewspaperCanvasProps {
   onSelectMasthead?: () => void;
   onUpdateArticleFrame?: (articleId: string, frame: FrameMm) => void;
   onSwapArticles?: (idA: string, idB: string) => void;
+  onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
   onTogglePageLayoutMode?: (mode: 'auto' | 'free') => void;
 }
 
@@ -72,15 +72,30 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   onSelectMasthead,
   onUpdateArticleFrame,
   onSwapArticles,
+  onMoveArticleToPage,
   onTogglePageLayoutMode,
 }) => {
   const sheetCanvasRef = useRef<HTMLDivElement>(null);
+  const touchDragRef = useRef<{ articleId: string; startX: number; startY: number } | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [draggedOverArticleId, setDraggedOverArticleId] = useState<string | null>(null);
   const isFirstPage = pageIndex === 0;
   const pageNumber = page.pageNumber ?? pageIndex + 1;
   const columnCount = resolvePageColumnCount({ layout }, page);
   const columnRule = layout.columnRule;
   const density = layout.spacingDensity;
+
+  const currentTheme = layout.theme ?? doc?.theme;
+  const themeVars = {
+    '--masthead-color': currentTheme?.mastheadColor ?? '#111111',
+    '--headline-color': currentTheme?.headlineColor ?? '#111111',
+    '--subheadline-color': currentTheme?.subheadlineColor ?? '#333333',
+    '--body-color': currentTheme?.bodyColor ?? '#222222',
+    '--byline-color': currentTheme?.bylineColor ?? '#666666',
+    '--kicker-color': currentTheme?.kickerColor ?? '#b91c1c',
+    '--border-color': currentTheme?.borderColor ?? '#111111',
+    '--page-bg': currentTheme?.pageBackground ?? '#ffffff',
+  } as React.CSSProperties;
 
   // Physical coordinates derived via template-engine shared metrics
   const physicalMetrics = getPhysicalPageMetrics(
@@ -170,17 +185,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   const getRuleBorderStyle = (): React.CSSProperties => {
     switch (masthead.ruleStyle) {
       case 'ornate-double':
-        return { borderBottom: '3.5px double #111111' };
+        return { borderBottom: '3.5px double var(--border-color, #111111)' };
       case 'oxford-thick-thin':
-        return { borderBottom: '3px solid #111111' };
+        return { borderBottom: '3px solid var(--border-color, #111111)' };
       case 'classic-double':
-        return { borderBottom: '2.5px double #111111' };
+        return { borderBottom: '2.5px double var(--border-color, #111111)' };
       case 'single-hairline':
-        return { borderBottom: '1px solid #111111' };
+        return { borderBottom: '1px solid var(--border-color, #111111)' };
       case 'none':
         return { borderBottom: 'none' };
       default:
-        return { borderBottom: '3.5px double #111111' };
+        return { borderBottom: '3.5px double var(--border-color, #111111)' };
     }
   };
 
@@ -210,14 +225,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             marginBottom: isSide ? '4px' : '8px',
             clear: article.imagePlacement === 'bottom' ? 'both' : 'none',
             flexShrink: 0,
+            ...(article.fillSpace && !isSide ? { flex: 1, display: 'flex', flexDirection: 'column' } : {}),
           }}
         >
           <div
             style={{
               width: '100%',
-              aspectRatio: photoAspect,
+              aspectRatio: article.customImageHeight ? undefined : photoAspect,
+              height: article.customImageHeight ? `${article.customImageHeight}px` : article.fillSpace && !isSide ? '100%' : undefined,
+              flex: article.fillSpace && !isSide ? 1 : undefined,
               overflow: 'hidden',
-              border: '1px solid #222',
+              border: `1px solid ${article.customColors?.borderColor || '#222'}`,
               borderRadius: '1px',
               backgroundColor: '#f3f4f6',
             }}
@@ -229,7 +247,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: photoObjectFit === 'fill' ? 'fill' : photoObjectFit,
+                objectFit: article.fillSpace ? 'cover' : photoObjectFit === 'fill' ? 'fill' : photoObjectFit,
                 objectPosition: photoObjectPosition,
                 display: 'block',
               }}
@@ -267,6 +285,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
     };
 
     const customBorders = article.borders;
+    const fallbackBorderColor =
+      article.customColors?.borderColor || 'var(--border-color, #c8c5bc)';
     const borderStyles: React.CSSProperties = {
       borderTop:
         customBorders?.top && customBorders.top.style !== 'none'
@@ -276,9 +296,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         customBorders?.right && customBorders.right.style !== 'none'
           ? `${customBorders.right.width}px ${customBorders.right.style} ${customBorders.right.color}`
           : !isFreeLayout && columnRule && (usePhysicalCanvasCoordinates || span < columnCount)
-            ? usePhysicalCanvasCoordinates
-              ? '1px solid #c8c5bc'
-              : '1px solid #d5d0c4'
+            ? `1px solid ${fallbackBorderColor}`
             : undefined,
       borderBottom:
         customBorders?.bottom && customBorders.bottom.style !== 'none'
@@ -286,7 +304,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           : !isFreeLayout && usePhysicalCanvasCoordinates
             ? undefined
             : !isFreeLayout
-              ? '1px solid #e0ded6'
+              ? `1px solid ${fallbackBorderColor}`
               : undefined,
       borderLeft:
         customBorders?.left && customBorders.left.style !== 'none'
@@ -310,6 +328,16 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         'Noto Serif Devanagari',
       ].some((f) => layout.bodyFont?.includes(f) || layout.headlineFont?.includes(f));
 
+    const isFixed = article.heightMode === 'fixed' && article.customHeight;
+    const isMinHeight = article.heightMode === 'min-height' && article.customHeight;
+    const effectiveHeight = isFreeLayout
+      ? '100%'
+      : isFixed
+        ? `${article.customHeight}px`
+        : article.fillSpace
+          ? '100%'
+          : undefined;
+
     return (
       <article
         key={article.id}
@@ -317,23 +345,99 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         data-article-id={article.id}
         className="newspaper-article"
         lang={isHindi ? 'hi' : 'en'}
+        draggable={!isFreeLayout}
+        onDragStart={(e) => {
+          if (isFreeLayout) return;
+          e.dataTransfer.setData('application/epaper-article-id', article.id);
+          e.dataTransfer.setData('application/epaper-source-page', String(pageIndex));
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragOver={(e) => {
+          if (isFreeLayout) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'move';
+          if (draggedOverArticleId !== article.id) {
+            setDraggedOverArticleId(article.id);
+          }
+        }}
+        onDragLeave={() => {
+          if (draggedOverArticleId === article.id) {
+            setDraggedOverArticleId(null);
+          }
+        }}
+        onDrop={(e) => {
+          if (isFreeLayout) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setDraggedOverArticleId(null);
+          const droppedArticleId = e.dataTransfer.getData('application/epaper-article-id');
+          const sourcePageStr = e.dataTransfer.getData('application/epaper-source-page');
+          const sourcePageIndex = sourcePageStr ? parseInt(sourcePageStr, 10) : pageIndex;
+          if (droppedArticleId && droppedArticleId !== article.id) {
+            if (sourcePageIndex === pageIndex && onSwapArticles) {
+              onSwapArticles(droppedArticleId, article.id);
+            } else if (sourcePageIndex !== pageIndex && onMoveArticleToPage) {
+              onMoveArticleToPage(droppedArticleId, pageIndex);
+            }
+          }
+        }}
+        onTouchStart={(e) => {
+          if (isFreeLayout) return;
+          const touch = e.touches[0];
+          if (touch) {
+            touchDragRef.current = {
+              articleId: article.id,
+              startX: touch.clientX,
+              startY: touch.clientY,
+            };
+          }
+        }}
+        onTouchEnd={(e) => {
+          if (isFreeLayout || !touchDragRef.current) return;
+          const touch = e.changedTouches[0];
+          if (touch) {
+            const deltaX = Math.abs(touch.clientX - touchDragRef.current.startX);
+            const deltaY = Math.abs(touch.clientY - touchDragRef.current.startY);
+            if (deltaX > 25 || deltaY > 25) {
+              const el = document.elementFromPoint(touch.clientX, touch.clientY);
+              const targetCard = el?.closest('[data-article-id]') as HTMLElement | null;
+              const targetId = targetCard?.getAttribute('data-article-id');
+              if (targetId && targetId !== touchDragRef.current.articleId && onSwapArticles) {
+                onSwapArticles(touchDragRef.current.articleId, targetId);
+              }
+            }
+          }
+          touchDragRef.current = null;
+        }}
         onClick={() => onSelectArticle(article.id)}
         style={{
           gridColumn: isFreeLayout ? undefined : `span ${span}`,
           width: isFreeLayout ? '100%' : undefined,
-          height: isFreeLayout ? '100%' : undefined,
+          height: effectiveHeight,
+          minHeight: isMinHeight ? `${article.customHeight}px` : undefined,
+          flex: !isFreeLayout && article.fillSpace ? 1 : undefined,
           boxSizing: 'border-box',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          breakInside: 'avoid',
+          pageBreakInside: 'avoid',
           padding: article.paddingPx ? `${article.paddingPx}px` : isFreeLayout ? '6px' : undefined,
+          margin: article.marginPx ? `${article.marginPx}px` : undefined,
           paddingBottom: usePhysicalCanvasCoordinates ? undefined : '12px',
           ...borderStyles,
           position: 'relative',
-          cursor: 'pointer',
-          outline: !isFreeLayout && isSelected ? `${visualOutlineWidth}px solid #2563eb` : 'none',
+          cursor: isFreeLayout ? 'pointer' : 'grab',
+          outline:
+            draggedOverArticleId === article.id
+              ? '2px dashed #2563eb'
+              : !isFreeLayout && isSelected
+                ? `${visualOutlineWidth}px solid #2563eb`
+                : 'none',
           outlineOffset: `${visualOutlineOffset}px`,
-          backgroundColor: article.backgroundColor ?? 'transparent',
+          backgroundColor:
+            article.customColors?.backgroundColor ?? article.backgroundColor ?? 'transparent',
           borderRadius: '1px',
           transition: 'outline 0.15s ease',
           hyphens: isHindi ? 'manual' : undefined,
@@ -348,6 +452,72 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             : {}),
         }}
       >
+        {/* Mobile / Touch Friendly Reorder Toolbar when article is selected */}
+        {isSelected && !isFreeLayout && (
+          <div
+            data-testid={`article-reorder-toolbar-${article.id}`}
+            style={{
+              position: 'absolute',
+              top: '4px',
+              right: '4px',
+              zIndex: 40,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#0f172a',
+              borderRadius: '4px',
+              padding: '3px 4px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              data-testid="article-move-up-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                _onMoveArticleUp(article.id);
+              }}
+              title="ऊपर ले जाएं (Move Up)"
+              style={{
+                backgroundColor: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #334155',
+                borderRadius: '3px',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '4px 8px',
+                minHeight: '28px',
+                cursor: 'pointer',
+              }}
+            >
+              ▲ ऊपर
+            </button>
+            <button
+              type="button"
+              data-testid="article-move-down-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                _onMoveArticleDown(article.id);
+              }}
+              title="नीचे ले जाएं (Move Down)"
+              style={{
+                backgroundColor: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #334155',
+                borderRadius: '3px',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '4px 8px',
+                minHeight: '28px',
+                cursor: 'pointer',
+              }}
+            >
+              ▼ नीचे
+            </button>
+          </div>
+        )}
+
         {/* Top Photo if placement === 'top' */}
         {article.imagePlacement === 'top' && renderPhoto()}
 
@@ -370,7 +540,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     fontSize: `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
-                    color: '#444',
+                    color: article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #444444)',
                   }}
                 >
                   {article.subheadline}
@@ -380,17 +550,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 className="article-headline"
                 style={{
                   fontFamily: layout.headlineFont,
-                  fontSize: isLead
-                    ? `${physicalMetrics.headlineSizesPt.lead}pt`
-                    : article.priority === 'major'
-                      ? `${physicalMetrics.headlineSizesPt.major}pt`
-                      : article.priority === 'minor'
-                        ? `${physicalMetrics.headlineSizesPt.minor}pt`
-                        : `${physicalMetrics.headlineSizesPt.brief}pt`,
+                  fontSize: article.customHeadlineFontSizePt
+                    ? `${article.customHeadlineFontSizePt}pt`
+                    : isLead
+                      ? `${physicalMetrics.headlineSizesPt.lead}pt`
+                      : article.priority === 'major'
+                        ? `${physicalMetrics.headlineSizesPt.major}pt`
+                        : article.priority === 'minor'
+                          ? `${physicalMetrics.headlineSizesPt.minor}pt`
+                          : `${physicalMetrics.headlineSizesPt.brief}pt`,
                   fontWeight: headlineWeight,
                   lineHeight: 1.15,
                   margin: 0,
-                  color: article.textColor ?? THEME_TOKENS.inkPrimary,
+                  color: article.customColors?.headlineColor ?? article.textColor ?? 'var(--headline-color, #111111)',
                   letterSpacing: isLead ? '-0.3pt' : undefined,
                 }}
               >
@@ -401,7 +573,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   className="article-byline"
                   style={{
                     fontSize: `${physicalMetrics.typographyPt.bylineFontSizePt}pt`,
-                    color: '#666',
+                    color: article.customColors?.bylineColor ?? 'var(--byline-color, #666666)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5pt',
@@ -420,7 +592,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   style={{
                     fontSize: '10.5px',
                     fontWeight: 800,
-                    color: '#b91c1c',
+                    color: article.customColors?.kickerColor ?? 'var(--kicker-color, #b91c1c)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     marginBottom: '2px',
@@ -432,17 +604,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               <h2
                 style={{
                   fontFamily: layout.headlineFont,
-                  fontSize: isLead
-                    ? '30px'
-                    : article.priority === 'major'
-                      ? '22px'
-                      : article.priority === 'minor'
-                        ? '15px'
-                        : '18px',
+                  fontSize: article.customHeadlineFontSizePt
+                    ? `${article.customHeadlineFontSizePt}pt`
+                    : isLead
+                      ? '30px'
+                      : article.priority === 'major'
+                        ? '22px'
+                        : article.priority === 'minor'
+                          ? '15px'
+                          : '18px',
                   fontWeight: headlineWeight,
                   lineHeight: 1.15,
                   margin: '0 0 4px 0',
-                  color: article.textColor ?? THEME_TOKENS.inkPrimary,
+                  color: article.customColors?.headlineColor ?? article.textColor ?? 'var(--headline-color, #111111)',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -456,7 +630,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
                     fontStyle: 'italic',
-                    color: '#333',
+                    color: article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #333333)',
                   }}
                 >
                   {article.subheadline}
@@ -466,7 +640,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <div
                   style={{
                     fontSize: '10.5px',
-                    color: '#555',
+                    color: article.customColors?.bylineColor ?? 'var(--byline-color, #555555)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.03em',
@@ -641,16 +815,30 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           <div
             lang={isHindi ? 'hi' : 'en'}
             style={{
-              fontSize: usePhysicalCanvasCoordinates
-                ? `${physicalMetrics.bodyFontSizePt}pt`
-                : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
+              fontSize: article.customFontSizePt
+                ? `${article.customFontSizePt}pt`
+                : usePhysicalCanvasCoordinates
+                  ? `${physicalMetrics.bodyFontSizePt}pt`
+                  : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
               lineHeight: Math.max(1.4, 1.45),
-              color: article.textColor ?? THEME_TOKENS.inkSecondary,
+              color:
+                article.customColors?.bodyColor ??
+                article.textColor ??
+                'var(--body-color, #222222)',
               fontFamily: layout.bodyFont,
               textAlign: 'justify',
               textJustify: 'inter-word',
               hyphens: isHindi ? 'manual' : 'auto',
               WebkitHyphens: isHindi ? 'manual' : 'auto',
+              flex: !isFreeLayout && article.fillSpace ? 1 : undefined,
+              ...(article.maxLines
+                ? {
+                    display: '-webkit-box',
+                    WebkitLineClamp: article.maxLines,
+                    WebkitBoxOrient: 'vertical' as const,
+                    overflow: 'hidden',
+                  }
+                : {}),
             }}
           >
             {article.imagePlacement === 'side' && renderPhoto()}
@@ -659,7 +847,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               <div
                 className="article-kicker"
                 style={{
-                  color: '#b91c1c',
+                  color: article.customColors?.kickerColor ?? 'var(--kicker-color, #b91c1c)',
                   fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
                   fontWeight: 700,
                   fontSize: `${physicalMetrics.typographyPt.kickerFontSizePt}pt`,
@@ -676,7 +864,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <span
                   className="article-dateline"
                   style={{
-                    color: '#121212',
+                    color: article.customColors?.bylineColor ?? 'var(--byline-color, #121212)',
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     fontSize: '0.9em',
@@ -686,7 +874,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   {article.dateline}{' '}
                 </span>
               ) : (
-                <strong style={{ color: '#111', marginRight: '4px' }}>{article.dateline}</strong>
+                <strong
+                  style={{
+                    color: article.customColors?.bylineColor ?? 'var(--byline-color, #111111)',
+                    marginRight: '4px',
+                  }}
+                >
+                  {article.dateline}
+                </strong>
               ))}
             {article.body.split(/\n\s*\n/).map((para, pIdx) => (
               <p
@@ -814,6 +1009,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           }}
           onDrop={handleDrop}
           style={{
+            ...themeVars,
             width: `${canvasWidthPx}px`,
             height: `${canvasHeightPx}px`,
             minWidth: `${canvasWidthPx}px`,
@@ -822,8 +1018,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             maxHeight: `${canvasHeightPx}px`,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
-            backgroundColor: '#ffffff', // Requirement 4: Pure White Print Paper
-            color: THEME_TOKENS.inkPrimary,
+            backgroundColor: 'var(--page-bg, #ffffff)', // Pure White or Theme Background
+            color: 'var(--body-color, #111111)',
             fontFamily: layout.bodyFont,
             boxShadow: usePhysicalCanvasCoordinates
               ? '0 0 0 1px #d1d5db, 0 12px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.12)'
@@ -1044,7 +1240,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     fontWeight: 900,
                     lineHeight: 1.05,
                     margin: 0,
-                    color: THEME_TOKENS.inkPrimary,
+                    color: 'var(--masthead-color, #111111)',
                     letterSpacing: '-0.02em',
                   }}
                 >
@@ -1384,6 +1580,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                    gridAutoFlow: 'dense',
                     columnGap: gapVal,
                     rowGap: gapVal,
                     alignContent: 'start',

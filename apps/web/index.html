@@ -7,6 +7,27 @@
     <title>E-Paper Studio — Professional Indian Newspaper Publishing</title>
     <!-- Self-hosted Latin + Devanagari Typography -->
     <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+        background-color: #cbd5e1;
+      }
+      #root {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

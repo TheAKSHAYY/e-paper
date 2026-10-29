@@ -14,6 +14,13 @@ export interface MobileTopBarProps {
   totalPages: number;
   onPrevPage: () => void;
   onNextPage: () => void;
+  onFitWidth?: () => void;
+  onAutoFit?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onOpenTheme?: () => void;
 }
 
 export const MobileTopBar: React.FC<MobileTopBarProps> = ({
@@ -30,6 +37,13 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
   totalPages,
   onPrevPage,
   onNextPage,
+  onFitWidth,
+  onAutoFit,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onOpenTheme,
 }) => {
   return (
     <header
@@ -159,8 +173,134 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
         </button>
       </div>
 
-      {/* 3. Right: Action Buttons (Save, Fullscreen, PDF) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      {/* 3. Right: Action Buttons (Fit, Undo, Redo, Theme, Save, Fullscreen, PDF) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {onUndo && (
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={!canUndo}
+            aria-label="पूर्ववत करें (Undo)"
+            title="पूर्ववत करें"
+            style={{
+              minWidth: '36px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              color: canUndo ? '#f1f5f9' : '#475569',
+              cursor: canUndo ? 'pointer' : 'not-allowed',
+              fontSize: '15px',
+              fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            ↶
+          </button>
+        )}
+
+        {onRedo && (
+          <button
+            type="button"
+            onClick={onRedo}
+            disabled={!canRedo}
+            aria-label="फिर से करें (Redo)"
+            title="फिर से करें"
+            style={{
+              minWidth: '36px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              color: canRedo ? '#f1f5f9' : '#475569',
+              cursor: canRedo ? 'pointer' : 'not-allowed',
+              fontSize: '15px',
+              fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            ↷
+          </button>
+        )}
+
+        {onAutoFit && (
+          <button
+            type="button"
+            onClick={onAutoFit}
+            aria-label="ऑटो-फ़िट (Auto Fit)"
+            title="ऑटो-फ़िट"
+            style={{
+              minWidth: '36px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              color: '#38bdf8',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            ⚡
+          </button>
+        )}
+
+        {onOpenTheme && (
+          <button
+            type="button"
+            onClick={onOpenTheme}
+            aria-label="रंग व थीम (Themes)"
+            title="रंग व थीम"
+            style={{
+              minWidth: '36px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              color: '#c084fc',
+              cursor: 'pointer',
+              fontSize: '15px',
+              padding: 0,
+            }}
+          >
+            🎨
+          </button>
+        )}
+
+        {onFitWidth && (
+          <button
+            type="button"
+            onClick={onFitWidth}
+            aria-label="स्क्रीन पर फ़िट करें (Fit to Width)"
+            title="स्क्रीन पर फ़िट करें"
+            style={{
+              minWidth: '40px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              padding: 0,
+            }}
+          >
+            ↔
+          </button>
+        )}
+
         {onSave && (
           <button
             type="button"

@@ -1,5 +1,6 @@
-import { NewspaperDocumentSchema, type NewspaperDocument } from '@epaper-studio/document-schema';
+import { NewspaperDocumentSchema, type NewspaperDocument, type Article } from '@epaper-studio/document-schema';
 import type { DraftStorageAdapter, DraftSummary } from './types';
+import { indexedDbAssetStorage } from './IndexedDbAssetStorage';
 
 const INDEX_KEY = 'epaper_studio_drafts_index_v1';
 const DATA_KEY_PREFIX = 'epaper_studio_draft_doc_v1_';
@@ -64,7 +65,29 @@ export class LocalStorageDraftAdapter implements DraftStorageAdapter {
         return null;
       }
 
-      return validation.data;
+      const validDoc = validation.data;
+
+      // Rehydrate any offloaded indexeddb:// assets
+      const rehydrateArticles = async (arts: Article[]) => {
+        for (const art of arts) {
+          if (art.imageUrl && art.imageUrl.startsWith('indexeddb://')) {
+            const assetKey = art.imageUrl.replace('indexeddb://', '');
+            const assetData = await indexedDbAssetStorage.getAsset(assetKey);
+            if (assetData) {
+              art.imageUrl = assetData;
+            }
+          }
+        }
+      };
+
+      await rehydrateArticles(validDoc.articles);
+      if (validDoc.pages) {
+        for (const p of validDoc.pages) {
+          if (p.articles) await rehydrateArticles(p.articles);
+        }
+      }
+
+      return validDoc;
     } catch (err) {
       console.error(`Error loading draft ${id}:`, err);
       return null;
@@ -99,7 +122,48 @@ export class LocalStorageDraftAdapter implements DraftStorageAdapter {
 
     try {
       // 1. Save document payload
-      window.localStorage.setItem(`${DATA_KEY_PREFIX}${validDoc.id}`, JSON.stringify(validDoc));
+      try {
+        window.localStorage.setItem(`${DATA_KEY_PREFIX}${validDoc.id}`, JSON.stringify(validDoc));
+      } catch (storageErr) {
+        // If quota exceeded, offload heavy base64 image strings to IndexedDB and retry
+        const isQuotaErr =
+          (storageErr instanceof Error && storageErr.name === 'QuotaExceededError') ||
+          (storageErr instanceof DOMException &&
+            (storageErr.name === 'QuotaExceededError' || storageErr.code === 22));
+
+        if (isQuotaErr) {
+          console.warn('LocalStorage quota exceeded. Offloading images to IndexedDB assets store...');
+          const offloadedDoc = JSON.parse(JSON.stringify(validDoc)) as NewspaperDocument;
+          const offloadPromises: Promise<void>[] = [];
+
+          const processArticles = (arts: Article[]) => {
+            for (const art of arts) {
+              if (art.imageUrl && (art.imageUrl.startsWith('data:') || art.imageUrl.length > 500)) {
+                const assetKey = `asset_${validDoc.id}_${art.id}`;
+                const originalUrl = art.imageUrl;
+                art.imageUrl = `indexeddb://${assetKey}`;
+                offloadPromises.push(indexedDbAssetStorage.saveAsset(assetKey, originalUrl));
+              }
+            }
+          };
+
+          processArticles(offloadedDoc.articles);
+          if (offloadedDoc.pages) {
+            for (const p of offloadedDoc.pages) {
+              if (p.articles) processArticles(p.articles);
+            }
+          }
+
+          await Promise.all(offloadPromises);
+          // Retry saving the lightweight document structure
+          window.localStorage.setItem(
+            `${DATA_KEY_PREFIX}${validDoc.id}`,
+            JSON.stringify(offloadedDoc)
+          );
+        } else {
+          throw storageErr;
+        }
+      }
 
       // 2. Update index
       const existingList = await this.listDrafts();
