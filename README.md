@@ -1,6 +1,6 @@
 # E-Paper Studio: Hindi & Multilingual Newspaper Page Builder
 
-> A high-performance Hindi & multilingual newspaper page builder and publishing studio. Features an intuitive visual editor, intelligent auto-fit and free layout with drag-and-drop, customizable editorial themes, JSON project backup & restore, and print-ready vector PDF export powered by a dedicated headless Chromium rendering service with self-hosted Devanagari typography.
+> A high-performance Hindi & multilingual newspaper page builder and publishing studio. Features an intuitive visual editor, intelligent auto-fit and free layout with drag-and-drop, customizable editorial themes, JSON project backup & restore, and 100% in-browser print-ready PDF export with self-hosted Devanagari typography.
 
 [![CI](https://github.com/TheAKSHAYY/e-paper/actions/workflows/ci.yml/badge.svg)](https://github.com/TheAKSHAYY/e-paper/actions)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://www.typescriptlang.org/)
@@ -14,8 +14,8 @@
   - **Grid & Auto-Fit Engine**: Calculates column spans, balances vertical column heights, and paginates multi-story news across physical page dimensions.
   - **Free Layout Mode**: Precise millimeter-based drag, drop, resize, and positioning for front-page leads, ads, and breaking news alerts.
 - **Theme & Palette Customization**: Authentic newspaper themes (Classic Broadsheet, Modern Editorial, Pink Financial, Warm Sepia, Vintage Newspaper, Dark Mode) with per-block color overrides.
-- **Print-Ready Vector PDF Export**: Generates authentic vector PDFs with selectable text matching physical paper dimensions (A4, Tabloid, Berliner, Broadsheet) via a containerized Playwright rendering worker.
-- **Split Cloud Architecture**: Static frontend deployable on Cloudflare Pages; dedicated Docker rendering microservice deployable on Render.com.
+- **100% Client-Side PDF Export**: Generates authentic print-ready PDFs directly in the browser matching physical paper dimensions (A4, Tabloid, Berliner, Broadsheet) with self-hosted Devanagari typography. Zero external backend or paid services required.
+- **Serverless Static Architecture**: Deployable on Vercel, Cloudflare Pages, Netlify, or any static host with zero server maintenance costs. Optional headless worker (`apps/renderer`) available for automated background batch jobs.
 
 ---
 
@@ -106,4 +106,4 @@ e-paper/
 
 ## 7. Deployment
 
-For complete, step-by-step instructions on deploying the renderer microservice to **Render.com** (Docker) and the studio frontend to **Cloudflare Pages**, see [**DEPLOY.md**](./DEPLOY.md).
+For step-by-step production deployment instructions (Vercel, Cloudflare Pages, Netlify), see [**DEPLOY.md**](./DEPLOY.md).

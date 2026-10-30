@@ -1477,17 +1477,21 @@ export const App: React.FC = () => {
       setIsExportingPdf(true);
       showNotification('प्रिंट-रेडी PDF तैयार हो रहा है...');
       try {
-        const result = await exportDocumentToPdf(document);
+        const result = await exportDocumentToPdf(document, {
+          onProgress: (current, total) => {
+            showNotification(`PDF तैयार हो रहा है... पृष्ठ ${current}/${total}`);
+          },
+        });
         showNotification(
           `✓ डाउनलोड संपन्न: ${result.filename} (${(result.byteLength / 1024).toFixed(1)} KB)`
         );
       } catch (err) {
         console.error('PDF export error:', err);
-        const errMsg = err instanceof Error ? err.message : 'सर्वर से संपर्क नहीं हो सका';
+        const errMsg = err instanceof Error ? err.message : 'PDF तैयार करने में त्रुटि';
         setPrintErrorMessage(errMsg);
         setIsPrintModalOpen(true);
         showNotification(
-          `सर्वर रेंडरर से PDF डाउनलोड विफल (${errMsg})। आप सीधे 'प्रिंट / Save as PDF' का उपयोग कर सकते हैं।`,
+          `PDF निर्माण विफल (${errMsg})। आप सीधे 'प्रिंट / Save as PDF' का उपयोग कर सकते हैं।`,
           {
             label: '🖨️ प्रिंट विकल्प',
             onClick: () => {

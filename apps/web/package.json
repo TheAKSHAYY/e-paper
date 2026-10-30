@@ -16,6 +16,8 @@
     "@epaper-studio/template-engine": "workspace:*",
     "@epaper-studio/typography": "workspace:*",
     "@epaper-studio/ui": "workspace:*",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

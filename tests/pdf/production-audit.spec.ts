@@ -333,17 +333,11 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
 
   test('Audit Case 6: Browser UI Export Workflow with Real Download Event', async ({ page }) => {
     test.slow();
-    await page.route('**/api/render-pdf', async (route) => {
-      const postData = route.request().postDataJSON();
-      const result = await worker.renderToPdf(postData);
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/pdf',
-        headers: {
-          'Content-Disposition': 'attachment; filename="newspaper.pdf"',
-        },
-        body: Buffer.from(result.pdfBuffer),
-      });
+    let renderEndpointCalled = false;
+    page.on('request', (req) => {
+      if (req.url().includes('/api/render-pdf')) {
+        renderEndpointCalled = true;
+      }
     });
 
     await page.goto('/#editor');
@@ -377,6 +371,8 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
     expect(metadata.isValidPdf).toBe(true);
     expect(metadata.mediaBoxes[0]?.width).toBe(1080);
     expect(metadata.mediaBoxes[0]?.height).toBe(1638);
+    // Confirm zero external renderer calls
+    expect(renderEndpointCalled).toBe(false);
   }, 60000);
 
   test('Audit Case 7: Mobile Viewport Browser UI Export Workflow with Real Download Event', async ({
@@ -385,17 +381,11 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
     test.slow();
     await page.setViewportSize({ width: 390, height: 844 });
 
-    await page.route('**/api/render-pdf', async (route) => {
-      const postData = route.request().postDataJSON();
-      const result = await worker.renderToPdf(postData);
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/pdf',
-        headers: {
-          'Content-Disposition': 'attachment; filename="mobile_newspaper.pdf"',
-        },
-        body: Buffer.from(result.pdfBuffer),
-      });
+    let renderEndpointCalled = false;
+    page.on('request', (req) => {
+      if (req.url().includes('/api/render-pdf')) {
+        renderEndpointCalled = true;
+      }
     });
 
     await page.goto('/#editor');
@@ -424,5 +414,7 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
     const metadata = inspectPdf(buffer);
     expect(metadata.isValidPdf).toBe(true);
     expect(metadata.pageCount).toBeGreaterThanOrEqual(1);
+    // Confirm zero external renderer calls
+    expect(renderEndpointCalled).toBe(false);
   }, 60000);
 });
