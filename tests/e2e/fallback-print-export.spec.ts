@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createNewspaperDocument, getPhysicalPageMetrics } from '@epaper-studio/template-engine';
+import { createNewspaperDocument, getPhysicalPageMetrics } from '../../packages/template-engine/src/index';
 import { generatePrintHtml } from '../../apps/web/src/utils/browserPrintExport';
 
 test.describe('Fallback Print / Save as PDF Flow (Standalone without Renderer)', () => {

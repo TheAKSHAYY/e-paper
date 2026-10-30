@@ -687,19 +687,38 @@ export function migrateDocumentSchema(doc: unknown): NewspaperDocument {
     throw new Error('Invalid document object for migration');
   }
   const raw = doc as Record<string, unknown>;
+  const articles = Array.isArray(raw.articles) ? raw.articles : [];
+
+  let pages: unknown[] | undefined;
+  if (Array.isArray(raw.pages) && raw.pages.length > 0) {
+    pages = raw.pages.map((p: unknown, idx: number) => {
+      if (!p || typeof p !== 'object') return p;
+      const pageObj = p as Record<string, unknown>;
+      return {
+        ...pageObj,
+        pageNumber: typeof pageObj.pageNumber === 'number' ? pageObj.pageNumber : idx + 1,
+        layoutMode: pageObj.layoutMode ?? 'auto',
+      };
+    });
+  } else if (articles.length > 0) {
+    const isHindi = (raw.metadata as Record<string, unknown> | undefined)?.language === 'hi';
+    pages = [
+      {
+        id: 'page-1',
+        pageNumber: 1,
+        sectionTitle: isHindi ? 'मुख्य पृष्ठ' : 'Front Page',
+        layoutMode: 'auto',
+        articles,
+      },
+    ];
+  }
+
   const migrated = {
     ...raw,
     version: '1.1.0',
-    pages: Array.isArray(raw.pages)
-      ? raw.pages.map((p: unknown) => {
-          if (!p || typeof p !== 'object') return p;
-          const pageObj = p as Record<string, unknown>;
-          return {
-            ...pageObj,
-            layoutMode: pageObj.layoutMode ?? 'auto',
-          };
-        })
-      : raw.pages,
+    schemaVersion: '1.1.0',
+    articles,
+    pages,
   };
   return NewspaperDocumentSchema.parse(migrated);
 }

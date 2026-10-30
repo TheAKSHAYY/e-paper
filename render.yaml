@@ -30,13 +30,13 @@ services:
         value: /usr/bin/chromium
       - key: PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
         value: /usr/bin/chromium
-      # Configure to your Cloudflare Pages frontend URL (e.g. https://your-project.pages.dev)
+      # Configure to your Vercel or Cloudflare Pages frontend URL (e.g. https://your-app.vercel.app or https://*.vercel.app)
       - key: ALLOWED_ORIGINS
         sync: false
       # Optional: Whitelist external image domains if needed (comma-separated)
       - key: ALLOWED_ASSET_ORIGINS
         sync: false
-      # Optional: Generate a secure random API key if you want to restrict public access
+      # Optional: Shared secret key for API authentication (leave empty to disable API key requirement)
       - key: RENDER_API_KEY
-        generateValue: true
+        sync: false
 

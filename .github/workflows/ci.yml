@@ -54,3 +54,6 @@ jobs:
 
       - name: Run unit & integration test suite
         run: pnpm test
+
+      - name: Run Playwright E2E & PDF test suite
+        run: pnpm exec playwright test tests/e2e/fallback-print-export.spec.ts tests/e2e/studio.spec.ts tests/pdf/pdf-geometry.spec.ts

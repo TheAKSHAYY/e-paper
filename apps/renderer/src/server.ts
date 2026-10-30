@@ -159,31 +159,69 @@ function readJsonBody(req: IncomingMessage, maxBytes: number): Promise<unknown> 
 }
 
 /**
+ * Checks whether an incoming request Origin matches configured ALLOWED_ORIGINS,
+ * supporting exact matches, trailing slashes, and wildcard subdomains (e.g. *.vercel.app).
+ */
+export function isOriginAllowed(requestOrigin: string, allowedOriginsEnv?: string): boolean {
+  if (!allowedOriginsEnv || allowedOriginsEnv === '*') {
+    return true;
+  }
+  const cleanReq = requestOrigin.replace(/\/$/, '').toLowerCase();
+  const allowedList = allowedOriginsEnv
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, '').toLowerCase())
+    .filter(Boolean);
+
+  for (const pattern of allowedList) {
+    if (pattern === cleanReq || pattern === '*') {
+      return true;
+    }
+    // Wildcard support: *.vercel.app, https://*.vercel.app, *.pages.dev
+    if (pattern.includes('*')) {
+      const regexPattern =
+        '^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$';
+      if (new RegExp(regexPattern).test(cleanReq)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Sets CORS headers restricted to ALLOWED_ORIGINS (or fallback in development).
  */
 function setCorsHeaders(req: IncomingMessage, res: ServerResponse): void {
   const allowedOriginsEnv = process.env.ALLOWED_ORIGINS?.trim();
   const requestOrigin = req.headers.origin;
 
-  if (!allowedOriginsEnv || allowedOriginsEnv === '*') {
-    res.setHeader('Access-Control-Allow-Origin', requestOrigin || '*');
-  } else {
-    const allowedList = allowedOriginsEnv
-      .split(',')
-      .map((o) => o.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (requestOrigin && allowedList.includes(requestOrigin.toLowerCase())) {
-      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-    }
+  if (requestOrigin && isOriginAllowed(requestOrigin, allowedOriginsEnv)) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
     res.setHeader('Vary', 'Origin');
+  } else if (!allowedOriginsEnv || allowedOriginsEnv === '*') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Api-Key, Accept'
+    'Content-Type, content-type, Authorization, authorization, X-Api-Key, x-api-key, Accept, accept, Origin, origin, X-Requested-With'
   );
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
+/**
+ * Sets standard security and CORS headers on all HTTP responses.
+ */
+function setSecurityHeaders(req: IncomingMessage, res: ServerResponse): void {
+  setCorsHeaders(req, res);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
 }
 
 /**
@@ -199,7 +237,7 @@ export function createRendererServer(
   });
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    setCorsHeaders(req, res);
+    setSecurityHeaders(req, res);
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -239,11 +277,15 @@ export function createRendererServer(
         uptimeSeconds: Math.round(process.uptime()),
         memoryRssMb: Math.round(mem.rss / (1024 * 1024)),
         activeJobs: worker.getActiveJobsCount(),
+        queuedJobs: worker.getQueuedJobsCount(),
         maxConcurrency: worker.getConfig().concurrency,
         chromiumAvailable: isReady,
       };
 
-      res.writeHead(isReady ? 200 : 503, { 'Content-Type': 'application/json' });
+      res.writeHead(isReady ? 200 : 503, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+      });
       res.end(JSON.stringify(statusPayload, null, 2));
       return;
     }
@@ -262,18 +304,6 @@ export function createRendererServer(
 
     // PDF rendering endpoint
     if (req.method === 'POST' && (pathname === '/render-pdf' || pathname === '/api/render-pdf')) {
-      if (worker.getActiveJobsCount() >= worker.getConfig().concurrency) {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            error: 'Service Busy',
-            message: 'All rendering slots are currently utilized. Please retry shortly.',
-            activeJobs: worker.getActiveJobsCount(),
-          })
-        );
-        return;
-      }
-
       try {
         const body = (await readJsonBody(req, MAX_PAYLOAD_BYTES)) as Record<string, unknown>;
         const rawDoc = body.document ? body.document : body;
@@ -297,6 +327,10 @@ export function createRendererServer(
         const doc: NewspaperDocument = parseResult.data;
         const result: RenderPdfResult = await worker.renderToPdf(doc);
 
+        if (req.socket.destroyed) {
+          return;
+        }
+
         const asciiTitle =
           doc.metadata.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'newspaper';
         const fullFilename =
@@ -307,6 +341,7 @@ export function createRendererServer(
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${asciiTitle}.pdf"; filename*=UTF-8''${utf8Filename}`,
           'Content-Length': result.fileSizeBytes,
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           'X-Page-Count': String(result.pageCount),
           'X-Render-Time-Ms': String(result.durationMs),
           'X-Layout-Overflow': String(result.hasOverflow),
@@ -314,18 +349,35 @@ export function createRendererServer(
 
         res.end(Buffer.from(result.pdfBuffer));
       } catch (err: unknown) {
+        if (req.socket.destroyed) return;
+
         const statusCode =
           err && typeof err === 'object' && 'statusCode' in err
             ? (err as { statusCode: number }).statusCode
             : 500;
-        const message = err instanceof Error ? err.message : String(err);
+        const isProd = process.env.NODE_ENV === 'production';
+        const rawMessage = err instanceof Error ? err.message : String(err);
+        console.error(`[Renderer Service Error] (${statusCode}):`, err);
 
-        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+        const clientMessage =
+          statusCode >= 500 && isProd
+            ? 'An internal rendering error occurred while generating the PDF. Please retry.'
+            : rawMessage;
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache',
+        };
+        if (statusCode === 503 || statusCode === 504) {
+          headers['Retry-After'] = '5';
+        }
+
+        res.writeHead(statusCode, headers);
         res.end(
           JSON.stringify({
-            error: 'Render Failed',
+            error: statusCode === 503 ? 'Service Busy' : 'Render Failed',
             statusCode,
-            message,
+            message: clientMessage,
           })
         );
       }
@@ -359,20 +411,48 @@ export function createRendererServer(
 
         const imageBuffer = await worker.renderToImage(doc, { pageNumber, scale });
 
+        if (req.socket.destroyed) {
+          return;
+        }
+
         res.writeHead(200, {
           'Content-Type': 'image/png',
           'Content-Length': imageBuffer.length,
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
         });
         res.end(Buffer.from(imageBuffer));
       } catch (err: unknown) {
+        if (req.socket.destroyed) return;
+
         const statusCode =
           err && typeof err === 'object' && 'statusCode' in err
             ? (err as { statusCode: number }).statusCode
             : 500;
-        const message = err instanceof Error ? err.message : String(err);
+        const isProd = process.env.NODE_ENV === 'production';
+        const rawMessage = err instanceof Error ? err.message : String(err);
+        console.error(`[Renderer Service Error] (${statusCode}):`, err);
 
-        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Render Image Failed', message }));
+        const clientMessage =
+          statusCode >= 500 && isProd
+            ? 'An internal error occurred while rendering the page image. Please retry.'
+            : rawMessage;
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache',
+        };
+        if (statusCode === 503 || statusCode === 504) {
+          headers['Retry-After'] = '5';
+        }
+
+        res.writeHead(statusCode, headers);
+        res.end(
+          JSON.stringify({
+            error: statusCode === 503 ? 'Service Busy' : 'Render Image Failed',
+            statusCode,
+            message: clientMessage,
+          })
+        );
       }
       return;
     }

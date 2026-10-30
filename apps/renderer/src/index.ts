@@ -8,6 +8,10 @@ import {
 import { renderNewspaperDocumentToHtml, getPageDimensionsPt } from '@epaper-studio/template-engine';
 import { readSelfHostedFont } from '@epaper-studio/typography/server';
 import { SELF_HOSTED_FONT_FAMILIES, findUnsupportedCharacters } from '@epaper-studio/typography';
+import { isSafeUrl, isAllowedAssetOrigin } from './security.js';
+import { parsePdfStructure, type StructuralPdfMetadata } from './pdfParser.js';
+
+export { isSafeUrl, isAllowedAssetOrigin, parsePdfStructure, type StructuralPdfMetadata };
 
 export interface RenderJobRequest {
   jobId: string;
@@ -39,6 +43,7 @@ export interface RenderPdfResult {
   durationMs: number;
   hasOverflow: boolean;
   warnings: string[];
+  isValidPdf?: boolean;
 }
 
 export interface PdfMetadata {
@@ -50,97 +55,18 @@ export interface PdfMetadata {
 }
 
 /**
- * Validates that an outbound resource URL does not point to sensitive local,
- * internal, or cloud metadata endpoints (SSRF mitigation).
- */
-export function isSafeUrl(urlStr: string): boolean {
-  if (!urlStr) return false;
-  // Allow inline base64 and SVG data URIs
-  if (urlStr.startsWith('data:image/')) return true;
-
-  try {
-    const parsed = new URL(urlStr);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return false;
-    }
-
-    const host = parsed.hostname.toLowerCase();
-    // Block loopback, private ranges, link-local and cloud metadata addresses
-    if (
-      host === 'localhost' ||
-      host === '127.0.0.1' ||
-      host === '::1' ||
-      host === '169.254.169.254' ||
-      host.startsWith('10.') ||
-      host.startsWith('192.168.') ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
-      host.endsWith('.internal') ||
-      host.endsWith('.local')
-    ) {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Parses binary PDF buffer to inspect PDF headers, MediaBox dimensions,
  * page counts, and embedded text stream operators.
+ * Uses structural parsing with zlib FlateDecode decompression.
  */
 export function inspectPdf(pdfBuffer: Uint8Array): PdfMetadata {
-  const binaryString = Buffer.from(pdfBuffer).toString('binary');
-
-  // Verify %PDF- header signature
-  const headerMatch = binaryString.match(/%PDF-(\d+\.\d+)/);
-  const isValidPdf = Boolean(headerMatch);
-  const version = headerMatch?.[1] ?? '';
-
-  // Parse MediaBox page bounds [0 0 width height]
-  const mediaBoxRegex = /\/MediaBox\s*\[\s*([\d.\s-]+)\s*\]/g;
-  const mediaBoxes: Array<{ width: number; height: number }> = [];
-  let match: RegExpExecArray | null;
-
-  while ((match = mediaBoxRegex.exec(binaryString)) !== null) {
-    const rawBox = match[1];
-    if (rawBox) {
-      const parts = rawBox.trim().split(/\s+/).map(Number);
-      if (parts.length === 4) {
-        const [llx = 0, lly = 0, urx = 0, ury = 0] = parts;
-        const width = Math.abs(urx - llx);
-        const height = Math.abs(ury - lly);
-        mediaBoxes.push({ width, height });
-      }
-    }
-  }
-
-  // Page count via /Type /Page occurrences or /Count <N> in /Pages
-  let pageCount = 0;
-  const pageMatches = binaryString.match(/\/Type\s*\/Page\b/g);
-  if (pageMatches) {
-    pageCount = pageMatches.length;
-  } else {
-    const countMatch = binaryString.match(/\/Count\s+(\d+)/);
-    if (countMatch?.[1]) {
-      pageCount = parseInt(countMatch[1], 10);
-    }
-  }
-
-  // Verify selectable text streams (BT ... ET or Font objects)
-  const hasSelectableText =
-    binaryString.includes('BT') ||
-    binaryString.includes('/Font') ||
-    binaryString.includes('Tj') ||
-    binaryString.includes('TJ');
-
+  const structural = parsePdfStructure(pdfBuffer);
   return {
-    isValidPdf,
-    version,
-    pageCount: Math.max(1, pageCount),
-    mediaBoxes,
-    hasSelectableText,
+    isValidPdf: structural.isValidPdf,
+    version: structural.version,
+    pageCount: structural.pageCount,
+    mediaBoxes: structural.mediaBoxes.map((b) => ({ width: b.width, height: b.height })),
+    hasSelectableText: structural.hasSelectableText,
   };
 }
 
@@ -152,7 +78,13 @@ export function inspectPdf(pdfBuffer: Uint8Array): PdfMetadata {
 export class RendererWorker {
   private config: RendererWorkerConfig;
   private browserInstance: Browser | null = null;
+  private browserPromise: Promise<Browser> | null = null;
   private activeJobsCount = 0;
+  private queuedJobsCount = 0;
+  private totalJobsCompleted = 0;
+  private queue: Array<() => void> = [];
+  private readonly maxQueueLength = 20;
+  private readonly maxJobsBeforeRecycle = 250;
 
   constructor(config: Partial<RendererWorkerConfig> = {}) {
     this.config = {
@@ -169,6 +101,10 @@ export class RendererWorker {
     return this.activeJobsCount;
   }
 
+  public getQueuedJobsCount(): number {
+    return this.queuedJobsCount;
+  }
+
   public async validateEnvironment(): Promise<boolean> {
     try {
       const browser = await this.getBrowser();
@@ -179,27 +115,124 @@ export class RendererWorker {
   }
 
   /**
-   * Lazily initializes and reuses a headless Chromium browser instance.
+   * Acquires a concurrency execution slot or queues the request until a slot frees up.
+   */
+  private async acquireSlot(timeoutMs: number): Promise<() => void> {
+    if (this.activeJobsCount < this.config.concurrency) {
+      this.activeJobsCount++;
+      return () => this.releaseSlot();
+    }
+
+    if (this.queuedJobsCount >= this.maxQueueLength) {
+      const err = new Error(
+        'Renderer queue is full. All rendering slots are currently utilized. Please retry shortly.'
+      );
+      (err as Error & { statusCode: number }).statusCode = 503;
+      throw err;
+    }
+
+    this.queuedJobsCount++;
+    return new Promise<() => void>((resolve, reject) => {
+      const timer: NodeJS.Timeout = setTimeout(() => {
+        const idx = this.queue.indexOf(proceed);
+        if (idx !== -1) {
+          this.queue.splice(idx, 1);
+          this.queuedJobsCount--;
+        }
+        const timeoutErr = new Error(`Renderer queue wait timeout exceeded (${timeoutMs}ms)`);
+        (timeoutErr as Error & { statusCode: number }).statusCode = 504;
+        reject(timeoutErr);
+      }, timeoutMs);
+
+      const proceed = () => {
+        clearTimeout(timer);
+        this.queuedJobsCount--;
+        this.activeJobsCount++;
+        resolve(() => this.releaseSlot());
+      };
+
+      this.queue.push(proceed);
+    });
+  }
+
+  /**
+   * Releases an active concurrency slot and unblocks the next queued job,
+   * or recycles the browser instance if the retirement threshold was reached while idle.
+   */
+  private releaseSlot(): void {
+    this.activeJobsCount--;
+    this.totalJobsCompleted++;
+
+    if (this.queue.length > 0) {
+      const next = this.queue.shift();
+      if (next) next();
+    } else if (
+      this.activeJobsCount === 0 &&
+      this.totalJobsCompleted >= this.maxJobsBeforeRecycle
+    ) {
+      void this.recycleBrowser();
+    }
+  }
+
+  /**
+   * Gracefully closes and resets the Chromium browser process to reclaim memory.
+   */
+  private async recycleBrowser(): Promise<void> {
+    if (this.browserInstance) {
+      try {
+        await this.browserInstance.close();
+      } catch {
+        // Ignored
+      }
+      this.browserInstance = null;
+      this.browserPromise = null;
+      this.totalJobsCompleted = 0;
+    }
+  }
+
+  /**
+   * Lazily initializes and reuses a headless Chromium browser instance with atomic promise deduplication.
    */
   private async getBrowser(): Promise<Browser> {
-    if (!this.browserInstance || !this.browserInstance.isConnected()) {
-      const executablePath =
-        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-        process.env.CHROMIUM_PATH ||
-        undefined;
+    if (this.browserInstance && this.browserInstance.isConnected()) {
+      return this.browserInstance;
+    }
 
-      this.browserInstance = await chromium.launch({
+    if (this.browserPromise) {
+      return this.browserPromise;
+    }
+
+    const executablePath =
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
+      process.env.CHROMIUM_PATH ||
+      undefined;
+
+    this.browserPromise = chromium
+      .launch({
         headless: true,
         executablePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
+          '--disable-gpu',
           '--font-render-hinting=medium',
         ],
+      })
+      .then((browser) => {
+        this.browserInstance = browser;
+        browser.on('disconnected', () => {
+          this.browserInstance = null;
+          this.browserPromise = null;
+        });
+        return browser;
+      })
+      .catch((err) => {
+        this.browserPromise = null;
+        throw err;
       });
-    }
-    return this.browserInstance;
+
+    return this.browserPromise;
   }
 
   /**
@@ -235,34 +268,22 @@ export class RendererWorker {
         }
       }
 
-      if (reqUrl.startsWith('data:') || reqUrl.startsWith('about:')) {
+      // Safe local schemes
+      if (reqUrl.startsWith('about:')) {
         return route.continue();
       }
 
-      // Check allowlisted asset origins for images if configured
-      const rawAllowedOrigins = process.env.ALLOWED_ASSET_ORIGINS;
-      if (rawAllowedOrigins) {
-        const allowed = rawAllowedOrigins
-          .split(',')
-          .map((s) => s.trim().toLowerCase())
-          .filter(Boolean);
-        try {
-          const parsed = new URL(reqUrl);
-          const isAllowedHost =
-            (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
-            allowed.some(
-              (origin) =>
-                parsed.hostname.toLowerCase() === origin ||
-                parsed.origin.toLowerCase() === origin
-            ) &&
-            isSafeUrl(reqUrl);
-
-          if (isAllowedHost) {
-            return route.continue();
-          }
-        } catch {
-          // invalid url
+      // Check data URIs (ensure no malicious SVG scripts)
+      if (reqUrl.startsWith('data:')) {
+        if (isSafeUrl(reqUrl)) {
+          return route.continue();
         }
+        return route.abort('blockedbyclient');
+      }
+
+      // Check allowlisted asset origins for external images with strict SSRF validation
+      if (isAllowedAssetOrigin(reqUrl, process.env.ALLOWED_ASSET_ORIGINS)) {
+        return route.continue();
       }
 
       // Never route.continue() to the network for unhandled or arbitrary external origins (SSRF prevention)
@@ -460,9 +481,9 @@ export class RendererWorker {
     doc: NewspaperDocument,
     options: { timeoutMs?: number } = {}
   ): Promise<RenderPdfResult> {
-    this.activeJobsCount++;
-    const startTime = Date.now();
     const timeout = options.timeoutMs ?? this.config.timeoutMs;
+    const releaseSlot = await this.acquireSlot(timeout);
+    const startTime = Date.now();
     const { widthPt, heightPt, widthIn, heightIn } = getPageDimensionsPt(
       doc.metadata.pageSize,
       doc.metadata.orientation
@@ -559,8 +580,8 @@ export class RendererWorker {
         warnings: layoutDiagnostics.warnings,
       };
     } finally {
-      this.activeJobsCount--;
-      await page.close();
+      releaseSlot();
+      await page.close().catch(() => {});
     }
   }
 
@@ -571,7 +592,7 @@ export class RendererWorker {
     doc: NewspaperDocument,
     options: { pageNumber?: number; scale?: number } = {}
   ): Promise<Uint8Array> {
-    this.activeJobsCount++;
+    const releaseSlot = await this.acquireSlot(this.config.timeoutMs);
     const { widthPt, heightPt } = getPageDimensionsPt(
       doc.metadata.pageSize,
       doc.metadata.orientation
@@ -612,8 +633,8 @@ export class RendererWorker {
 
       return screenshotBuffer;
     } finally {
-      this.activeJobsCount--;
-      await page.close();
+      releaseSlot();
+      await page.close().catch(() => {});
     }
   }
 
@@ -624,6 +645,7 @@ export class RendererWorker {
     doc: NewspaperDocument,
     options: { scale?: number } = {}
   ): Promise<Uint8Array[]> {
+    const releaseSlot = await this.acquireSlot(this.config.timeoutMs);
     const { widthPt, heightPt } = getPageDimensionsPt(
       doc.metadata.pageSize,
       doc.metadata.orientation
@@ -663,7 +685,8 @@ export class RendererWorker {
 
       return images;
     } finally {
-      await page.close();
+      releaseSlot();
+      await page.close().catch(() => {});
     }
   }
 

@@ -333,7 +333,20 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
 
   test('Audit Case 6: Browser UI Export Workflow with Real Download Event', async ({ page }) => {
     test.slow();
-    await page.goto('/');
+    await page.route('**/api/render-pdf', async (route) => {
+      const postData = route.request().postDataJSON();
+      const result = await worker.renderToPdf(postData);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/pdf',
+        headers: {
+          'Content-Disposition': 'attachment; filename="newspaper.pdf"',
+        },
+        body: Buffer.from(result.pdfBuffer),
+      });
+    });
+
+    await page.goto('/#editor');
 
     const exportBtn = page.locator('[data-testid="btn-export-pdf"]');
     await expect(exportBtn).toBeVisible();
@@ -364,5 +377,52 @@ test.describe('E-Paper Studio — Production PDF Readiness Audit', () => {
     expect(metadata.isValidPdf).toBe(true);
     expect(metadata.mediaBoxes[0]?.width).toBe(1080);
     expect(metadata.mediaBoxes[0]?.height).toBe(1638);
+  }, 60000);
+
+  test('Audit Case 7: Mobile Viewport Browser UI Export Workflow with Real Download Event', async ({
+    page,
+  }) => {
+    test.slow();
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await page.route('**/api/render-pdf', async (route) => {
+      const postData = route.request().postDataJSON();
+      const result = await worker.renderToPdf(postData);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/pdf',
+        headers: {
+          'Content-Disposition': 'attachment; filename="mobile_newspaper.pdf"',
+        },
+        body: Buffer.from(result.pdfBuffer),
+      });
+    });
+
+    await page.goto('/#editor');
+
+    const mobileExportBtn = page.locator('[data-testid="mobile-export-pdf-btn"]');
+    await expect(mobileExportBtn).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', { timeout: 50000 });
+    await mobileExportBtn.click();
+
+    const download = await downloadPromise;
+    const filename = download.suggestedFilename();
+    expect(filename).toMatch(/\.pdf$/i);
+
+    const downloadPath = path.join(ARTIFACTS_DIR, '07_mobile_ui_downloaded.pdf');
+    await download.saveAs(downloadPath);
+
+    expect(fs.existsSync(downloadPath)).toBe(true);
+    const fileStats = fs.statSync(downloadPath);
+    expect(fileStats.size).toBeGreaterThan(15000);
+
+    const buffer = fs.readFileSync(downloadPath);
+    const header = buffer.subarray(0, 5).toString('ascii');
+    expect(header).toBe('%PDF-');
+
+    const metadata = inspectPdf(buffer);
+    expect(metadata.isValidPdf).toBe(true);
+    expect(metadata.pageCount).toBeGreaterThanOrEqual(1);
   }, 60000);
 });

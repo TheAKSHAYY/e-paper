@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Visual & Typographic Rendering Specs', () => {
   test('should render high-contrast typography and newspaper sheet container', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#editor');
 
     const sheet = page.locator('[data-testid="newspaper-sheet-canvas"]');
     await expect(sheet).toBeVisible();

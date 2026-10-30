@@ -17,6 +17,7 @@ import {
   getPageDimensions,
   resolvePageColumnCount,
   NewspaperDocumentSchema,
+  migrateDocumentSchema,
 } from '@epaper-studio/document-schema';
 import {
   createNewspaperDocument,
@@ -534,6 +535,17 @@ export const App: React.FC = () => {
         if (mounted) {
           setDocument(initial);
         }
+
+        // Clean any orphaned IndexedDB assets in the background
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(() => {
+            void draftStorage.cleanOrphanedAssets().catch(() => {});
+          });
+        } else {
+          setTimeout(() => {
+            void draftStorage.cleanOrphanedAssets().catch(() => {});
+          }, 3000);
+        }
       } catch (err) {
         console.warn('Draft initialization error:', err);
       }
@@ -722,16 +734,23 @@ export const App: React.FC = () => {
         try {
           const content = e.target?.result as string;
           const parsed = JSON.parse(content);
+          let validatedDoc: NewspaperDocument;
           const validated = NewspaperDocumentSchema.safeParse(parsed);
           if (!validated.success) {
-            showNotification('अमान्य प्रोजेक्ट फ़ाइल: JSON स्कीमा सत्यापन विफल रहा');
-            console.error('Validation errors:', validated.error);
-            return;
+            try {
+              validatedDoc = migrateDocumentSchema(parsed);
+            } catch {
+              showNotification('अमान्य प्रोजेक्ट फ़ाइल: JSON स्कीमा सत्यापन विफल रहा');
+              console.error('Validation errors:', validated.error);
+              return;
+            }
+          } else {
+            validatedDoc = validated.data;
           }
-          setDocument(validated.data);
+          setDocument(validatedDoc);
           setCurrentPageIndex(0);
           setSelectedArticleId(null);
-          await draftStorage.saveDraft(validated.data);
+          await draftStorage.saveDraft(validatedDoc);
           showNotification('प्रोजेक्ट बैकअप सफलतापूर्वक लोड किया गया (Project restored)');
         } catch (err) {
           showNotification('प्रोजेक्ट JSON फ़ाइल पढ़ने में त्रुटि');

@@ -1,5 +1,6 @@
 import {
   NewspaperDocumentSchema,
+  migrateDocumentSchema,
   type NewspaperDocument,
   type Article,
 } from '@epaper-studio/document-schema';
@@ -63,13 +64,25 @@ export class LocalStorageDraftAdapter implements DraftStorageAdapter {
       }
 
       const parsed: unknown = JSON.parse(rawData);
+      let validDoc: NewspaperDocument;
       const validation = NewspaperDocumentSchema.safeParse(parsed);
       if (!validation.success) {
-        console.warn(`Draft ${id} failed schema validation:`, validation.error);
-        return null;
+        // Attempt backward compatibility schema migration (e.g. 1.0.0 -> 1.1.0)
+        try {
+          validDoc = migrateDocumentSchema(parsed);
+          window.localStorage.setItem(`${DATA_KEY_PREFIX}${id}`, JSON.stringify(validDoc));
+        } catch {
+          console.warn(`Draft ${id} failed schema validation:`, validation.error);
+          return null;
+        }
+      } else {
+        validDoc = validation.data;
+        // If draft is on an older schema version (e.g. 1.0.0), upgrade it cleanly to 1.1.0
+        if (validDoc.version !== '1.1.0') {
+          validDoc = migrateDocumentSchema(validDoc);
+          window.localStorage.setItem(`${DATA_KEY_PREFIX}${id}`, JSON.stringify(validDoc));
+        }
       }
-
-      const validDoc = validation.data;
 
       // Rehydrate any offloaded indexeddb:// assets
       const rehydrateArticles = async (arts: Article[]) => {
@@ -197,9 +210,24 @@ export class LocalStorageDraftAdapter implements DraftStorageAdapter {
       const existingList = await this.listDrafts();
       const updatedList = existingList.filter((d) => d.id !== id);
       window.localStorage.setItem(INDEX_KEY, JSON.stringify(updatedList));
+
+      // Purge any offloaded IndexedDB image assets belonging to this deleted draft
+      await indexedDbAssetStorage.deleteAssetsForDraft(id);
     } catch (err) {
       console.error(`Failed to delete draft ${id}:`, err);
       throw err;
     }
+  }
+
+  /**
+   * Scans IndexedDB and purges any orphaned image assets from deleted or stale drafts.
+   */
+  public async cleanOrphanedAssets(): Promise<number> {
+    if (!this.isStorageAvailable()) {
+      return 0;
+    }
+    const drafts = await this.listDrafts();
+    const activeIds = drafts.map((d) => d.id);
+    return indexedDbAssetStorage.cleanOrphanedAssets(activeIds);
   }
 }

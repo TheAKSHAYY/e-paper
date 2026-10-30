@@ -8,9 +8,10 @@ export async function downscaleImageFile(
   maxDimension = 1600,
   quality = 0.85
 ): Promise<string> {
-  // If not an image, reject
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Selected file is not an image');
+  // Only allow supported raster image formats (blocks arbitrary SVGs or active files)
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedMimeTypes.includes(file.type.toLowerCase())) {
+    throw new Error('Unsupported image format. Please select JPEG, PNG, or WebP image files.');
   }
 
   // Create an object URL for memory efficiency

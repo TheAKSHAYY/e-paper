@@ -108,7 +108,8 @@ If deploying the frontend on Vercel:
 1. Import your GitHub repository (`e-paper`) in the [Vercel Dashboard](https://vercel.com/new).
 2. Set **Root Directory** to `apps/web`.
 3. Vercel will automatically detect `Vite` and run `pnpm run build`.
-   - The updated build script in `apps/web/package.json` (`pnpm --filter "@epaper-studio/web^..." build && tsc -p tsconfig.json --noEmit && vite build`) will automatically compile the internal monorepo packages first, even on a fresh clone.
+   - The build script in `apps/web/package.json` compiles the internal monorepo packages first, synchronizes self-hosted fonts, and bundles the application.
+   - Production security headers and font asset caching are configured in `apps/web/vercel.json` (CSP, `X-Frame-Options: SAMEORIGIN`, immutable 1-year font caching, and SPA routing rewrites).
 4. Set **Output Directory** to `dist` (default for Vite).
 5. In **Environment Variables**, add:
    - `VITE_RENDERER_URL`: `https://epaper-renderer.onrender.com`

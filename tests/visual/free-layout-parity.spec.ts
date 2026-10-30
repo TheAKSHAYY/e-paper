@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { NewspaperDocument, Article } from '@epaper-studio/document-schema';
+import type { NewspaperDocument, Article } from '../../packages/document-schema/src/index';
 import {
   createNewspaperDocument,
   renderNewspaperDocumentToHtml,
   autoToFree,
-} from '@epaper-studio/template-engine';
+} from '../../packages/template-engine/src/index';
 
 const AFTER_FREE_LAYOUT_DIR = path.resolve(process.cwd(), 'tests', 'after-free-layout');
 

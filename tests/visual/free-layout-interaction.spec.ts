@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import type { NewspaperDocument, Article } from '@epaper-studio/document-schema';
-import { createNewspaperDocument } from '@epaper-studio/template-engine';
+import type { NewspaperDocument, Article } from '../../packages/document-schema/src/index';
+import { createNewspaperDocument } from '../../packages/template-engine/src/index';
 
 function getTestDoc(): NewspaperDocument {
   const doc = createNewspaperDocument({

@@ -119,5 +119,71 @@ describe('Server Rate Limiting & Client IP Resolution (Proxy Safety)', () => {
       expect(checkRateLimit(clientB, maxLimit)).toBe(true);
     });
   });
+
+  describe('isOriginAllowed() and CORS Configuration', () => {
+    it('allows all origins when ALLOWED_ORIGINS is empty or wildcard', async () => {
+      const { isOriginAllowed } = await import('./server');
+      expect(isOriginAllowed('https://example.com', '')).toBe(true);
+      expect(isOriginAllowed('https://example.com', '*')).toBe(true);
+    });
+
+    it('matches exact origins and normalizes trailing slashes', async () => {
+      const { isOriginAllowed } = await import('./server');
+      const allowed = 'https://epaper-studio.vercel.app, http://localhost:5173';
+      expect(isOriginAllowed('https://epaper-studio.vercel.app', allowed)).toBe(true);
+      expect(isOriginAllowed('https://epaper-studio.vercel.app/', allowed)).toBe(true);
+      expect(isOriginAllowed('http://localhost:5173', allowed)).toBe(true);
+      expect(isOriginAllowed('https://evil.com', allowed)).toBe(false);
+    });
+
+    it('supports wildcard subdomain patterns for Vercel/Cloudflare preview deployments', async () => {
+      const { isOriginAllowed } = await import('./server');
+      const allowed = 'https://*.vercel.app, https://*.pages.dev';
+      expect(isOriginAllowed('https://e-paper-git-main-theakshayy.vercel.app', allowed)).toBe(true);
+      expect(isOriginAllowed('https://epaper-studio-pr-12.pages.dev', allowed)).toBe(true);
+      expect(isOriginAllowed('https://sub.domain.other.com', allowed)).toBe(false);
+    });
+  });
+
+  describe('createRendererServer() and Security Headers', () => {
+    it('sets standard security headers, CORS preflight and handles health check with queue metrics', async () => {
+      const { createRendererServer } = await import('./server');
+      process.env.ALLOWED_ORIGINS = 'https://*.vercel.app';
+      const instance = createRendererServer({ port: 4099 });
+
+      try {
+        // Test OPTIONS preflight request
+        const optionsRes = await fetch('http://localhost:4099/api/render-pdf', {
+          method: 'OPTIONS',
+          headers: {
+            Origin: 'https://preview-123.vercel.app',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type, X-Api-Key',
+          },
+        });
+        expect(optionsRes.status).toBe(204);
+        expect(optionsRes.headers.get('access-control-allow-origin')).toBe(
+          'https://preview-123.vercel.app'
+        );
+        expect(optionsRes.headers.get('access-control-allow-methods')).toContain('POST');
+        expect(optionsRes.headers.get('access-control-max-age')).toBe('86400');
+
+        // Test GET health
+        const res = await fetch('http://localhost:4099/health');
+        expect(res.status).toBe(200);
+        expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+        expect(res.headers.get('x-frame-options')).toBe('DENY');
+        expect(res.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
+
+        const body = (await res.json()) as Record<string, unknown>;
+        expect(body.service).toBe('@epaper-studio/renderer');
+        expect(body.status).toBe('healthy');
+        expect(typeof body.activeJobs).toBe('number');
+        expect(typeof body.queuedJobs).toBe('number');
+      } finally {
+        await instance.close();
+      }
+    }, 25000);
+  });
 });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { LocalStorageDraftAdapter } from './LocalStorageDraftAdapter';
 import { createNewspaperDocument } from '@epaper-studio/template-engine';
+import { indexedDbAssetStorage } from './IndexedDbAssetStorage';
 
 describe('LocalStorageDraftAdapter', () => {
   let adapter: LocalStorageDraftAdapter;
@@ -24,9 +25,62 @@ describe('LocalStorageDraftAdapter', () => {
       key: (_index: number): string | null => null,
     };
 
+    const mockIdbStore: Record<string, unknown> = {};
+    const mockIndexedDB = {
+      open: () => {
+        const req = {
+          result: {
+            objectStoreNames: { contains: () => true },
+            createObjectStore: () => {},
+            transaction: () => ({
+              objectStore: () => ({
+                put: (data: unknown, key: string) => {
+                  mockIdbStore[key] = data;
+                  const r = { error: null, onsuccess: null as (() => void) | null };
+                  setTimeout(() => r.onsuccess?.(), 0);
+                  return r;
+                },
+                get: (key: string) => {
+                  const r = {
+                    result: mockIdbStore[key] ?? null,
+                    error: null,
+                    onsuccess: null as (() => void) | null,
+                  };
+                  setTimeout(() => r.onsuccess?.(), 0);
+                  return r;
+                },
+                delete: (key: string) => {
+                  delete mockIdbStore[key];
+                  const r = { error: null, onsuccess: null as (() => void) | null };
+                  setTimeout(() => r.onsuccess?.(), 0);
+                  return r;
+                },
+                getAllKeys: () => {
+                  const r = {
+                    result: Object.keys(mockIdbStore),
+                    error: null,
+                    onsuccess: null as (() => void) | null,
+                  };
+                  setTimeout(() => r.onsuccess?.(), 0);
+                  return r;
+                },
+              }),
+            }),
+          },
+          error: null,
+          onsuccess: null as (() => void) | null,
+          onerror: null as (() => void) | null,
+          onupgradeneeded: null as ((ev: unknown) => void) | null,
+        };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      },
+    };
+
     // Attach mock to globalThis
     (globalThis as unknown as { window: unknown }).window = {
       localStorage: mockLocalStorage,
+      indexedDB: mockIndexedDB,
     };
 
     adapter = new LocalStorageDraftAdapter();
@@ -106,5 +160,55 @@ describe('LocalStorageDraftAdapter', () => {
 
     const schemaResult = await adapter.getDraft('invalid_schema');
     expect(schemaResult).toBeNull();
+  });
+
+  it('should automatically migrate legacy 1.0.0 drafts on getDraft', async () => {
+    const legacyDoc = createNewspaperDocument({
+      title: 'Legacy 1.0.0 Newspaper',
+      presetId: 'classic-broadsheet',
+    });
+    legacyDoc.id = 'legacy-draft-1';
+
+    // Simulate legacy 1.0.0 structure without page layoutMode
+    const rawLegacy = {
+      ...legacyDoc,
+      version: '1.0.0',
+      pages: [
+        {
+          id: 'page-1',
+          pageNumber: 1,
+          sectionTitle: 'Front Page',
+          articles: legacyDoc.articles,
+          // layoutMode is omitted in 1.0.0
+        },
+      ],
+    };
+    mockStore['epaper_studio_draft_doc_v1_legacy-draft-1'] = JSON.stringify(rawLegacy);
+
+    const migrated = await adapter.getDraft('legacy-draft-1');
+    expect(migrated).not.toBeNull();
+    expect(migrated?.version).toBe('1.1.0');
+    expect(migrated?.pages?.[0]?.layoutMode).toBe('auto');
+  });
+
+  it('purges offloaded IndexedDB assets when deleting a draft', async () => {
+    const doc = createNewspaperDocument({
+      title: 'Draft with Images',
+      presetId: 'classic-broadsheet',
+    });
+    doc.id = 'draft-with-assets';
+    await adapter.saveDraft(doc);
+
+    // Save an associated asset key in IndexedDB mock
+    const assetKey = `asset_${doc.id}_art-1`;
+    await indexedDbAssetStorage.saveAsset(assetKey, 'data:image/png;base64,mock');
+
+    const assetBefore = await indexedDbAssetStorage.getAsset(assetKey);
+    expect(assetBefore).toBe('data:image/png;base64,mock');
+
+    await adapter.deleteDraft(doc.id);
+
+    const assetAfter = await indexedDbAssetStorage.getAsset(assetKey);
+    expect(assetAfter).toBeNull();
   });
 });
