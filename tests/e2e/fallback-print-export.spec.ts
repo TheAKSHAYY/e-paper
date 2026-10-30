@@ -64,7 +64,7 @@ test.describe('Fallback Print / Save as PDF Flow (Standalone without Renderer)',
     // Simulate export failure in the browser environment (e.g. canvas allocation error / memory pressure)
     await page.evaluate(() => {
       const origCreate = document.createElement.bind(document);
-      document.createElement = function (tag: string, options?: any) {
+      document.createElement = function (tag: string, options?: ElementCreationOptions) {
         if (tag.toLowerCase() === 'canvas') {
           throw new Error('Canvas render memory limit exceeded: Service Busy');
         }

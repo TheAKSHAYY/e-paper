@@ -1,6 +1,16 @@
 import React from 'react';
 
-export type MobileDrawerMode = 'pages' | 'blocks' | 'inspector' | 'presets' | 'none';
+export type MobileDrawerMode =
+  | 'text'
+  | 'image'
+  | 'layout'
+  | 'style'
+  | 'pages'
+  | 'more'
+  | 'blocks'
+  | 'presets'
+  | 'inspector'
+  | 'none';
 
 export interface MobileBottomNavProps {
   activeDrawer: MobileDrawerMode;
@@ -8,8 +18,8 @@ export interface MobileBottomNavProps {
   currentPageNumber: number;
   totalPages: number;
   hasSelectedArticle: boolean;
-  onExportPdf: () => void;
-  isExportingPdf: boolean;
+  onExportPdf?: () => void;
+  isExportingPdf?: boolean;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -18,9 +28,71 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   currentPageNumber,
   totalPages,
   hasSelectedArticle,
-  onExportPdf,
-  isExportingPdf,
 }) => {
+  // Map legacy modes to primary 6 categories
+  const normalizedActive =
+    activeDrawer === 'inspector'
+      ? hasSelectedArticle
+        ? 'text'
+        : 'layout'
+      : activeDrawer === 'blocks'
+        ? 'text'
+        : activeDrawer === 'presets'
+          ? 'style'
+          : activeDrawer;
+
+  const handleToggle = (mode: 'text' | 'image' | 'layout' | 'style' | 'pages' | 'more') => {
+    if (activeDrawer === mode) {
+      onSelectDrawer('none');
+    } else {
+      onSelectDrawer(mode);
+    }
+  };
+
+  const navItems = [
+    {
+      id: 'text' as const,
+      label: 'टेक्स्ट',
+      aliasText: '+ ब्लॉक',
+      icon: '🔤',
+      testId: 'mobile-nav-text',
+      badge: hasSelectedArticle ? '✓' : undefined,
+    },
+    {
+      id: 'image' as const,
+      label: 'चित्र',
+      icon: '🖼️',
+      testId: 'mobile-nav-image',
+    },
+    {
+      id: 'layout' as const,
+      label: 'लेआउट',
+      aliasText: 'गुण',
+      icon: '⊞',
+      testId: 'mobile-nav-layout',
+    },
+    {
+      id: 'style' as const,
+      label: 'शैली',
+      aliasText: 'प्रारूप',
+      icon: '🎨',
+      testId: 'mobile-nav-style',
+    },
+    {
+      id: 'pages' as const,
+      label: `पृष्ठ ${currentPageNumber}/${totalPages}`,
+      aliasText: 'पेज',
+      icon: '📄',
+      testId: 'mobile-nav-pages',
+    },
+    {
+      id: 'more' as const,
+      label: 'अधिक',
+      icon: '⋯',
+      testId: 'mobile-nav-more',
+    },
+  ];
+
   return (
     <nav
       data-testid="mobile-bottom-nav"
@@ -31,158 +103,93 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         right: 0,
         height: 'calc(58px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        backgroundColor: '#111827',
-        borderTop: '1px solid #1f2937',
+        backgroundColor: '#0f172a',
+        borderTop: '1px solid #1e293b',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-around',
-        paddingLeft: '4px',
-        paddingRight: '4px',
+        justifyContent: 'space-between',
+        paddingLeft: '2px',
+        paddingRight: '2px',
         boxSizing: 'border-box',
         zIndex: 100,
         userSelect: 'none',
       }}
     >
-      {/* 1. Pages Button */}
-      <button
-        type="button"
-        onClick={() => onSelectDrawer(activeDrawer === 'pages' ? 'none' : 'pages')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          background: activeDrawer === 'pages' ? '#1f2937' : 'none',
-          border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'pages' ? '#ffffff' : '#9ca3af',
-          cursor: 'pointer',
-          padding: '6px 8px',
-          fontSize: '11px',
-          fontWeight: activeDrawer === 'pages' ? 700 : 500,
-          flex: 1,
-          maxWidth: '72px',
-          minHeight: '44px',
-          minWidth: '44px',
-        }}
-      >
-        <span style={{ fontSize: '14px', lineHeight: 1 }}>▤</span>
-        <span style={{ whiteSpace: 'nowrap' }}>
-          पेज {currentPageNumber}/{totalPages}
-        </span>
-      </button>
-
-      {/* 2. Add Block Button */}
-      <button
-        type="button"
-        onClick={() => onSelectDrawer(activeDrawer === 'blocks' ? 'none' : 'blocks')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          background: activeDrawer === 'blocks' ? '#1f2937' : 'none',
-          border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'blocks' ? '#ef4444' : '#9ca3af',
-          cursor: 'pointer',
-          padding: '6px 8px',
-          fontSize: '11px',
-          fontWeight: activeDrawer === 'blocks' ? 700 : 500,
-          flex: 1,
-          maxWidth: '72px',
-          minHeight: '44px',
-          minWidth: '44px',
-        }}
-      >
-        <span style={{ fontSize: '14px', lineHeight: 1 }}>✚</span>
-        <span style={{ whiteSpace: 'nowrap' }}>+ ब्लॉक</span>
-      </button>
-
-      {/* 3. Edit / Inspector Button */}
-      <button
-        type="button"
-        onClick={() => onSelectDrawer(activeDrawer === 'inspector' ? 'none' : 'inspector')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          background: activeDrawer === 'inspector' ? '#1f2937' : 'none',
-          border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'inspector' ? '#60a5fa' : '#9ca3af',
-          cursor: 'pointer',
-          padding: '6px 8px',
-          fontSize: '11px',
-          fontWeight: activeDrawer === 'inspector' ? 700 : 500,
-          flex: 1,
-          maxWidth: '72px',
-          minHeight: '44px',
-          minWidth: '44px',
-        }}
-      >
-        <span style={{ fontSize: '14px', lineHeight: 1 }}>✎</span>
-        <span style={{ whiteSpace: 'nowrap' }}>{hasSelectedArticle ? 'संपादक' : 'गुण'}</span>
-      </button>
-
-      {/* 4. Presets Button */}
-      <button
-        type="button"
-        onClick={() => onSelectDrawer(activeDrawer === 'presets' ? 'none' : 'presets')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          background: activeDrawer === 'presets' ? '#1f2937' : 'none',
-          border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'presets' ? '#a78bfa' : '#9ca3af',
-          cursor: 'pointer',
-          padding: '6px 8px',
-          fontSize: '11px',
-          fontWeight: activeDrawer === 'presets' ? 700 : 500,
-          flex: 1,
-          maxWidth: '72px',
-          minHeight: '44px',
-          minWidth: '44px',
-        }}
-      >
-        <span style={{ fontSize: '14px', lineHeight: 1 }}>❖</span>
-        <span style={{ whiteSpace: 'nowrap' }}>प्रारूप</span>
-      </button>
-
-      {/* 5. Export PDF Button */}
-      <button
-        type="button"
-        onClick={onExportPdf}
-        disabled={isExportingPdf}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          backgroundColor: '#b91c1c',
-          border: 'none',
-          borderRadius: '6px',
-          color: '#ffffff',
-          cursor: isExportingPdf ? 'wait' : 'pointer',
-          padding: '6px 10px',
-          fontSize: '11px',
-          fontWeight: 700,
-          minWidth: '48px',
-          minHeight: '44px',
-        }}
-      >
-        <span style={{ fontSize: '13px', lineHeight: 1 }}>⇓</span>
-        <span>{isExportingPdf ? '...' : 'PDF'}</span>
-      </button>
+      {navItems.map((item) => {
+        const isActive = normalizedActive === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            data-testid={item.testId}
+            onClick={() => handleToggle(item.id)}
+            aria-label={item.label}
+            aria-expanded={isActive}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1px',
+              background: isActive ? '#1e293b' : 'transparent',
+              border: 'none',
+              borderRadius: '6px',
+              color: isActive ? '#38bdf8' : '#94a3b8',
+              cursor: 'pointer',
+              padding: '4px 2px',
+              fontSize: '10px',
+              fontWeight: isActive ? 700 : 500,
+              flex: 1,
+              minHeight: '44px',
+              minWidth: '44px',
+              position: 'relative',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
+            }}
+          >
+            <span style={{ fontSize: '15px', lineHeight: 1 }}>{item.icon}</span>
+            <span
+              style={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '56px',
+              }}
+            >
+              {item.label}
+            </span>
+            {item.aliasText && (
+              <span
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                {item.aliasText}
+              </span>
+            )}
+            {item.badge && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '6px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#38bdf8',
+                }}
+              />
+            )}
+          </button>
+        );
+      })}
     </nav>
   );
 };

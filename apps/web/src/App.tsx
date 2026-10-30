@@ -10,6 +10,7 @@ import type {
   NewspaperPage,
   FrameMm,
   NewspaperThemeConfig,
+  ElementTypography,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
@@ -35,6 +36,7 @@ import { LeftSidebar, type SidebarTab } from './components/studio/LeftSidebar';
 import { ContextualInspector } from './components/studio/ContextualInspector';
 import { NewspaperCanvas } from './components/studio/NewspaperCanvas';
 import { MobileBottomNav, type MobileDrawerMode } from './components/studio/MobileBottomNav';
+import { MobileBottomSheet } from './components/studio/mobile/MobileBottomSheet';
 import { ProjectSetupModal } from './components/studio/ProjectSetupModal';
 import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
@@ -795,7 +797,7 @@ export const App: React.FC = () => {
 
   // Add block to current page
   const handleAddBlock = useCallback(
-    (blockTemplate: Partial<Article>) => {
+    (blockTemplate: Partial<Article> = {}) => {
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const resolvedColumnCount = resolvePageColumnCount(document, currentPage);
       const newArticle = createArticleFromPreset(blockTemplate, {
@@ -1284,8 +1286,11 @@ export const App: React.FC = () => {
 
   // Duplicate article on current page
   const handleDuplicateArticle = useCallback(
-    (articleId: string) => {
-      const art = currentPage.articles.find((a) => a.id === articleId);
+    (target: string | Article) => {
+      const articleId = typeof target === 'string' ? target : target.id;
+      const art =
+        currentPage.articles.find((a) => a.id === articleId) ??
+        (typeof target !== 'string' ? target : null);
       if (!art) return;
 
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -1319,6 +1324,36 @@ export const App: React.FC = () => {
       showNotification(`खबर की प्रति बनाई गई`);
     },
     [currentPage.articles, safePageIndex, showNotification]
+  );
+
+  // Apply typography to all articles on current page
+  const handleApplyTypographyToPage = useCallback(
+    (typography: ElementTypography) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const targetPage = currentPages[safePageIndex];
+        if (!targetPage) return prev;
+
+        const updatedArticles = targetPage.articles.map((art) => ({
+          ...art,
+          typography: { ...typography },
+        }));
+        const updatedPages = currentPages.map((p, idx) =>
+          idx === safePageIndex ? { ...p, articles: updatedArticles } : p
+        );
+
+        return {
+          ...prev,
+          pages: updatedPages,
+          articles: safePageIndex === 0 ? updatedArticles : prev.articles,
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+
+      setHasUnsavedChanges(true);
+      showNotification('इस पेज के सभी लेखों पर टाइपोग्राफी लागू की गई');
+    },
+    [safePageIndex, showNotification]
   );
 
   // Apply 12-column layout row
@@ -1950,7 +1985,11 @@ export const App: React.FC = () => {
                 paddingTop: isMobile ? '12px' : '24px',
                 paddingLeft: isMobile ? '8px' : '16px',
                 paddingRight: isMobile ? '8px' : '16px',
-                paddingBottom: isMobile ? '70px' : '76px',
+                paddingBottom: isMobile
+                  ? mobileDrawer !== 'none'
+                    ? 'calc(40vh + 60px)'
+                    : 'calc(68px + env(safe-area-inset-bottom, 0px))'
+                  : '76px',
                 position: 'relative',
                 touchAction: 'pan-x pan-y pinch-zoom',
                 WebkitOverflowScrolling: 'touch',
@@ -1963,6 +2002,109 @@ export const App: React.FC = () => {
                 }
               }}
             >
+              {/* Floating Mobile Zoom Controls */}
+              {isMobile && (
+                <div
+                  data-testid="mobile-canvas-zoom-controls"
+                  style={{
+                    position: 'fixed',
+                    right: '12px',
+                    top: '64px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    zIndex: 40,
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '4px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setScale((s) => Math.min(3.0, Math.round((s + 0.15) * 100) / 100))
+                    }
+                    aria-label="ज़ूम इन करें"
+                    title="Zoom In"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: '#1e293b',
+                      color: '#ffffff',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    +
+                  </button>
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: '#cbd5e1',
+                      textAlign: 'center',
+                      padding: '2px 0',
+                    }}
+                  >
+                    {Math.round(scale * 100)}%
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setScale((s) => Math.max(0.2, Math.round((s - 0.15) * 100) / 100))
+                    }
+                    aria-label="ज़ूम आउट करें"
+                    title="Zoom Out"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: '#1e293b',
+                      color: '#ffffff',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFitWidth}
+                    aria-label="स्क्रीन पर फिट करें"
+                    title="Fit Width"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: '#1e293b',
+                      color: '#38bdf8',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    ⊡
+                  </button>
+                </div>
+              )}
+
               <NewspaperCanvas
                 page={currentPage}
                 pageIndex={safePageIndex}
@@ -1980,7 +2122,7 @@ export const App: React.FC = () => {
                   setSelectedArticleId(id);
                   setIsMastheadSelected(false);
                   if (isMobile) {
-                    setMobileDrawer('inspector');
+                    setMobileDrawer('text');
                   } else {
                     setIsInspectorOpen(true);
                   }
@@ -1990,7 +2132,7 @@ export const App: React.FC = () => {
                   setIsMastheadSelected(true);
                   setSelectedArticleId(null);
                   if (isMobile) {
-                    setMobileDrawer('inspector');
+                    setMobileDrawer('style');
                   } else {
                     setIsInspectorOpen(true);
                   }
@@ -2017,6 +2159,8 @@ export const App: React.FC = () => {
                 onMoveArticleUp={handleMoveArticleUp}
                 onMoveArticleDown={handleMoveArticleDown}
                 onMoveArticleToPage={handleMoveArticleToPage}
+                onDuplicateArticle={handleDuplicateArticle}
+                onApplyTypographyToPage={handleApplyTypographyToPage}
                 totalPages={pages.length}
                 currentPageIndex={safePageIndex}
                 masthead={document.masthead}
@@ -2055,227 +2199,50 @@ export const App: React.FC = () => {
                 isExportingPdf={isExportingPdf}
               />
 
-              {/* Mobile Slide-Up Drawer */}
-              {mobileDrawer !== 'none' && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    inset: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    zIndex: 95,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                  }}
-                  onClick={() => setMobileDrawer('none')}
-                >
-                  <div
-                    style={{
-                      backgroundColor: '#ffffff',
-                      borderTopLeftRadius: '16px',
-                      borderTopRightRadius: '16px',
-                      maxHeight: '80vh',
-                      marginBottom: '52px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      boxShadow: '0 -10px 30px rgba(0,0,0,0.3)',
-                      overflow: 'hidden',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Fixed Top Header with Title and Close Button */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px 16px',
-                        borderBottom: '1px solid #e2e8f0',
-                        backgroundColor: '#f8fafc',
-                        borderTopLeftRadius: '16px',
-                        borderTopRightRadius: '16px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
-                        {mobileDrawer === 'pages'
-                          ? `अख़बार के पेज (${pages.length})`
-                          : mobileDrawer === 'blocks'
-                            ? `तत्व व ब्लॉक जोड़ें (पेज ${safePageIndex + 1})`
-                            : mobileDrawer === 'presets'
-                              ? 'प्रारूप व टेम्पलेट्स (Presets)'
-                              : selectedArticle
-                                ? `खबर संपादक: ${selectedArticle.headline || 'अनाम खबर'}`
-                                : isMastheadSelected
-                                  ? 'मास्टहेड व पेज सेटिंग्स'
-                                  : `पेज ${safePageIndex + 1} सेटिंग्स`}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setMobileDrawer('none')}
-                        aria-label="बंद करें (Close)"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          fontSize: '18px',
-                          color: '#64748b',
-                          cursor: 'pointer',
-                          padding: '4px 8px',
-                          lineHeight: 1,
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* Scrollable Content Container */}
-                    <div
-                      style={{
-                        flex: 1,
-                        minHeight: 0,
-                        overflowY: 'auto',
-                        WebkitOverflowScrolling: 'touch',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                    >
-                      {mobileDrawer === 'pages' && (
-                        <LeftSidebar
-                          activeTab="pages"
-                          onTabChange={(tab) => {
-                            if (tab === 'pages') setMobileDrawer('pages');
-                            else if (tab === 'blocks') setMobileDrawer('blocks');
-                            else if (tab === 'templates') setMobileDrawer('presets');
-                          }}
-                          pages={pages}
-                          currentPageIndex={safePageIndex}
-                          onSelectPage={(idx) => {
-                            handleSelectPage(idx);
-                            setMobileDrawer('none');
-                          }}
-                          onAddPage={handleAddPage}
-                          onDuplicatePage={handleDuplicatePage}
-                          onDeletePage={handleDeletePage}
-                          onMovePage={handleMovePage}
-                          onMoveArticleToPage={handleMoveArticleToPage}
-                          onAddBlock={(tmpl) => {
-                            handleAddBlock(tmpl);
-                            setMobileDrawer('none');
-                          }}
-                          currentPresetId={document.layout.presetId}
-                          onSelectPreset={(pId) => {
-                            handleApplyPreset(pId, false);
-                            setMobileDrawer('none');
-                          }}
-                          isMobile={true}
-                          hideTabs={true}
-                          width="100%"
-                        />
-                      )}
-
-                      {mobileDrawer === 'blocks' && (
-                        <LeftSidebar
-                          activeTab="blocks"
-                          onTabChange={(tab) => {
-                            if (tab === 'pages') setMobileDrawer('pages');
-                            else if (tab === 'blocks') setMobileDrawer('blocks');
-                            else if (tab === 'templates') setMobileDrawer('presets');
-                          }}
-                          pages={pages}
-                          currentPageIndex={safePageIndex}
-                          onSelectPage={() => {}}
-                          onAddPage={() => {}}
-                          onDuplicatePage={() => {}}
-                          onDeletePage={() => {}}
-                          onMovePage={() => {}}
-                          onAddBlock={(tmpl) => {
-                            handleAddBlock(tmpl);
-                            setMobileDrawer('none');
-                          }}
-                          currentPresetId={document.layout.presetId}
-                          onSelectPreset={() => {}}
-                          isMobile={true}
-                          hideTabs={true}
-                          width="100%"
-                        />
-                      )}
-
-                      {mobileDrawer === 'presets' && (
-                        <LeftSidebar
-                          activeTab="templates"
-                          onTabChange={(tab) => {
-                            if (tab === 'pages') setMobileDrawer('pages');
-                            else if (tab === 'blocks') setMobileDrawer('blocks');
-                            else if (tab === 'templates') setMobileDrawer('presets');
-                          }}
-                          pages={pages}
-                          currentPageIndex={safePageIndex}
-                          onSelectPage={() => {}}
-                          onAddPage={() => {}}
-                          onDuplicatePage={() => {}}
-                          onDeletePage={() => {}}
-                          onMovePage={() => {}}
-                          onAddBlock={() => {}}
-                          currentPresetId={document.layout.presetId}
-                          onSelectPreset={(pId) => {
-                            handleApplyPreset(pId, false);
-                            setMobileDrawer('none');
-                          }}
-                          onApplyLayoutRow={(cols) => {
-                            handleApplyLayoutRow(cols);
-                            setMobileDrawer('none');
-                          }}
-                          isMobile={true}
-                          hideTabs={true}
-                          width="100%"
-                        />
-                      )}
-
-                      {mobileDrawer === 'inspector' && (
-                        <ContextualInspector
-                          selectedArticle={selectedArticle}
-                          currentPage={currentPage}
-                          onUpdateArticle={handleUpdateArticle}
-                          onDeleteArticle={(id) => {
-                            handleDeleteArticle(id);
-                            setMobileDrawer('none');
-                          }}
-                          onMoveArticleUp={handleMoveArticleUp}
-                          onMoveArticleDown={handleMoveArticleDown}
-                          onMoveArticleToPage={handleMoveArticleToPage}
-                          totalPages={pages.length}
-                          currentPageIndex={safePageIndex}
-                          masthead={document.masthead}
-                          onUpdateMasthead={handleUpdateMasthead}
-                          layout={document.layout}
-                          onUpdateLayout={handleUpdateLayout}
-                          pageSize={document.metadata.pageSize}
-                          onPageSizeChange={handlePageSizeChange}
-                          orientation={document.metadata.orientation}
-                          onOrientationChange={handleOrientationChange}
-                          onDeselect={() => {
-                            setSelectedArticleId(null);
-                            setIsMastheadSelected(false);
-                            setMobileDrawer('none');
-                          }}
-                          isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-                          onSelectMasthead={() => {
-                            setIsMastheadSelected(true);
-                            setSelectedArticleId(null);
-                          }}
-                          onCloseMasthead={() => setIsMastheadSelected(false)}
-                          isMobile={true}
-                          width="100%"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <MobileBottomSheet
+                mode={mobileDrawer}
+                onClose={() => setMobileDrawer('none')}
+                selectedArticle={selectedArticle}
+                onUpdateArticle={handleUpdateArticle}
+                onDeleteArticle={handleDeleteArticle}
+                onDuplicateArticle={handleDuplicateArticle}
+                onApplyTypographyToPage={handleApplyTypographyToPage}
+                onAddArticle={() => handleAddBlock()}
+                currentPage={currentPage}
+                currentPageIndex={safePageIndex}
+                totalPages={pages.length}
+                onSelectPage={handleSelectPage}
+                onAddPage={handleAddPage}
+                onDuplicatePage={() => handleDuplicatePage(safePageIndex)}
+                onDeletePage={() => handleDeletePage(safePageIndex)}
+                onMovePageLeft={() => handleMovePage(safePageIndex, safePageIndex - 1)}
+                onMovePageRight={() => handleMovePage(safePageIndex, safePageIndex + 1)}
+                document={document}
+                onUpdateLayout={handleUpdateLayout}
+                onUpdateMasthead={handleUpdateMasthead}
+                onPageSizeChange={handlePageSizeChange}
+                onOrientationChange={handleOrientationChange}
+                useFreeLayout={useFreeLayout}
+                onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
+                onAutoFit={() => handleAutoFitPage(safePageIndex)}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < history.length - 1}
+                onExportPdf={handleExportPdf}
+                isExportingPdf={isExportingPdf}
+                onPrintPdf={() => handleOpenPrintModal(null)}
+                onOpenTheme={() => setIsThemeModalOpen(true)}
+                onExportProjectJson={handleExportProjectJson}
+                onDeselectArticle={() => {
+                  setSelectedArticleId(null);
+                  setIsMastheadSelected(false);
+                }}
+                onSelectArticle={(id) => {
+                  setSelectedArticleId(id);
+                  setIsMastheadSelected(false);
+                }}
+              />
             </>
           )}
         </>

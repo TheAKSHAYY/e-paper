@@ -266,12 +266,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           {(article.imageCaption || article.imageCredit) && (
             <figcaption
               style={{
-                fontSize: '10px',
+                fontSize: article.typography?.captionFontSizePt
+                  ? `${article.typography.captionFontSizePt}pt`
+                  : '10px',
                 color: '#444',
                 fontStyle: 'italic',
                 marginTop: '3px',
                 lineHeight: 1.3,
                 wordBreak: 'break-word',
+                textAlign: article.typography?.textAlign,
               }}
             >
               {article.imageCaption && <span>{article.imageCaption} </span>}
@@ -546,9 +549,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   className="article-deck"
                   style={{
                     margin: `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`,
-                    fontSize: `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
+                    fontSize: article.typography?.subheadlineFontSizePt
+                      ? `${article.typography.subheadlineFontSizePt}pt`
+                      : `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
+                    textAlign: article.typography?.textAlign,
                     color:
                       article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #444444)',
                   }}
@@ -559,24 +565,30 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               <h2
                 className="article-headline"
                 style={{
-                  fontFamily: layout.headlineFont,
-                  fontSize: article.customHeadlineFontSizePt
-                    ? `${article.customHeadlineFontSizePt}pt`
-                    : isLead
-                      ? `${physicalMetrics.headlineSizesPt.lead}pt`
-                      : article.priority === 'major'
-                        ? `${physicalMetrics.headlineSizesPt.major}pt`
-                        : article.priority === 'minor'
-                          ? `${physicalMetrics.headlineSizesPt.minor}pt`
-                          : `${physicalMetrics.headlineSizesPt.brief}pt`,
-                  fontWeight: headlineWeight,
-                  lineHeight: 1.15,
+                  fontFamily: article.typography?.fontFamily || layout.headlineFont,
+                  fontSize: article.typography?.headlineFontSizePt
+                    ? `${article.typography.headlineFontSizePt}pt`
+                    : article.customHeadlineFontSizePt
+                      ? `${article.customHeadlineFontSizePt}pt`
+                      : isLead
+                        ? `${physicalMetrics.headlineSizesPt.lead}pt`
+                        : article.priority === 'major'
+                          ? `${physicalMetrics.headlineSizesPt.major}pt`
+                          : article.priority === 'minor'
+                            ? `${physicalMetrics.headlineSizesPt.minor}pt`
+                            : `${physicalMetrics.headlineSizesPt.brief}pt`,
+                  fontWeight: article.typography?.headlineFontWeight || article.typography?.fontWeight || headlineWeight,
+                  lineHeight: article.typography?.lineHeight ?? 1.15,
                   margin: 0,
+                  textAlign: article.typography?.textAlign,
                   color:
+                    article.typography?.textColor ??
                     article.customColors?.headlineColor ??
                     article.textColor ??
                     'var(--headline-color, #111111)',
-                  letterSpacing: isLead ? '-0.3pt' : undefined,
+                  letterSpacing: article.typography?.letterSpacingPt !== undefined
+                    ? `${article.typography.letterSpacingPt}pt`
+                    : isLead ? '-0.3pt' : undefined,
                 }}
               >
                 {article.headline}
@@ -585,11 +597,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <div
                   className="article-byline"
                   style={{
-                    fontSize: `${physicalMetrics.typographyPt.bylineFontSizePt}pt`,
+                    fontSize: article.typography?.bylineFontSizePt
+                      ? `${article.typography.bylineFontSizePt}pt`
+                      : `${physicalMetrics.typographyPt.bylineFontSizePt}pt`,
                     color: article.customColors?.bylineColor ?? 'var(--byline-color, #666666)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5pt',
+                    textAlign: article.typography?.textAlign,
                     marginTop: `${physicalMetrics.spacingPt.bylineMarginTopPt}pt`,
                     fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
                   }}
@@ -616,24 +631,30 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               )}
               <h2
                 style={{
-                  fontFamily: layout.headlineFont,
-                  fontSize: article.customHeadlineFontSizePt
-                    ? `${article.customHeadlineFontSizePt}pt`
-                    : isLead
-                      ? '30px'
-                      : article.priority === 'major'
-                        ? '22px'
-                        : article.priority === 'minor'
-                          ? '15px'
-                          : '18px',
-                  fontWeight: headlineWeight,
-                  lineHeight: 1.15,
+                  fontFamily: article.typography?.fontFamily || layout.headlineFont,
+                  fontSize: article.typography?.headlineFontSizePt
+                    ? `${article.typography.headlineFontSizePt}pt`
+                    : article.customHeadlineFontSizePt
+                      ? `${article.customHeadlineFontSizePt}pt`
+                      : isLead
+                        ? '30px'
+                        : article.priority === 'major'
+                          ? '22px'
+                          : article.priority === 'minor'
+                            ? '15px'
+                            : '18px',
+                  fontWeight: article.typography?.headlineFontWeight || article.typography?.fontWeight || headlineWeight,
+                  lineHeight: article.typography?.lineHeight ?? 1.15,
                   margin: '0 0 4px 0',
+                  textAlign: article.typography?.textAlign,
                   color:
+                    article.typography?.textColor ??
                     article.customColors?.headlineColor ??
                     article.textColor ??
                     'var(--headline-color, #111111)',
-                  letterSpacing: '-0.01em',
+                  letterSpacing: article.typography?.letterSpacingPt !== undefined
+                    ? `${article.typography.letterSpacingPt}pt`
+                    : '-0.01em',
                 }}
               >
                 {article.headline}
@@ -642,10 +663,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 <p
                   style={{
                     margin: '3px 0 5px 0',
-                    fontSize: isLead ? '13px' : '11.5px',
+                    fontSize: article.typography?.subheadlineFontSizePt
+                      ? `${article.typography.subheadlineFontSizePt}pt`
+                      : isLead ? '13px' : '11.5px',
                     lineHeight: 1.35,
                     fontFamily: layout.subheadlineFont || layout.headlineFont,
                     fontStyle: 'italic',
+                    textAlign: article.typography?.textAlign,
                     color:
                       article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #333333)',
                   }}
@@ -656,11 +680,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               {(article.byline || article.dateline) && (
                 <div
                   style={{
-                    fontSize: '10.5px',
+                    fontSize: article.typography?.bylineFontSizePt
+                      ? `${article.typography.bylineFontSizePt}pt`
+                      : '10.5px',
                     color: article.customColors?.bylineColor ?? 'var(--byline-color, #555555)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.03em',
+                    textAlign: article.typography?.textAlign,
                     borderTop: isLead ? '1px solid #222' : 'none',
                     paddingTop: isLead ? '3px' : 0,
                     marginBottom: '6px',
@@ -832,18 +859,25 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           <div
             lang={isHindi ? 'hi' : 'en'}
             style={{
-              fontSize: article.customFontSizePt
-                ? `${article.customFontSizePt}pt`
-                : usePhysicalCanvasCoordinates
-                  ? `${physicalMetrics.bodyFontSizePt}pt`
-                  : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
-              lineHeight: Math.max(1.4, 1.45),
+              fontSize: article.typography?.fontSizePt
+                ? `${article.typography.fontSizePt}pt`
+                : article.customFontSizePt
+                  ? `${article.customFontSizePt}pt`
+                  : usePhysicalCanvasCoordinates
+                    ? `${physicalMetrics.bodyFontSizePt}pt`
+                    : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
+              fontWeight: article.typography?.fontWeight || 'normal',
+              lineHeight: article.typography?.lineHeight ?? Math.max(1.4, 1.45),
               color:
+                article.typography?.textColor ??
                 article.customColors?.bodyColor ??
                 article.textColor ??
                 'var(--body-color, #222222)',
-              fontFamily: layout.bodyFont,
-              textAlign: 'justify',
+              fontFamily: article.typography?.fontFamily || layout.bodyFont,
+              textAlign: article.typography?.textAlign ?? 'justify',
+              letterSpacing: article.typography?.letterSpacingPt !== undefined
+                ? `${article.typography.letterSpacingPt}pt`
+                : undefined,
               textJustify: 'inter-word',
               hyphens: isHindi ? 'manual' : 'auto',
               WebkitHyphens: isHindi ? 'manual' : 'auto',
@@ -905,12 +939,16 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 key={pIdx}
                 className="article-para"
                 style={{
-                  margin: usePhysicalCanvasCoordinates
-                    ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
-                    : '0 0 7px 0',
-                  textIndent: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.spacingPt.paraTextIndentPt}pt`
-                    : undefined,
+                  margin: article.typography?.paragraphSpacingPt !== undefined
+                    ? `0 0 ${article.typography.paragraphSpacingPt}pt 0`
+                    : usePhysicalCanvasCoordinates
+                      ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
+                      : '0 0 7px 0',
+                  textIndent: article.typography?.textIndentPt !== undefined
+                    ? `${article.typography.textIndentPt}pt`
+                    : usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.paraTextIndentPt}pt`
+                      : undefined,
                 }}
               >
                 {usePhysicalCanvasCoordinates

@@ -26,6 +26,8 @@ import {
 import { MastheadInspectorPanel } from './MastheadInspectorPanel';
 import { BorderControls } from './BorderControls';
 import { downscaleImageFile } from '../../utils/imageOptimizer';
+import { TypographyControls } from './TypographyControls';
+import type { ElementTypography } from '@epaper-studio/document-schema';
 
 export interface ContextualInspectorProps {
   selectedArticle: Article | null;
@@ -35,6 +37,8 @@ export interface ContextualInspectorProps {
   onMoveArticleUp?: (articleId: string) => void;
   onMoveArticleDown?: (articleId: string) => void;
   onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
+  onDuplicateArticle?: (article: Article) => void;
+  onApplyTypographyToPage?: (typography: ElementTypography) => void;
   totalPages: number;
   currentPageIndex: number;
   masthead: MastheadConfig;
@@ -63,6 +67,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onMoveArticleUp,
   onMoveArticleDown,
   onMoveArticleToPage,
+  onDuplicateArticle,
+  onApplyTypographyToPage,
   totalPages,
   currentPageIndex,
   masthead,
@@ -232,6 +238,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         </button>
 
         <button
+          type="button"
+          data-testid="inspector-tab-typography"
           onClick={() => setActiveInspectorTab('typography')}
           style={{
             flex: 1,
@@ -2696,6 +2704,134 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 </div>
               </div>
 
+              {/* Element Management & Arrangement */}
+              <div
+                style={{
+                  paddingTop: '10px',
+                  borderTop: '1px solid #f1f5f9',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {onDuplicateArticle && (
+                    <button
+                      type="button"
+                      onClick={() => onDuplicateArticle(selectedArticle)}
+                      title="Duplicate this article block (डुप्लीकेट बनाएँ)"
+                      style={{
+                        padding: '8px 10px',
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px',
+                        minHeight: '36px',
+                      }}
+                    >
+                      <span>📑</span> डुप्लीकेट (Duplicate)
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateArticle({
+                        ...selectedArticle,
+                        locked: !selectedArticle.locked,
+                      })
+                    }
+                    title={selectedArticle.locked ? 'Unlock element' : 'Lock element position & edits'}
+                    style={{
+                      padding: '8px 10px',
+                      backgroundColor: selectedArticle.locked ? '#fef3c7' : '#f8fafc',
+                      border: `1px solid ${selectedArticle.locked ? '#f59e0b' : '#cbd5e1'}`,
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: selectedArticle.locked ? '#92400e' : '#0f172a',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      minHeight: '36px',
+                    }}
+                  >
+                    <span>{selectedArticle.locked ? '🔒' : '🔓'}</span>{' '}
+                    {selectedArticle.locked ? 'अनलॉक (Locked)' : 'लॉक करें (Lock)'}
+                  </button>
+                </div>
+
+                {/* Layer Stacking Order (Z-Index) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '6px 8px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <span style={{ fontSize: '11px', color: '#475569', fontWeight: 600 }}>
+                    स्तर (Layer): {selectedArticle.zIndex ?? 1}
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          zIndex: Math.max(1, (selectedArticle.zIndex ?? 1) - 1),
+                        })
+                      }
+                      title="Send Backward (पीछे भेजें)"
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⬇ पीछे
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          zIndex: (selectedArticle.zIndex ?? 1) + 1,
+                        })
+                      }
+                      title="Bring Forward (आगे लाएँ)"
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⬆ आगे
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Delete Article Action */}
               {onDeleteArticle && (
                 <div style={{ paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
@@ -2928,9 +3064,18 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
               )}
             </div>
           )
+        ) : selectedArticle ? (
+          /* ==========================================================
+           * 3. INDIVIDUAL ELEMENT TYPOGRAPHY CONTROLS
+           * ========================================================== */
+          <TypographyControls
+            selectedArticle={selectedArticle}
+            onUpdateArticle={onUpdateArticle}
+            onApplyToPage={onApplyTypographyToPage}
+          />
         ) : (
           /* ==========================================================
-           * 3. TYPOGRAPHY & FONT SETTINGS
+           * 4. GLOBAL / PAGE-WIDE TYPOGRAPHY & FONT SETTINGS
            * ========================================================== */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Curated Font Combinations */}

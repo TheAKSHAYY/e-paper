@@ -215,6 +215,25 @@ export const FrameMmSchema = z.object({
 
 export type FrameMm = z.infer<typeof FrameMmSchema>;
 
+export const ElementTypographySchema = z.object({
+  fontFamily: z.string().optional(),
+  fontSizePt: z.number().min(6).max(120).optional(),
+  headlineFontSizePt: z.number().min(8).max(140).optional(),
+  subheadlineFontSizePt: z.number().min(6).max(96).optional(),
+  bylineFontSizePt: z.number().min(6).max(48).optional(),
+  captionFontSizePt: z.number().min(6).max(48).optional(),
+  fontWeight: z.string().optional(),
+  headlineFontWeight: z.string().optional(),
+  lineHeight: z.number().min(0.8).max(3.0).optional(),
+  letterSpacingPt: z.number().min(-2).max(10).optional(),
+  textAlign: z.enum(['left', 'center', 'right', 'justify']).optional(),
+  textColor: z.string().optional(),
+  paragraphSpacingPt: z.number().min(0).max(48).optional(),
+  textIndentPt: z.number().min(0).max(64).optional(),
+});
+
+export type ElementTypography = z.infer<typeof ElementTypographySchema>;
+
 export const ArticleSchema = z.object({
   id: z.string().min(1),
   elementType: ElementTypeSchema.optional(),
@@ -288,6 +307,12 @@ export const ArticleSchema = z.object({
   rashifalItems: z.array(RashifalItemSchema).optional(),
   shortNewsItems: z.array(ShortNewsItemSchema).optional(),
   advertisementData: AdvertisementDataSchema.optional(),
+
+  // Granular typography and mobile-first element control
+  typography: ElementTypographySchema.optional(),
+  locked: z.boolean().optional(),
+  zIndex: z.number().int().optional(),
+  imageAlignment: z.enum(['left', 'center', 'right', 'full']).optional(),
 });
 
 export type Article = z.infer<typeof ArticleSchema>;

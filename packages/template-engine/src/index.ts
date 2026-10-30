@@ -1239,7 +1239,9 @@ export function isPredominantlyDevanagari(text: string): boolean {
 export function formatBodyParagraphsHtml(
   body: string,
   enableDropCap: boolean = false,
-  language: string = 'en'
+  language: string = 'en',
+  paragraphSpacingPt?: number,
+  textIndentPt?: number
 ): string {
   const isHindi = language === 'hi' || isPredominantlyDevanagari(body);
   const allowDropCap = enableDropCap && !isHindi;
@@ -1253,11 +1255,21 @@ export function formatBodyParagraphsHtml(
     return '';
   }
 
+  const customParaStyles: string[] = [];
+  if (paragraphSpacingPt !== undefined) {
+    customParaStyles.push(`margin-bottom: ${paragraphSpacingPt}pt;`);
+  }
+  if (textIndentPt !== undefined) {
+    customParaStyles.push(`text-indent: ${textIndentPt}pt;`);
+  }
+  const paraStyleAttr =
+    customParaStyles.length > 0 ? ` style="${customParaStyles.join(' ')}"` : '';
+
   return paragraphs
     .map((para, idx) => {
       const isFirst = idx === 0 && allowDropCap;
       const cls = isFirst ? 'article-para drop-cap' : 'article-para';
-      return `<p class="${cls}">${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`;
+      return `<p class="${cls}"${paraStyleAttr}>${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`;
     })
     .join('');
 }
@@ -1748,15 +1760,63 @@ export function renderNewspaperDocumentToHtml(
             `;
           }
 
-          const headlineColorStyle = art.customColors?.headlineColor
-            ? `style="color: ${art.customColors.headlineColor};"`
-            : '';
-          const subheadlineColorStyle = art.customColors?.subheadlineColor
-            ? `style="color: ${art.customColors.subheadlineColor};"`
-            : '';
-          const bylineColorStyle = art.customColors?.bylineColor
-            ? `style="color: ${art.customColors.bylineColor};"`
-            : '';
+          const headlineStylesList: string[] = [];
+          if (art.customColors?.headlineColor) {
+            headlineStylesList.push(`color: ${art.customColors.headlineColor};`);
+          }
+          if (art.typography?.textColor) {
+            headlineStylesList.push(`color: ${art.typography.textColor};`);
+          }
+          if (art.typography?.fontFamily) {
+            headlineStylesList.push(`font-family: ${art.typography.fontFamily};`);
+          }
+          if (art.typography?.headlineFontSizePt) {
+            headlineStylesList.push(`font-size: ${art.typography.headlineFontSizePt}pt;`);
+          } else if (art.customHeadlineFontSizePt) {
+            headlineStylesList.push(`font-size: ${art.customHeadlineFontSizePt}pt;`);
+          }
+          if (art.typography?.headlineFontWeight || art.typography?.fontWeight) {
+            headlineStylesList.push(
+              `font-weight: ${art.typography.headlineFontWeight || art.typography.fontWeight};`
+            );
+          }
+          if (art.typography?.lineHeight) {
+            headlineStylesList.push(`line-height: ${art.typography.lineHeight};`);
+          }
+          if (art.typography?.letterSpacingPt !== undefined) {
+            headlineStylesList.push(`letter-spacing: ${art.typography.letterSpacingPt}pt;`);
+          }
+          if (art.typography?.textAlign) {
+            headlineStylesList.push(`text-align: ${art.typography.textAlign};`);
+          }
+          const headlineColorStyle =
+            headlineStylesList.length > 0 ? `style="${headlineStylesList.join(' ')}"` : '';
+
+          const subheadlineStylesList: string[] = [];
+          if (art.customColors?.subheadlineColor) {
+            subheadlineStylesList.push(`color: ${art.customColors.subheadlineColor};`);
+          }
+          if (art.typography?.subheadlineFontSizePt) {
+            subheadlineStylesList.push(`font-size: ${art.typography.subheadlineFontSizePt}pt;`);
+          }
+          if (art.typography?.textAlign) {
+            subheadlineStylesList.push(`text-align: ${art.typography.textAlign};`);
+          }
+          const subheadlineColorStyle =
+            subheadlineStylesList.length > 0 ? `style="${subheadlineStylesList.join(' ')}"` : '';
+
+          const bylineStylesList: string[] = [];
+          if (art.customColors?.bylineColor) {
+            bylineStylesList.push(`color: ${art.customColors.bylineColor};`);
+          }
+          if (art.typography?.bylineFontSizePt) {
+            bylineStylesList.push(`font-size: ${art.typography.bylineFontSizePt}pt;`);
+          }
+          if (art.typography?.textAlign) {
+            bylineStylesList.push(`text-align: ${art.typography.textAlign};`);
+          }
+          const bylineColorStyle =
+            bylineStylesList.length > 0 ? `style="${bylineStylesList.join(' ')}"` : '';
 
           const headlineHtml = `
             <div class="article-header priority-${priority}">
@@ -1848,8 +1908,28 @@ export function renderNewspaperDocumentToHtml(
           if (art.customColors?.bodyColor) {
             bodyStylesList.push(`color: ${art.customColors.bodyColor};`);
           }
-          if (art.customFontSizePt) {
+          if (art.typography?.textColor) {
+            bodyStylesList.push(`color: ${art.typography.textColor};`);
+          }
+          if (art.typography?.fontFamily) {
+            bodyStylesList.push(`font-family: ${art.typography.fontFamily};`);
+          }
+          if (art.typography?.fontSizePt) {
+            bodyStylesList.push(`font-size: ${art.typography.fontSizePt}pt;`);
+          } else if (art.customFontSizePt) {
             bodyStylesList.push(`font-size: ${art.customFontSizePt}pt;`);
+          }
+          if (art.typography?.fontWeight) {
+            bodyStylesList.push(`font-weight: ${art.typography.fontWeight};`);
+          }
+          if (art.typography?.lineHeight) {
+            bodyStylesList.push(`line-height: ${art.typography.lineHeight};`);
+          }
+          if (art.typography?.letterSpacingPt !== undefined) {
+            bodyStylesList.push(`letter-spacing: ${art.typography.letterSpacingPt}pt;`);
+          }
+          if (art.typography?.textAlign) {
+            bodyStylesList.push(`text-align: ${art.typography.textAlign};`);
           }
           if (art.maxLines) {
             bodyStylesList.push(
@@ -1863,7 +1943,13 @@ export function renderNewspaperDocumentToHtml(
             <div class="article-body" ${bodyStyleAttr}>
               ${kickerHtml}
               ${art.dateline ? `<span class="article-dateline">${escapeHtml(art.dateline)} </span>` : ''}
-              ${formatBodyParagraphsHtml(art.body, enableDropCap, isHindi ? 'hi' : 'en')}
+              ${formatBodyParagraphsHtml(
+                art.body,
+                enableDropCap,
+                isHindi ? 'hi' : 'en',
+                art.typography?.paragraphSpacingPt,
+                art.typography?.textIndentPt
+              )}
               ${specializedExtraHtml}
             </div>
           `;
