@@ -43,9 +43,8 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!fonts/|assets/|favicon\\.svg|manifest\\.json).*)/?",
+      "source": "/((?!fonts/|assets/|favicon\\.svg|manifest\\.json).*)",
       "destination": "/index.html"
     }
   ]
 }
-
