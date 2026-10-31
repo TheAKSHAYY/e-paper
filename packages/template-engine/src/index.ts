@@ -7,6 +7,7 @@ import {
   type PageSizePreset,
   type PageOrientation,
   type Article,
+  type ElementTypography,
   type MastheadConfig,
   type NewspaperLayoutConfig,
   type NewspaperPage,
@@ -1241,7 +1242,8 @@ export function formatBodyParagraphsHtml(
   enableDropCap: boolean = false,
   language: string = 'en',
   paragraphSpacingPt?: number,
-  textIndentPt?: number
+  textIndentPt?: number,
+  paragraphTypography?: Record<string, ElementTypography>
 ): string {
   const isHindi = language === 'hi' || isPredominantlyDevanagari(body);
   const allowDropCap = enableDropCap && !isHindi;
@@ -1255,21 +1257,47 @@ export function formatBodyParagraphsHtml(
     return '';
   }
 
-  const customParaStyles: string[] = [];
-  if (paragraphSpacingPt !== undefined) {
-    customParaStyles.push(`margin-bottom: ${paragraphSpacingPt}pt;`);
-  }
-  if (textIndentPt !== undefined) {
-    customParaStyles.push(`text-indent: ${textIndentPt}pt;`);
-  }
-  const paraStyleAttr =
-    customParaStyles.length > 0 ? ` style="${customParaStyles.join(' ')}"` : '';
-
   return paragraphs
     .map((para, idx) => {
       const isFirst = idx === 0 && allowDropCap;
       const cls = isFirst ? 'article-para drop-cap' : 'article-para';
-      return `<p class="${cls}"${paraStyleAttr}>${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`;
+      const paraTypo = paragraphTypography?.[String(idx)] ?? paragraphTypography?.[idx];
+
+      const customParaStyles: string[] = [];
+      const effectiveSpacing = paraTypo?.paragraphSpacingPt ?? paragraphSpacingPt;
+      if (effectiveSpacing !== undefined) {
+        customParaStyles.push(`margin-bottom: ${effectiveSpacing}pt;`);
+      }
+      const effectiveIndent = paraTypo?.textIndentPt ?? textIndentPt;
+      if (effectiveIndent !== undefined) {
+        customParaStyles.push(`text-indent: ${effectiveIndent}pt;`);
+      }
+      if (paraTypo?.fontSizePt !== undefined) {
+        customParaStyles.push(`font-size: ${paraTypo.fontSizePt}pt;`);
+      }
+      if (paraTypo?.lineHeight !== undefined) {
+        customParaStyles.push(`line-height: ${paraTypo.lineHeight};`);
+      }
+      if (paraTypo?.textAlign !== undefined) {
+        customParaStyles.push(`text-align: ${paraTypo.textAlign};`);
+      }
+      if (paraTypo?.fontWeight !== undefined) {
+        customParaStyles.push(`font-weight: ${paraTypo.fontWeight};`);
+      }
+      if (paraTypo?.textColor !== undefined) {
+        customParaStyles.push(`color: ${paraTypo.textColor};`);
+      }
+      if (paraTypo?.fontFamily !== undefined) {
+        customParaStyles.push(`font-family: ${paraTypo.fontFamily};`);
+      }
+      if (paraTypo?.letterSpacingPt !== undefined) {
+        customParaStyles.push(`letter-spacing: ${paraTypo.letterSpacingPt}pt;`);
+      }
+
+      const paraStyleAttr =
+        customParaStyles.length > 0 ? ` style="${customParaStyles.join(' ')}"` : '';
+
+      return `<p class="${cls}"${paraStyleAttr} data-para-index="${idx}">${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`;
     })
     .join('');
 }
@@ -1948,7 +1976,8 @@ export function renderNewspaperDocumentToHtml(
                 enableDropCap,
                 isHindi ? 'hi' : 'en',
                 art.typography?.paragraphSpacingPt,
-                art.typography?.textIndentPt
+                art.typography?.textIndentPt,
+                art.paragraphTypography
               )}
               ${specializedExtraHtml}
             </div>

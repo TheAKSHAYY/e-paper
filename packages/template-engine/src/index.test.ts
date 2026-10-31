@@ -209,6 +209,27 @@ describe('TemplateEngine', () => {
       expect(renderedEnglish).toContain('class="article-para drop-cap"');
     });
 
+    it('applies paragraphTypography to individual paragraphs independently', () => {
+      const multiPara = 'पहला अनुच्छेद यहाँ समाप्त होता है।\n\nदूसरा अनुच्छेद यहाँ से शुरू होता है।';
+      const rendered = formatBodyParagraphsHtml(
+        multiPara,
+        false,
+        'hi',
+        undefined,
+        undefined,
+        {
+          '0': { fontSizePt: 18, lineHeight: 1.6, textAlign: 'center' },
+          '1': { fontSizePt: 12 },
+        }
+      );
+      expect(rendered).toContain('data-para-index="0"');
+      expect(rendered).toContain('data-para-index="1"');
+      expect(rendered).toContain('font-size: 18pt;');
+      expect(rendered).toContain('line-height: 1.6;');
+      expect(rendered).toContain('text-align: center;');
+      expect(rendered).toContain('font-size: 12pt;');
+    });
+
     it('injects hyphens: manual and lang="hi" attributes for Devanagari articles in generated HTML', () => {
       const doc = createNewspaperDocument({
         presetId: 'classic-hindi-broadsheet',

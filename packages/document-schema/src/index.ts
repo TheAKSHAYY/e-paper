@@ -310,6 +310,7 @@ export const ArticleSchema = z.object({
 
   // Granular typography and mobile-first element control
   typography: ElementTypographySchema.optional(),
+  paragraphTypography: z.record(z.string(), ElementTypographySchema).optional(),
   locked: z.boolean().optional(),
   zIndex: z.number().int().optional(),
   imageAlignment: z.enum(['left', 'center', 'right', 'full']).optional(),

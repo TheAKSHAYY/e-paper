@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import type { Article, ElementTypography } from '@epaper-studio/document-schema';
 import { DEVANAGARI_FONTS } from '@epaper-studio/typography';
 
@@ -7,6 +7,8 @@ export type TargetTextElement = 'headline' | 'subheadline' | 'body' | 'byline' |
 export interface TypographyControlsProps {
   article?: Article;
   selectedArticle?: Article;
+  selectedParagraphIndex?: number | null;
+  onSelectParagraph?: (index: number | null) => void;
   onUpdateArticle: (updated: Article) => void;
   onApplyGlobally?: (typography: ElementTypography) => void;
   onApplyToPage?: (typography: ElementTypography) => void;
@@ -17,6 +19,8 @@ export interface TypographyControlsProps {
 export const TypographyControls: React.FC<TypographyControlsProps> = ({
   article: propArticle,
   selectedArticle,
+  selectedParagraphIndex,
+  onSelectParagraph,
   onUpdateArticle,
   onApplyGlobally,
   onApplyToPage,
@@ -25,8 +29,36 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
 }) => {
   const article = (propArticle ?? selectedArticle)!;
   const handleApply = onApplyToPage ?? onApplyGlobally;
-  const [targetElement, setTargetElement] = useState<TargetTextElement>('headline');
+
+  const [targetElement, setTargetElement] = useState<TargetTextElement>(
+    selectedParagraphIndex !== undefined && selectedParagraphIndex !== null ? 'body' : 'headline'
+  );
+  const [internalParaIndex, setInternalParaIndex] = useState<number | null>(
+    selectedParagraphIndex !== undefined ? selectedParagraphIndex : null
+  );
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+
+  // Sync external selectedParagraphIndex into local state
+  useEffect(() => {
+    if (selectedParagraphIndex !== undefined) {
+      setInternalParaIndex(selectedParagraphIndex);
+      if (selectedParagraphIndex !== null) {
+        setTargetElement('body');
+      }
+    }
+  }, [selectedParagraphIndex]);
+
+  const currentParaIndex =
+    selectedParagraphIndex !== undefined ? selectedParagraphIndex : internalParaIndex;
+
+  const handleSelectParagraph = (idx: number | null) => {
+    setInternalParaIndex(idx);
+    onSelectParagraph?.(idx);
+    if (idx !== null) {
+      setTargetElement('body');
+    }
+  };
+
   const sliderId = useId();
   const numInputId = useId();
   const lineHeightSliderId = useId();
@@ -36,8 +68,18 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
 
   const currentTypography: ElementTypography = article.typography || {};
 
-  // Derive current values based on selected target element
+  // Extract individual paragraphs from article body
+  const paragraphs = article.body.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+
+  // Derive current font size based on target element and paragraph selection
   const getCurrentFontSize = (): number => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      const paraTypo = article.paragraphTypography?.[String(currentParaIndex)];
+      if (paraTypo?.fontSizePt !== undefined) {
+        return paraTypo.fontSizePt;
+      }
+      return currentTypography.fontSizePt ?? article.customFontSizePt ?? 14;
+    }
     switch (targetElement) {
       case 'headline':
         return currentTypography.headlineFontSizePt ?? article.customHeadlineFontSizePt ?? 22;
@@ -49,14 +91,30 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
         return currentTypography.captionFontSizePt ?? 7.5;
       case 'body':
       default:
-        return currentTypography.fontSizePt ?? article.customFontSizePt ?? 9.5;
+        return currentTypography.fontSizePt ?? article.customFontSizePt ?? 14;
     }
   };
 
   const updateFontSize = (newSizePt: number) => {
     const clamped = Math.max(6, Math.min(140, Number(newSizePt.toFixed(1))));
-    const nextTypo: ElementTypography = { ...currentTypography };
 
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      const currentParaTypo = article.paragraphTypography?.[String(currentParaIndex)] || {};
+      const nextParaTypo = {
+        ...(article.paragraphTypography || {}),
+        [String(currentParaIndex)]: {
+          ...currentParaTypo,
+          fontSizePt: clamped,
+        },
+      };
+      onUpdateArticle({
+        ...article,
+        paragraphTypography: nextParaTypo,
+      });
+      return;
+    }
+
+    const nextTypo: ElementTypography = { ...currentTypography };
     switch (targetElement) {
       case 'headline':
         nextTypo.headlineFontSizePt = clamped;
@@ -88,6 +146,22 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
     field: K,
     value: ElementTypography[K]
   ) => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      const currentParaTypo = article.paragraphTypography?.[String(currentParaIndex)] || {};
+      const nextParaTypo = {
+        ...(article.paragraphTypography || {}),
+        [String(currentParaIndex)]: {
+          ...currentParaTypo,
+          [field]: value,
+        },
+      };
+      onUpdateArticle({
+        ...article,
+        paragraphTypography: nextParaTypo,
+      });
+      return;
+    }
+
     const nextTypo: ElementTypography = {
       ...currentTypography,
       [field]: value,
@@ -98,20 +172,26 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
     });
   };
 
-  const currentFontSize = getCurrentFontSize();
-  const currentFontFamily = currentTypography.fontFamily || '';
-  const currentFontWeight = currentTypography.fontWeight || 'normal';
-  const currentHeadlineWeight = currentTypography.headlineFontWeight || currentFontWeight;
-  const currentLineHeight = currentTypography.lineHeight ?? 1.25;
-  const currentLetterSpacing = currentTypography.letterSpacingPt ?? 0;
-  const currentTextAlign = currentTypography.textAlign || (targetElement === 'body' ? 'justify' : 'left');
-  const currentTextColor = currentTypography.textColor || article.customColors?.headlineColor || '#111111';
-  const currentParaSpacing = currentTypography.paragraphSpacingPt ?? 6;
-  const currentTextIndent = currentTypography.textIndentPt ?? 0;
+  const effectiveParaTypo =
+    targetElement === 'body' && currentParaIndex !== null
+      ? article.paragraphTypography?.[String(currentParaIndex)]
+      : undefined;
 
-  const quickSizePresets = targetElement === 'headline'
-    ? [14, 18, 22, 28, 36, 48, 64]
-    : [7.5, 8.5, 9.5, 10.5, 12, 14, 16];
+  const currentFontSize = getCurrentFontSize();
+  const currentFontFamily = effectiveParaTypo?.fontFamily || currentTypography.fontFamily || '';
+  const currentFontWeight = effectiveParaTypo?.fontWeight || currentTypography.fontWeight || 'normal';
+  const currentHeadlineWeight = currentTypography.headlineFontWeight || currentFontWeight;
+  const currentLineHeight = effectiveParaTypo?.lineHeight ?? currentTypography.lineHeight ?? (targetElement === 'headline' ? 1.15 : 1.45);
+  const currentLetterSpacing = effectiveParaTypo?.letterSpacingPt ?? currentTypography.letterSpacingPt ?? 0;
+  const currentTextAlign = effectiveParaTypo?.textAlign ?? currentTypography.textAlign ?? (targetElement === 'body' ? 'justify' : 'left');
+  const currentTextColor = effectiveParaTypo?.textColor ?? currentTypography.textColor ?? article.customColors?.headlineColor ?? '#111111';
+  const currentParaSpacing = effectiveParaTypo?.paragraphSpacingPt ?? currentTypography.paragraphSpacingPt ?? 6;
+  const currentTextIndent = effectiveParaTypo?.textIndentPt ?? currentTypography.textIndentPt ?? 0;
+
+  const quickSizePresets =
+    targetElement === 'headline'
+      ? [14, 18, 22, 28, 36, 48, 64]
+      : [8, 10, 12, 14, 16, 18, 24, 32];
 
   return (
     <div
@@ -163,7 +243,12 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
               <button
                 key={item.key}
                 type="button"
-                onClick={() => setTargetElement(item.key)}
+                onClick={() => {
+                  setTargetElement(item.key);
+                  if (item.key !== 'body') {
+                    handleSelectParagraph(null);
+                  }
+                }}
                 data-testid={`target-element-${item.key}`}
                 style={{
                   padding: '6px 4px',
@@ -184,54 +269,173 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
             );
           })}
         </div>
+
+        {/* Individual Paragraph Selector Chips (Available when Body is active or multiple paragraphs exist) */}
+        {paragraphs.length > 0 && (
+          <div
+            style={{
+              marginTop: '8px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              padding: '6px 8px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 600,
+                color: '#475569',
+                marginBottom: '4px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>अनुच्छेद चुनें (Individual Paragraphs):</span>
+              {currentParaIndex !== null && targetElement === 'body' && (
+                <span style={{ color: '#2563eb', fontWeight: 700 }}>
+                  ¶ {currentParaIndex + 1} सक्रिय (Active)
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {paragraphs.map((_, pIdx) => {
+                const isThisParaActive = targetElement === 'body' && currentParaIndex === pIdx;
+                const paraCustomSize = article.paragraphTypography?.[String(pIdx)]?.fontSizePt;
+                return (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    data-testid={`target-paragraph-${pIdx}`}
+                    onClick={() => {
+                      setTargetElement('body');
+                      handleSelectParagraph(pIdx);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '5px',
+                      border: isThisParaActive ? '1.5px solid #2563eb' : '1px solid #cbd5e1',
+                      backgroundColor: isThisParaActive ? '#eff6ff' : '#ffffff',
+                      color: isThisParaActive ? '#1d4ed8' : '#334155',
+                      fontWeight: isThisParaActive ? 700 : 500,
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      minHeight: isMobile ? '36px' : '26px',
+                    }}
+                  >
+                    <span>¶</span> {pIdx + 1}
+                    {paraCustomSize && (
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          color: isThisParaActive ? '#1d4ed8' : '#059669',
+                          fontWeight: 700,
+                        }}
+                      >
+                        ({paraCustomSize}pt)
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                data-testid="target-all-paragraphs"
+                onClick={() => {
+                  setTargetElement('body');
+                  handleSelectParagraph(null);
+                }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '5px',
+                  border:
+                    targetElement === 'body' && currentParaIndex === null
+                      ? '1.5px solid #2563eb'
+                      : '1px solid #cbd5e1',
+                  backgroundColor:
+                    targetElement === 'body' && currentParaIndex === null ? '#eff6ff' : '#ffffff',
+                  color:
+                    targetElement === 'body' && currentParaIndex === null ? '#1d4ed8' : '#64748b',
+                  fontWeight: targetElement === 'body' && currentParaIndex === null ? 700 : 500,
+                  fontSize: '10.5px',
+                  cursor: 'pointer',
+                  minHeight: isMobile ? '36px' : '26px',
+                }}
+              >
+                सभी अनुच्छेद (All)
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2. Complete Font Size Controls (Slider + Plus/Minus + Number Input + Indicator) */}
       <div
         style={{
           backgroundColor: '#f8fafc',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #cbd5e1',
           borderRadius: '8px',
           padding: '12px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px',
+          gap: '10px',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <label htmlFor={sliderId} style={{ fontWeight: 700, fontSize: '11px', color: '#334155' }}>
-            अक्षर आकार (Font Size)
+          <label htmlFor={sliderId} style={{ fontWeight: 700, fontSize: '12px', color: '#1e293b' }}>
+            फ़ॉन्ट साइज़ (Font Size)
           </label>
           <span
             data-testid="current-font-size-badge"
             style={{
-              backgroundColor: '#e0f2fe',
-              color: '#0369a1',
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
               fontWeight: 700,
-              padding: '2px 8px',
+              padding: '3px 8px',
               borderRadius: '12px',
               fontSize: '11px',
+              border: '1px solid #bfdbfe',
             }}
           >
             {currentFontSize} pt ({Math.round(currentFontSize * 1.33)} px)
           </span>
         </div>
 
-        {/* Plus / Minus & Slider Row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Scope Indicator */}
+        <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 500 }}>
+          {targetElement === 'body' && currentParaIndex !== null
+            ? `संपादित हो रहा है: पैरोग्राफ ${currentParaIndex + 1} (Editing: Paragraph ${currentParaIndex + 1})`
+            : targetElement === 'headline'
+            ? 'संपादित हो रहा है: मुख्य शीर्षक (Headline)'
+            : targetElement === 'subheadline'
+            ? 'संपादित हो रहा है: उप-शीर्षक (Subheadline)'
+            : targetElement === 'byline'
+            ? 'संपादित हो रहा है: लेखक (Byline)'
+            : targetElement === 'caption'
+            ? 'संपादित हो रहा है: फोटो कैप्शन (Caption)'
+            : 'संपादित हो रहा है: पूरा मूल पाठ (All Body Text)'}
+        </div>
+
+        {/* Plus / Minus & Value Row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
           <button
             type="button"
             data-testid="font-size-decrement-btn"
-            onClick={() => updateFontSize(currentFontSize - 0.5)}
+            onClick={() => updateFontSize(currentFontSize - 1)}
             aria-label="Decrease Font Size"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               borderRadius: '6px',
               border: '1px solid #cbd5e1',
               backgroundColor: '#ffffff',
               color: '#0f172a',
-              fontSize: '16px',
+              fontSize: '18px',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -243,31 +447,33 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
             −
           </button>
 
-          <input
-            id={sliderId}
-            type="range"
-            data-testid="font-size-slider"
-            min={targetElement === 'headline' ? 10 : 6}
-            max={targetElement === 'headline' ? 96 : 36}
-            step="0.5"
-            value={currentFontSize}
-            onChange={(e) => updateFontSize(parseFloat(e.target.value))}
-            style={{ flex: 1, accentColor: '#b91c1c', cursor: 'pointer' }}
-          />
+          <div
+            data-testid="font-size-display-center"
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#0f172a',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {currentFontSize} pt
+          </div>
 
           <button
             type="button"
             data-testid="font-size-increment-btn"
-            onClick={() => updateFontSize(currentFontSize + 0.5)}
+            onClick={() => updateFontSize(currentFontSize + 1)}
             aria-label="Increase Font Size"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               borderRadius: '6px',
               border: '1px solid #cbd5e1',
               backgroundColor: '#ffffff',
               color: '#0f172a',
-              fontSize: '16px',
+              fontSize: '18px',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -278,33 +484,71 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
           >
             +
           </button>
+        </div>
 
+        {/* Slider Row: [---------●---------] */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+            {targetElement === 'headline' ? '10pt' : '6pt'}
+          </span>
           <input
-            id={numInputId}
-            type="number"
-            data-testid="font-size-numeric-input"
-            aria-label="Exact Font Size in pt"
-            min="6"
-            max="140"
-            step="0.5"
+            id={sliderId}
+            type="range"
+            data-testid="font-size-slider"
+            min={targetElement === 'headline' ? 10 : 6}
+            max={targetElement === 'headline' ? 120 : 72}
+            step="1"
             value={currentFontSize}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value);
-              if (!isNaN(val)) updateFontSize(val);
-            }}
-            style={{
-              width: '54px',
-              height: '34px',
-              padding: '4px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              fontSize: '12px',
-              fontWeight: 600,
-              textAlign: 'center',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
+            onChange={(e) => updateFontSize(parseFloat(e.target.value))}
+            style={{ flex: 1, accentColor: '#b91c1c', cursor: 'pointer' }}
           />
+          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+            {targetElement === 'headline' ? '120pt' : '72pt'}
+          </span>
+        </div>
+
+        {/* Custom size input: Custom size: [14] */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            paddingTop: '2px',
+          }}
+        >
+          <label htmlFor={numInputId} style={{ fontSize: '11px', fontWeight: 600, color: '#475569' }}>
+            कस्टम साइज़ (Custom size):
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input
+              id={numInputId}
+              type="number"
+              data-testid="font-size-numeric-input"
+              aria-label="Custom Font Size"
+              min="6"
+              max="140"
+              step="0.5"
+              value={currentFontSize}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) updateFontSize(val);
+              }}
+              style={{
+                width: '60px',
+                height: '32px',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '12px',
+                fontWeight: 600,
+                textAlign: 'center',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>pt</span>
+          </div>
         </div>
 
         {/* Quick Size Preset Pills */}
@@ -313,9 +557,10 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
             <button
               key={size}
               type="button"
+              data-testid={`font-size-preset-${size}`}
               onClick={() => updateFontSize(size)}
               style={{
-                padding: '3px 7px',
+                padding: '3px 8px',
                 borderRadius: '4px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: currentFontSize === size ? '#b91c1c' : '#ffffff',
@@ -351,20 +596,18 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
               backgroundColor: '#ffffff',
             }}
           >
-            <option value="">डिफ़ॉल्ट अखबार फॉन्ट</option>
-            {DEVANAGARI_FONTS.map((f) => (
-              <option key={f.family} value={`'${f.family}', serif`}>
-                {f.family} ({f.nameHi})
+            <option value="">डिफ़ॉल्ट फॉन्ट (Inherit)</option>
+            {DEVANAGARI_FONTS.map((font) => (
+              <option key={font.family} value={font.cssFamily}>
+                 {font.nameHi}
               </option>
             ))}
-            <option value="'Playfair Display', serif">Playfair Display (English)</option>
-            <option value="'Source Serif 4', serif">Source Serif 4</option>
           </select>
         </div>
 
         <div>
           <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
-            मोटाई (Weight)
+            मोटापा (Weight)
           </label>
           <select
             data-testid="font-weight-select"
@@ -386,112 +629,135 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
               backgroundColor: '#ffffff',
             }}
           >
-            <option value="400">नॉर्मल (Regular 400)</option>
-            <option value="500">मध्यम (Medium 500)</option>
-            <option value="600">अर्ध-बोल्ड (SemiBold 600)</option>
-            <option value="700">बोल्ड (Bold 700)</option>
-            <option value="900">ब्लैक (Black 900)</option>
+            <option value="400">Regular (400)</option>
+            <option value="500">Medium (500)</option>
+            <option value="600">SemiBold (600)</option>
+            <option value="700">Bold (700)</option>
+            <option value="900">Black (900)</option>
           </select>
         </div>
       </div>
 
-      {/* 4. Line Height & Letter Spacing */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-            <label htmlFor={lineHeightSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
-              पंक्ति अंतराल (Line Height)
-            </label>
-            <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>{currentLineHeight}x</span>
-          </div>
-          <input
-            id={lineHeightSliderId}
-            type="range"
-            data-testid="line-height-slider"
-            min="0.9"
-            max="2.5"
-            step="0.05"
-            value={currentLineHeight}
-            onChange={(e) => updateTypographyField('lineHeight', parseFloat(e.target.value))}
-            style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
-          />
-        </div>
-
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-            <label htmlFor={letterSpacingSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
-              अक्षर अंतर (Spacing)
-            </label>
-            <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>{currentLetterSpacing}pt</span>
-          </div>
-          <input
-            id={letterSpacingSliderId}
-            type="range"
-            data-testid="letter-spacing-slider"
-            min="-1"
-            max="5"
-            step="0.1"
-            value={currentLetterSpacing}
-            onChange={(e) => updateTypographyField('letterSpacingPt', parseFloat(e.target.value))}
-            style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
-          />
-        </div>
-      </div>
-
-      {/* 5. Text Alignment */}
+      {/* 4. Line Height Slider */}
       <div>
-        <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
-          संरेखण (Text Alignment)
-        </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
-          {(
-            [
-              { key: 'left', label: 'बायें ⯇' },
-              { key: 'center', label: 'मध्य ☰' },
-              { key: 'right', label: 'दायें ⯈' },
-              { key: 'justify', label: 'समान ⯏' },
-            ] as const
-          ).map((align) => {
-            const isActive = currentTextAlign === align.key;
-            return (
-              <button
-                key={align.key}
-                type="button"
-                data-testid={`align-${align.key}-btn`}
-                onClick={() => updateTypographyField('textAlign', align.key)}
-                style={{
-                  padding: '6px 4px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: isActive ? '#0f172a' : '#ffffff',
-                  color: isActive ? '#ffffff' : '#334155',
-                  fontSize: '11px',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  minHeight: isMobile ? '38px' : '30px',
-                }}
-              >
-                {align.label}
-              </button>
-            );
-          })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <label htmlFor={lineHeightSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
+            पंक्ति अंतराल (Line Height)
+          </label>
+          <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748b' }}>
+            {currentLineHeight}x
+          </span>
+        </div>
+        <input
+          id={lineHeightSliderId}
+          type="range"
+          data-testid="line-height-slider"
+          min="0.9"
+          max="2.5"
+          step="0.05"
+          value={currentLineHeight}
+          onChange={(e) => updateTypographyField('lineHeight', parseFloat(e.target.value))}
+          style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
+        />
+      </div>
+
+      {/* 5. Letter Spacing Slider */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <label htmlFor={letterSpacingSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
+            अक्षर अंतराल (Letter Spacing)
+          </label>
+          <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748b' }}>
+            {currentLetterSpacing} pt
+          </span>
+        </div>
+        <input
+          id={letterSpacingSliderId}
+          type="range"
+          data-testid="letter-spacing-slider"
+          min="-1"
+          max="6"
+          step="0.25"
+          value={currentLetterSpacing}
+          onChange={(e) => updateTypographyField('letterSpacingPt', parseFloat(e.target.value))}
+          style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
+        />
+      </div>
+
+      {/* 6. Alignment & Text Color */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'flex-end' }}>
+        <div>
+          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+            संरेखण (Alignment)
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+            {(
+              [
+                { key: 'left', label: 'बायाँ (L)', testId: 'align-left-btn' },
+                { key: 'center', label: 'मध्य (C)', testId: 'align-center-btn' },
+                { key: 'right', label: 'दायाँ (R)', testId: 'align-right-btn' },
+                { key: 'justify', label: 'समान (J)', testId: 'align-justify-btn' },
+              ] as const
+            ).map((align) => {
+              const isAlignActive = currentTextAlign === align.key;
+              return (
+                <button
+                  key={align.key}
+                  type="button"
+                  data-testid={align.testId}
+                  onClick={() => updateTypographyField('textAlign', align.key)}
+                  style={{
+                    padding: '6px 2px',
+                    borderRadius: '4px',
+                    border: isAlignActive ? '1px solid #b91c1c' : '1px solid #cbd5e1',
+                    backgroundColor: isAlignActive ? '#fef2f2' : '#ffffff',
+                    color: isAlignActive ? '#b91c1c' : '#334155',
+                    fontWeight: isAlignActive ? 700 : 500,
+                    fontSize: '10.5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {align.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+            रंग (Color)
+          </label>
+          <input
+            type="color"
+            data-testid="text-color-picker"
+            value={currentTextColor}
+            onChange={(e) => updateTypographyField('textColor', e.target.value)}
+            style={{
+              width: '42px',
+              height: '32px',
+              padding: '1px',
+              borderRadius: '4px',
+              border: '1px solid #cbd5e1',
+              cursor: 'pointer',
+            }}
+          />
         </div>
       </div>
 
-      {/* 6. Paragraph Spacing & Indentation (for Body) */}
+      {/* 7. Paragraph Spacing & Indentation (Relevant for Body) */}
       {targetElement === 'body' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-              <label htmlFor={paraSpacingSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
-                पैराग्राफ अंतराल (Spacing)
+              <label htmlFor={paraSpacingSliderId} style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}>
+                पैराग्राफ दूरी
               </label>
-              <span style={{ fontSize: '10.5px', color: '#64748b' }}>{currentParaSpacing}pt</span>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>{currentParaSpacing}pt</span>
             </div>
             <input
               id={paraSpacingSliderId}
               type="range"
-              data-testid="para-spacing-slider"
               min="0"
               max="24"
               step="1"
@@ -503,15 +769,14 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-              <label htmlFor={textIndentSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
-                प्रथम पंक्ति हाशिया (Indent)
+              <label htmlFor={textIndentSliderId} style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}>
+                पहली पंक्ति इंडेंट
               </label>
-              <span style={{ fontSize: '10.5px', color: '#64748b' }}>{currentTextIndent}pt</span>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>{currentTextIndent}pt</span>
             </div>
             <input
               id={textIndentSliderId}
               type="range"
-              data-testid="text-indent-slider"
               min="0"
               max="36"
               step="1"
@@ -523,151 +788,113 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
         </div>
       )}
 
-      {/* 7. Text Color */}
-      <div>
-        <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
-          रंग (Text Color)
-        </label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input
-            type="color"
-            data-testid="text-color-picker"
-            value={currentTextColor}
-            onChange={(e) => updateTypographyField('textColor', e.target.value)}
+      {/* 8. Action Buttons: Add Paragraph & Apply to Page */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+        {onAddParagraph && (
+          <button
+            type="button"
+            data-testid="add-paragraph-btn"
+            onClick={onAddParagraph}
             style={{
-              width: '36px',
-              height: '32px',
-              padding: '0',
-              border: '1px solid #cbd5e1',
+              padding: '8px 12px',
               borderRadius: '6px',
+              border: '1px dashed #94a3b8',
+              backgroundColor: '#f8fafc',
+              color: '#334155',
+              fontSize: '11.5px',
+              fontWeight: 600,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
             }}
-          />
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {['#111111', '#334155', '#b91c1c', '#1d4ed8', '#15803d', '#b45309'].map((c) => (
+          >
+            <span>+</span> नया अनुच्छेद जोड़ें (Add Paragraph)
+          </button>
+        )}
+
+        {handleApply && !showApplyConfirm && (
+          <button
+            type="button"
+            data-testid="apply-typography-to-page-btn"
+            onClick={() => setShowApplyConfirm(true)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              backgroundColor: '#ffffff',
+              color: '#334155',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>📑</span> इस पेज के सभी लेखों पर लागू करें (Apply to Page)
+          </button>
+        )}
+
+        {handleApply && showApplyConfirm && (
+          <div
+            style={{
+              padding: '8px',
+              borderRadius: '6px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <span style={{ fontSize: '11px', color: '#991b1b', fontWeight: 600 }}>
+              क्या आप इस स्टाइल को वर्तमान पेज के सभी ब्लॉक्स पर लागू करना चाहते हैं?
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
               <button
-                key={c}
                 type="button"
-                onClick={() => updateTypographyField('textColor', c)}
+                data-testid="confirm-apply-typography-btn"
+                onClick={() => {
+                  handleApply(article.typography || {});
+                  setShowApplyConfirm(false);
+                }}
                 style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: c,
-                  border: currentTextColor === c ? '2px solid #0f172a' : '1px solid #e2e8f0',
+                  flex: 1,
+                  padding: '6px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: '#b91c1c',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 8. Add Paragraph Helper */}
-      {onAddParagraph && (
-        <button
-          type="button"
-          data-testid="add-paragraph-btn"
-          onClick={onAddParagraph}
-          style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            border: '1px dashed #cbd5e1',
-            backgroundColor: '#f8fafc',
-            color: '#0f172a',
-            fontWeight: 600,
-            fontSize: '11.5px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            minHeight: isMobile ? '44px' : '36px',
-          }}
-        >
-          <span>✚ नया पैराग्राफ जोड़ें (Add Paragraph)</span>
-        </button>
-      )}
-
-      {/* 9. Apply to all articles on page toggle / button */}
-      {handleApply && (
-        <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-          {!showApplyConfirm ? (
-            <button
-              type="button"
-              data-testid="apply-typography-globally-btn"
-              onClick={() => setShowApplyConfirm(true)}
-              style={{
-                width: '100%',
-                padding: '7px 10px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                backgroundColor: '#ffffff',
-                color: '#475569',
-                fontSize: '11px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🌐 यह टाइपोग्राफी पूरे पेज पर लागू करें (Apply to Page)
-            </button>
-          ) : (
-            <div
-              style={{
-                backgroundColor: '#fffbeb',
-                border: '1px solid #fde68a',
-                padding: '8px',
-                borderRadius: '6px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px',
-              }}
-            >
-              <span style={{ fontSize: '11px', color: '#92400e', fontWeight: 600 }}>
-                क्या आप यह फॉन्ट शैली पेज के सभी लेखों पर लागू करना चाहते हैं?
-              </span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleApply(currentTypography);
-                    setShowApplyConfirm(false);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '6px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    backgroundColor: '#b45309',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  हाँ, लागू करें
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowApplyConfirm(false)}
-                  style={{
-                    flex: 1,
-                    padding: '6px',
-                    borderRadius: '4px',
-                    border: '1px solid #d97706',
-                    backgroundColor: '#ffffff',
-                    color: '#92400e',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  रद्द करें
-                </button>
-              </div>
+              >
+                हाँ, लागू करें
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowApplyConfirm(false)}
+                style={{
+                  flex: 1,
+                  padding: '6px',
+                  borderRadius: '4px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#475569',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                }}
+              >
+                रद्द करें
+              </button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
