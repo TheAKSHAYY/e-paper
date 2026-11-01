@@ -2122,7 +2122,7 @@ export const App: React.FC = () => {
                   setSelectedArticleId(id);
                   setIsMastheadSelected(false);
                   if (isMobile) {
-                    setMobileDrawer('text');
+                    setMobileDrawer('inspector');
                   } else {
                     setIsInspectorOpen(true);
                   }
@@ -2132,7 +2132,7 @@ export const App: React.FC = () => {
                   setIsMastheadSelected(true);
                   setSelectedArticleId(null);
                   if (isMobile) {
-                    setMobileDrawer('style');
+                    setMobileDrawer('presets');
                   } else {
                     setIsInspectorOpen(true);
                   }
@@ -2207,7 +2207,7 @@ export const App: React.FC = () => {
                 onDeleteArticle={handleDeleteArticle}
                 onDuplicateArticle={handleDuplicateArticle}
                 onApplyTypographyToPage={handleApplyTypographyToPage}
-                onAddArticle={() => handleAddBlock()}
+                onAddBlock={handleAddBlock}
                 currentPage={currentPage}
                 currentPageIndex={safePageIndex}
                 totalPages={pages.length}
@@ -2225,15 +2225,9 @@ export const App: React.FC = () => {
                 useFreeLayout={useFreeLayout}
                 onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
                 onAutoFit={() => handleAutoFitPage(safePageIndex)}
-                onUndo={handleUndo}
-                onRedo={handleRedo}
-                canUndo={historyIndex > 0}
-                canRedo={historyIndex < history.length - 1}
-                onExportPdf={handleExportPdf}
-                isExportingPdf={isExportingPdf}
-                onPrintPdf={() => handleOpenPrintModal(null)}
+                onApplyPreset={(pId) => handleApplyPreset(pId, false)}
+                onApplyLayoutRow={handleApplyLayoutRow}
                 onOpenTheme={() => setIsThemeModalOpen(true)}
-                onExportProjectJson={handleExportProjectJson}
                 onDeselectArticle={() => {
                   setSelectedArticleId(null);
                   setIsMastheadSelected(false);

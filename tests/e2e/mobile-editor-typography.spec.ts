@@ -9,7 +9,7 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
   ];
 
   for (const vp of mobileViewports) {
-    test(`1. Bottom toolbar renders 6 touch-friendly items (>= 44px) on ${vp.name}`, async ({ page }) => {
+    test(`1. Bottom toolbar renders 5 newspaper-focused touch items (>= 44px) on ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto('/#editor');
       await page.waitForTimeout(600);
@@ -17,14 +17,13 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
       const bottomNav = page.locator('[data-testid="mobile-bottom-nav"]');
       await expect(bottomNav).toBeVisible();
 
-      // Check all 6 required items: Text, Image, Layout, Style, Pages, More
+      // Check all 5 restored authentic newspaper items: Pages, Add Block, Editor, Format, PDF
       const navButtons = [
-        page.locator('[data-testid="mobile-nav-text"]'),
-        page.locator('[data-testid="mobile-nav-image"]'),
-        page.locator('[data-testid="mobile-nav-layout"]'),
-        page.locator('[data-testid="mobile-nav-style"]'),
         page.locator('[data-testid="mobile-nav-pages"]'),
-        page.locator('[data-testid="mobile-nav-more"]'),
+        page.locator('[data-testid="mobile-nav-blocks"]'),
+        page.locator('[data-testid="mobile-nav-inspector"]'),
+        page.locator('[data-testid="mobile-nav-presets"]'),
+        page.locator('[data-testid="mobile-nav-pdf"]'),
       ];
 
       for (const btn of navButtons) {
@@ -37,6 +36,13 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
           expect(box.height).toBeGreaterThanOrEqual(44);
         }
       }
+
+      // Verify labels match exact newspaper terms
+      await expect(page.locator('[data-testid="mobile-nav-pages"]')).toContainText(/पेज/i);
+      await expect(page.locator('[data-testid="mobile-nav-blocks"]')).toContainText(/ब्लॉक/i);
+      await expect(page.locator('[data-testid="mobile-nav-inspector"]')).toContainText(/संपादक|गुण/i);
+      await expect(page.locator('[data-testid="mobile-nav-presets"]')).toContainText(/प्रारूप/i);
+      await expect(page.locator('[data-testid="mobile-nav-pdf"]')).toContainText(/PDF/i);
     });
   }
 
@@ -51,9 +57,9 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     const canvas = page.locator('[data-testid="newspaper-sheet-canvas"]').first();
     await expect(canvas).toBeVisible();
 
-    // Tap "Text" tool to open bottom sheet
-    const textNavBtn = page.locator('[data-testid="mobile-nav-text"]');
-    await textNavBtn.click();
+    // Tap "+ ब्लॉक" tool to open bottom sheet
+    const blockNavBtn = page.locator('[data-testid="mobile-nav-blocks"]');
+    await blockNavBtn.click();
     await page.waitForTimeout(300);
 
     // Bottom sheet is visible
@@ -80,12 +86,12 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     await page.goto('/#editor');
     await page.waitForTimeout(600);
 
-    // Open Layout sheet
-    await page.locator('[data-testid="mobile-nav-layout"]').click();
+    // Open Presets sheet
+    await page.locator('[data-testid="mobile-nav-presets"]').click();
     const sheet = page.locator('[data-testid="mobile-bottom-sheet"]');
     await expect(sheet).toBeVisible();
 
-    // Initial height is compact peek (~38vh)
+    // Initial height is compact peek (~42vh)
     const initialBox = await sheet.boundingBox();
     expect(initialBox).not.toBeNull();
 

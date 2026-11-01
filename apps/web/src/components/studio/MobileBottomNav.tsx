@@ -1,16 +1,6 @@
 import React from 'react';
 
-export type MobileDrawerMode =
-  | 'text'
-  | 'image'
-  | 'layout'
-  | 'style'
-  | 'pages'
-  | 'more'
-  | 'blocks'
-  | 'presets'
-  | 'inspector'
-  | 'none';
+export type MobileDrawerMode = 'pages' | 'blocks' | 'inspector' | 'presets' | 'none';
 
 export interface MobileBottomNavProps {
   activeDrawer: MobileDrawerMode;
@@ -18,8 +8,8 @@ export interface MobileBottomNavProps {
   currentPageNumber: number;
   totalPages: number;
   hasSelectedArticle: boolean;
-  onExportPdf?: () => void;
-  isExportingPdf?: boolean;
+  onExportPdf: () => void;
+  isExportingPdf: boolean;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -28,74 +18,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   currentPageNumber,
   totalPages,
   hasSelectedArticle,
+  onExportPdf,
+  isExportingPdf,
 }) => {
-  // Map legacy modes to primary 6 categories
-  const normalizedActive =
-    activeDrawer === 'inspector'
-      ? hasSelectedArticle
-        ? 'text'
-        : 'layout'
-      : activeDrawer === 'blocks'
-        ? 'text'
-        : activeDrawer === 'presets'
-          ? 'style'
-          : activeDrawer;
-
-  const handleToggle = (mode: 'text' | 'image' | 'layout' | 'style' | 'pages' | 'more') => {
-    if (activeDrawer === mode) {
-      onSelectDrawer('none');
-    } else {
-      onSelectDrawer(mode);
-    }
-  };
-
-  const navItems = [
-    {
-      id: 'text' as const,
-      label: 'टेक्स्ट',
-      aliasText: '+ ब्लॉक',
-      icon: '🔤',
-      testId: 'mobile-nav-text',
-      badge: hasSelectedArticle ? '✓' : undefined,
-    },
-    {
-      id: 'image' as const,
-      label: 'चित्र',
-      icon: '🖼️',
-      testId: 'mobile-nav-image',
-    },
-    {
-      id: 'layout' as const,
-      label: 'लेआउट',
-      aliasText: 'गुण',
-      icon: '⊞',
-      testId: 'mobile-nav-layout',
-    },
-    {
-      id: 'style' as const,
-      label: 'शैली',
-      aliasText: 'प्रारूप',
-      icon: '🎨',
-      testId: 'mobile-nav-style',
-    },
-    {
-      id: 'pages' as const,
-      label: `पृष्ठ ${currentPageNumber}/${totalPages}`,
-      aliasText: 'पेज',
-      icon: '📄',
-      testId: 'mobile-nav-pages',
-    },
-    {
-      id: 'more' as const,
-      label: 'अधिक',
-      icon: '⋯',
-      testId: 'mobile-nav-more',
-    },
-  ];
-
   return (
     <nav
       data-testid="mobile-bottom-nav"
+      aria-label="मोबाइल नेविगेशन टूलबार"
       style={{
         position: 'fixed',
         bottom: 0,
@@ -108,88 +37,187 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingLeft: '2px',
-        paddingRight: '2px',
+        paddingLeft: '4px',
+        paddingRight: '4px',
         boxSizing: 'border-box',
         zIndex: 100,
         userSelect: 'none',
       }}
     >
-      {navItems.map((item) => {
-        const isActive = normalizedActive === item.id;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            data-testid={item.testId}
-            onClick={() => handleToggle(item.id)}
-            aria-label={item.label}
-            aria-expanded={isActive}
+      {/* 1. Pages Button (पेज) */}
+      <button
+        type="button"
+        data-testid="mobile-nav-pages"
+        onClick={() => onSelectDrawer(activeDrawer === 'pages' ? 'none' : 'pages')}
+        aria-label={`पेज ${currentPageNumber}/${totalPages}`}
+        aria-expanded={activeDrawer === 'pages'}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px',
+          background: activeDrawer === 'pages' ? '#1e293b' : 'transparent',
+          border: 'none',
+          borderRadius: '6px',
+          color: activeDrawer === 'pages' ? '#38bdf8' : '#94a3b8',
+          cursor: 'pointer',
+          padding: '6px 4px',
+          fontSize: '11px',
+          fontWeight: activeDrawer === 'pages' ? 700 : 500,
+          flex: 1,
+          minHeight: '44px',
+          minWidth: '44px',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          पेज {currentPageNumber}/{totalPages}
+        </span>
+      </button>
+
+      {/* 2. Add Block Button (+ ब्लॉक) */}
+      <button
+        type="button"
+        data-testid="mobile-nav-blocks"
+        onClick={() => onSelectDrawer(activeDrawer === 'blocks' ? 'none' : 'blocks')}
+        aria-label="नया समाचार ब्लॉक जोड़ें"
+        aria-expanded={activeDrawer === 'blocks'}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px',
+          background: activeDrawer === 'blocks' ? '#1e293b' : 'transparent',
+          border: 'none',
+          borderRadius: '6px',
+          color: activeDrawer === 'blocks' ? '#ef4444' : '#94a3b8',
+          cursor: 'pointer',
+          padding: '6px 4px',
+          fontSize: '11px',
+          fontWeight: activeDrawer === 'blocks' ? 700 : 500,
+          flex: 1,
+          minHeight: '44px',
+          minWidth: '44px',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
+        <span style={{ whiteSpace: 'nowrap' }}>+ ब्लॉक</span>
+      </button>
+
+      {/* 3. Editor / Inspector Button (संपादक / गुण) */}
+      <button
+        type="button"
+        data-testid="mobile-nav-inspector"
+        onClick={() => onSelectDrawer(activeDrawer === 'inspector' ? 'none' : 'inspector')}
+        aria-label={hasSelectedArticle ? 'लेख संपादक' : 'पृष्ठ गुण'}
+        aria-expanded={activeDrawer === 'inspector'}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px',
+          background: activeDrawer === 'inspector' ? '#1e293b' : 'transparent',
+          border: 'none',
+          borderRadius: '6px',
+          color: activeDrawer === 'inspector' ? '#60a5fa' : '#94a3b8',
+          cursor: 'pointer',
+          padding: '6px 4px',
+          fontSize: '11px',
+          fontWeight: activeDrawer === 'inspector' ? 700 : 500,
+          flex: 1,
+          minHeight: '44px',
+          minWidth: '44px',
+          position: 'relative',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <span style={{ fontSize: '15px', lineHeight: 1 }}>✎</span>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {hasSelectedArticle ? 'संपादक' : 'गुण'}
+        </span>
+        {hasSelectedArticle && (
+          <span
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1px',
-              background: isActive ? '#1e293b' : 'transparent',
-              border: 'none',
-              borderRadius: '6px',
-              color: isActive ? '#38bdf8' : '#94a3b8',
-              cursor: 'pointer',
-              padding: '4px 2px',
-              fontSize: '10px',
-              fontWeight: isActive ? 700 : 500,
-              flex: 1,
-              minHeight: '44px',
-              minWidth: '44px',
-              position: 'relative',
-              transition: 'background-color 0.15s ease, color 0.15s ease',
+              position: 'absolute',
+              top: '5px',
+              right: '12px',
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: '#38bdf8',
             }}
-          >
-            <span style={{ fontSize: '15px', lineHeight: 1 }}>{item.icon}</span>
-            <span
-              style={{
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '56px',
-              }}
-            >
-              {item.label}
-            </span>
-            {item.aliasText && (
-              <span
-                style={{
-                  position: 'absolute',
-                  width: '1px',
-                  height: '1px',
-                  padding: 0,
-                  margin: '-1px',
-                  overflow: 'hidden',
-                  clip: 'rect(0, 0, 0, 0)',
-                  whiteSpace: 'nowrap',
-                  border: 0,
-                }}
-              >
-                {item.aliasText}
-              </span>
-            )}
-            {item.badge && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '6px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#38bdf8',
-                }}
-              />
-            )}
-          </button>
-        );
-      })}
+          />
+        )}
+      </button>
+
+      {/* 4. Format / Presets Button (प्रारूप) */}
+      <button
+        type="button"
+        data-testid="mobile-nav-presets"
+        onClick={() => onSelectDrawer(activeDrawer === 'presets' ? 'none' : 'presets')}
+        aria-label="अख़बार प्रारूप व विन्यास"
+        aria-expanded={activeDrawer === 'presets'}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px',
+          background: activeDrawer === 'presets' ? '#1e293b' : 'transparent',
+          border: 'none',
+          borderRadius: '6px',
+          color: activeDrawer === 'presets' ? '#a78bfa' : '#94a3b8',
+          cursor: 'pointer',
+          padding: '6px 4px',
+          fontSize: '11px',
+          fontWeight: activeDrawer === 'presets' ? 700 : 500,
+          flex: 1,
+          minHeight: '44px',
+          minWidth: '44px',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
+        <span style={{ whiteSpace: 'nowrap' }}>प्रारूप</span>
+      </button>
+
+      {/* 5. Direct PDF Export Button (PDF) */}
+      <button
+        type="button"
+        data-testid="mobile-nav-pdf"
+        onClick={onExportPdf}
+        disabled={isExportingPdf}
+        aria-label="अख़बार का PDF डाउनलोड करें"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px',
+          backgroundColor: '#b91c1c',
+          border: 'none',
+          borderRadius: '6px',
+          color: '#ffffff',
+          cursor: isExportingPdf ? 'wait' : 'pointer',
+          padding: '6px 8px',
+          fontSize: '11px',
+          fontWeight: 700,
+          flex: 1,
+          minHeight: '44px',
+          minWidth: '44px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          opacity: isExportingPdf ? 0.7 : 1,
+          transition: 'background-color 0.15s ease',
+        }}
+      >
+        <span style={{ fontSize: '14px', lineHeight: 1 }}>⇓</span>
+        <span style={{ whiteSpace: 'nowrap' }}>{isExportingPdf ? '...' : 'PDF'}</span>
+      </button>
     </nav>
   );
 };
