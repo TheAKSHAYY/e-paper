@@ -166,10 +166,7 @@ export class RendererWorker {
     if (this.queue.length > 0) {
       const next = this.queue.shift();
       if (next) next();
-    } else if (
-      this.activeJobsCount === 0 &&
-      this.totalJobsCompleted >= this.maxJobsBeforeRecycle
-    ) {
+    } else if (this.activeJobsCount === 0 && this.totalJobsCompleted >= this.maxJobsBeforeRecycle) {
       void this.recycleBrowser();
     }
   }
@@ -203,9 +200,7 @@ export class RendererWorker {
     }
 
     const executablePath =
-      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-      process.env.CHROMIUM_PATH ||
-      undefined;
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || undefined;
 
     this.browserPromise = chromium
       .launch({

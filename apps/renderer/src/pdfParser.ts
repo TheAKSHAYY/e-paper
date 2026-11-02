@@ -193,9 +193,7 @@ export function parsePdfStructure(pdfBuffer: Uint8Array): StructuralPdfMetadata 
     const inner = tjArrMatch[1] || '';
     const innerParts = inner.match(/\(([^)]+)\)/g);
     if (innerParts) {
-      const combined = innerParts
-        .map((p) => decodePdfString(p.slice(1, -1)))
-        .join('');
+      const combined = innerParts.map((p) => decodePdfString(p.slice(1, -1))).join('');
       if (combined.trim()) extractedWords.push(combined.trim());
     }
   }

@@ -41,7 +41,7 @@ const BLOCKED_IPV4_RANGES: Array<{ min: number; max: number }> = [
  */
 function ipToNumber(ip: string): number {
   const parts = ip.split('.').map(Number);
-  return (((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0);
+  return ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0;
 }
 
 /**
@@ -56,12 +56,7 @@ export function parseCanonicalIPv4(host: string): string | null {
   if (/^\d+$/.test(cleanHost)) {
     const num = Number(cleanHost);
     if (!Number.isNaN(num) && num >= 0 && num <= 0xffffffff) {
-      return [
-        (num >>> 24) & 255,
-        (num >>> 16) & 255,
-        (num >>> 8) & 255,
-        num & 255,
-      ].join('.');
+      return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
     }
   }
 
@@ -69,12 +64,7 @@ export function parseCanonicalIPv4(host: string): string | null {
   if (/^0x[0-9a-fA-F]+$/i.test(cleanHost)) {
     const num = parseInt(cleanHost, 16);
     if (!Number.isNaN(num) && num >= 0 && num <= 0xffffffff) {
-      return [
-        (num >>> 24) & 255,
-        (num >>> 16) & 255,
-        (num >>> 8) & 255,
-        num & 255,
-      ].join('.');
+      return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
     }
   }
 
@@ -105,12 +95,7 @@ export function parseCanonicalIPv4(host: string): string | null {
     } else if (numericParts.length === 1) {
       const num = numericParts[0]!;
       if (num <= 0xffffffff) {
-        return [
-          (num >>> 24) & 255,
-          (num >>> 16) & 255,
-          (num >>> 8) & 255,
-          num & 255,
-        ].join('.');
+        return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
       }
     }
   }
@@ -139,7 +124,10 @@ export function isPrivateOrReservedIPv4(ipv4: string): boolean {
  * Checks whether an IPv6 address is in a private, loopback, or cloud metadata range.
  */
 export function isPrivateOrReservedIPv6(host: string): boolean {
-  const clean = host.replace(/^\[|\]$/g, '').toLowerCase().trim();
+  const clean = host
+    .replace(/^\[|\]$/g, '')
+    .toLowerCase()
+    .trim();
 
   // Loopback (::1, 0:0:0:0:0:0:0:1)
   if (clean === '::1' || clean === '0:0:0:0:0:0:0:1' || /^0*(:0*)*:1$/.test(clean)) {
@@ -245,11 +233,7 @@ export function isSafeUrl(urlStr: string): boolean {
     }
 
     // Cloud metadata hostnames
-    if (
-      host === 'metadata.google.internal' ||
-      host === 'instance-data' ||
-      host === 'metadata'
-    ) {
+    if (host === 'metadata.google.internal' || host === 'instance-data' || host === 'metadata') {
       return false;
     }
 
@@ -315,4 +299,3 @@ export function isAllowedAssetOrigin(urlStr: string, allowedOriginsEnv?: string)
     return false;
   }
 }
-

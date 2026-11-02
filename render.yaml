@@ -39,4 +39,3 @@ services:
       # Optional: Shared secret key for API authentication (leave empty to disable API key requirement)
       - key: RENDER_API_KEY
         sync: false
-

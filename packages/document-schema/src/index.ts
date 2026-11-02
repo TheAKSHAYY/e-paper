@@ -179,6 +179,27 @@ export const ElementBordersSchema = z.object({
 });
 export type ElementBorders = z.infer<typeof ElementBordersSchema>;
 
+/**
+ * Converts ElementBorders into an inline CSS style string for HTML/PDF rendering.
+ */
+export function elementBordersToStyleString(borders?: ElementBorders, fallbackColor?: string): string {
+  if (!borders) return '';
+  let str = '';
+  if (borders.top && borders.top.style && borders.top.style !== 'none' && (borders.top.width ?? 0) > 0) {
+    str += `border-top: ${borders.top.width}px ${borders.top.style} ${fallbackColor || borders.top.color || '#111111'}; `;
+  }
+  if (borders.right && borders.right.style && borders.right.style !== 'none' && (borders.right.width ?? 0) > 0) {
+    str += `border-right: ${borders.right.width}px ${borders.right.style} ${fallbackColor || borders.right.color || '#111111'}; `;
+  }
+  if (borders.bottom && borders.bottom.style && borders.bottom.style !== 'none' && (borders.bottom.width ?? 0) > 0) {
+    str += `border-bottom: ${borders.bottom.width}px ${borders.bottom.style} ${fallbackColor || borders.bottom.color || '#111111'}; `;
+  }
+  if (borders.left && borders.left.style && borders.left.style !== 'none' && (borders.left.width ?? 0) > 0) {
+    str += `border-left: ${borders.left.width}px ${borders.left.style} ${fallbackColor || borders.left.color || '#111111'}; `;
+  }
+  return str;
+}
+
 export const RashifalItemSchema = z.object({
   rashi: z.string(),
   sign: z.string(),
@@ -220,19 +241,57 @@ export const ElementTypographySchema = z.object({
   fontSizePt: z.number().min(6).max(120).optional(),
   headlineFontSizePt: z.number().min(8).max(140).optional(),
   subheadlineFontSizePt: z.number().min(6).max(96).optional(),
+  bodyFontSizePt: z.number().min(6).max(120).optional(),
   bylineFontSizePt: z.number().min(6).max(48).optional(),
   captionFontSizePt: z.number().min(6).max(48).optional(),
   fontWeight: z.string().optional(),
   headlineFontWeight: z.string().optional(),
+  subheadlineFontWeight: z.string().optional(),
+  bodyFontWeight: z.string().optional(),
   lineHeight: z.number().min(0.8).max(3.0).optional(),
+  headlineLineHeight: z.number().min(0.8).max(3.0).optional(),
+  subheadlineLineHeight: z.number().min(0.8).max(3.0).optional(),
+  bodyLineHeight: z.number().min(0.8).max(3.0).optional(),
   letterSpacingPt: z.number().min(-2).max(10).optional(),
+  headlineLetterSpacingPt: z.number().min(-2).max(10).optional(),
+  subheadlineLetterSpacingPt: z.number().min(-2).max(10).optional(),
+  bodyLetterSpacingPt: z.number().min(-2).max(10).optional(),
   textAlign: z.enum(['left', 'center', 'right', 'justify']).optional(),
+  headlineTextAlign: z.enum(['left', 'center', 'right', 'justify']).optional(),
+  subheadlineTextAlign: z.enum(['left', 'center', 'right', 'justify']).optional(),
+  bodyTextAlign: z.enum(['left', 'center', 'right', 'justify']).optional(),
   textColor: z.string().optional(),
+  headlineColor: z.string().optional(),
+  subheadlineColor: z.string().optional(),
+  bodyColor: z.string().optional(),
+  headlineFontFamily: z.string().optional(),
+  subheadlineFontFamily: z.string().optional(),
+  bodyFontFamily: z.string().optional(),
+  headlineMarginTopPt: z.number().min(0).max(64).optional(),
+  headlineMarginBottomPt: z.number().min(0).max(64).optional(),
+  headlinePaddingPt: z.number().min(0).max(32).optional(),
+  subheadlineMarginTopPt: z.number().min(0).max(64).optional(),
+  subheadlineMarginBottomPt: z.number().min(0).max(64).optional(),
+  subheadlinePaddingPt: z.number().min(0).max(32).optional(),
+  headlineBorders: ElementBordersSchema.optional(),
+  subheadlineBorders: ElementBordersSchema.optional(),
+  bodyBorders: ElementBordersSchema.optional(),
+  imageBorders: ElementBordersSchema.optional(),
+  captionBorders: ElementBordersSchema.optional(),
+  headlineBackgroundColor: z.string().optional(),
+  subheadlineBackgroundColor: z.string().optional(),
+  bodyBackgroundColor: z.string().optional(),
   paragraphSpacingPt: z.number().min(0).max(48).optional(),
   textIndentPt: z.number().min(0).max(64).optional(),
+  underline: z.boolean().optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
+  opacity: z.number().min(0).max(1).optional(),
 });
 
 export type ElementTypography = z.infer<typeof ElementTypographySchema>;
+
+export type SelectedElementPart =
+  'headline' | 'subheadline' | 'body' | 'image' | 'caption' | 'block' | null;
 
 export const ArticleSchema = z.object({
   id: z.string().min(1),
@@ -275,9 +334,11 @@ export const ArticleSchema = z.object({
 
   // Independent 4-side borders
   borders: ElementBordersSchema.optional(),
+  imageBorders: ElementBordersSchema.optional(),
 
   // Custom typography & styling
   backgroundColor: z.string().optional(),
+  opacity: z.number().min(0).max(1).optional(),
   textColor: z.string().optional(),
   paddingPx: z.number().min(0).max(64).optional(),
   marginPx: z.number().min(0).max(64).optional(),
@@ -574,6 +635,9 @@ export const NewspaperMetadataSchema = z.object({
   pageSize: PageSizePresetSchema.default('broadsheet'),
   orientation: PageOrientationSchema.default('portrait'),
   dimensions: PageDimensionsSchema.optional(),
+  templateId: z.string().optional(),
+  editionId: z.string().optional(),
+  editionDate: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -617,6 +681,9 @@ export const NewspaperDocumentSchema = z.object({
   masthead: MastheadConfigSchema,
   layout: NewspaperLayoutConfigSchema,
   theme: NewspaperThemeConfigSchema.optional(),
+  templateId: z.string().optional(),
+  editionId: z.string().optional(),
+  editionDate: z.string().optional(),
   articles: z.array(ArticleSchema).default([]),
   pages: z.array(NewspaperPageSchema).optional(),
 });
@@ -846,3 +913,119 @@ export function clampFrameToPrintableArea(frame: FrameMm, bounds: PrintableAreaB
     z: frame.z ?? 1,
   };
 }
+
+/* ====================================================================
+ * Master Template & Daily Edition Publishing Architecture (Phase 1)
+ * ==================================================================== */
+
+export const TemplatePageBlueprintSchema = z.object({
+  pageNumber: z.number().int().positive(),
+  sectionTitle: z.string().default('मुख्य पृष्ठ'),
+  layoutMode: PageLayoutModeSchema.default('auto'),
+  columnCount: z.number().int().min(2).max(12).optional(),
+  defaultArticles: z.array(ArticleSchema).default([]),
+});
+
+export type TemplatePageBlueprint = z.infer<typeof TemplatePageBlueprintSchema>;
+
+export const MasterTemplateCategorySchema = z.enum([
+  'broadsheet',
+  'tabloid',
+  'evening',
+  'commercial',
+  'magazine',
+  'custom',
+]);
+
+export type MasterTemplateCategory = z.infer<typeof MasterTemplateCategorySchema>;
+
+export const MasterTemplateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1, 'Template name is required'),
+  description: z.string().optional().default(''),
+  category: MasterTemplateCategorySchema.default('custom'),
+  presetId: NewspaperPresetIdSchema.default('classic-hindi-broadsheet'),
+  pageSize: PageSizePresetSchema.default('broadsheet'),
+  orientation: PageOrientationSchema.default('portrait'),
+  dimensions: PageDimensionsSchema.optional(),
+  isBuiltIn: z.boolean().default(false),
+  masthead: MastheadConfigSchema,
+  layout: NewspaperLayoutConfigSchema,
+  theme: NewspaperThemeConfigSchema.optional(),
+  pageBlueprints: z.array(TemplatePageBlueprintSchema).default([]),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type MasterTemplate = z.infer<typeof MasterTemplateSchema>;
+
+export const DailyEditionSchema = z.object({
+  id: z.string().min(1),
+  templateId: z.string().min(1),
+  templateName: z.string().optional(),
+  editionName: z.string().min(1).default('मुख्य संस्करण'),
+  editionDate: z.string().min(1),
+  publicationName: z.string().min(1).default('जनवाणी समाचार'),
+  volumeNumber: z.number().int().positive().optional(),
+  issueNumber: z.number().int().positive().optional(),
+  document: NewspaperDocumentSchema,
+  saveStatus: z.enum(['saved', 'draft', 'modified']).default('saved'),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type DailyEdition = z.infer<typeof DailyEditionSchema>;
+
+/* ====================================================================
+ * PDF Preflight & Quality Assurance Specification (Phase 1)
+ * ==================================================================== */
+
+export const PreflightSeveritySchema = z.enum(['green', 'yellow', 'red']);
+export type PreflightSeverity = z.infer<typeof PreflightSeveritySchema>;
+
+export const PreflightCheckTypeSchema = z.enum([
+  'text_overflow',
+  'page_boundaries',
+  'missing_images',
+  'low_res_images',
+  'font_availability',
+  'font_embedding',
+  'hindi_rendering',
+  'empty_blocks',
+  'page_dimensions',
+  'invalid_page_config',
+  'outdated_date',
+  'blank_pages',
+]);
+
+export type PreflightCheckType = z.infer<typeof PreflightCheckTypeSchema>;
+
+export const PreflightIssueSchema = z.object({
+  id: z.string(),
+  type: PreflightCheckTypeSchema,
+  severity: PreflightSeveritySchema,
+  pageIndex: z.number().int().nonnegative().optional(),
+  pageNumber: z.number().int().positive().optional(),
+  articleId: z.string().optional(),
+  headline: z.string().optional(),
+  title: z.string(),
+  explanation: z.string(),
+  suggestedCorrection: z.string(),
+  autoFixAvailable: z.boolean().default(false),
+  autoFixType: z.string().optional(),
+});
+
+export type PreflightIssue = z.infer<typeof PreflightIssueSchema>;
+
+export const PreflightReportSchema = z.object({
+  timestamp: z.string(),
+  overallStatus: PreflightSeveritySchema,
+  totalChecks: z.number(),
+  passedChecks: z.number(),
+  warningCount: z.number(),
+  errorCount: z.number(),
+  issues: z.array(PreflightIssueSchema),
+  canExport: z.boolean(),
+});
+
+export type PreflightReport = z.infer<typeof PreflightReportSchema>;

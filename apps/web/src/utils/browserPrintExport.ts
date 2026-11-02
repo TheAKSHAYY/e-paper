@@ -61,8 +61,9 @@ export function generatePrintHtml(doc: NewspaperDocument, baseUrl?: string): str
 export function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
   const userAgent = navigator.userAgent || '';
-  const isMobileUA =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent);
+  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+    userAgent
+  );
   const isSmallScreen = window.innerWidth <= 768;
   const hasTouch = typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 0;
   return isMobileUA || (isSmallScreen && hasTouch);
@@ -77,7 +78,9 @@ export async function printDocumentViaIframe(
   options: PrintExportOptions = {}
 ): Promise<{ success: boolean }> {
   if (typeof window === 'undefined') {
-    throw new Error('प्रिंट सुविधा केवल ब्राउज़र वातावरण में उपलब्ध है (Available only in browser)');
+    throw new Error(
+      'प्रिंट सुविधा केवल ब्राउज़र वातावरण में उपलब्ध है (Available only in browser)'
+    );
   }
 
   // Remove any previously orphaned print iframe
@@ -165,4 +168,3 @@ export async function printDocumentViaIframe(
 
   return { success: true };
 }
-

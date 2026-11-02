@@ -36,8 +36,7 @@ export function copyFonts() {
 
     if (fs.statSync(srcFile).isFile()) {
       const needsCopy =
-        !fs.existsSync(destFile) ||
-        fs.statSync(srcFile).size !== fs.statSync(destFile).size;
+        !fs.existsSync(destFile) || fs.statSync(srcFile).size !== fs.statSync(destFile).size;
 
       if (needsCopy) {
         fs.copyFileSync(srcFile, destFile);
@@ -52,5 +51,7 @@ export function copyFonts() {
 // Execute directly if run as a script
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = copyFonts();
-  console.log(`[copy-fonts] Synced ${result.total} fonts to public/fonts (${result.copied} updated)`);
+  console.log(
+    `[copy-fonts] Synced ${result.total} fonts to public/fonts (${result.copied} updated)`
+  );
 }

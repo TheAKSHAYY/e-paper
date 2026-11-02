@@ -22,6 +22,7 @@
 ## 2. Security Notice
 
 > [!IMPORTANT]
+>
 > - **Never commit `.env` or `.env.local` files** containing private secrets, database keys, or production tokens to version control.
 > - **`VITE_*` environment variables are public**: In Vite applications (`apps/web`), any variable prefixed with `VITE_` (such as `VITE_RENDERER_URL` or `VITE_RENDERER_API_KEY`) is statically baked into client-side JavaScript bundles during compilation and can be inspected by any visitor. Never store sensitive private keys in `VITE_*` variables.
 
@@ -56,27 +57,29 @@ pnpm dev
 The Web Studio will be available at [http://localhost:5173](http://localhost:5173).
 
 To start the standalone PDF rendering worker locally:
+
 ```bash
 pnpm --filter @epaper-studio/renderer start
 ```
+
 The renderer listens on [http://localhost:4000](http://localhost:4000).
 
 ---
 
 ## 5. Workspace Scripts
 
-| Command             | Description                                                    |
-| ------------------- | -------------------------------------------------------------- |
-| `pnpm dev`          | Starts the interactive Vite web application (`apps/web`)       |
-| `pnpm build`        | Compiles all packages and applications                         |
-| `pnpm typecheck`    | Runs strict TypeScript validation across the entire workspace  |
-| `pnpm lint`         | Runs ESLint across all packages and apps                       |
-| `pnpm lint:fix`     | Automatically fixes auto-fixable ESLint warnings               |
-| `pnpm test`         | Runs all unit & integration test suites using Vitest           |
-| `pnpm test:watch`   | Runs Vitest in interactive watch mode                          |
-| `pnpm test:e2e`     | Runs Playwright browser end-to-end user flows                  |
-| `pnpm format`       | Formats all files using Prettier                               |
-| `pnpm format:check` | Validates formatting consistency without modifying files       |
+| Command             | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| `pnpm dev`          | Starts the interactive Vite web application (`apps/web`)      |
+| `pnpm build`        | Compiles all packages and applications                        |
+| `pnpm typecheck`    | Runs strict TypeScript validation across the entire workspace |
+| `pnpm lint`         | Runs ESLint across all packages and apps                      |
+| `pnpm lint:fix`     | Automatically fixes auto-fixable ESLint warnings              |
+| `pnpm test`         | Runs all unit & integration test suites using Vitest          |
+| `pnpm test:watch`   | Runs Vitest in interactive watch mode                         |
+| `pnpm test:e2e`     | Runs Playwright browser end-to-end user flows                 |
+| `pnpm format`       | Formats all files using Prettier                              |
+| `pnpm format:check` | Validates formatting consistency without modifying files      |
 
 ---
 

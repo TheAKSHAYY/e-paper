@@ -137,11 +137,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>✎</span>
-        <span style={{ whiteSpace: 'nowrap' }}>
-          {hasSelectedArticle ? 'संपादक' : 'गुण'}
-        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>संपादक</span>
         {hasSelectedArticle && (
           <span
+            data-testid="inspector-selection-dot"
             style={{
               position: 'absolute',
               top: '5px',

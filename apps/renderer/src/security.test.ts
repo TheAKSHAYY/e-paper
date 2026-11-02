@@ -87,13 +87,21 @@ describe('SSRF & Asset Security (security.ts)', () => {
     });
 
     it('allows valid raster base64 data URIs', () => {
-      expect(isSafeUrl('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')).toBe(true);
+      expect(
+        isSafeUrl(
+          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+        )
+      ).toBe(true);
       expect(isSafeUrl('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP...')).toBe(true);
     });
 
     it('blocks dangerous SVG data URIs with active scripts', () => {
       expect(isSafeUrl('data:image/svg+xml;utf8,<svg onload="alert(1)"></svg>')).toBe(false);
-      expect(isSafeUrl('data:image/svg+xml;utf8,<svg><script>fetch("http://169.254.169.254")</script></svg>')).toBe(false);
+      expect(
+        isSafeUrl(
+          'data:image/svg+xml;utf8,<svg><script>fetch("http://169.254.169.254")</script></svg>'
+        )
+      ).toBe(false);
     });
 
     it('blocks loopback and localhost variants', () => {
@@ -147,7 +155,10 @@ describe('SSRF & Asset Security (security.ts)', () => {
 
     it('permits inline data URIs regardless of origin configuration', () => {
       expect(
-        isAllowedAssetOrigin('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', '')
+        isAllowedAssetOrigin(
+          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          ''
+        )
       ).toBe(true);
     });
 
@@ -159,10 +170,11 @@ describe('SSRF & Asset Security (security.ts)', () => {
     });
 
     it('blocks private or reserved destinations even if misconfigured in ALLOWED_ASSET_ORIGINS', () => {
-      expect(isAllowedAssetOrigin('http://169.254.169.254/meta-data', '169.254.169.254')).toBe(false);
+      expect(isAllowedAssetOrigin('http://169.254.169.254/meta-data', '169.254.169.254')).toBe(
+        false
+      );
       expect(isAllowedAssetOrigin('http://127.0.0.1:8080/image.png', '127.0.0.1')).toBe(false);
       expect(isAllowedAssetOrigin('http://2130706433/image.png', '2130706433')).toBe(false);
     });
   });
 });
-

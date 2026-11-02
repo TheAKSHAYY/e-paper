@@ -36,9 +36,7 @@ export async function exportDocumentToPdf(
   options: ExportPdfOptions = {}
 ): Promise<ExportPdfResult> {
   if (typeof window === 'undefined' || !window.document?.createElement) {
-    throw new Error(
-      'PDF generation requires a browser environment with Canvas and DOM support.'
-    );
+    throw new Error('PDF generation requires a browser environment with Canvas and DOM support.');
   }
 
   // Derive target physical dimensions in PostScript points (72 pt/inch)
@@ -130,9 +128,7 @@ export async function exportDocumentToPdf(
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   // Find all newspaper pages
-  const pageElements = Array.from(
-    iframeDoc.querySelectorAll('.newspaper-page')
-  ) as HTMLElement[];
+  const pageElements = Array.from(iframeDoc.querySelectorAll('.newspaper-page')) as HTMLElement[];
   const pagesToRender = pageElements.length > 0 ? pageElements : [iframeDoc.body];
   const totalPages = pagesToRender.length;
 

@@ -4,9 +4,7 @@ import { downscaleImageFile } from './imageOptimizer';
 describe('Image Optimizer & File Security (imageOptimizer.ts)', () => {
   it('rejects non-image files with clear error', async () => {
     const textFile = new File(['hello text'], 'notes.txt', { type: 'text/plain' });
-    await expect(downscaleImageFile(textFile)).rejects.toThrow(
-      'Unsupported image format'
-    );
+    await expect(downscaleImageFile(textFile)).rejects.toThrow('Unsupported image format');
   });
 
   it('rejects SVG files to prevent script execution and canvas rendering failures', async () => {
@@ -15,9 +13,6 @@ describe('Image Optimizer & File Security (imageOptimizer.ts)', () => {
       'image.svg',
       { type: 'image/svg+xml' }
     );
-    await expect(downscaleImageFile(svgFile)).rejects.toThrow(
-      'Unsupported image format'
-    );
+    await expect(downscaleImageFile(svgFile)).rejects.toThrow('Unsupported image format');
   });
 });
-

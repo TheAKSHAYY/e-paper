@@ -226,7 +226,8 @@ describe('RendererWorker & PDF Export Engine', () => {
       doc.articles = [
         {
           id: 'lead-hindi-story',
-          title: 'प्रधानमंत्री द्वारा क्षत्रिय और राष्ट्रनिष्ठा का सम्मान: संकल्प से सिद्धि की नई गाथा',
+          title:
+            'प्रधानमंत्री द्वारा क्षत्रिय और राष्ट्रनिष्ठा का सम्मान: संकल्प से सिद्धि की नई गाथा',
           kicker: 'राष्ट्रीय विशेष',
           byline: 'विशेष संवाददाता, नई दिल्ली',
           dateline: 'नई दिल्ली —',
@@ -255,7 +256,8 @@ describe('RendererWorker & PDF Export Engine', () => {
       // Save to artifact directory
       const fs = await import('node:fs');
       const path = await import('node:path');
-      const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+      const artifactDir =
+        'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
       if (fs.existsSync(artifactDir)) {
         fs.writeFileSync(path.join(artifactDir, 'devanagari-rasterized-200pct.png'), imageBuffer);
       }

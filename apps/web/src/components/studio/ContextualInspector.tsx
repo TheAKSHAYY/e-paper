@@ -10,6 +10,7 @@ import type {
   ImageAspect,
   SpacingDensity,
   NewspaperPage,
+  SelectedElementPart,
 } from '@epaper-studio/document-schema';
 import {
   PAGE_SIZE_DEFINITIONS,
@@ -57,6 +58,9 @@ export interface ContextualInspectorProps {
   isMobile?: boolean;
   hideHeader?: boolean;
   width?: string | number;
+  selectedElementPart?: SelectedElementPart;
+  selectedParagraphIndex?: number | null;
+  onSelectParagraph?: (index: number | null) => void;
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -87,6 +91,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   isMobile = false,
   hideHeader,
   width,
+  selectedElementPart,
+  selectedParagraphIndex,
+  onSelectParagraph,
 }) => {
   const shouldHideHeader = hideHeader ?? isMobile;
   const [activeInspectorTab, setActiveInspectorTab] = useState<'content' | 'typography'>('content');
@@ -2748,7 +2755,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         locked: !selectedArticle.locked,
                       })
                     }
-                    title={selectedArticle.locked ? 'Unlock element' : 'Lock element position & edits'}
+                    title={
+                      selectedArticle.locked ? 'Unlock element' : 'Lock element position & edits'
+                    }
                     style={{
                       padding: '8px 10px',
                       backgroundColor: selectedArticle.locked ? '#fef3c7' : '#f8fafc',
@@ -3070,6 +3079,15 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
            * ========================================================== */
           <TypographyControls
             selectedArticle={selectedArticle}
+            initialTargetElement={
+              selectedElementPart === 'headline' ||
+              selectedElementPart === 'subheadline' ||
+              selectedElementPart === 'body'
+                ? selectedElementPart
+                : undefined
+            }
+            selectedParagraphIndex={selectedParagraphIndex}
+            onSelectParagraph={onSelectParagraph}
             onUpdateArticle={onUpdateArticle}
             onApplyToPage={onApplyTypographyToPage}
           />

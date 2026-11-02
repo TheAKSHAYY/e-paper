@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type {
   Article,
   MastheadConfig,
@@ -11,10 +11,14 @@ import type {
   NewspaperPresetId,
   ImagePlacement,
   ImageFit,
+  SelectedElementPart,
 } from '@epaper-studio/document-schema';
 import { getAllNewspaperPresets } from '@epaper-studio/template-engine';
 import { TypographyControls } from '../TypographyControls';
+import { BorderControls } from '../BorderControls';
+import { LAYOUT_PRESET_OPTIONS } from '../LayoutBuilderRow';
 import { ELEMENT_PRESETS } from '../ElementsPanel';
+import { MastheadInspectorPanel } from '../MastheadInspectorPanel';
 import { downscaleImageFile } from '../../../utils/imageOptimizer';
 import type { MobileDrawerMode } from '../MobileBottomNav';
 
@@ -44,6 +48,7 @@ export interface MobileBottomSheetProps {
   useFreeLayout: boolean;
   onToggleFreeLayout: () => void;
   onAutoFit?: () => void;
+  onOpenPublishing?: () => void;
   onApplyPreset?: (presetId: NewspaperPresetId) => void;
   onApplyLayoutRow?: (columns: number[]) => void;
   onOpenTheme?: () => void;
@@ -51,6 +56,10 @@ export interface MobileBottomSheetProps {
   onSelectArticle: (id: string) => void;
   selectedParagraphIndex?: number | null;
   onSelectParagraph?: (index: number | null) => void;
+  initialTargetElement?: 'headline' | 'subheadline' | 'body';
+  selectedElementPart?: SelectedElementPart;
+  isMastheadSelected?: boolean;
+  mastheadTab?: 'title' | 'meta' | 'rules';
 }
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
@@ -78,6 +87,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   onOrientationChange,
   useFreeLayout,
   onToggleFreeLayout,
+  onOpenPublishing,
   onAutoFit,
   onApplyPreset,
   onApplyLayoutRow,
@@ -86,9 +96,42 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   onSelectArticle,
   selectedParagraphIndex,
   onSelectParagraph,
+  initialTargetElement,
+  selectedElementPart,
+  isMastheadSelected = false,
+  mastheadTab,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [presetTab, setPresetTab] = useState<'presets' | 'layout'>('presets');
+  const [activePart, setActivePart] = useState<
+    'headline' | 'subheadline' | 'body' | 'image' | 'block'
+  >(
+    initialTargetElement === 'subheadline'
+      ? 'subheadline'
+      : initialTargetElement === 'body'
+        ? 'body'
+        : 'headline'
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (
+      initialTargetElement === 'headline' ||
+      initialTargetElement === 'subheadline' ||
+      initialTargetElement === 'body'
+    ) {
+      setActivePart(initialTargetElement);
+    }
+  }, [initialTargetElement]);
+
+  useEffect(() => {
+    if (selectedElementPart === 'headline') setActivePart('headline');
+    else if (selectedElementPart === 'subheadline') setActivePart('subheadline');
+    else if (selectedElementPart === 'body') setActivePart('body');
+    else if (selectedElementPart === 'image' || selectedElementPart === 'caption')
+      setActivePart('image');
+    else if (selectedElementPart === 'block') setActivePart('block');
+  }, [selectedElementPart]);
 
   if (mode === 'none') return null;
 
@@ -132,6 +175,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
       case 'blocks':
         return '✚ नया समाचार ब्लॉक जोड़ें';
       case 'inspector':
+        if (isMastheadSelected) {
+          return '✎ मास्टहेड संपादक (Editing: Masthead)';
+        }
         return selectedArticle
           ? `✎ समाचार संपादक: ${selectedArticle.headline ? selectedArticle.headline.slice(0, 20) + '...' : 'ब्लॉक'}`
           : '✎ पृष्ठ गुण व विन्यास';
@@ -189,11 +235,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           >
             {getTitle()}
           </span>
-          {selectedArticle && mode === 'inspector' && (
+          {(selectedArticle || isMastheadSelected) && mode === 'inspector' && (
             <button
               type="button"
               onClick={onDeselectArticle}
               title="चयन हटाएँ"
+              data-testid="mobile-btn-clear-selection"
               style={{
                 fontSize: '10px',
                 color: '#64748b',
@@ -404,7 +451,13 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               >
                 अख़बार के सभी पृष्ठ (Pages in Newspaper)
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                  gap: '8px',
+                }}
+              >
                 {Array.from({ length: totalPages }).map((_, pIdx) => {
                   const isActive = pIdx === currentPageIndex;
                   return (
@@ -422,12 +475,33 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                         gap: '4px',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: isActive ? '#b91c1c' : '#0f172a' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: isActive ? '#b91c1c' : '#0f172a',
+                          }}
+                        >
                           पृष्ठ {pIdx + 1}
                         </span>
                         {isActive && (
-                          <span style={{ fontSize: '9px', fontWeight: 700, color: '#b91c1c', backgroundColor: '#fee2e2', padding: '1px 5px', borderRadius: '4px' }}>
+                          <span
+                            style={{
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              color: '#b91c1c',
+                              backgroundColor: '#fee2e2',
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                            }}
+                          >
                             सक्रिय
                           </span>
                         )}
@@ -497,7 +571,14 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                 >
                   <span style={{ fontSize: '24px', flexShrink: 0 }}>{preset.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0f172a', marginBottom: '2px' }}>
+                    <div
+                      style={{
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        marginBottom: '2px',
+                      }}
+                    >
                       {preset.name}
                     </div>
                     <div
@@ -536,294 +617,1164 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
          * ========================================================== */}
         {mode === 'inspector' && (
           <div>
-            {selectedArticle ? (
+            {isMastheadSelected ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* 1. Kicker & Headline */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
-                    किकर / विषय (Kicker)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedArticle.kickerText || ''}
-                    onChange={(e) => onUpdateArticle({ ...selectedArticle, kickerText: e.target.value })}
-                    placeholder="उदा. विशेष रिपोर्ट / ताज़ा खबर..."
-                    style={{
-                      width: '100%',
-                      padding: '7px 9px',
-                      fontSize: '12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
-                    मुख्य शीर्षक (Headline) *
-                  </label>
-                  <input
-                    type="text"
-                    data-testid="mobile-input-headline"
-                    value={selectedArticle.headline}
-                    onChange={(e) => onUpdateArticle({ ...selectedArticle, headline: e.target.value })}
-                    placeholder="मुख्य खबर का शीर्षक..."
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
-                    उप-शीर्षक (Subheadline)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedArticle.subheadline || ''}
-                    onChange={(e) => onUpdateArticle({ ...selectedArticle, subheadline: e.target.value })}
-                    placeholder="खबर की उप-सुर्खी..."
-                    style={{
-                      width: '100%',
-                      padding: '7px 9px',
-                      fontSize: '12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                {/* 2. Dateline & Byline */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
-                      स्थान / तिथि (Dateline)
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedArticle.dateline || ''}
-                      onChange={(e) => onUpdateArticle({ ...selectedArticle, dateline: e.target.value })}
-                      placeholder="नई दिल्ली —"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        fontSize: '11.5px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '6px',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
-                      लेखक (Byline)
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedArticle.byline || ''}
-                      onChange={(e) => onUpdateArticle({ ...selectedArticle, byline: e.target.value })}
-                      placeholder="विशेष संवाददाता"
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        fontSize: '11.5px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '6px',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Body Text */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
-                      समाचार का मुख्य विवरण (Body Text)
-                    </label>
-                    <span style={{ fontSize: '10px', color: '#64748b' }}>
-                      {selectedArticle.body.trim().split(/\s+/).filter(Boolean).length} शब्द
+                {/* Top Selected Element Banner */}
+                <div
+                  data-testid="mobile-active-part-banner"
+                  style={{
+                    backgroundColor: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '14px' }}>🗞️</span>
+                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e40af' }}>
+                      संपादित हो रहा है: मास्टहेड / शीर्ष सज्जा (Editing: Masthead)
                     </span>
                   </div>
-                  <textarea
-                    rows={4}
-                    data-testid="mobile-input-body"
-                    value={selectedArticle.body}
-                    onChange={(e) => onUpdateArticle({ ...selectedArticle, body: e.target.value })}
-                    placeholder="खबर का विवरण लिखें (पैराग्राफ बदलने हेतु दो बार Enter दबाएँ)..."
+                  <button
+                    type="button"
+                    onClick={onDeselectArticle}
                     style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '12px',
-                      lineHeight: 1.5,
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      boxSizing: 'border-box',
-                      resize: 'vertical',
+                      fontSize: '10px',
+                      color: '#2563eb',
+                      background: '#dbeafe',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '2px 6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
                     }}
-                  />
+                  >
+                    चयन हटाएँ ✕
+                  </button>
                 </div>
 
-                {/* 4. Complete Typography Controls (Requirement 3) */}
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-                  <TypographyControls
-                    selectedArticle={selectedArticle}
-                    selectedParagraphIndex={selectedParagraphIndex}
-                    onSelectParagraph={onSelectParagraph}
-                    onUpdateArticle={onUpdateArticle}
-                    onApplyToPage={onApplyTypographyToPage}
-                    isMobile={true}
-                  />
+                {/* Render complete Masthead Inspector Panel */}
+                <MastheadInspectorPanel
+                  masthead={doc.masthead}
+                  onUpdateMasthead={onUpdateMasthead}
+                  presetId={doc.layout?.presetId}
+                  initialTab={mastheadTab}
+                  onClose={onDeselectArticle}
+                />
+              </div>
+            ) : selectedArticle ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Top Selected Element Banner */}
+                <div
+                  data-testid="mobile-active-part-banner"
+                  style={{
+                    backgroundColor: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '14px' }}>
+                      {activePart === 'headline'
+                        ? '📌'
+                        : activePart === 'subheadline'
+                          ? '📝'
+                          : activePart === 'body'
+                            ? '📄'
+                            : activePart === 'image'
+                              ? '📷'
+                              : '🔲'}
+                    </span>
+                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e40af' }}>
+                      संपादित हो रहा है:{' '}
+                      {activePart === 'headline'
+                        ? 'मुख्य शीर्षक (Main Headline)'
+                        : activePart === 'subheadline'
+                          ? 'उप-शीर्षक (Subheadline)'
+                          : activePart === 'body'
+                            ? selectedParagraphIndex !== null &&
+                              selectedParagraphIndex !== undefined
+                              ? `पैराग्राफ ${selectedParagraphIndex + 1} (Paragraph ${selectedParagraphIndex + 1})`
+                              : 'संपूर्ण मूल पाठ (All Body Text)'
+                            : activePart === 'image'
+                              ? 'फोटो व कैप्शन (Photo & Caption)'
+                              : 'ब्लॉक विन्यास सेटिंग्स (Block Layout)'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* 5. Photo & Media */}
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                    फोटो व चित्र (Photo & Media)
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#0f172a',
-                        cursor: 'pointer',
-                        minHeight: '40px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <span>📷</span> {selectedArticle.imageUrl ? 'फोटो बदलें' : 'फोटो अपलोड करें'}
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={handleImageFileChange}
-                    />
-
-                    {selectedArticle.imageUrl && (
+                {/* Quick Element Switcher Chips */}
+                <div
+                  data-testid="mobile-element-switcher"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '4px',
+                    backgroundColor: '#f1f5f9',
+                    padding: '3px',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {(
+                    [
+                      { key: 'headline', label: 'शीर्षक', icon: '📌' },
+                      { key: 'subheadline', label: 'उप-सुर्खी', icon: '📝' },
+                      { key: 'body', label: 'विवरण', icon: '📄' },
+                      { key: 'image', label: 'फोटो', icon: '📷' },
+                      { key: 'block', label: 'ब्लॉक', icon: '🔲' },
+                    ] as const
+                  ).map((tab) => {
+                    const isActive = activePart === tab.key;
+                    return (
                       <button
+                        key={tab.key}
                         type="button"
-                        onClick={() => onUpdateArticle({ ...selectedArticle, imageUrl: undefined })}
+                        data-testid={`mobile-switch-to-${tab.key}`}
+                        onClick={() => {
+                          setActivePart(tab.key);
+                          if (tab.key !== 'body') {
+                            onSelectParagraph?.(null);
+                          }
+                        }}
                         style={{
-                          padding: '8px 10px',
-                          backgroundColor: '#fee2e2',
-                          border: '1px solid #fecaca',
+                          padding: '6px 2px',
                           borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: isActive ? '#ffffff' : 'transparent',
+                          color: isActive ? '#1d4ed8' : '#64748b',
+                          fontWeight: isActive ? 700 : 500,
                           fontSize: '11px',
-                          color: '#b91c1c',
                           cursor: 'pointer',
-                          minHeight: '40px',
+                          boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                          minHeight: '36px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '2px',
                         }}
                       >
-                        फोटो हटाएँ
+                        <span style={{ fontSize: '12px' }}>{tab.icon}</span>
+                        <span>{tab.label}</span>
                       </button>
-                    )}
-                  </div>
+                    );
+                  })}
+                </div>
 
-                  {selectedArticle.imageUrl && (
-                    <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>
-                          स्थान (Placement)
-                        </label>
-                        <select
-                          value={selectedArticle.imagePlacement || 'top'}
-                          onChange={(e) =>
-                            onUpdateArticle({
-                              ...selectedArticle,
-                              imagePlacement: e.target.value as ImagePlacement,
-                            })
-                          }
-                          style={{
-                            width: '100%',
-                            padding: '6px',
-                            borderRadius: '4px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '11px',
-                          }}
-                        >
-                          <option value="top">शीर्ष पर (Top)</option>
-                          <option value="bottom">नीचे (Bottom)</option>
-                          <option value="side">बाजू में (Side)</option>
-                          <option value="none">छुपाएँ (Hidden)</option>
-                        </select>
+                {/* ── PART 1: HEADLINE ── */}
+                {activePart === 'headline' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#475569',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        मुख्य शीर्षक (Headline) *
+                      </label>
+                      <input
+                        type="text"
+                        data-testid="mobile-input-headline"
+                        value={selectedArticle.headline}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, headline: e.target.value })
+                        }
+                        placeholder="मुख्य खबर का शीर्षक..."
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    {/* Headline Typography */}
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <TypographyControls
+                        selectedArticle={selectedArticle}
+                        article={selectedArticle}
+                        initialTargetElement="headline"
+                        onUpdateArticle={onUpdateArticle}
+                        onApplyToPage={onApplyTypographyToPage}
+                        isMobile={true}
+                      />
+                    </div>
+
+                    {/* Headline Margins & Background */}
+                    <div
+                      style={{
+                        borderTop: '1px solid #e2e8f0',
+                        paddingTop: '10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                      }}
+                    >
+                      <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                        शीर्षक दूरी व पृष्ठभूमि (Headline Spacing & Background)
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '10.5px',
+                              color: '#64748b',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            ऊपरी अंतर (Top Margin)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="36"
+                            step="1"
+                            value={selectedArticle.typography?.headlineMarginTopPt ?? 0}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                typography: {
+                                  ...(selectedArticle.typography || {}),
+                                  headlineMarginTopPt: val,
+                                },
+                              });
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '6px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '11.5px',
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '10.5px',
+                              color: '#64748b',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            निचला अंतर (Bottom Margin)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="36"
+                            step="1"
+                            value={selectedArticle.typography?.headlineMarginBottomPt ?? 0}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                typography: {
+                                  ...(selectedArticle.typography || {}),
+                                  headlineMarginBottomPt: val,
+                                },
+                              });
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '6px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '11.5px',
+                            }}
+                          />
+                        </div>
                       </div>
 
+                      {/* Headline Background Chips */}
                       <div>
-                        <label style={{ display: 'block', fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>
-                          फिट (Fit Mode)
-                        </label>
-                        <select
-                          value={selectedArticle.imageFit || 'cover'}
-                          onChange={(e) =>
-                            onUpdateArticle({
-                              ...selectedArticle,
-                              imageFit: e.target.value as ImageFit,
-                            })
-                          }
+                        <label
                           style={{
-                            width: '100%',
-                            padding: '6px',
-                            borderRadius: '4px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '11px',
+                            display: 'block',
+                            fontSize: '10.5px',
+                            color: '#64748b',
+                            marginBottom: '4px',
                           }}
                         >
-                          <option value="cover">क्रॉप (Cover)</option>
-                          <option value="contain">पूरा (Contain)</option>
-                          <option value="fill">खिंचाव (Fill)</option>
-                        </select>
+                          पृष्ठभूमि रंग (Background Color)
+                        </label>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {[
+                            { label: 'पारदर्शी', color: 'transparent' },
+                            { label: 'हल्का पीला', color: '#fef3c7' },
+                            { label: 'हल्का लाल', color: '#fee2e2' },
+                            { label: 'हल्का ग्रे', color: '#f1f5f9' },
+                            { label: 'काला', color: '#111111' },
+                          ].map((chip) => {
+                            const isMatch =
+                              (selectedArticle.typography?.headlineBackgroundColor ||
+                                'transparent') === chip.color;
+                            return (
+                              <button
+                                key={chip.color}
+                                type="button"
+                                onClick={() =>
+                                  onUpdateArticle({
+                                    ...selectedArticle,
+                                    typography: {
+                                      ...(selectedArticle.typography || {}),
+                                      headlineBackgroundColor:
+                                        chip.color === 'transparent' ? undefined : chip.color,
+                                      ...(chip.color === '#111111'
+                                        ? { headlineColor: '#ffffff' }
+                                        : {}),
+                                    },
+                                  })
+                                }
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  border: isMatch ? '2px solid #b91c1c' : '1px solid #cbd5e1',
+                                  backgroundColor:
+                                    chip.color === 'transparent' ? '#ffffff' : chip.color,
+                                  color: chip.color === '#111111' ? '#ffffff' : '#0f172a',
+                                  fontSize: '10.5px',
+                                  fontWeight: isMatch ? 700 : 500,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {chip.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* 6. Column Span & Actions */}
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
-                      कॉलम फैलाव (Column Span)
-                    </label>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#b91c1c' }}>
-                      {selectedArticle.columnSpan} / 12
-                    </span>
+                    {/* Headline Borders */}
+                    <div data-testid="section-headline-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <BorderControls
+                        label="शीर्षक बॉर्डर (Headline Borders)"
+                        borders={selectedArticle.typography?.headlineBorders}
+                        onChange={(headlineBorders) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: { ...selectedArticle.typography, headlineBorders },
+                          })
+                        }
+                        onReset={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: {
+                              ...selectedArticle.typography,
+                              headlineBorders: undefined,
+                            },
+                          })
+                        }
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="12"
-                    step="1"
-                    value={selectedArticle.columnSpan}
-                    onChange={(e) =>
-                      onUpdateArticle({
-                        ...selectedArticle,
-                        columnSpan: parseInt(e.target.value, 10),
-                      })
-                    }
-                    style={{ width: '100%', accentColor: '#b91c1c' }}
-                  />
-                </div>
+                )}
+
+                {/* ── PART 2: SUBHEADLINE ── */}
+                {activePart === 'subheadline' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#475569',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        उप-शीर्षक (Subheadline)
+                      </label>
+                      <input
+                        type="text"
+                        data-testid="mobile-input-subheadline"
+                        value={selectedArticle.subheadline || ''}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, subheadline: e.target.value })
+                        }
+                        placeholder="खबर की उप-सुर्खी..."
+                        style={{
+                          width: '100%',
+                          padding: '7px 9px',
+                          fontSize: '12px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <TypographyControls
+                        selectedArticle={selectedArticle}
+                        article={selectedArticle}
+                        initialTargetElement="subheadline"
+                        onUpdateArticle={onUpdateArticle}
+                        onApplyToPage={onApplyTypographyToPage}
+                        isMobile={true}
+                      />
+                    </div>
+
+                    {/* Subheadline Borders */}
+                    <div data-testid="section-subheadline-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <BorderControls
+                        label="उप-शीर्षक बॉर्डर (Subheadline Borders)"
+                        borders={selectedArticle.typography?.subheadlineBorders}
+                        onChange={(subheadlineBorders) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: { ...selectedArticle.typography, subheadlineBorders },
+                          })
+                        }
+                        onReset={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: {
+                              ...selectedArticle.typography,
+                              subheadlineBorders: undefined,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── PART 3: BODY ── */}
+                {activePart === 'body' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                          समाचार का मुख्य विवरण (Body Text)
+                        </label>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                          {selectedArticle.body.trim().split(/\s+/).filter(Boolean).length} शब्द
+                        </span>
+                      </div>
+                      <textarea
+                        rows={4}
+                        data-testid="mobile-input-body"
+                        value={selectedArticle.body}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, body: e.target.value })
+                        }
+                        placeholder="खबर का विवरण लिखें (पैराग्राफ बदलने हेतु दो बार Enter दबाएँ)..."
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          fontSize: '12px',
+                          lineHeight: 1.5,
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          boxSizing: 'border-box',
+                          resize: 'vertical',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <TypographyControls
+                        selectedArticle={selectedArticle}
+                        article={selectedArticle}
+                        initialTargetElement="body"
+                        selectedParagraphIndex={selectedParagraphIndex}
+                        onSelectParagraph={onSelectParagraph}
+                        onUpdateArticle={onUpdateArticle}
+                        onApplyToPage={onApplyTypographyToPage}
+                        isMobile={true}
+                      />
+                    </div>
+
+                    {/* Body Borders */}
+                    <div data-testid="section-body-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <BorderControls
+                        label="मूल पाठ बॉर्डर (Body Borders)"
+                        borders={selectedArticle.typography?.bodyBorders}
+                        onChange={(bodyBorders) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: { ...selectedArticle.typography, bodyBorders },
+                          })
+                        }
+                        onReset={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            typography: {
+                              ...selectedArticle.typography,
+                              bodyBorders: undefined,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── PART 4: IMAGE & MEDIA ── */}
+                {activePart === 'image' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#475569',
+                      }}
+                    >
+                      फोटो व चित्र (Photo & Media)
+                    </label>
+
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#0f172a',
+                          cursor: 'pointer',
+                          minHeight: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>📷</span>{' '}
+                        {selectedArticle.imageUrl ? 'फोटो बदलें' : 'फोटो अपलोड करें'}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleImageFileChange}
+                      />
+
+                      {selectedArticle.imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateArticle({ ...selectedArticle, imageUrl: undefined })
+                          }
+                          style={{
+                            padding: '8px 10px',
+                            backgroundColor: '#fee2e2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            color: '#b91c1c',
+                            cursor: 'pointer',
+                            minHeight: '40px',
+                          }}
+                        >
+                          फोटो हटाएँ
+                        </button>
+                      )}
+                    </div>
+
+                    {selectedArticle.imageUrl && (
+                      <>
+                        <div
+                          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}
+                        >
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '10px',
+                                color: '#64748b',
+                                marginBottom: '2px',
+                              }}
+                            >
+                              स्थान (Placement)
+                            </label>
+                            <select
+                              value={selectedArticle.imagePlacement || 'top'}
+                              onChange={(e) =>
+                                onUpdateArticle({
+                                  ...selectedArticle,
+                                  imagePlacement: e.target.value as ImagePlacement,
+                                })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '6px',
+                                borderRadius: '4px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '11px',
+                              }}
+                            >
+                              <option value="top">शीर्ष पर (Top)</option>
+                              <option value="bottom">नीचे (Bottom)</option>
+                              <option value="side">बाजू में (Side)</option>
+                              <option value="none">छुपाएँ (Hidden)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '10px',
+                                color: '#64748b',
+                                marginBottom: '2px',
+                              }}
+                            >
+                              फिट (Fit Mode)
+                            </label>
+                            <select
+                              value={selectedArticle.imageFit || 'cover'}
+                              onChange={(e) =>
+                                onUpdateArticle({
+                                  ...selectedArticle,
+                                  imageFit: e.target.value as ImageFit,
+                                })
+                              }
+                              style={{
+                                width: '100%',
+                                padding: '6px',
+                                borderRadius: '4px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '11px',
+                              }}
+                            >
+                              <option value="cover">क्रॉप (Cover)</option>
+                              <option value="contain">पूरा (Contain)</option>
+                              <option value="fill">खिंचाव (Fill)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '10px',
+                              color: '#64748b',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            फोटो कैप्शन (Caption)
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedArticle.imageCaption || ''}
+                            onChange={(e) =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                imageCaption: e.target.value,
+                              })
+                            }
+                            placeholder="फोटो का विवरण लिखें..."
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              fontSize: '11.5px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            style={{
+                              display: 'block',
+                              fontSize: '10px',
+                              color: '#64748b',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            क्रेडिट (Credit)
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedArticle.imageCredit || ''}
+                            onChange={(e) =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                imageCredit: e.target.value,
+                              })
+                            }
+                            placeholder="फोटोग्राफर / एजेंसी का नाम..."
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              fontSize: '11.5px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Photo Borders */}
+                    <div data-testid="section-image-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <BorderControls
+                        label="फोटो बॉर्डर (Photo Borders)"
+                        borders={selectedArticle.imageBorders || selectedArticle.typography?.imageBorders}
+                        onChange={(imageBorders) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            imageBorders,
+                            typography: { ...selectedArticle.typography, imageBorders },
+                          })
+                        }
+                        onReset={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            imageBorders: undefined,
+                            typography: {
+                              ...selectedArticle.typography,
+                              imageBorders: undefined,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── PART 5: BLOCK SETTINGS ── */}
+                {activePart === 'block' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Kicker, Dateline, Byline */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#475569',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        किकर / विषय (Kicker)
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedArticle.kickerText || ''}
+                        onChange={(e) =>
+                          onUpdateArticle({ ...selectedArticle, kickerText: e.target.value })
+                        }
+                        placeholder="उदा. विशेष रिपोर्ट / ताज़ा खबर..."
+                        style={{
+                          width: '100%',
+                          padding: '7px 9px',
+                          fontSize: '12px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '3px',
+                          }}
+                        >
+                          स्थान / तिथि (Dateline)
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedArticle.dateline || ''}
+                          onChange={(e) =>
+                            onUpdateArticle({ ...selectedArticle, dateline: e.target.value })
+                          }
+                          placeholder="नई दिल्ली —"
+                          style={{
+                            width: '100%',
+                            padding: '6px 8px',
+                            fontSize: '11.5px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '3px',
+                          }}
+                        >
+                          लेखक (Byline)
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedArticle.byline || ''}
+                          onChange={(e) =>
+                            onUpdateArticle({ ...selectedArticle, byline: e.target.value })
+                          }
+                          placeholder="विशेष संवाददाता"
+                          style={{
+                            width: '100%',
+                            padding: '6px 8px',
+                            fontSize: '11.5px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Column Span */}
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                          कॉलम फैलाव (Column Span)
+                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                columnSpan: Math.max(1, selectedArticle.columnSpan - 1),
+                              })
+                            }
+                            disabled={selectedArticle.columnSpan <= 1}
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              backgroundColor: '#ffffff',
+                              cursor: selectedArticle.columnSpan <= 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 700,
+                              fontSize: '12px',
+                            }}
+                          >
+                            −
+                          </button>
+                          <span
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#b91c1c',
+                              minWidth: '46px',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {selectedArticle.columnSpan} / 12
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                columnSpan: Math.min(12, selectedArticle.columnSpan + 1),
+                              })
+                            }
+                            disabled={selectedArticle.columnSpan >= 12}
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              backgroundColor: '#ffffff',
+                              cursor: selectedArticle.columnSpan >= 12 ? 'not-allowed' : 'pointer',
+                              fontWeight: 700,
+                              fontSize: '12px',
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="12"
+                        step="1"
+                        value={selectedArticle.columnSpan}
+                        onChange={(e) =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            columnSpan: parseInt(e.target.value, 10),
+                          })
+                        }
+                        style={{ width: '100%', accentColor: '#b91c1c' }}
+                      />
+
+                      {/* Padding & Margin Controls */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '8px',
+                          marginTop: '8px',
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            <span style={{ fontSize: '10.5px', color: '#64748b' }}>
+                              पैडिंग (Padding)
+                            </span>
+                            <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#0f172a' }}>
+                              {selectedArticle.paddingPx ?? 8}px
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="32"
+                            step="2"
+                            value={selectedArticle.paddingPx ?? 8}
+                            onChange={(e) =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                paddingPx: parseInt(e.target.value, 10),
+                              })
+                            }
+                            style={{ width: '100%', accentColor: '#3b82f6' }}
+                          />
+                        </div>
+
+                        <div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            <span style={{ fontSize: '10.5px', color: '#64748b' }}>
+                              मार्जिन (Margin)
+                            </span>
+                            <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#0f172a' }}>
+                              {selectedArticle.marginPx ?? 4}px
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="32"
+                            step="2"
+                            value={selectedArticle.marginPx ?? 4}
+                            onChange={(e) =>
+                              onUpdateArticle({
+                                ...selectedArticle,
+                                marginPx: parseInt(e.target.value, 10),
+                              })
+                            }
+                            style={{ width: '100%', accentColor: '#3b82f6' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Fill Space Toggle */}
+                      <div style={{ marginTop: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              fillSpace: !selectedArticle.fillSpace,
+                            })
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: selectedArticle.fillSpace
+                              ? '1.5px solid #16a34a'
+                              : '1px solid #cbd5e1',
+                            backgroundColor: selectedArticle.fillSpace ? '#f0fdf4' : '#ffffff',
+                            color: selectedArticle.fillSpace ? '#15803d' : '#475569',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <span>↕ खाली स्थान भरें (Fill Space)</span>
+                          <span>{selectedArticle.fillSpace ? '✓ सक्रिय' : 'बंद'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Borders */}
+                    <div data-testid="section-block-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <BorderControls
+                        label="ब्लॉक बॉर्डर (Block Borders)"
+                        borders={selectedArticle.borders}
+                        onChange={(borders) => onUpdateArticle({ ...selectedArticle, borders })}
+                        onReset={() =>
+                          onUpdateArticle({
+                            ...selectedArticle,
+                            borders: undefined,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Background Color & Opacity */}
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#475569',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        पृष्ठभूमि व पारदर्शिता (Appearance & Background)
+                      </label>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '6px',
+                          marginBottom: '8px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {[
+                          { label: 'पारदर्शी', color: 'transparent' },
+                          { label: 'सफेद', color: '#ffffff' },
+                          { label: 'हल्का ग्रे', color: '#f8fafc' },
+                          { label: 'क्रीम', color: '#fef3c7' },
+                          { label: 'हल्का लाल', color: '#fee2e2' },
+                          { label: 'हल्का नीला', color: '#e0f2fe' },
+                        ].map((chip) => {
+                          const isMatch =
+                            (selectedArticle.backgroundColor || 'transparent') === chip.color;
+                          return (
+                            <button
+                              key={chip.color}
+                              type="button"
+                              onClick={() =>
+                                onUpdateArticle({
+                                  ...selectedArticle,
+                                  backgroundColor:
+                                    chip.color === 'transparent' ? undefined : chip.color,
+                                })
+                              }
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                border: isMatch ? '2px solid #b91c1c' : '1px solid #cbd5e1',
+                                backgroundColor:
+                                  chip.color === 'transparent' ? '#ffffff' : chip.color,
+                                color: '#0f172a',
+                                fontSize: '10.5px',
+                                fontWeight: isMatch ? 700 : 500,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {chip.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Opacity Slider */}
+                      <div style={{ marginTop: '4px' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: '2px',
+                          }}
+                        >
+                          <span style={{ fontSize: '10.5px', color: '#64748b' }}>
+                            पारदर्शिता (Opacity)
+                          </span>
+                          <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#0f172a' }}>
+                            {Math.round((selectedArticle.opacity ?? 1) * 100)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="1"
+                          step="0.05"
+                          value={selectedArticle.opacity ?? 1}
+                          onChange={(e) =>
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              opacity: parseFloat(e.target.value),
+                            })
+                          }
+                          style={{ width: '100%', accentColor: '#0f172a' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Duplicate & Delete Block Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px',
+                    borderTop: '1px solid #e2e8f0',
+                    paddingTop: '10px',
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => onDuplicateArticle(selectedArticle)}
@@ -875,13 +1826,30 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
             ) : (
               /* No Article Selected -> Page-wide Layout & Masthead Settings */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ backgroundColor: '#f1f5f9', padding: '10px', borderRadius: '6px', fontSize: '11.5px', color: '#475569' }}>
-                  ℹ️ किसी ब्लॉक को संपादित करने हेतु उस पर टैप करें, या नीचे पृष्ठ विन्यास सेटिंग्स बदलें:
+                <div
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    color: '#475569',
+                  }}
+                >
+                  ℹ️ किसी ब्लॉक को संपादित करने हेतु उस पर टैप करें, या नीचे पृष्ठ विन्यास सेटिंग्स
+                  बदलें:
                 </div>
 
                 {/* Masthead Title & Date */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#475569',
+                      marginBottom: '3px',
+                    }}
+                  >
                     अख़बार का मुख्य नाम (Masthead Title)
                   </label>
                   <input
@@ -902,7 +1870,15 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        color: '#475569',
+                        marginBottom: '3px',
+                      }}
+                    >
                       दिनांक (Date)
                     </label>
                     <input
@@ -920,13 +1896,23 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        color: '#475569',
+                        marginBottom: '3px',
+                      }}
+                    >
                       संस्करण (Edition)
                     </label>
                     <input
                       type="text"
                       value={doc.masthead.edition || ''}
-                      onChange={(e) => onUpdateMasthead({ ...doc.masthead, edition: e.target.value })}
+                      onChange={(e) =>
+                        onUpdateMasthead({ ...doc.masthead, edition: e.target.value })
+                      }
                       placeholder="उदा. नई दिल्ली"
                       style={{
                         width: '100%',
@@ -942,29 +1928,102 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
 
                 {/* Page Columns */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    पृष्ठ ग्रिड कॉलम (Page Columns)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                    {[4, 6, 8, 12].map((cols) => {
-                      const isActive = doc.layout.columnCount === cols;
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                      पृष्ठ ग्रिड कॉलम (Page Columns)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                          const nextCols = Math.max(1, activeCols - 1);
+                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
+                        }}
+                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) <= 1}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          cursor:
+                            (currentPage.columnCount ?? doc.layout.columnCount) <= 1
+                              ? 'not-allowed'
+                              : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                        }}
+                      >
+                        −
+                      </button>
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          color: '#b91c1c',
+                          minWidth: '50px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {currentPage.columnCount ?? doc.layout.columnCount} Cols
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                          const nextCols = Math.min(12, activeCols + 1);
+                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
+                        }}
+                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) >= 12}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          cursor:
+                            (currentPage.columnCount ?? doc.layout.columnCount) >= 12
+                              ? 'not-allowed'
+                              : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}
+                  >
+                    {[1, 2, 3, 4, 6, 8, 12].map((cols) => {
+                      const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                      const isActive = activeCols === cols;
                       return (
                         <button
                           key={cols}
                           type="button"
                           onClick={() => onUpdateLayout({ ...doc.layout, columnCount: cols })}
                           style={{
-                            padding: '8px 4px',
-                            borderRadius: '6px',
+                            padding: '6px 2px',
+                            borderRadius: '4px',
                             border: isActive ? '2px solid #b91c1c' : '1px solid #cbd5e1',
                             backgroundColor: isActive ? '#fff5f5' : '#ffffff',
                             color: isActive ? '#b91c1c' : '#0f172a',
                             fontWeight: isActive ? 700 : 500,
-                            fontSize: '12px',
+                            fontSize: '11px',
                             cursor: 'pointer',
                           }}
                         >
-                          {cols} Cols
+                          {cols}
                         </button>
                       );
                     })}
@@ -974,7 +2033,15 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                 {/* Articles on this Page */}
                 {currentPage.articles.length > 0 && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#475569',
+                        marginBottom: '6px',
+                      }}
+                    >
                       इस पृष्ठ के समाचार ब्लॉक (Articles on this Page):
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -995,10 +2062,19 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                             alignItems: 'center',
                           }}
                         >
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                          <span
+                            style={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '80%',
+                            }}
+                          >
                             {art.headline || 'समाचार ब्लॉक'}
                           </span>
-                          <span style={{ fontSize: '10px', color: '#b91c1c', fontWeight: 700 }}>संपादित करें ✎</span>
+                          <span style={{ fontSize: '10px', color: '#b91c1c', fontWeight: 700 }}>
+                            संपादित करें ✎
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1010,74 +2086,593 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         )}
 
         {/* ==========================================================
-         * 4. PRESETS / FORMAT DRAWER (प्रारूप)
+         * 4. PRESETS & LAYOUT DRAWER (प्रारूप व विन्यास)
          * ========================================================== */}
         {mode === 'presets' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {/* 1. Newspaper Presets */}
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                अख़बार प्रारूप (Newspaper Presets)
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {presets.map((preset) => {
-                  const isSelected = doc.layout.presetId === preset.id;
-                  return (
-                    <div
-                      key={preset.id}
-                      onClick={() => onApplyPreset?.(preset.id)}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
-                        backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: '12.5px', fontWeight: 700, color: isSelected ? '#b91c1c' : '#0f172a' }}>
-                          {preset.name}
-                        </div>
-                        <div style={{ fontSize: '10.5px', color: '#64748b' }}>
-                          {preset.defaultColumns} कॉलम • {preset.recommendedPageSize.toUpperCase()}
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#b91c1c', backgroundColor: '#fee2e2', padding: '2px 6px', borderRadius: '4px' }}>
-                          लागू है
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Sub-tab Switcher: Presets vs Grid Layout */}
+            <div
+              style={{
+                display: 'flex',
+                borderRadius: '8px',
+                backgroundColor: '#f1f5f9',
+                padding: '3px',
+              }}
+            >
+              <button
+                type="button"
+                data-testid="mobile-tab-presets"
+                onClick={() => setPresetTab('presets')}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: presetTab === 'presets' ? '#ffffff' : 'transparent',
+                  color: presetTab === 'presets' ? '#b91c1c' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: presetTab === 'presets' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                ❖ अख़बार प्रारूप (Presets)
+              </button>
+              <button
+                type="button"
+                data-testid="mobile-tab-layout"
+                onClick={() => setPresetTab('layout')}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: presetTab === 'layout' ? '#ffffff' : 'transparent',
+                  color: presetTab === 'layout' ? '#b91c1c' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: presetTab === 'layout' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                ▦ लेआउट व ग्रिड (Layout & Grid)
+              </button>
             </div>
 
-            {/* 2. 12-Column Row Presets */}
-            {onApplyLayoutRow && (
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  पंक्ति लेआउट (12-Col Row Presets)
+            {/* TAB 1: PRESETS & PUBLISHING */}
+            {presetTab === 'presets' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* 0. Publishing Studio: Master Templates & Daily Editions */}
+                {onOpenPublishing && (
+                  <div
+                    data-testid="mobile-btn-publishing"
+                    onClick={onOpenPublishing}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#0f172a',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#38bdf8' }}>
+                        📰 मास्टर टेम्पलेट एवं दैनिक अंक
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                        दैनिक संस्करण बनाएं, पुराने अंक देखें व टेम्पलेट प्रबंधित करें
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '16px', color: '#38bdf8' }}>➔</span>
+                  </div>
+                )}
+
+                {/* 1. Newspaper Presets */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#475569',
+                      marginBottom: '6px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    अख़बार प्रारूप (Newspaper Presets)
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {presets.map((preset) => {
+                      const isSelected = doc.layout.presetId === preset.id;
+                      return (
+                        <div
+                          key={preset.id}
+                          data-testid={`mobile-preset-${preset.id}`}
+                          onClick={() => onApplyPreset?.(preset.id)}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
+                            backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                color: isSelected ? '#b91c1c' : '#0f172a',
+                              }}
+                            >
+                              {preset.name}
+                            </div>
+                            <div style={{ fontSize: '10.5px', color: '#64748b' }}>
+                              {preset.defaultColumns} कॉलम •{' '}
+                              {preset.recommendedPageSize.toUpperCase()}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                color: '#b91c1c',
+                                backgroundColor: '#fee2e2',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              लागू है
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  {[
-                    { label: '6 + 6 (समान दो)', cols: [6, 6] },
-                    { label: '4 + 4 + 4 (तीन कॉलम)', cols: [4, 4, 4] },
-                    { label: '8 + 4 (लीड + साइड)', cols: [8, 4] },
-                    { label: '12 (पूरा बैनर)', cols: [12] },
-                  ].map((rowPreset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        onApplyLayoutRow(rowPreset.cols);
-                        onClose();
-                      }}
+
+                {/* 2. Page Size & Orientation */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#475569',
+                      marginBottom: '6px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    कागज़ का आकार व दिशा (Size & Orientation)
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '10.5px',
+                          color: '#64748b',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        आकार (Page Size)
+                      </label>
+                      <select
+                        value={doc.metadata.pageSize}
+                        onChange={(e) => onPageSizeChange(e.target.value as PageSizePreset)}
+                        style={{
+                          width: '100%',
+                          padding: '7px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '11.5px',
+                        }}
+                      >
+                        <option value="broadsheet">ब्रॉडशीट (Broadsheet)</option>
+                        <option value="berliner">बर्लिनर (Berliner)</option>
+                        <option value="a3">A3 पोस्टर (A3)</option>
+                        <option value="tabloid">टैब्लॉयड (Tabloid)</option>
+                        <option value="a4">A4 मानक (A4)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '10.5px',
+                          color: '#64748b',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        दिशा (Orientation)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onOrientationChange(
+                            doc.metadata.orientation === 'portrait' ? 'landscape' : 'portrait'
+                          )
+                        }
+                        style={{
+                          width: '100%',
+                          padding: '7px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {doc.metadata.orientation === 'portrait'
+                          ? '↕ लंबवत (Portrait)'
+                          : '↔ क्षैतिज (Landscape)'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Color Themes */}
+                {onOpenTheme && (
+                  <button
+                    type="button"
+                    onClick={onOpenTheme}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#f8fafc',
+                      color: '#0f172a',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      minHeight: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>🎨</span> अख़बार रंग व कागज़ थीम (Color Themes)
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: GRID LAYOUT, COLUMNS & BUILDER */}
+            {presetTab === 'layout' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* 1. Page Column Grid Stepper & Quick Selection */}
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                      पृष्ठ ग्रिड कॉलम (Page Columns)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                          const nextCols = Math.max(1, activeCols - 1);
+                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
+                        }}
+                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) <= 1}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          cursor:
+                            (currentPage.columnCount ?? doc.layout.columnCount) <= 1
+                              ? 'not-allowed'
+                              : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                        }}
+                      >
+                        −
+                      </button>
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          color: '#b91c1c',
+                          minWidth: '50px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {currentPage.columnCount ?? doc.layout.columnCount} Cols
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                          const nextCols = Math.min(12, activeCols + 1);
+                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
+                        }}
+                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) >= 12}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          cursor:
+                            (currentPage.columnCount ?? doc.layout.columnCount) >= 12
+                              ? 'not-allowed'
+                              : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}
+                  >
+                    {[1, 2, 3, 4, 6, 8, 12].map((cols) => {
+                      const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
+                      const isActive = activeCols === cols;
+                      return (
+                        <button
+                          key={cols}
+                          type="button"
+                          data-testid={`mobile-grid-col-${cols}`}
+                          onClick={() => onUpdateLayout({ ...doc.layout, columnCount: cols })}
+                          style={{
+                            padding: '6px 2px',
+                            borderRadius: '4px',
+                            border: isActive ? '2px solid #b91c1c' : '1px solid #cbd5e1',
+                            backgroundColor: isActive ? '#fff5f5' : '#ffffff',
+                            color: isActive ? '#b91c1c' : '#0f172a',
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {cols}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. 12-Column Row Presets Builder */}
+                {onApplyLayoutRow && (
+                  <div>
+                    <div
                       style={{
-                        padding: '8px 10px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#475569',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        12-कॉलम संयोजन (12-Col Row Presets)
+                      </div>
+                      <span style={{ fontSize: '10px', color: '#64748b' }}>
+                        {LAYOUT_PRESET_OPTIONS.length} विकल्प
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      {LAYOUT_PRESET_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          data-testid={`layout-preset-${opt.id}`}
+                          onClick={() => {
+                            onApplyLayoutRow(opt.columns);
+                            onClose();
+                          }}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            backgroundColor: '#f8fafc',
+                            color: '#0f172a',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            gap: '4px',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              width: '100%',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
+                              {opt.label}
+                            </span>
+                            <span style={{ fontSize: '9px', fontWeight: 600, color: '#64748b' }}>
+                              {opt.columns.length} भाग
+                            </span>
+                          </div>
+                          {/* Mini visual split bar */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              width: '100%',
+                              height: '5px',
+                              borderRadius: '2px',
+                              overflow: 'hidden',
+                              backgroundColor: '#e2e8f0',
+                              gap: '1px',
+                            }}
+                          >
+                            {opt.columns.map((col, cIdx) => (
+                              <div
+                                key={cIdx}
+                                style={{
+                                  flex: col,
+                                  backgroundColor: cIdx % 2 === 0 ? '#b91c1c' : '#475569',
+                                  height: '100%',
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              color: '#64748b',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '100%',
+                            }}
+                          >
+                            {opt.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Spacing Density */}
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#475569',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    स्पेसिंग व घनत्व (Spacing Density)
+                  </label>
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}
+                  >
+                    {[
+                      { key: 'compact', label: 'सघन (Compact)' },
+                      { key: 'normal', label: 'मानक (Normal)' },
+                      { key: 'spacious', label: 'खुला (Spacious)' },
+                    ].map((d) => {
+                      const isActive = (doc.layout.spacingDensity || 'normal') === d.key;
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() =>
+                            onUpdateLayout({
+                              ...doc.layout,
+                              spacingDensity: d.key as 'compact' | 'normal' | 'spacious',
+                            })
+                          }
+                          style={{
+                            padding: '7px 4px',
+                            borderRadius: '6px',
+                            border: isActive ? '2px solid #b91c1c' : '1px solid #cbd5e1',
+                            backgroundColor: isActive ? '#fff5f5' : '#ffffff',
+                            color: isActive ? '#b91c1c' : '#0f172a',
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Column Rule Divider Line Toggle */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateLayout({
+                        ...doc.layout,
+                        columnRule: !doc.layout.columnRule,
+                      })
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: doc.layout.columnRule ? '1.5px solid #b91c1c' : '1px solid #cbd5e1',
+                      backgroundColor: doc.layout.columnRule ? '#fff5f5' : '#ffffff',
+                      color: doc.layout.columnRule ? '#b91c1c' : '#0f172a',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>│ कॉलम विभाजक रेखा (Column Divider)</span>
+                    <span>{doc.layout.columnRule ? '✓ चालू' : 'बंद'}</span>
+                  </button>
+                </div>
+
+                {/* 5. Free Layout & Auto-Fit Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={onToggleFreeLayout}
+                    style={{
+                      padding: '9px 12px',
+                      borderRadius: '6px',
+                      border: useFreeLayout ? '2px solid #b91c1c' : '1px solid #cbd5e1',
+                      backgroundColor: useFreeLayout ? '#fff5f5' : '#f8fafc',
+                      color: useFreeLayout ? '#b91c1c' : '#0f172a',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      minHeight: '44px',
+                    }}
+                  >
+                    {useFreeLayout ? '🔓 मुक्त लेआउट ऑन' : '🔒 ग्रिड लेआउट ऑन'}
+                  </button>
+
+                  {onAutoFit && (
+                    <button
+                      type="button"
+                      onClick={onAutoFit}
+                      style={{
+                        padding: '9px 12px',
                         borderRadius: '6px',
                         border: '1px solid #cbd5e1',
                         backgroundColor: '#f8fafc',
@@ -1085,111 +2680,15 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                         fontSize: '11.5px',
                         fontWeight: 600,
                         cursor: 'pointer',
-                        minHeight: '40px',
+                        minHeight: '44px',
                       }}
                     >
-                      {rowPreset.label}
+                      📐 ऑटो-फिट ग्रिड
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
-
-            {/* 3. Page Size & Orientation */}
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                कागज़ का आकार व दिशा (Size & Orientation)
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '10.5px', color: '#64748b', marginBottom: '3px' }}>
-                    आकार (Page Size)
-                  </label>
-                  <select
-                    value={doc.metadata.pageSize}
-                    onChange={(e) => onPageSizeChange(e.target.value as PageSizePreset)}
-                    style={{
-                      width: '100%',
-                      padding: '7px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '11.5px',
-                    }}
-                  >
-                    <option value="broadsheet">ब्रॉडशीट (Broadsheet)</option>
-                    <option value="berliner">बर्लिनर (Berliner)</option>
-                    <option value="a3">A3 पोस्टर (A3)</option>
-                    <option value="tabloid">टैब्लॉयड (Tabloid)</option>
-                    <option value="a4">A4 मानक (A4)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '10.5px', color: '#64748b', marginBottom: '3px' }}>
-                    दिशा (Orientation)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onOrientationChange(doc.metadata.orientation === 'portrait' ? 'landscape' : 'portrait')
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '7px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#ffffff',
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {doc.metadata.orientation === 'portrait' ? '↕ लंबवत (Portrait)' : '↔ क्षैतिज (Landscape)'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Color Themes & Free Layout */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {onOpenTheme && (
-                <button
-                  type="button"
-                  onClick={onOpenTheme}
-                  style={{
-                    padding: '9px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f8fafc',
-                    color: '#0f172a',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    minHeight: '44px',
-                  }}
-                >
-                  🎨 रंग व कागज़ थीम
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={onToggleFreeLayout}
-                style={{
-                  padding: '9px 12px',
-                  borderRadius: '6px',
-                  border: useFreeLayout ? '2px solid #b91c1c' : '1px solid #cbd5e1',
-                  backgroundColor: useFreeLayout ? '#fff5f5' : '#f8fafc',
-                  color: useFreeLayout ? '#b91c1c' : '#0f172a',
-                  fontSize: '11.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                {useFreeLayout ? '🔓 मुक्त लेआउट ऑन' : '🔒 ग्रिड लेआउट ऑन'}
-              </button>
-            </div>
           </div>
         )}
       </div>

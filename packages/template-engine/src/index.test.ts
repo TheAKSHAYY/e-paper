@@ -210,18 +210,12 @@ describe('TemplateEngine', () => {
     });
 
     it('applies paragraphTypography to individual paragraphs independently', () => {
-      const multiPara = 'पहला अनुच्छेद यहाँ समाप्त होता है।\n\nदूसरा अनुच्छेद यहाँ से शुरू होता है।';
-      const rendered = formatBodyParagraphsHtml(
-        multiPara,
-        false,
-        'hi',
-        undefined,
-        undefined,
-        {
-          '0': { fontSizePt: 18, lineHeight: 1.6, textAlign: 'center' },
-          '1': { fontSizePt: 12 },
-        }
-      );
+      const multiPara =
+        'पहला अनुच्छेद यहाँ समाप्त होता है।\n\nदूसरा अनुच्छेद यहाँ से शुरू होता है।';
+      const rendered = formatBodyParagraphsHtml(multiPara, false, 'hi', undefined, undefined, {
+        '0': { fontSizePt: 18, lineHeight: 1.6, textAlign: 'center' },
+        '1': { fontSizePt: 12 },
+      });
       expect(rendered).toContain('data-para-index="0"');
       expect(rendered).toContain('data-para-index="1"');
       expect(rendered).toContain('font-size: 18pt;');

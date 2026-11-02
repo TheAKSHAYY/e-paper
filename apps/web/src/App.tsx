@@ -11,14 +11,21 @@ import type {
   FrameMm,
   NewspaperThemeConfig,
   ElementTypography,
+  PreflightReport,
+  PreflightIssue,
+  MasterTemplate,
+  DailyEdition,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
   createNewBlankPage,
   getPageDimensions,
+  getPrintableAreaBoundsMm,
+  clampFrameToPrintableArea,
   resolvePageColumnCount,
   NewspaperDocumentSchema,
   migrateDocumentSchema,
+  SelectedElementPart,
 } from '@epaper-studio/document-schema';
 import {
   createNewspaperDocument,
@@ -28,6 +35,9 @@ import {
   freeToAuto,
   swapFrames,
   findNearestFreeSlot,
+  runPreflightValidation,
+  createMasterTemplateFromDocument,
+  createDailyEditionFromTemplate,
 } from '@epaper-studio/template-engine';
 
 import { TopBar, type ViewMode } from './components/studio/TopBar';
@@ -42,8 +52,10 @@ import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
+import { PreflightReportModal } from './components/studio/PreflightReportModal';
+import { TemplateEditionModal } from './components/studio/TemplateEditionModal';
 import { LandingPage } from './components/landing/LandingPage';
-import { draftStorage } from './storage';
+import { draftStorage, editionStorage, templateStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
 import { printDocumentViaIframe } from './utils/browserPrintExport';
 import { PrintInstructionsModal } from './components/studio/PrintInstructionsModal';
@@ -74,7 +86,10 @@ export const App: React.FC = () => {
   // Active page & selection state
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [selectedElementPart, setSelectedElementPart] = useState<SelectedElementPart>(null);
+  const [selectedParaIndex, setSelectedParaIndex] = useState<number | null>(null);
   const [isMastheadSelected, setIsMastheadSelected] = useState<boolean>(false);
+  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'meta' | 'rules'>('title');
 
   // UI state
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');
@@ -131,6 +146,12 @@ export const App: React.FC = () => {
     }
     return false;
   });
+
+  // Publishing Studio & Preflight validation state (Phase 1)
+  const [isTemplateEditionModalOpen, setIsTemplateEditionModalOpen] = useState<boolean>(false);
+  const [isPreflightModalOpen, setIsPreflightModalOpen] = useState<boolean>(false);
+  const [preflightReport, setPreflightReport] = useState<PreflightReport | null>(null);
+  const [activeEditionId, setActiveEditionId] = useState<string | undefined>(undefined);
 
   // Modals for page full and export preflight
   const [showPageFullModal, setShowPageFullModal] = useState<boolean>(false);
@@ -517,6 +538,17 @@ export const App: React.FC = () => {
     if (!selectedArticleId) return null;
     return currentPage.articles.find((a) => a.id === selectedArticleId) ?? null;
   }, [selectedArticleId, currentPage.articles]);
+
+  // Live Preflight Status
+  const preflightStatus = useMemo(() => {
+    if (!document) return null;
+    const report = runPreflightValidation(document);
+    return {
+      overallStatus: report.overallStatus,
+      blockerCount: report.errorCount,
+      warningCount: report.warningCount,
+    };
+  }, [document]);
 
   // Auto-load most recent draft or save initial preset on mount (clean view, no aggressive auto-select)
   useEffect(() => {
@@ -1426,14 +1458,24 @@ export const App: React.FC = () => {
     setHasUnsavedChanges(true);
   }, []);
 
-  const handleUpdateLayout = useCallback((layout: NewspaperLayoutConfig) => {
-    setDocument((prev) => ({
-      ...prev,
-      layout,
-      metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
-    }));
-    setHasUnsavedChanges(true);
-  }, []);
+  const handleUpdateLayout = useCallback(
+    (layout: NewspaperLayoutConfig) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const updatedPages = currentPages.map((p, idx) =>
+          idx === safePageIndex ? { ...p, columnCount: layout.columnCount } : p
+        );
+        return {
+          ...prev,
+          layout,
+          pages: updatedPages,
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+      setHasUnsavedChanges(true);
+    },
+    [safePageIndex]
+  );
 
   const handlePageSizeChange = useCallback((pageSize: PageSizePreset) => {
     setDocument((prev) => {
@@ -1467,44 +1509,42 @@ export const App: React.FC = () => {
     setHasUnsavedChanges(true);
   }, []);
 
-  // Save draft manually
+  // Save draft or active edition manually
   const handleSaveDraft = useCallback(async () => {
     setIsSaving(true);
     try {
-      await draftStorage.saveDraft(document);
+      if (activeEditionId) {
+        const existing = await editionStorage.getEdition(activeEditionId);
+        if (existing) {
+          existing.document = document;
+          existing.publicationName = document.masthead.title;
+          existing.editionName = document.masthead.edition;
+          existing.editionDate = document.masthead.date;
+          await editionStorage.saveEdition(existing);
+        } else {
+          await draftStorage.saveDraft(document);
+        }
+      } else {
+        await draftStorage.saveDraft(document);
+      }
       setHasUnsavedChanges(false);
-      showNotification(`"${document.metadata.title}" ड्राफ़्ट सेव हो गया।`);
+      showNotification(`"${document.metadata.title}" सहेजा गया।`);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : 'ड्राफ़्ट सेव नहीं हो सका।');
+      alert(err instanceof Error ? err.message : 'सहेजा नहीं जा सका।');
     } finally {
       setIsSaving(false);
     }
-  }, [document, showNotification]);
+  }, [document, activeEditionId, showNotification]);
 
-  // Export PDF with Preflight Overflow Guard (Task 4)
+  // Export PDF with 12-Point Preflight Quality Guard
   const handleExportPdf = useCallback(
     async (bypassPreflight = false) => {
       if (!bypassPreflight) {
-        // Preflight overflow detection: find any blocks whose content exceeds capacity
-        const overflows: Array<{ pageIndex: number; articleId: string; headline: string }> = [];
-        pages.forEach((pg, pIdx) => {
-          if (pg.layoutMode === 'free') {
-            pg.articles.forEach((art) => {
-              if (art.frame) {
-                const areaMm2 = art.frame.w * art.frame.h;
-                const words = art.body.trim().split(/\s+/).filter(Boolean).length;
-                // Roughly 1 word takes ~18mm2 in 10pt text
-                if (words * 18 > areaMm2 * 1.35) {
-                  overflows.push({ pageIndex: pIdx, articleId: art.id, headline: art.headline });
-                }
-              }
-            });
-          }
-        });
-
-        if (overflows.length > 0) {
-          setPreflightWarnings(overflows);
+        const report = runPreflightValidation(document);
+        setPreflightReport(report);
+        if (!report.canExport || report.warningCount > 0) {
+          setIsPreflightModalOpen(true);
           return;
         }
       }
@@ -1539,7 +1579,201 @@ export const App: React.FC = () => {
         setIsExportingPdf(false);
       }
     },
-    [document, pages, showNotification]
+    [document, showNotification]
+  );
+
+  const handleRunPreflight = useCallback(() => {
+    const report = runPreflightValidation(document);
+    setPreflightReport(report);
+    setIsPreflightModalOpen(true);
+  }, [document]);
+
+  const handleApplyPreflightAutoFix = useCallback(
+    (issue: PreflightIssue) => {
+      setDocument((prev) => {
+        const cloned = JSON.parse(JSON.stringify(prev)) as NewspaperDocument;
+        const pubPages = getPublicationPages(cloned);
+
+        if (
+          issue.autoFixType === 'clamp_to_bounds' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          const art = page?.articles.find((a) => a.id === issue.articleId);
+          if (art && art.frame) {
+            const bounds = getPrintableAreaBoundsMm(
+              cloned.metadata.pageSize,
+              cloned.metadata.orientation
+            );
+            art.frame = clampFrameToPrintableArea(art.frame, bounds);
+          }
+        } else if (
+          issue.autoFixType === 'reduce_font_size' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          const art = page?.articles.find((a) => a.id === issue.articleId);
+          if (art) {
+            if (art.customFontSizePt && art.customFontSizePt > 6) {
+              art.customFontSizePt -= 1;
+            } else {
+              art.customFontSizePt = Math.max(6, (cloned.layout.bodyFontSizePt || 10) - 1);
+            }
+          }
+        } else if (issue.autoFixType === 'set_today_date') {
+          const todayStr = new Intl.DateTimeFormat('hi-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }).format(new Date());
+          cloned.masthead.date = todayStr;
+        } else if (issue.autoFixType === 'remove_blank_page' && issue.pageIndex !== undefined) {
+          if (cloned.pages && cloned.pages.length > 1) {
+            cloned.pages.splice(issue.pageIndex, 1);
+            cloned.pages.forEach((p, idx) => {
+              p.pageNumber = idx + 1;
+            });
+          }
+        } else if (
+          issue.autoFixType === 'delete_empty_block' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          if (page) {
+            page.articles = page.articles.filter((a) => a.id !== issue.articleId);
+            if (issue.pageIndex === 0) {
+              cloned.articles = page.articles;
+            }
+          }
+        } else if (
+          issue.autoFixType === 'remove_image_placement' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          const art = page?.articles.find((a) => a.id === issue.articleId);
+          if (art) {
+            art.imagePlacement = 'none';
+          }
+        }
+
+        const newReport = runPreflightValidation(cloned);
+        setPreflightReport(newReport);
+        return cloned;
+      });
+      showNotification('✓ स्वतः सुधार लागू किया गया।');
+    },
+    [showNotification]
+  );
+
+  const handleResolveAllAutoFixable = useCallback(() => {
+    if (!preflightReport) return;
+    const autoFixableIssues = preflightReport.issues.filter((i) => i.autoFixAvailable);
+    if (autoFixableIssues.length === 0) return;
+
+    setDocument((prev) => {
+      const cloned = JSON.parse(JSON.stringify(prev)) as NewspaperDocument;
+      for (const issue of autoFixableIssues) {
+        const pubPages = getPublicationPages(cloned);
+        if (
+          issue.autoFixType === 'clamp_to_bounds' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          const art = page?.articles.find((a) => a.id === issue.articleId);
+          if (art && art.frame) {
+            const bounds = getPrintableAreaBoundsMm(
+              cloned.metadata.pageSize,
+              cloned.metadata.orientation
+            );
+            art.frame = clampFrameToPrintableArea(art.frame, bounds);
+          }
+        } else if (
+          issue.autoFixType === 'reduce_font_size' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          const art = page?.articles.find((a) => a.id === issue.articleId);
+          if (art) {
+            if (art.customFontSizePt && art.customFontSizePt > 6) {
+              art.customFontSizePt -= 1;
+            } else {
+              art.customFontSizePt = Math.max(6, (cloned.layout.bodyFontSizePt || 10) - 1);
+            }
+          }
+        } else if (issue.autoFixType === 'set_today_date') {
+          const todayStr = new Intl.DateTimeFormat('hi-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }).format(new Date());
+          cloned.masthead.date = todayStr;
+        } else if (
+          issue.autoFixType === 'delete_empty_block' &&
+          issue.articleId &&
+          issue.pageIndex !== undefined
+        ) {
+          const page = pubPages[issue.pageIndex];
+          if (page) {
+            page.articles = page.articles.filter((a) => a.id !== issue.articleId);
+            if (issue.pageIndex === 0) {
+              cloned.articles = page.articles;
+            }
+          }
+        }
+      }
+
+      const newReport = runPreflightValidation(cloned);
+      setPreflightReport(newReport);
+      return cloned;
+    });
+    showNotification('✓ सभी संभव सुधार लागू किए गए।');
+  }, [preflightReport, showNotification]);
+
+  // Master Template & Daily Edition publishing handlers
+  const handleLoadEdition = useCallback(
+    async (edition: DailyEdition) => {
+      setDocument(edition.document);
+      setActiveEditionId(edition.id);
+      setCurrentPageIndex(0);
+      showNotification(
+        `✓ संस्करण लोड किया गया: ${edition.publicationName} (${edition.editionName})`
+      );
+    },
+    [showNotification]
+  );
+
+  const handleSaveCurrentAsTemplate = useCallback(
+    async (name: string, description?: string) => {
+      const template = createMasterTemplateFromDocument(document, name, { description });
+      await templateStorage.saveTemplate(template);
+      showNotification(`✓ मास्टर टेम्पलेट सहेजा गया: ${name}`);
+    },
+    [document, showNotification]
+  );
+
+  const handleStartNewEditionFromTemplate = useCallback(
+    async (template: MasterTemplate) => {
+      const todayStr = new Intl.DateTimeFormat('hi-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date());
+      const edition = createDailyEditionFromTemplate(template, {
+        editionDate: todayStr,
+      });
+      await editionStorage.saveEdition(edition);
+      setDocument(edition.document);
+      setActiveEditionId(edition.id);
+      setCurrentPageIndex(0);
+      showNotification(`✓ नया दैनिक अंक प्रारंभ किया गया (${edition.editionDate})`);
+    },
+    [showNotification]
   );
 
   // Fallback Browser Print State and Handlers
@@ -1562,9 +1796,7 @@ export const App: React.FC = () => {
       showNotification('✓ प्रिंट डायलॉग प्रारंभ किया गया');
     } catch (err) {
       console.error('Print export error:', err);
-      showNotification(
-        `प्रिंट त्रुटि: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`
-      );
+      showNotification(`प्रिंट त्रुटि: ${err instanceof Error ? err.message : 'अज्ञात त्रुटि'}`);
     } finally {
       setIsPrintingPdf(false);
     }
@@ -1617,6 +1849,19 @@ export const App: React.FC = () => {
     (presetId: NewspaperPresetId, replaceArticles: boolean) => {
       const preset = getNewspaperPreset(presetId);
       setDocument((prev) => {
+        const pageSize = preset.recommendedPageSize;
+        const dimensions = getPageDimensions(pageSize, prev.metadata.orientation);
+        const newArticles = replaceArticles
+          ? preset.seedArticles.map((art, i) => ({ ...art, id: `art-${presetId}-${i + 1}` }))
+          : null;
+
+        const currentPages = getPublicationPages(prev);
+        const updatedPages = currentPages.map((p, idx) => ({
+          ...p,
+          columnCount: preset.defaultColumns,
+          articles: idx === 0 && newArticles ? newArticles : p.articles,
+        }));
+
         const next: NewspaperDocument = {
           ...prev,
           masthead: {
@@ -1626,6 +1871,13 @@ export const App: React.FC = () => {
             issueNumber: preset.defaultMasthead.issueNumber,
             price: preset.defaultMasthead.price,
             weatherNotice: preset.defaultMasthead.weatherNotice,
+            fontFamily:
+              preset.defaultMasthead.fontFamily || preset.mastheadFont || prev.masthead.fontFamily,
+            tagline: preset.defaultMasthead.tagline ?? prev.masthead.tagline,
+            edition: preset.defaultMasthead.edition ?? prev.masthead.edition,
+            establishmentYear:
+              preset.defaultMasthead.establishmentYear ?? prev.masthead.establishmentYear,
+            emblem: preset.defaultMasthead.emblem ?? prev.masthead.emblem,
           },
           layout: {
             ...prev.layout,
@@ -1633,13 +1885,21 @@ export const App: React.FC = () => {
             columnCount: preset.defaultColumns,
             columnRule: preset.columnRule,
             headlineFont: preset.headlineFont,
+            subheadlineFont: preset.subheadlineFont ?? prev.layout.subheadlineFont,
+            headlineWeight: preset.headlineWeight ?? prev.layout.headlineWeight,
             bodyFont: preset.bodyFont,
             bodyFontSizePt: preset.bodyFontSizePt,
             spacingDensity: preset.spacingDensity,
+            mastheadFont: preset.mastheadFont ?? prev.layout.mastheadFont,
           },
-          articles: replaceArticles
-            ? preset.seedArticles.map((art, i) => ({ ...art, id: `art-${presetId}-${i + 1}` }))
-            : prev.articles,
+          metadata: {
+            ...prev.metadata,
+            pageSize,
+            dimensions,
+            updatedAt: new Date().toISOString(),
+          },
+          pages: updatedPages,
+          articles: newArticles ? newArticles : prev.articles,
         };
         return next;
       });
@@ -1790,6 +2050,9 @@ export const App: React.FC = () => {
               onOpenTemplates={() => setIsPresetsOpen(true)}
               onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
               onOpenDrafts={() => setIsDraftsOpen(true)}
+              onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
+              preflightStatus={preflightStatus}
+              onOpenPreflight={handleRunPreflight}
               onExportPdf={handleExportPdf}
               isExportingPdf={isExportingPdf}
               onPrintPdf={() => handleOpenPrintModal(null)}
@@ -1998,6 +2261,8 @@ export const App: React.FC = () => {
                 // Deselect article if clicking directly on background
                 if (e.target === e.currentTarget) {
                   setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
                   setIsMastheadSelected(false);
                 }
               }}
@@ -2118,8 +2383,29 @@ export const App: React.FC = () => {
                 useFreeLayout={useFreeLayout}
                 doc={document}
                 selectedArticleId={selectedArticleId}
+                selectedElementPart={selectedElementPart}
+                selectedParagraphIndex={selectedParaIndex}
+                onDeselect={() => {
+                  setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
+                  setIsMastheadSelected(false);
+                }}
                 onSelectArticle={(id) => {
                   setSelectedArticleId(id);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
+                  setIsMastheadSelected(false);
+                  if (isMobile) {
+                    setMobileDrawer('inspector');
+                  } else {
+                    setIsInspectorOpen(true);
+                  }
+                }}
+                onSelectElementPart={(articleId, part, paraIndex) => {
+                  setSelectedArticleId(articleId);
+                  setSelectedElementPart(part);
+                  setSelectedParaIndex(paraIndex ?? null);
                   setIsMastheadSelected(false);
                   if (isMobile) {
                     setMobileDrawer('inspector');
@@ -2128,11 +2414,16 @@ export const App: React.FC = () => {
                   }
                 }}
                 isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-                onSelectMasthead={() => {
+                onSelectMasthead={(tab?: 'title' | 'meta' | 'rules') => {
                   setIsMastheadSelected(true);
                   setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
+                  if (tab) {
+                    setMastheadInspectorTab(tab);
+                  }
                   if (isMobile) {
-                    setMobileDrawer('presets');
+                    setMobileDrawer('inspector');
                   } else {
                     setIsInspectorOpen(true);
                   }
@@ -2171,8 +2462,13 @@ export const App: React.FC = () => {
                 onPageSizeChange={handlePageSizeChange}
                 orientation={document.metadata.orientation}
                 onOrientationChange={handleOrientationChange}
+                selectedElementPart={selectedElementPart}
+                selectedParagraphIndex={selectedParaIndex}
+                onSelectParagraph={setSelectedParaIndex}
                 onDeselect={() => {
                   setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
                   setIsMastheadSelected(false);
                 }}
                 onCloseInspector={() => setIsInspectorOpen(false)}
@@ -2180,6 +2476,8 @@ export const App: React.FC = () => {
                 onSelectMasthead={() => {
                   setIsMastheadSelected(true);
                   setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
                 }}
                 onCloseMasthead={() => setIsMastheadSelected(false)}
               />
@@ -2194,7 +2492,7 @@ export const App: React.FC = () => {
                 onSelectDrawer={setMobileDrawer}
                 currentPageNumber={safePageIndex + 1}
                 totalPages={pages.length}
-                hasSelectedArticle={Boolean(selectedArticle)}
+                hasSelectedArticle={Boolean(selectedArticle) || (isMastheadSelected && safePageIndex === 0)}
                 onExportPdf={handleExportPdf}
                 isExportingPdf={isExportingPdf}
               />
@@ -2203,6 +2501,8 @@ export const App: React.FC = () => {
                 mode={mobileDrawer}
                 onClose={() => setMobileDrawer('none')}
                 selectedArticle={selectedArticle}
+                isMastheadSelected={isMastheadSelected && safePageIndex === 0}
+                mastheadTab={mastheadInspectorTab}
                 onUpdateArticle={handleUpdateArticle}
                 onDeleteArticle={handleDeleteArticle}
                 onDuplicateArticle={handleDuplicateArticle}
@@ -2228,14 +2528,29 @@ export const App: React.FC = () => {
                 onApplyPreset={(pId) => handleApplyPreset(pId, false)}
                 onApplyLayoutRow={handleApplyLayoutRow}
                 onOpenTheme={() => setIsThemeModalOpen(true)}
+                onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
                 onDeselectArticle={() => {
                   setSelectedArticleId(null);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
                   setIsMastheadSelected(false);
                 }}
                 onSelectArticle={(id) => {
                   setSelectedArticleId(id);
+                  setSelectedElementPart(null);
+                  setSelectedParaIndex(null);
                   setIsMastheadSelected(false);
                 }}
+                initialTargetElement={
+                  selectedElementPart === 'headline' ||
+                  selectedElementPart === 'subheadline' ||
+                  selectedElementPart === 'body'
+                    ? selectedElementPart
+                    : undefined
+                }
+                selectedElementPart={selectedElementPart}
+                selectedParagraphIndex={selectedParaIndex}
+                onSelectParagraph={setSelectedParaIndex}
               />
             </>
           )}
@@ -2286,6 +2601,33 @@ export const App: React.FC = () => {
           setIsDraftsOpen(false);
           setIsSetupOpen(true);
         }}
+      />
+
+      <TemplateEditionModal
+        isOpen={isTemplateEditionModalOpen}
+        onClose={() => setIsTemplateEditionModalOpen(false)}
+        activeEditionId={activeEditionId}
+        onLoadEdition={handleLoadEdition}
+        onSaveCurrentAsTemplate={handleSaveCurrentAsTemplate}
+        onStartNewEditionFromTemplate={handleStartNewEditionFromTemplate}
+      />
+
+      <PreflightReportModal
+        isOpen={isPreflightModalOpen}
+        report={preflightReport}
+        onClose={() => setIsPreflightModalOpen(false)}
+        onExportDirectly={() => {
+          setIsPreflightModalOpen(false);
+          handleExportPdf(true);
+        }}
+        onNavigateToIssue={(pageIndex, articleId) => {
+          setCurrentPageIndex(pageIndex);
+          if (articleId) setSelectedArticleId(articleId);
+          setIsPreflightModalOpen(false);
+        }}
+        onApplyAutoFix={handleApplyPreflightAutoFix}
+        onResolveAllAutoFixable={handleResolveAllAutoFixable}
+        isExporting={isExportingPdf}
       />
 
       <ThemeModal

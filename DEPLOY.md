@@ -45,7 +45,7 @@ As of the latest architecture, **PDF export is 100% fully client-side**. Publica
    ```bash
    pnpm run build
    ```
-   *(The build script compiles internal monorepo packages, synchronizes self-hosted fonts to `dist/fonts/`, and bundles the app).*
+   _(The build script compiles internal monorepo packages, synchronizes self-hosted fonts to `dist/fonts/`, and bundles the app)._
 4. Set **Output Directory** to `dist`.
 5. **No Environment Variables Required**: PDF export works out of the box without any backend URL or API key.
 6. Click **Deploy**.
@@ -89,7 +89,7 @@ Security headers and font caching are preconfigured in `apps/web/vercel.json` (C
 1. **Self-Hosted Font Delivery**:
    Open `/fonts/fonts.css` or `/fonts/noto-serif-devanagari-devanagari-400.woff2` on your live site. It must return `200 OK` with proper MIME type (`font/woff2`).
 2. **Hindi & Complex Script Rendering**:
-   Type Hindi text with conjuncts (e.g. *प्रधानमंत्री, राष्ट्रीय, दृष्टिकोण, प्रौद्योगिकी*). Verify all glyphs render cleanly.
+   Type Hindi text with conjuncts (e.g. _प्रधानमंत्री, राष्ट्रीय, दृष्टिकोण, प्रौद्योगिकी_). Verify all glyphs render cleanly.
 3. **One-Click PDF Export**:
    Click **"PDF"** in the top bar. The browser compiles the publication into a PDF and triggers an automated download with `%PDF-` magic header and crisp 192 DPI typography.
 4. **Fallback Print Option**:

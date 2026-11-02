@@ -16,6 +16,7 @@ import {
   getImageObjectPosition,
   getImageAspectRatio,
   resolvePageColumnCount,
+  elementBordersToStyleString,
 } from '@epaper-studio/document-schema';
 import {
   GOOGLE_FONTS_DEVANAGARI_CSS_URL,
@@ -1771,9 +1772,10 @@ export function renderNewspaperDocumentToHtml(
               ? 'style="flex: 1; display: flex; flex-direction: column;"'
               : '';
 
+            const imageBorderStr = elementBordersToStyleString(art.imageBorders || art.typography?.imageBorders);
             imageHtml = `
               <figure class="article-figure placement-${art.imagePlacement} layout-${art.imageLayout ?? 'full'} aspect-${art.imageAspect ?? 'standard'}" ${figStyle}>
-                <img src="${escapeHtml(art.imageUrl ?? '')}" alt="${escapeHtml(art.imageCaption ?? art.headline ?? '')}" class="article-image aspect-${art.imageAspect ?? 'standard'}" style="object-fit: ${fit}; object-position: ${objectPos}; aspect-ratio: ${art.customImageHeight ? 'auto' : aspectStyle}; ${imgHeightStyle}" onerror="this.style.display='none'" />
+                <img src="${escapeHtml(art.imageUrl ?? '')}" alt="${escapeHtml(art.imageCaption ?? art.headline ?? '')}" class="article-image aspect-${art.imageAspect ?? 'standard'}" style="object-fit: ${fit}; object-position: ${objectPos}; aspect-ratio: ${art.customImageHeight ? 'auto' : aspectStyle}; ${imgHeightStyle} ${imageBorderStr}" onerror="this.style.display='none'" />
                 ${
                   art.imageCaption || art.imageCredit
                     ? `
@@ -1789,46 +1791,101 @@ export function renderNewspaperDocumentToHtml(
           }
 
           const headlineStylesList: string[] = [];
-          if (art.customColors?.headlineColor) {
-            headlineStylesList.push(`color: ${art.customColors.headlineColor};`);
+          const effectiveHeadlineColor =
+            art.typography?.headlineColor || art.customColors?.headlineColor;
+          if (effectiveHeadlineColor) {
+            headlineStylesList.push(`color: ${effectiveHeadlineColor};`);
           }
-          if (art.typography?.textColor) {
-            headlineStylesList.push(`color: ${art.typography.textColor};`);
-          }
-          if (art.typography?.fontFamily) {
-            headlineStylesList.push(`font-family: ${art.typography.fontFamily};`);
+          const effectiveHeadlineFont = art.typography?.headlineFontFamily;
+          if (effectiveHeadlineFont) {
+            headlineStylesList.push(`font-family: ${effectiveHeadlineFont};`);
           }
           if (art.typography?.headlineFontSizePt) {
             headlineStylesList.push(`font-size: ${art.typography.headlineFontSizePt}pt;`);
           } else if (art.customHeadlineFontSizePt) {
             headlineStylesList.push(`font-size: ${art.customHeadlineFontSizePt}pt;`);
           }
-          if (art.typography?.headlineFontWeight || art.typography?.fontWeight) {
-            headlineStylesList.push(
-              `font-weight: ${art.typography.headlineFontWeight || art.typography.fontWeight};`
-            );
+          if (art.typography?.headlineFontWeight) {
+            headlineStylesList.push(`font-weight: ${art.typography.headlineFontWeight};`);
           }
-          if (art.typography?.lineHeight) {
-            headlineStylesList.push(`line-height: ${art.typography.lineHeight};`);
+          if (art.typography?.headlineLineHeight !== undefined) {
+            headlineStylesList.push(`line-height: ${art.typography.headlineLineHeight};`);
           }
-          if (art.typography?.letterSpacingPt !== undefined) {
-            headlineStylesList.push(`letter-spacing: ${art.typography.letterSpacingPt}pt;`);
+          if (art.typography?.headlineLetterSpacingPt !== undefined) {
+            headlineStylesList.push(`letter-spacing: ${art.typography.headlineLetterSpacingPt}pt;`);
           }
-          if (art.typography?.textAlign) {
-            headlineStylesList.push(`text-align: ${art.typography.textAlign};`);
+          if (art.typography?.headlineTextAlign) {
+            headlineStylesList.push(`text-align: ${art.typography.headlineTextAlign};`);
+          }
+          if (art.typography?.headlineMarginTopPt !== undefined) {
+            headlineStylesList.push(`margin-top: ${art.typography.headlineMarginTopPt}pt;`);
+          }
+          if (art.typography?.headlineMarginBottomPt !== undefined) {
+            headlineStylesList.push(`margin-bottom: ${art.typography.headlineMarginBottomPt}pt;`);
+          }
+          if (art.typography?.headlinePaddingPt !== undefined) {
+            headlineStylesList.push(`padding: ${art.typography.headlinePaddingPt}pt;`);
+          }
+          if (art.typography?.headlineBackgroundColor) {
+            headlineStylesList.push(`background-color: ${art.typography.headlineBackgroundColor};`);
+          }
+          const effectiveHeadlineDecor =
+            art.typography?.textDecoration || (art.typography?.underline ? 'underline' : undefined);
+          if (effectiveHeadlineDecor) {
+            headlineStylesList.push(`text-decoration: ${effectiveHeadlineDecor};`);
+          }
+          const headlineBorderStr = elementBordersToStyleString(art.typography?.headlineBorders);
+          if (headlineBorderStr) {
+            headlineStylesList.push(headlineBorderStr);
           }
           const headlineColorStyle =
             headlineStylesList.length > 0 ? `style="${headlineStylesList.join(' ')}"` : '';
 
           const subheadlineStylesList: string[] = [];
-          if (art.customColors?.subheadlineColor) {
-            subheadlineStylesList.push(`color: ${art.customColors.subheadlineColor};`);
+          const effectiveSubheadlineColor =
+            art.typography?.subheadlineColor || art.customColors?.subheadlineColor;
+          if (effectiveSubheadlineColor) {
+            subheadlineStylesList.push(`color: ${effectiveSubheadlineColor};`);
+          }
+          if (art.typography?.subheadlineFontFamily) {
+            subheadlineStylesList.push(`font-family: ${art.typography.subheadlineFontFamily};`);
           }
           if (art.typography?.subheadlineFontSizePt) {
             subheadlineStylesList.push(`font-size: ${art.typography.subheadlineFontSizePt}pt;`);
           }
-          if (art.typography?.textAlign) {
-            subheadlineStylesList.push(`text-align: ${art.typography.textAlign};`);
+          if (art.typography?.subheadlineFontWeight) {
+            subheadlineStylesList.push(`font-weight: ${art.typography.subheadlineFontWeight};`);
+          }
+          if (art.typography?.subheadlineLineHeight !== undefined) {
+            subheadlineStylesList.push(`line-height: ${art.typography.subheadlineLineHeight};`);
+          }
+          if (art.typography?.subheadlineLetterSpacingPt !== undefined) {
+            subheadlineStylesList.push(
+              `letter-spacing: ${art.typography.subheadlineLetterSpacingPt}pt;`
+            );
+          }
+          if (art.typography?.subheadlineTextAlign) {
+            subheadlineStylesList.push(`text-align: ${art.typography.subheadlineTextAlign};`);
+          }
+          if (art.typography?.subheadlineMarginTopPt !== undefined) {
+            subheadlineStylesList.push(`margin-top: ${art.typography.subheadlineMarginTopPt}pt;`);
+          }
+          if (art.typography?.subheadlineMarginBottomPt !== undefined) {
+            subheadlineStylesList.push(
+              `margin-bottom: ${art.typography.subheadlineMarginBottomPt}pt;`
+            );
+          }
+          if (art.typography?.subheadlinePaddingPt !== undefined) {
+            subheadlineStylesList.push(`padding: ${art.typography.subheadlinePaddingPt}pt;`);
+          }
+          if (art.typography?.subheadlineBackgroundColor) {
+            subheadlineStylesList.push(
+              `background-color: ${art.typography.subheadlineBackgroundColor};`
+            );
+          }
+          const subheadlineBorderStr = elementBordersToStyleString(art.typography?.subheadlineBorders);
+          if (subheadlineBorderStr) {
+            subheadlineStylesList.push(subheadlineBorderStr);
           }
           const subheadlineColorStyle =
             subheadlineStylesList.length > 0 ? `style="${subheadlineStylesList.join(' ')}"` : '';
@@ -1933,36 +1990,53 @@ export function renderNewspaperDocumentToHtml(
           }
 
           const bodyStylesList: string[] = [];
-          if (art.customColors?.bodyColor) {
-            bodyStylesList.push(`color: ${art.customColors.bodyColor};`);
+          const effectiveBodyColor =
+            art.typography?.bodyColor ||
+            art.customColors?.bodyColor ||
+            art.typography?.textColor ||
+            art.textColor;
+          if (effectiveBodyColor) {
+            bodyStylesList.push(`color: ${effectiveBodyColor};`);
           }
-          if (art.typography?.textColor) {
-            bodyStylesList.push(`color: ${art.typography.textColor};`);
+          const effectiveBodyFont = art.typography?.bodyFontFamily || art.typography?.fontFamily;
+          if (effectiveBodyFont) {
+            bodyStylesList.push(`font-family: ${effectiveBodyFont};`);
           }
-          if (art.typography?.fontFamily) {
-            bodyStylesList.push(`font-family: ${art.typography.fontFamily};`);
-          }
-          if (art.typography?.fontSizePt) {
+          if (art.typography?.bodyFontSizePt) {
+            bodyStylesList.push(`font-size: ${art.typography.bodyFontSizePt}pt;`);
+          } else if (art.typography?.fontSizePt) {
             bodyStylesList.push(`font-size: ${art.typography.fontSizePt}pt;`);
           } else if (art.customFontSizePt) {
             bodyStylesList.push(`font-size: ${art.customFontSizePt}pt;`);
           }
-          if (art.typography?.fontWeight) {
-            bodyStylesList.push(`font-weight: ${art.typography.fontWeight};`);
+          const effectiveBodyWeight = art.typography?.bodyFontWeight || art.typography?.fontWeight;
+          if (effectiveBodyWeight) {
+            bodyStylesList.push(`font-weight: ${effectiveBodyWeight};`);
           }
-          if (art.typography?.lineHeight) {
-            bodyStylesList.push(`line-height: ${art.typography.lineHeight};`);
+          const effectiveBodyLineHeight =
+            art.typography?.bodyLineHeight || art.typography?.lineHeight;
+          if (effectiveBodyLineHeight) {
+            bodyStylesList.push(`line-height: ${effectiveBodyLineHeight};`);
           }
-          if (art.typography?.letterSpacingPt !== undefined) {
-            bodyStylesList.push(`letter-spacing: ${art.typography.letterSpacingPt}pt;`);
+          const effectiveBodySpacing =
+            art.typography?.bodyLetterSpacingPt !== undefined
+              ? art.typography.bodyLetterSpacingPt
+              : art.typography?.letterSpacingPt;
+          if (effectiveBodySpacing !== undefined) {
+            bodyStylesList.push(`letter-spacing: ${effectiveBodySpacing}pt;`);
           }
-          if (art.typography?.textAlign) {
-            bodyStylesList.push(`text-align: ${art.typography.textAlign};`);
+          const effectiveBodyAlign = art.typography?.bodyTextAlign || art.typography?.textAlign;
+          if (effectiveBodyAlign) {
+            bodyStylesList.push(`text-align: ${effectiveBodyAlign};`);
           }
           if (art.maxLines) {
             bodyStylesList.push(
               `-webkit-line-clamp: ${art.maxLines}; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;`
             );
+          }
+          const bodyBorderStr = elementBordersToStyleString(art.typography?.bodyBorders);
+          if (bodyBorderStr) {
+            bodyStylesList.push(bodyBorderStr);
           }
           const bodyStyleAttr =
             bodyStylesList.length > 0 ? `style="${bodyStylesList.join(' ')}"` : '';
@@ -2050,6 +2124,9 @@ export function renderNewspaperDocumentToHtml(
           }
           if (art.paddingPx !== undefined && art.paddingPx > 0) {
             customStyles += `padding: ${art.paddingPx}px; `;
+          }
+          if (art.opacity !== undefined) {
+            customStyles += `opacity: ${art.opacity}; `;
           }
 
           return `
@@ -2572,3 +2649,6 @@ export function renderNewspaperDocumentToHtml(
 </body>
 </html>`;
 }
+
+export * from './templates.js';
+export * from './preflight.js';

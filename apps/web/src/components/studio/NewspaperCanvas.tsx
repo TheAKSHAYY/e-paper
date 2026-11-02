@@ -8,12 +8,14 @@ import type {
   PageOrientation,
   Article,
   FrameMm,
+  SelectedElementPart,
 } from '@epaper-studio/document-schema';
 import {
   getPageDimensions,
   getImageObjectPosition,
   getImageAspectRatio,
   resolvePageColumnCount,
+  ElementBorders,
 } from '@epaper-studio/document-schema';
 import {
   getMastheadEmblemSvg,
@@ -21,6 +23,24 @@ import {
   screenToPageMm,
 } from '@epaper-studio/template-engine';
 import { FreeLayoutLayer } from './FreeLayoutLayer';
+
+function toBorderCss(borders?: ElementBorders): React.CSSProperties {
+  if (!borders) return {};
+  const styles: React.CSSProperties = {};
+  if (borders.top && borders.top.style && borders.top.style !== 'none' && (borders.top.width ?? 0) > 0) {
+    styles.borderTop = `${borders.top.width}px ${borders.top.style} ${borders.top.color || '#111111'}`;
+  }
+  if (borders.right && borders.right.style && borders.right.style !== 'none' && (borders.right.width ?? 0) > 0) {
+    styles.borderRight = `${borders.right.width}px ${borders.right.style} ${borders.right.color || '#111111'}`;
+  }
+  if (borders.bottom && borders.bottom.style && borders.bottom.style !== 'none' && (borders.bottom.width ?? 0) > 0) {
+    styles.borderBottom = `${borders.bottom.width}px ${borders.bottom.style} ${borders.bottom.color || '#111111'}`;
+  }
+  if (borders.left && borders.left.style && borders.left.style !== 'none' && (borders.left.width ?? 0) > 0) {
+    styles.borderLeft = `${borders.left.width}px ${borders.left.style} ${borders.left.color || '#111111'}`;
+  }
+  return styles;
+}
 
 export interface NewspaperCanvasProps {
   page: NewspaperPage;
@@ -42,11 +62,19 @@ export interface NewspaperCanvasProps {
   onAddBlock?: (blockTemplate: Partial<Article>) => void;
   onAddPage?: () => void;
   isMastheadSelected?: boolean;
-  onSelectMasthead?: () => void;
+  onSelectMasthead?: (tab?: 'title' | 'meta' | 'rules') => void;
   onUpdateArticleFrame?: (articleId: string, frame: FrameMm) => void;
   onSwapArticles?: (idA: string, idB: string) => void;
   onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
   onTogglePageLayoutMode?: (mode: 'auto' | 'free') => void;
+  onSelectElementPart?: (
+    articleId: string,
+    part: SelectedElementPart,
+    paraIndex?: number | null
+  ) => void;
+  selectedElementPart?: SelectedElementPart;
+  selectedParagraphIndex?: number | null;
+  onDeselect?: () => void;
 }
 
 export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
@@ -73,6 +101,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   onUpdateArticleFrame,
   onSwapArticles,
   onMoveArticleToPage,
+  onTogglePageLayoutMode: _onTogglePageLayoutMode,
+  onSelectElementPart,
+  selectedElementPart,
+  selectedParagraphIndex,
+  onDeselect,
   onTogglePageLayoutMode,
 }) => {
   const sheetCanvasRef = useRef<HTMLDivElement>(null);
@@ -212,10 +245,20 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
 
     const renderPhoto = () => {
       if (!hasPhoto) return null;
+      const isImageSelected = isSelected && selectedElementPart === 'image';
+      const isCaptionSelected = isSelected && selectedElementPart === 'caption';
+
       return (
         <figure
           data-image-placement={article.imagePlacement}
           data-image-fit={photoObjectFit}
+          onClick={(e) => {
+            if (onSelectElementPart) {
+              e.stopPropagation();
+              onSelectArticle(article.id);
+              onSelectElementPart(article.id, 'image');
+            }
+          }}
           style={{
             margin: 0,
             padding: 0,
@@ -225,6 +268,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             marginBottom: isSide ? '4px' : '8px',
             clear: article.imagePlacement === 'bottom' ? 'both' : 'none',
             flexShrink: 0,
+            cursor: onSelectElementPart ? 'pointer' : undefined,
             ...(article.fillSpace && !isSide
               ? { flex: 1, display: 'flex', flexDirection: 'column' }
               : {}),
@@ -241,9 +285,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   : undefined,
               flex: article.fillSpace && !isSide ? 1 : undefined,
               overflow: 'hidden',
-              border: `1px solid ${article.customColors?.borderColor || '#222'}`,
               borderRadius: '1px',
               backgroundColor: '#f3f4f6',
+              outline: isImageSelected ? '2px solid #2563eb' : undefined,
+              outlineOffset: '2px',
+              ...(article.imageBorders || article.typography?.imageBorders
+                ? toBorderCss(article.imageBorders || article.typography?.imageBorders)
+                : { border: `1px solid ${article.customColors?.borderColor || '#222'}` }),
             }}
           >
             <img
@@ -265,6 +313,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           </div>
           {(article.imageCaption || article.imageCredit) && (
             <figcaption
+              onClick={(e) => {
+                if (onSelectElementPart) {
+                  e.stopPropagation();
+                  onSelectArticle(article.id);
+                  onSelectElementPart(article.id, 'caption');
+                }
+              }}
               style={{
                 fontSize: article.typography?.captionFontSizePt
                   ? `${article.typography.captionFontSizePt}pt`
@@ -275,6 +330,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 lineHeight: 1.3,
                 wordBreak: 'break-word',
                 textAlign: article.typography?.textAlign,
+                cursor: onSelectElementPart ? 'pointer' : undefined,
+                outline: isCaptionSelected ? '2px solid #2563eb' : undefined,
+                outlineOffset: '2px',
+                borderRadius: '2px',
               }}
             >
               {article.imageCaption && <span>{article.imageCaption} </span>}
@@ -450,6 +509,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           outlineOffset: `${visualOutlineOffset}px`,
           backgroundColor:
             article.customColors?.backgroundColor ?? article.backgroundColor ?? 'transparent',
+          opacity: article.opacity ?? 1,
           borderRadius: '1px',
           transition: 'outline 0.15s ease',
           hyphens: isHindi ? 'manual' : undefined,
@@ -546,17 +606,51 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             <>
               {article.subheadline && (
                 <p
-                  className="article-deck"
+                  className="article-deck article-subheadline"
+                  onClick={(e) => {
+                    if (onSelectElementPart) {
+                      e.stopPropagation();
+                      onSelectArticle(article.id);
+                      onSelectElementPart(article.id, 'subheadline');
+                    }
+                  }}
                   style={{
-                    margin: `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`,
+                    margin:
+                      article.typography?.subheadlineMarginBottomPt !== undefined ||
+                      article.typography?.subheadlineMarginTopPt !== undefined
+                        ? `${article.typography.subheadlineMarginTopPt ?? 0}pt 0 ${article.typography.subheadlineMarginBottomPt ?? physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`
+                        : `0 0 ${physicalMetrics.spacingPt.deckMarginBottomPt}pt 0`,
+                    padding:
+                      article.typography?.subheadlinePaddingPt !== undefined
+                        ? `${article.typography.subheadlinePaddingPt}pt`
+                        : undefined,
+                    backgroundColor: article.typography?.subheadlineBackgroundColor || undefined,
                     fontSize: article.typography?.subheadlineFontSizePt
                       ? `${article.typography.subheadlineFontSizePt}pt`
                       : `${physicalMetrics.typographyPt.deckFontSizePt}pt`,
-                    lineHeight: 1.35,
-                    fontFamily: layout.subheadlineFont || layout.headlineFont,
-                    textAlign: article.typography?.textAlign,
+                    lineHeight: article.typography?.subheadlineLineHeight ?? 1.35,
+                    fontFamily:
+                      article.typography?.subheadlineFontFamily ||
+                      layout.subheadlineFont ||
+                      layout.headlineFont,
+                    fontWeight: article.typography?.subheadlineFontWeight || 'normal',
+                    textAlign: article.typography?.subheadlineTextAlign || 'left',
                     color:
-                      article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #444444)',
+                      article.typography?.subheadlineColor ??
+                      article.customColors?.subheadlineColor ??
+                      'var(--subheadline-color, #444444)',
+                    letterSpacing:
+                      article.typography?.subheadlineLetterSpacingPt !== undefined
+                        ? `${article.typography.subheadlineLetterSpacingPt}pt`
+                        : undefined,
+                    cursor: onSelectElementPart ? 'pointer' : undefined,
+                    outline:
+                      isSelected && selectedElementPart === 'subheadline'
+                        ? '2px solid #2563eb'
+                        : undefined,
+                    outlineOffset: '2px',
+                    borderRadius: '2px',
+                    ...toBorderCss(article.typography?.subheadlineBorders),
                   }}
                 >
                   {article.subheadline}
@@ -564,8 +658,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               )}
               <h2
                 className="article-headline"
+                onClick={(e) => {
+                  if (onSelectElementPart) {
+                    e.stopPropagation();
+                    onSelectArticle(article.id);
+                    onSelectElementPart(article.id, 'headline');
+                  }
+                }}
                 style={{
-                  fontFamily: article.typography?.fontFamily || layout.headlineFont,
+                  fontFamily: article.typography?.headlineFontFamily || layout.headlineFont,
                   fontSize: article.typography?.headlineFontSizePt
                     ? `${article.typography.headlineFontSizePt}pt`
                     : article.customHeadlineFontSizePt
@@ -577,18 +678,41 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                           : article.priority === 'minor'
                             ? `${physicalMetrics.headlineSizesPt.minor}pt`
                             : `${physicalMetrics.headlineSizesPt.brief}pt`,
-                  fontWeight: article.typography?.headlineFontWeight || article.typography?.fontWeight || headlineWeight,
-                  lineHeight: article.typography?.lineHeight ?? 1.15,
-                  margin: 0,
-                  textAlign: article.typography?.textAlign,
+                  fontWeight: article.typography?.headlineFontWeight || headlineWeight,
+                  lineHeight: article.typography?.headlineLineHeight ?? 1.15,
+                  margin:
+                    article.typography?.headlineMarginTopPt !== undefined ||
+                    article.typography?.headlineMarginBottomPt !== undefined
+                      ? `${article.typography.headlineMarginTopPt ?? 0}pt 0 ${article.typography.headlineMarginBottomPt ?? 0}pt 0`
+                      : 0,
+                  padding:
+                    article.typography?.headlinePaddingPt !== undefined
+                      ? `${article.typography.headlinePaddingPt}pt`
+                      : undefined,
+                  backgroundColor: article.typography?.headlineBackgroundColor || undefined,
+                  textAlign: article.typography?.headlineTextAlign || 'left',
                   color:
-                    article.typography?.textColor ??
+                    article.typography?.headlineColor ??
                     article.customColors?.headlineColor ??
                     article.textColor ??
                     'var(--headline-color, #111111)',
-                  letterSpacing: article.typography?.letterSpacingPt !== undefined
-                    ? `${article.typography.letterSpacingPt}pt`
-                    : isLead ? '-0.3pt' : undefined,
+                  letterSpacing:
+                    article.typography?.headlineLetterSpacingPt !== undefined
+                      ? `${article.typography.headlineLetterSpacingPt}pt`
+                      : isLead
+                        ? '-0.3pt'
+                        : undefined,
+                  textDecoration:
+                    article.typography?.textDecoration ||
+                    (article.typography?.underline ? 'underline' : undefined),
+                  cursor: onSelectElementPart ? 'pointer' : undefined,
+                  outline:
+                    isSelected && selectedElementPart === 'headline'
+                      ? '2px solid #2563eb'
+                      : undefined,
+                  outlineOffset: '2px',
+                  borderRadius: '2px',
+                  ...toBorderCss(article.typography?.headlineBorders),
                 }}
               >
                 {article.headline}
@@ -630,8 +754,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 </div>
               )}
               <h2
+                onClick={(e) => {
+                  if (onSelectElementPart) {
+                    e.stopPropagation();
+                    onSelectArticle(article.id);
+                    onSelectElementPart(article.id, 'headline');
+                  }
+                }}
                 style={{
-                  fontFamily: article.typography?.fontFamily || layout.headlineFont,
+                  fontFamily: article.typography?.headlineFontFamily || layout.headlineFont,
                   fontSize: article.typography?.headlineFontSizePt
                     ? `${article.typography.headlineFontSizePt}pt`
                     : article.customHeadlineFontSizePt
@@ -643,35 +774,93 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                           : article.priority === 'minor'
                             ? '15px'
                             : '18px',
-                  fontWeight: article.typography?.headlineFontWeight || article.typography?.fontWeight || headlineWeight,
-                  lineHeight: article.typography?.lineHeight ?? 1.15,
-                  margin: '0 0 4px 0',
-                  textAlign: article.typography?.textAlign,
+                  fontWeight: article.typography?.headlineFontWeight || headlineWeight,
+                  lineHeight: article.typography?.headlineLineHeight ?? 1.15,
+                  margin:
+                    article.typography?.headlineMarginTopPt !== undefined ||
+                    article.typography?.headlineMarginBottomPt !== undefined
+                      ? `${article.typography.headlineMarginTopPt ?? 0}pt 0 ${article.typography.headlineMarginBottomPt ?? 4}pt 0`
+                      : '0 0 4px 0',
+                  padding:
+                    article.typography?.headlinePaddingPt !== undefined
+                      ? `${article.typography.headlinePaddingPt}pt`
+                      : undefined,
+                  backgroundColor: article.typography?.headlineBackgroundColor || undefined,
+                  textAlign: article.typography?.headlineTextAlign || 'left',
                   color:
-                    article.typography?.textColor ??
+                    article.typography?.headlineColor ??
                     article.customColors?.headlineColor ??
                     article.textColor ??
                     'var(--headline-color, #111111)',
-                  letterSpacing: article.typography?.letterSpacingPt !== undefined
-                    ? `${article.typography.letterSpacingPt}pt`
-                    : '-0.01em',
+                  letterSpacing:
+                    article.typography?.headlineLetterSpacingPt !== undefined
+                      ? `${article.typography.headlineLetterSpacingPt}pt`
+                      : '-0.01em',
+                  textDecoration:
+                    article.typography?.textDecoration ||
+                    (article.typography?.underline ? 'underline' : undefined),
+                  cursor: onSelectElementPart ? 'pointer' : undefined,
+                  outline:
+                    isSelected && selectedElementPart === 'headline'
+                      ? '2px solid #2563eb'
+                      : undefined,
+                  outlineOffset: '2px',
+                  borderRadius: '2px',
+                  ...toBorderCss(article.typography?.headlineBorders),
                 }}
               >
                 {article.headline}
               </h2>
               {article.subheadline && (
                 <p
+                  className="article-deck article-subheadline"
+                  onClick={(e) => {
+                    if (onSelectElementPart) {
+                      e.stopPropagation();
+                      onSelectArticle(article.id);
+                      onSelectElementPart(article.id, 'subheadline');
+                    }
+                  }}
                   style={{
-                    margin: '3px 0 5px 0',
+                    margin:
+                      article.typography?.subheadlineMarginBottomPt !== undefined ||
+                      article.typography?.subheadlineMarginTopPt !== undefined
+                        ? `${article.typography.subheadlineMarginTopPt ?? 3}pt 0 ${article.typography.subheadlineMarginBottomPt ?? 5}pt 0`
+                        : '3px 0 5px 0',
+                    padding:
+                      article.typography?.subheadlinePaddingPt !== undefined
+                        ? `${article.typography.subheadlinePaddingPt}pt`
+                        : undefined,
+                    backgroundColor: article.typography?.subheadlineBackgroundColor || undefined,
                     fontSize: article.typography?.subheadlineFontSizePt
                       ? `${article.typography.subheadlineFontSizePt}pt`
-                      : isLead ? '13px' : '11.5px',
-                    lineHeight: 1.35,
-                    fontFamily: layout.subheadlineFont || layout.headlineFont,
+                      : isLead
+                        ? '13px'
+                        : '11.5px',
+                    lineHeight: article.typography?.subheadlineLineHeight ?? 1.35,
+                    fontFamily:
+                      article.typography?.subheadlineFontFamily ||
+                      layout.subheadlineFont ||
+                      layout.headlineFont,
+                    fontWeight: article.typography?.subheadlineFontWeight || 'normal',
                     fontStyle: 'italic',
-                    textAlign: article.typography?.textAlign,
+                    textAlign: article.typography?.subheadlineTextAlign || 'left',
                     color:
-                      article.customColors?.subheadlineColor ?? 'var(--subheadline-color, #333333)',
+                      article.typography?.subheadlineColor ??
+                      article.customColors?.subheadlineColor ??
+                      'var(--subheadline-color, #333333)',
+                    letterSpacing:
+                      article.typography?.subheadlineLetterSpacingPt !== undefined
+                        ? `${article.typography.subheadlineLetterSpacingPt}pt`
+                        : undefined,
+                    cursor: onSelectElementPart ? 'pointer' : undefined,
+                    outline:
+                      isSelected && selectedElementPart === 'subheadline'
+                        ? '2px solid #2563eb'
+                        : undefined,
+                    outlineOffset: '2px',
+                    borderRadius: '2px',
+                    ...toBorderCss(article.typography?.subheadlineBorders),
                   }}
                 >
                   {article.subheadline}
@@ -857,27 +1046,42 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         ) : (
           /* Standard Body Paragraphs (with Side Photo if placement === 'side') */
           <div
+            className="article-body"
             lang={isHindi ? 'hi' : 'en'}
             style={{
-              fontSize: article.typography?.fontSizePt
-                ? `${article.typography.fontSizePt}pt`
-                : article.customFontSizePt
-                  ? `${article.customFontSizePt}pt`
-                  : usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.bodyFontSizePt}pt`
-                    : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
-              fontWeight: article.typography?.fontWeight || 'normal',
-              lineHeight: article.typography?.lineHeight ?? Math.max(1.4, 1.45),
+              fontSize: article.typography?.bodyFontSizePt
+                ? `${article.typography.bodyFontSizePt}pt`
+                : article.typography?.fontSizePt
+                  ? `${article.typography.fontSizePt}pt`
+                  : article.customFontSizePt
+                    ? `${article.customFontSizePt}pt`
+                    : usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.bodyFontSizePt}pt`
+                      : `${layout.bodyFontSizePt ? Math.round(layout.bodyFontSizePt * 1.33) : 13}px`,
+              fontWeight:
+                article.typography?.bodyFontWeight || article.typography?.fontWeight || 'normal',
+              lineHeight:
+                article.typography?.bodyLineHeight ??
+                article.typography?.lineHeight ??
+                Math.max(1.4, 1.45),
               color:
+                article.typography?.bodyColor ??
                 article.typography?.textColor ??
                 article.customColors?.bodyColor ??
                 article.textColor ??
                 'var(--body-color, #222222)',
-              fontFamily: article.typography?.fontFamily || layout.bodyFont,
-              textAlign: article.typography?.textAlign ?? 'justify',
-              letterSpacing: article.typography?.letterSpacingPt !== undefined
-                ? `${article.typography.letterSpacingPt}pt`
-                : undefined,
+              fontFamily:
+                article.typography?.bodyFontFamily ||
+                article.typography?.fontFamily ||
+                layout.bodyFont,
+              textAlign:
+                (article.typography?.bodyTextAlign || article.typography?.textAlign) ?? 'justify',
+              letterSpacing:
+                article.typography?.bodyLetterSpacingPt !== undefined
+                  ? `${article.typography.bodyLetterSpacingPt}pt`
+                  : article.typography?.letterSpacingPt !== undefined
+                    ? `${article.typography.letterSpacingPt}pt`
+                    : undefined,
               textJustify: 'inter-word',
               hyphens: isHindi ? 'manual' : 'auto',
               WebkitHyphens: isHindi ? 'manual' : 'auto',
@@ -890,6 +1094,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     overflow: 'hidden',
                   }
                 : {}),
+              ...toBorderCss(article.typography?.bodyBorders),
             }}
           >
             {article.imagePlacement === 'side' && renderPhoto()}
@@ -934,33 +1139,69 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   {article.dateline}
                 </strong>
               ))}
-            {article.body.split(/\n\s*\n/).map((para, pIdx) => (
-              <p
-                key={pIdx}
-                className="article-para"
-                style={{
-                  margin: article.typography?.paragraphSpacingPt !== undefined
-                    ? `0 0 ${article.typography.paragraphSpacingPt}pt 0`
-                    : usePhysicalCanvasCoordinates
-                      ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
-                      : '0 0 7px 0',
-                  textIndent: article.typography?.textIndentPt !== undefined
-                    ? `${article.typography.textIndentPt}pt`
-                    : usePhysicalCanvasCoordinates
-                      ? `${physicalMetrics.spacingPt.paraTextIndentPt}pt`
-                      : undefined,
-                }}
-              >
-                {usePhysicalCanvasCoordinates
-                  ? para.split('\n').map((line, lIdx, arr) => (
-                      <React.Fragment key={lIdx}>
-                        {line}
-                        {lIdx < arr.length - 1 && <br />}
-                      </React.Fragment>
-                    ))
-                  : para}
-              </p>
-            ))}
+            {article.body.split(/\n\s*\n/).map((para, pIdx) => {
+              const paraTypo = article.paragraphTypography?.[String(pIdx)];
+              const isParaSelected =
+                isSelected &&
+                selectedElementPart === 'body' &&
+                (selectedParagraphIndex === pIdx ||
+                  selectedParagraphIndex === null ||
+                  selectedParagraphIndex === undefined);
+              return (
+                <p
+                  key={pIdx}
+                  className="article-para"
+                  onClick={(e) => {
+                    if (onSelectElementPart) {
+                      e.stopPropagation();
+                      onSelectArticle(article.id);
+                      onSelectElementPart(article.id, 'body', pIdx);
+                    }
+                  }}
+                  style={{
+                    fontSize: paraTypo?.fontSizePt ? `${paraTypo.fontSizePt}pt` : undefined,
+                    fontFamily: paraTypo?.fontFamily || undefined,
+                    fontWeight: paraTypo?.fontWeight || undefined,
+                    lineHeight: paraTypo?.lineHeight ?? undefined,
+                    textAlign: paraTypo?.textAlign || undefined,
+                    color: paraTypo?.textColor || undefined,
+                    letterSpacing:
+                      paraTypo?.letterSpacingPt !== undefined
+                        ? `${paraTypo.letterSpacingPt}pt`
+                        : undefined,
+                    margin:
+                      paraTypo?.paragraphSpacingPt !== undefined
+                        ? `0 0 ${paraTypo.paragraphSpacingPt}pt 0`
+                        : article.typography?.paragraphSpacingPt !== undefined
+                          ? `0 0 ${article.typography.paragraphSpacingPt}pt 0`
+                          : usePhysicalCanvasCoordinates
+                            ? `0 0 ${physicalMetrics.spacingPt.paraMarginBottomPt}pt 0`
+                            : '0 0 7px 0',
+                    textIndent:
+                      paraTypo?.textIndentPt !== undefined
+                        ? `${paraTypo.textIndentPt}pt`
+                        : article.typography?.textIndentPt !== undefined
+                          ? `${article.typography.textIndentPt}pt`
+                          : usePhysicalCanvasCoordinates
+                            ? `${physicalMetrics.spacingPt.paraTextIndentPt}pt`
+                            : undefined,
+                    cursor: onSelectElementPart ? 'pointer' : undefined,
+                    outline: isParaSelected ? '2px solid #2563eb' : undefined,
+                    outlineOffset: '2px',
+                    borderRadius: '2px',
+                  }}
+                >
+                  {usePhysicalCanvasCoordinates
+                    ? para.split('\n').map((line, lIdx, arr) => (
+                        <React.Fragment key={lIdx}>
+                          {line}
+                          {lIdx < arr.length - 1 && <br />}
+                        </React.Fragment>
+                      ))
+                    : para}
+                </p>
+              );
+            })}
           </div>
         )}
 
@@ -1053,6 +1294,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           ref={sheetCanvasRef}
           className="newspaper-sheet-canvas"
           data-testid="newspaper-sheet-canvas"
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            const clickedInsideArticle =
+              target.closest('.newspaper-article-card') ||
+              target.closest('[data-testid^="article-card-"]');
+            const clickedInsideMasthead =
+              target.closest('.masthead-section') || target.closest('[data-testid="masthead-section"]');
+            if (!clickedInsideArticle && !clickedInsideMasthead) {
+              onDeselect?.();
+            }
+          }}
           onDragOver={(e) => {
             e.preventDefault();
             if (!isDraggingOver) setIsDraggingOver(true);
@@ -1098,7 +1350,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             <header
               onClick={(e) => {
                 e.stopPropagation();
-                onSelectMasthead?.();
+                onSelectMasthead?.('title');
               }}
               data-testid="masthead-section"
               className="masthead-section"
@@ -1125,6 +1377,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               {masthead.showTopStrip !== false && (
                 <div
                   className="masthead-top-strip"
+                  data-testid="masthead-top-strip"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectMasthead?.('meta');
+                  }}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -1145,6 +1402,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       : "'Inter', sans-serif",
                     letterSpacing: usePhysicalCanvasCoordinates ? '0.2pt' : '0.02em',
                     lineHeight: usePhysicalCanvasCoordinates ? 1.25 : undefined,
+                    cursor: 'pointer',
                   }}
                 >
                   {/* Weather & AQI */}
@@ -1259,6 +1517,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               {/* 2. Main Masthead Row */}
               <div
                 className="masthead-main-row"
+                data-testid="masthead-main-row"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectMasthead?.('title');
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1277,6 +1540,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       : masthead.alignment === 'justified'
                         ? 'justify'
                         : 'center',
+                  cursor: 'pointer',
                 }}
               >
                 {masthead.showEmblem && emblemSvg && (
@@ -1307,6 +1571,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               {masthead.showBottomStrip !== false && (
                 <div
                   className="masthead-bottom-strip"
+                  data-testid="masthead-bottom-strip"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectMasthead?.('meta');
+                  }}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -1328,6 +1597,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     fontWeight: 600,
                     color: '#222222',
                     letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
+                    cursor: 'pointer',
                   }}
                 >
                   <div>

@@ -22,9 +22,20 @@ vi.mock('jspdf', () => {
       addImage = vi.fn();
       output(type: string) {
         const mockPdfBytes = new Uint8Array([
-          0x25, 0x50, 0x44, 0x46, 0x2d, // %PDF-
-          0x31, 0x2e, 0x34, 0x0a,
-          0x25, 0xe2, 0xe3, 0xcf, 0xd3,
+          0x25,
+          0x50,
+          0x44,
+          0x46,
+          0x2d, // %PDF-
+          0x31,
+          0x2e,
+          0x34,
+          0x0a,
+          0x25,
+          0xe2,
+          0xe3,
+          0xcf,
+          0xd3,
         ]);
         if (type === 'blob') {
           return new Blob([mockPdfBytes], { type: 'application/pdf' });

@@ -134,7 +134,8 @@ export const PrintInstructionsModal: React.FC<PrintInstructionsModalProps> = ({
             >
               <strong>⚠️ सर्वर रेंडरर अनुपलब्ध:</strong> {errorMessage}
               <div style={{ marginTop: '4px', color: '#fed7aa', fontSize: '12px' }}>
-                चिंता न करें! आप बिना किसी सर्वर या इंटरनेट कनेक्शन के सीधे अपने ब्राउज़र से अखबार को PDF के रूप में सहेज सकते हैं।
+                चिंता न करें! आप बिना किसी सर्वर या इंटरनेट कनेक्शन के सीधे अपने ब्राउज़र से अखबार
+                को PDF के रूप में सहेज सकते हैं।
               </div>
             </div>
           )}
@@ -156,10 +157,12 @@ export const PrintInstructionsModal: React.FC<PrintInstructionsModalProps> = ({
                 📱 मोबाइल उपयोगकर्ताओं के लिए महत्वपूर्ण सूचना:
               </div>
               <div>
-                मोबाइल ब्राउज़र (Chrome/Safari) में प्रिंट-टू-पीडीएफ पृष्ठ के भौतिक ग्रिड और मार्जिन को स्वचालित रूप से समायोजित कर सकता है, जिससे लेआउट प्रभावित हो सकता है।
+                मोबाइल ब्राउज़र (Chrome/Safari) में प्रिंट-टू-पीडीएफ पृष्ठ के भौतिक ग्रिड और मार्जिन
+                को स्वचालित रूप से समायोजित कर सकता है, जिससे लेआउट प्रभावित हो सकता है।
               </div>
               <div style={{ marginTop: '4px', fontWeight: 600 }}>
-                👉 सर्वोत्तम परिणाम के लिए मुख्य '📥 PDF' (सर्वर रेंडरर) का उपयोग करें या डेस्कटॉप कंप्यूटर से प्रिंट करें।
+                👉 सर्वोत्तम परिणाम के लिए मुख्य '📥 PDF' (सर्वर रेंडरर) का उपयोग करें या डेस्कटॉप
+                कंप्यूटर से प्रिंट करें।
               </div>
             </div>
           )}
@@ -173,7 +176,9 @@ export const PrintInstructionsModal: React.FC<PrintInstructionsModalProps> = ({
               padding: '14px 16px',
             }}
           >
-            <div style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', fontSize: '13px' }}>
+            <div
+              style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', fontSize: '13px' }}
+            >
               ⚙️ प्रिंट डायलॉग में ये सेटिंग्स चुनें (Recommended Settings):
             </div>
             <ul
@@ -188,25 +193,29 @@ export const PrintInstructionsModal: React.FC<PrintInstructionsModalProps> = ({
             >
               <li>
                 <strong>गंतव्य (Destination):</strong>{' '}
-                <span style={{ color: '#4ade80', fontWeight: 600 }}>'Save as PDF'</span> (पीडीएफ के रूप में सहेजें)
+                <span style={{ color: '#4ade80', fontWeight: 600 }}>'Save as PDF'</span> (पीडीएफ के
+                रूप में सहेजें)
               </li>
               <li>
                 <strong>मार्जिन (Margins):</strong>{' '}
-                <span style={{ color: '#4ade80', fontWeight: 600 }}>'None'</span> (कोई नहीं / न्यूनतम शून्य मार्जिन)
+                <span style={{ color: '#4ade80', fontWeight: 600 }}>'None'</span> (कोई नहीं /
+                न्यूनतम शून्य मार्जिन)
               </li>
               <li>
                 <strong>पृष्ठभूमि ग्राफिक्स (Background graphics):</strong>{' '}
-                <span style={{ color: '#4ade80', fontWeight: 600 }}>'On' / चेक करें</span> (ताकि अखबार का बैकग्राउंड और थीम रंग दिखें)
+                <span style={{ color: '#4ade80', fontWeight: 600 }}>'On' / चेक करें</span> (ताकि
+                अखबार का बैकग्राउंड और थीम रंग दिखें)
               </li>
               <li>
-                <strong>पेज आकार (Paper Size):</strong>{' '}
-                <span>{pageSizeLabel}</span> — {orientationLabel}
+                <strong>पेज आकार (Paper Size):</strong> <span>{pageSizeLabel}</span> —{' '}
+                {orientationLabel}
               </li>
             </ul>
           </div>
 
           <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-            ℹ️ यह विकल्प स्थानीय देवनागरी फॉन्ट (Gotu, Hind, Rozha One आदि) को सीधे लोड करता है। इसमें किसी तीसरे पक्ष या बाहरी सर्वर पर डेटा नहीं भेजा जाता।
+            ℹ️ यह विकल्प स्थानीय देवनागरी फॉन्ट (Gotu, Hind, Rozha One आदि) को सीधे लोड करता है।
+            इसमें किसी तीसरे पक्ष या बाहरी सर्वर पर डेटा नहीं भेजा जाता।
           </div>
         </div>
 
@@ -267,4 +276,3 @@ export const PrintInstructionsModal: React.FC<PrintInstructionsModalProps> = ({
     </div>
   );
 };
-

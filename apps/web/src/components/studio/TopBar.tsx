@@ -27,6 +27,13 @@ export interface TopBarProps {
   onOpenTemplates: () => void;
   onOpenMastheadGallery?: () => void;
   onOpenDrafts: () => void;
+  onOpenPublishing?: () => void;
+  preflightStatus?: {
+    overallStatus: 'green' | 'yellow' | 'red';
+    blockerCount: number;
+    warningCount: number;
+  } | null;
+  onOpenPreflight?: () => void;
   onExportPdf: () => void;
   isExportingPdf: boolean;
   onPrintPdf?: () => void;
@@ -66,6 +73,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleFreeLayout,
   onNewPublication,
   onOpenTemplates,
+  onOpenPublishing,
+  preflightStatus,
+  onOpenPreflight,
   onExportPdf,
   isExportingPdf,
   onPrintPdf,
@@ -575,6 +585,31 @@ export const TopBar: React.FC<TopBarProps> = ({
           + नया
         </button>
 
+        {/* Publishing Studio: Master Templates & Daily Editions */}
+        {onOpenPublishing && (
+          <button
+            data-testid="btn-publishing-studio"
+            onClick={onOpenPublishing}
+            title="मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन"
+            style={{
+              backgroundColor: '#1e293b',
+              color: '#38bdf8',
+              border: '1px solid #0284c7',
+              borderRadius: '2px',
+              padding: '5px 8px',
+              fontSize: '11.5px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>📰</span>
+            <span>प्रकाशन</span>
+          </button>
+        )}
+
         <button
           onClick={onOpenTemplates}
           title="टेम्पलेट प्रारूप"
@@ -696,6 +731,54 @@ export const TopBar: React.FC<TopBarProps> = ({
               📂 इम्पोर्ट
             </button>
           </>
+        )}
+
+        {/* Preflight Validation Status Pill */}
+        {onOpenPreflight && (
+          <button
+            data-testid="btn-preflight-status"
+            onClick={onOpenPreflight}
+            title="12-पॉइंट PDF प्रीफ़्लाइट जांच रिपोर्ट खोलें"
+            style={{
+              backgroundColor:
+                preflightStatus?.overallStatus === 'green'
+                  ? '#065f46'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#92400e'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#991b1b'
+                      : '#1e293b',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '2px',
+              padding: '5px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>
+              {preflightStatus?.overallStatus === 'green'
+                ? '🟢'
+                : preflightStatus?.overallStatus === 'yellow'
+                  ? '🟡'
+                  : preflightStatus?.overallStatus === 'red'
+                    ? '🔴'
+                    : '🛡️'}
+            </span>
+            <span>
+              {preflightStatus?.overallStatus === 'green'
+                ? 'प्रीफ़्लाइट OK'
+                : preflightStatus?.overallStatus === 'yellow'
+                  ? `प्रीफ़्लाइट (${preflightStatus.warningCount})`
+                  : preflightStatus?.overallStatus === 'red'
+                    ? `प्रीफ़्लाइट (${preflightStatus.blockerCount})`
+                    : 'प्रीफ़्लाइट जांच'}
+            </span>
+          </button>
         )}
 
         {/* Primary PDF Download Button */}

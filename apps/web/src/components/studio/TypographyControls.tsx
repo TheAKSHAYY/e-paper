@@ -14,6 +14,7 @@ export interface TypographyControlsProps {
   onApplyToPage?: (typography: ElementTypography) => void;
   onAddParagraph?: () => void;
   isMobile?: boolean;
+  initialTargetElement?: TargetTextElement;
 }
 
 export const TypographyControls: React.FC<TypographyControlsProps> = ({
@@ -26,17 +27,28 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
   onApplyToPage,
   onAddParagraph,
   isMobile = false,
+  initialTargetElement,
 }) => {
   const article = (propArticle ?? selectedArticle)!;
   const handleApply = onApplyToPage ?? onApplyGlobally;
 
   const [targetElement, setTargetElement] = useState<TargetTextElement>(
-    selectedParagraphIndex !== undefined && selectedParagraphIndex !== null ? 'body' : 'headline'
+    initialTargetElement ||
+      (selectedParagraphIndex !== undefined && selectedParagraphIndex !== null
+        ? 'body'
+        : 'headline')
   );
   const [internalParaIndex, setInternalParaIndex] = useState<number | null>(
     selectedParagraphIndex !== undefined ? selectedParagraphIndex : null
   );
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+
+  // Sync external initialTargetElement
+  useEffect(() => {
+    if (initialTargetElement) {
+      setTargetElement(initialTargetElement);
+    }
+  }, [initialTargetElement]);
 
   // Sync external selectedParagraphIndex into local state
   useEffect(() => {
@@ -130,6 +142,7 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
         break;
       case 'body':
       default:
+        nextTypo.bodyFontSizePt = clamped;
         nextTypo.fontSizePt = clamped;
         break;
     }
@@ -142,56 +155,506 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
     });
   };
 
-  const updateTypographyField = <K extends keyof ElementTypography>(
+  const effectiveParaTypo =
+    targetElement === 'body' && currentParaIndex !== null
+      ? article.paragraphTypography?.[String(currentParaIndex)]
+      : undefined;
+
+  const updateParagraphField = <K extends keyof ElementTypography>(
     field: K,
     value: ElementTypography[K]
   ) => {
+    if (currentParaIndex === null) return;
+    const currentParaTypo = article.paragraphTypography?.[String(currentParaIndex)] || {};
+    const nextParaTypo = {
+      ...(article.paragraphTypography || {}),
+      [String(currentParaIndex)]: {
+        ...currentParaTypo,
+        [field]: value,
+      },
+    };
+    onUpdateArticle({
+      ...article,
+      paragraphTypography: nextParaTypo,
+    });
+  };
+
+  const handleUpdateFontFamily = (font: string) => {
     if (targetElement === 'body' && currentParaIndex !== null) {
-      const currentParaTypo = article.paragraphTypography?.[String(currentParaIndex)] || {};
-      const nextParaTypo = {
-        ...(article.paragraphTypography || {}),
-        [String(currentParaIndex)]: {
-          ...currentParaTypo,
-          [field]: value,
+      updateParagraphField('fontFamily', font);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineFontFamily: font,
         },
-      };
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineFontFamily: font,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyFontFamily: font,
+          fontFamily: font,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, fontFamily: font },
+    });
+  };
+
+  const handleUpdateFontWeight = (weight: string) => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      updateParagraphField('fontWeight', weight);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineFontWeight: weight,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineFontWeight: weight,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyFontWeight: weight,
+          fontWeight: weight,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, fontWeight: weight },
+    });
+  };
+
+  const handleUpdateLineHeight = (lh: number) => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      updateParagraphField('lineHeight', lh);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineLineHeight: lh,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineLineHeight: lh,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyLineHeight: lh,
+          lineHeight: lh,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, lineHeight: lh },
+    });
+  };
+
+  const handleUpdateLetterSpacing = (ls: number) => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      updateParagraphField('letterSpacingPt', ls);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineLetterSpacingPt: ls,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineLetterSpacingPt: ls,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyLetterSpacingPt: ls,
+          letterSpacingPt: ls,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, letterSpacingPt: ls },
+    });
+  };
+
+  const handleUpdateTextAlign = (align: 'left' | 'center' | 'right' | 'justify') => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      updateParagraphField('textAlign', align);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineTextAlign: align,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineTextAlign: align,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyTextAlign: align,
+          textAlign: align,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, textAlign: align },
+    });
+  };
+
+  const handleUpdateTextColor = (color: string) => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      updateParagraphField('textColor', color);
+      return;
+    }
+    if (targetElement === 'headline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          headlineColor: color,
+        },
+        customColors: {
+          ...(article.customColors || {}),
+          headlineColor: color,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          subheadlineColor: color,
+        },
+        customColors: {
+          ...(article.customColors || {}),
+          subheadlineColor: color,
+        },
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      onUpdateArticle({
+        ...article,
+        typography: {
+          ...currentTypography,
+          bodyColor: color,
+          textColor: color,
+        },
+        customColors: {
+          ...(article.customColors || {}),
+          bodyColor: color,
+        },
+      });
+      return;
+    }
+    onUpdateArticle({
+      ...article,
+      typography: { ...currentTypography, textColor: color },
+    });
+  };
+
+  const handleResetTargetTypography = () => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      const nextParaTypo = { ...(article.paragraphTypography || {}) };
+      delete nextParaTypo[String(currentParaIndex)];
       onUpdateArticle({
         ...article,
         paragraphTypography: nextParaTypo,
       });
       return;
     }
-
-    const nextTypo: ElementTypography = {
-      ...currentTypography,
-      [field]: value,
-    };
-    onUpdateArticle({
-      ...article,
-      typography: nextTypo,
-    });
+    if (targetElement === 'headline') {
+      const nextTypo = { ...currentTypography };
+      delete nextTypo.headlineFontSizePt;
+      delete nextTypo.headlineFontFamily;
+      delete nextTypo.headlineFontWeight;
+      delete nextTypo.headlineLineHeight;
+      delete nextTypo.headlineLetterSpacingPt;
+      delete nextTypo.headlineTextAlign;
+      delete nextTypo.headlineColor;
+      delete nextTypo.textDecoration;
+      delete nextTypo.underline;
+      onUpdateArticle({
+        ...article,
+        typography: nextTypo,
+        customHeadlineFontSizePt: undefined,
+      });
+      return;
+    }
+    if (targetElement === 'subheadline') {
+      const nextTypo = { ...currentTypography };
+      delete nextTypo.subheadlineFontSizePt;
+      delete nextTypo.subheadlineFontFamily;
+      delete nextTypo.subheadlineFontWeight;
+      delete nextTypo.subheadlineLineHeight;
+      delete nextTypo.subheadlineLetterSpacingPt;
+      delete nextTypo.subheadlineTextAlign;
+      delete nextTypo.subheadlineColor;
+      onUpdateArticle({
+        ...article,
+        typography: nextTypo,
+      });
+      return;
+    }
+    if (targetElement === 'body') {
+      const nextTypo = { ...currentTypography };
+      delete nextTypo.fontSizePt;
+      delete nextTypo.bodyFontFamily;
+      delete nextTypo.bodyFontWeight;
+      delete nextTypo.bodyLineHeight;
+      delete nextTypo.bodyLetterSpacingPt;
+      delete nextTypo.bodyTextAlign;
+      delete nextTypo.bodyColor;
+      delete nextTypo.paragraphSpacingPt;
+      delete nextTypo.textIndentPt;
+      onUpdateArticle({
+        ...article,
+        typography: nextTypo,
+        customFontSizePt: undefined,
+        paragraphTypography: {},
+      });
+      return;
+    }
   };
 
-  const effectiveParaTypo =
-    targetElement === 'body' && currentParaIndex !== null
-      ? article.paragraphTypography?.[String(currentParaIndex)]
-      : undefined;
-
   const currentFontSize = getCurrentFontSize();
-  const currentFontFamily = effectiveParaTypo?.fontFamily || currentTypography.fontFamily || '';
-  const currentFontWeight = effectiveParaTypo?.fontWeight || currentTypography.fontWeight || 'normal';
-  const currentHeadlineWeight = currentTypography.headlineFontWeight || currentFontWeight;
-  const currentLineHeight = effectiveParaTypo?.lineHeight ?? currentTypography.lineHeight ?? (targetElement === 'headline' ? 1.15 : 1.45);
-  const currentLetterSpacing = effectiveParaTypo?.letterSpacingPt ?? currentTypography.letterSpacingPt ?? 0;
-  const currentTextAlign = effectiveParaTypo?.textAlign ?? currentTypography.textAlign ?? (targetElement === 'body' ? 'justify' : 'left');
-  const currentTextColor = effectiveParaTypo?.textColor ?? currentTypography.textColor ?? article.customColors?.headlineColor ?? '#111111';
-  const currentParaSpacing = effectiveParaTypo?.paragraphSpacingPt ?? currentTypography.paragraphSpacingPt ?? 6;
+
+  const currentFontFamily = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.fontFamily ||
+        currentTypography.bodyFontFamily ||
+        currentTypography.fontFamily ||
+        ''
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineFontFamily || '';
+    }
+    if (targetElement === 'subheadline') {
+      return currentTypography.subheadlineFontFamily || '';
+    }
+    if (targetElement === 'body') {
+      return currentTypography.bodyFontFamily || currentTypography.fontFamily || '';
+    }
+    return currentTypography.fontFamily || '';
+  })();
+
+  const currentFontWeight = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.fontWeight ||
+        currentTypography.bodyFontWeight ||
+        currentTypography.fontWeight ||
+        '400'
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineFontWeight || '700';
+    }
+    if (targetElement === 'subheadline') {
+      return currentTypography.subheadlineFontWeight || 'normal';
+    }
+    if (targetElement === 'body') {
+      return currentTypography.bodyFontWeight || currentTypography.fontWeight || 'normal';
+    }
+    return currentTypography.fontWeight || 'normal';
+  })();
+
+  const currentLineHeight = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.lineHeight ??
+        currentTypography.bodyLineHeight ??
+        currentTypography.lineHeight ??
+        1.45
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineLineHeight ?? 1.15;
+    }
+    if (targetElement === 'subheadline') {
+      return currentTypography.subheadlineLineHeight ?? 1.35;
+    }
+    if (targetElement === 'body') {
+      return currentTypography.bodyLineHeight ?? currentTypography.lineHeight ?? 1.45;
+    }
+    return currentTypography.lineHeight ?? 1.4;
+  })();
+
+  const currentLetterSpacing = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.letterSpacingPt ??
+        currentTypography.bodyLetterSpacingPt ??
+        currentTypography.letterSpacingPt ??
+        0
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineLetterSpacingPt ?? 0;
+    }
+    if (targetElement === 'subheadline') {
+      return currentTypography.subheadlineLetterSpacingPt ?? 0;
+    }
+    if (targetElement === 'body') {
+      return currentTypography.bodyLetterSpacingPt ?? currentTypography.letterSpacingPt ?? 0;
+    }
+    return currentTypography.letterSpacingPt ?? 0;
+  })();
+
+  const currentTextAlign = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.textAlign ??
+        currentTypography.bodyTextAlign ??
+        currentTypography.textAlign ??
+        'justify'
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineTextAlign ?? 'left';
+    }
+    if (targetElement === 'subheadline') {
+      return currentTypography.subheadlineTextAlign ?? 'left';
+    }
+    if (targetElement === 'body') {
+      return currentTypography.bodyTextAlign ?? currentTypography.textAlign ?? 'justify';
+    }
+    return currentTypography.textAlign ?? 'left';
+  })();
+
+  const currentTextColor = (() => {
+    if (targetElement === 'body' && currentParaIndex !== null) {
+      return (
+        effectiveParaTypo?.textColor ??
+        currentTypography.bodyColor ??
+        article.customColors?.bodyColor ??
+        currentTypography.textColor ??
+        '#111111'
+      );
+    }
+    if (targetElement === 'headline') {
+      return currentTypography.headlineColor ?? article.customColors?.headlineColor ?? '#111111';
+    }
+    if (targetElement === 'subheadline') {
+      return (
+        currentTypography.subheadlineColor ?? article.customColors?.subheadlineColor ?? '#444444'
+      );
+    }
+    if (targetElement === 'body') {
+      return (
+        currentTypography.bodyColor ??
+        article.customColors?.bodyColor ??
+        currentTypography.textColor ??
+        '#111111'
+      );
+    }
+    return currentTypography.textColor ?? '#111111';
+  })();
+
+  const currentParaSpacing =
+    effectiveParaTypo?.paragraphSpacingPt ?? currentTypography.paragraphSpacingPt ?? 6;
   const currentTextIndent = effectiveParaTypo?.textIndentPt ?? currentTypography.textIndentPt ?? 0;
+  const isUnderlined =
+    currentTypography.textDecoration === 'underline' || Boolean(currentTypography.underline);
 
   const quickSizePresets =
     targetElement === 'headline'
       ? [14, 18, 22, 28, 36, 48, 64]
-      : [8, 10, 12, 14, 16, 18, 24, 32];
+      : targetElement === 'subheadline'
+        ? [10, 11, 12, 13, 14, 16, 18]
+        : [8, 10, 12, 14, 16, 18, 24, 32];
 
   return (
     <div
@@ -411,18 +874,25 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
           {targetElement === 'body' && currentParaIndex !== null
             ? `संपादित हो रहा है: पैरोग्राफ ${currentParaIndex + 1} (Editing: Paragraph ${currentParaIndex + 1})`
             : targetElement === 'headline'
-            ? 'संपादित हो रहा है: मुख्य शीर्षक (Headline)'
-            : targetElement === 'subheadline'
-            ? 'संपादित हो रहा है: उप-शीर्षक (Subheadline)'
-            : targetElement === 'byline'
-            ? 'संपादित हो रहा है: लेखक (Byline)'
-            : targetElement === 'caption'
-            ? 'संपादित हो रहा है: फोटो कैप्शन (Caption)'
-            : 'संपादित हो रहा है: पूरा मूल पाठ (All Body Text)'}
+              ? 'संपादित हो रहा है: मुख्य शीर्षक (Headline)'
+              : targetElement === 'subheadline'
+                ? 'संपादित हो रहा है: उप-शीर्षक (Subheadline)'
+                : targetElement === 'byline'
+                  ? 'संपादित हो रहा है: लेखक (Byline)'
+                  : targetElement === 'caption'
+                    ? 'संपादित हो रहा है: फोटो कैप्शन (Caption)'
+                    : 'संपादित हो रहा है: पूरा मूल पाठ (All Body Text)'}
         </div>
 
         {/* Plus / Minus & Value Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+          }}
+        >
           <button
             type="button"
             data-testid="font-size-decrement-btn"
@@ -517,7 +987,10 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
             paddingTop: '2px',
           }}
         >
-          <label htmlFor={numInputId} style={{ fontSize: '11px', fontWeight: 600, color: '#475569' }}>
+          <label
+            htmlFor={numInputId}
+            style={{ fontSize: '11px', fontWeight: 600, color: '#475569' }}
+          >
             कस्टम साइज़ (Custom size):
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -579,13 +1052,21 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
       {/* 3. Font Family & Weight */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
         <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: 600,
+              fontSize: '11px',
+              color: '#475569',
+              marginBottom: '4px',
+            }}
+          >
             फॉन्ट परिवार (Font)
           </label>
           <select
             data-testid="font-family-select"
             value={currentFontFamily}
-            onChange={(e) => updateTypographyField('fontFamily', e.target.value)}
+            onChange={(e) => handleUpdateFontFamily(e.target.value)}
             style={{
               width: '100%',
               padding: '6px 8px',
@@ -599,26 +1080,28 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
             <option value="">डिफ़ॉल्ट फॉन्ट (Inherit)</option>
             {DEVANAGARI_FONTS.map((font) => (
               <option key={font.family} value={font.cssFamily}>
-                 {font.nameHi}
+                {font.nameHi}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: 600,
+              fontSize: '11px',
+              color: '#475569',
+              marginBottom: '4px',
+            }}
+          >
             मोटापा (Weight)
           </label>
           <select
             data-testid="font-weight-select"
-            value={targetElement === 'headline' ? currentHeadlineWeight : currentFontWeight}
-            onChange={(e) => {
-              if (targetElement === 'headline') {
-                updateTypographyField('headlineFontWeight', e.target.value);
-              } else {
-                updateTypographyField('fontWeight', e.target.value);
-              }
-            }}
+            value={currentFontWeight}
+            onChange={(e) => handleUpdateFontWeight(e.target.value)}
             style={{
               width: '100%',
               padding: '6px 8px',
@@ -640,8 +1123,18 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
 
       {/* 4. Line Height Slider */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <label htmlFor={lineHeightSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '4px',
+          }}
+        >
+          <label
+            htmlFor={lineHeightSliderId}
+            style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}
+          >
             पंक्ति अंतराल (Line Height)
           </label>
           <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748b' }}>
@@ -656,15 +1149,25 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
           max="2.5"
           step="0.05"
           value={currentLineHeight}
-          onChange={(e) => updateTypographyField('lineHeight', parseFloat(e.target.value))}
+          onChange={(e) => handleUpdateLineHeight(parseFloat(e.target.value))}
           style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
         />
       </div>
 
       {/* 5. Letter Spacing Slider */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <label htmlFor={letterSpacingSliderId} style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '4px',
+          }}
+        >
+          <label
+            htmlFor={letterSpacingSliderId}
+            style={{ fontWeight: 600, fontSize: '11px', color: '#475569' }}
+          >
             अक्षर अंतराल (Letter Spacing)
           </label>
           <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748b' }}>
@@ -679,15 +1182,30 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
           max="6"
           step="0.25"
           value={currentLetterSpacing}
-          onChange={(e) => updateTypographyField('letterSpacingPt', parseFloat(e.target.value))}
+          onChange={(e) => handleUpdateLetterSpacing(parseFloat(e.target.value))}
           style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
         />
       </div>
 
       {/* 6. Alignment & Text Color */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'flex-end' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto',
+          gap: '8px',
+          alignItems: 'flex-end',
+        }}
+      >
         <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: 600,
+              fontSize: '11px',
+              color: '#475569',
+              marginBottom: '4px',
+            }}
+          >
             संरेखण (Alignment)
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
@@ -705,7 +1223,7 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
                   key={align.key}
                   type="button"
                   data-testid={align.testId}
-                  onClick={() => updateTypographyField('textAlign', align.key)}
+                  onClick={() => handleUpdateTextAlign(align.key)}
                   style={{
                     padding: '6px 2px',
                     borderRadius: '4px',
@@ -725,14 +1243,22 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '11px', color: '#475569', marginBottom: '4px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: 600,
+              fontSize: '11px',
+              color: '#475569',
+              marginBottom: '4px',
+            }}
+          >
             रंग (Color)
           </label>
           <input
             type="color"
             data-testid="text-color-picker"
             value={currentTextColor}
-            onChange={(e) => updateTypographyField('textColor', e.target.value)}
+            onChange={(e) => handleUpdateTextColor(e.target.value)}
             style={{
               width: '42px',
               height: '32px',
@@ -745,12 +1271,74 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
         </div>
       </div>
 
+      {/* 6.1 Text Decoration & Reset Controls */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          paddingTop: '2px',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button
+            type="button"
+            data-testid="text-underline-btn"
+            onClick={() => {
+              const nextUnderline = !isUnderlined;
+              onUpdateArticle({
+                ...article,
+                typography: {
+                  ...currentTypography,
+                  underline: nextUnderline,
+                  textDecoration: nextUnderline ? 'underline' : 'none',
+                },
+              });
+            }}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '4px',
+              border: isUnderlined ? '1px solid #b91c1c' : '1px solid #cbd5e1',
+              backgroundColor: isUnderlined ? '#fef2f2' : '#ffffff',
+              color: isUnderlined ? '#b91c1c' : '#475569',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            U रेखांकित (Underline)
+          </button>
+        </div>
+
+        <button
+          type="button"
+          data-testid="reset-typography-btn"
+          onClick={handleResetTargetTypography}
+          style={{
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: '1px solid #cbd5e1',
+            backgroundColor: '#ffffff',
+            color: '#64748b',
+            fontSize: '10.5px',
+            cursor: 'pointer',
+          }}
+        >
+          ↺ डिफ़ॉल्ट करें (Reset)
+        </button>
+      </div>
+
       {/* 7. Paragraph Spacing & Indentation (Relevant for Body) */}
       {targetElement === 'body' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-              <label htmlFor={paraSpacingSliderId} style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}>
+              <label
+                htmlFor={paraSpacingSliderId}
+                style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}
+              >
                 पैराग्राफ दूरी
               </label>
               <span style={{ fontSize: '10px', color: '#64748b' }}>{currentParaSpacing}pt</span>
@@ -762,14 +1350,27 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
               max="24"
               step="1"
               value={currentParaSpacing}
-              onChange={(e) => updateTypographyField('paragraphSpacingPt', parseFloat(e.target.value))}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (currentParaIndex !== null) {
+                  updateParagraphField('paragraphSpacingPt', val);
+                } else {
+                  onUpdateArticle({
+                    ...article,
+                    typography: { ...currentTypography, paragraphSpacingPt: val },
+                  });
+                }
+              }}
               style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
             />
           </div>
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-              <label htmlFor={textIndentSliderId} style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}>
+              <label
+                htmlFor={textIndentSliderId}
+                style={{ fontWeight: 600, fontSize: '10.5px', color: '#475569' }}
+              >
                 पहली पंक्ति इंडेंट
               </label>
               <span style={{ fontSize: '10px', color: '#64748b' }}>{currentTextIndent}pt</span>
@@ -781,7 +1382,17 @@ export const TypographyControls: React.FC<TypographyControlsProps> = ({
               max="36"
               step="1"
               value={currentTextIndent}
-              onChange={(e) => updateTypographyField('textIndentPt', parseFloat(e.target.value))}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (currentParaIndex !== null) {
+                  updateParagraphField('textIndentPt', val);
+                } else {
+                  onUpdateArticle({
+                    ...article,
+                    typography: { ...currentTypography, textIndentPt: val },
+                  });
+                }
+              }}
               style={{ width: '100%', accentColor: '#b91c1c', cursor: 'pointer' }}
             />
           </div>

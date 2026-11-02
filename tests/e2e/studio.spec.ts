@@ -85,11 +85,11 @@ test.describe('E-Paper Studio — Professional Indian Newspaper Publishing Flow'
 
     const leftSidebar = page.locator('[data-testid="left-sidebar"]');
     if (!(await leftSidebar.isVisible())) {
-      const pageRailBtn = page.locator('button:has-text("▤ पेज")');
+      const pageRailBtn = page.locator('button[title*="पेज सूची"]').first();
       if (await pageRailBtn.isVisible()) {
         await pageRailBtn.click();
       } else {
-        await page.locator('button[title*="sidebar"], button:has-text("☰")').first().click();
+        await page.locator('button[aria-label="Toggle sidebar"]').first().click();
       }
       await page.waitForTimeout(500);
     }

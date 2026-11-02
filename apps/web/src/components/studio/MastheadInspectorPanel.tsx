@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type {
   MastheadConfig,
   MastheadRuleStyle,
@@ -14,6 +14,7 @@ export interface MastheadInspectorPanelProps {
   onUpdateMasthead: (updated: MastheadConfig) => void;
   presetId?: NewspaperPresetId;
   onClose?: () => void;
+  initialTab?: 'title' | 'meta' | 'rules';
 }
 
 export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
@@ -21,8 +22,15 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   onUpdateMasthead,
   presetId = 'classic-hindi-broadsheet',
   onClose,
+  initialTab,
 }) => {
-  const [activeTab, setActiveTab] = useState<'title' | 'meta' | 'rules'>('title');
+  const [activeTab, setActiveTab] = useState<'title' | 'meta' | 'rules'>(initialTab || 'title');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const updateField = <K extends keyof MastheadConfig>(key: K, value: MastheadConfig[K]) => {
     // If string, sanitize digits to ensure strictly English numerals (0-9)
@@ -139,6 +147,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
       >
         <button
           type="button"
+          data-testid="masthead-tab-title"
           onClick={() => setActiveTab('title')}
           style={{
             padding: '6px 4px',
@@ -156,6 +165,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
         </button>
         <button
           type="button"
+          data-testid="masthead-tab-meta"
           onClick={() => setActiveTab('meta')}
           style={{
             padding: '6px 4px',
@@ -173,6 +183,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
         </button>
         <button
           type="button"
+          data-testid="masthead-tab-rules"
           onClick={() => setActiveTab('rules')}
           style={{
             padding: '6px 4px',

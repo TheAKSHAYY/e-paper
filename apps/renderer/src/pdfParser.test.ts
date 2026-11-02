@@ -94,4 +94,3 @@ describe('Structural PDF Parser (pdfParser.ts)', () => {
     expect(res.mediaBoxes[2]?.pageNumber).toBe(3);
   });
 });
-

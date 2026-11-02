@@ -87,14 +87,17 @@ export function checkRateLimit(req: IncomingMessage, maxLimitOverride?: number):
 }
 
 // Periodically clean up expired rate-limit IP records
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of ipRateMap.entries()) {
-    if (now > entry.resetAt) {
-      ipRateMap.delete(ip);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [ip, entry] of ipRateMap.entries()) {
+      if (now > entry.resetAt) {
+        ipRateMap.delete(ip);
+      }
     }
-  }
-}, 5 * 60 * 1000).unref();
+  },
+  5 * 60 * 1000
+).unref();
 
 /**
  * Validates optional API key passed via X-Api-Key or Authorization: Bearer.

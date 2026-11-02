@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { createNewspaperDocument, getPhysicalPageMetrics } from '../../packages/template-engine/src/index';
+import {
+  createNewspaperDocument,
+  getPhysicalPageMetrics,
+} from '../../packages/template-engine/src/index';
 import { generatePrintHtml } from '../../apps/web/src/utils/browserPrintExport';
 
 test.describe('Fallback Print / Save as PDF Flow (Standalone without Renderer)', () => {
@@ -123,9 +126,12 @@ test.describe('Fallback Print / Save as PDF Flow (Standalone without Renderer)',
     expect(joinedStyles).toContain('--masthead-color: #111111');
     expect(joinedStyles).toContain('--page-bg: #ffffff');
 
-    const pageBgColor = await page.locator('.newspaper-page').first().evaluate((el) => {
-      return window.getComputedStyle(el).backgroundColor;
-    });
+    const pageBgColor = await page
+      .locator('.newspaper-page')
+      .first()
+      .evaluate((el) => {
+        return window.getComputedStyle(el).backgroundColor;
+      });
     expect(pageBgColor).toBe('rgb(255, 255, 255)');
 
     // 3. Verify fonts loaded via document.fonts.ready from web app's static origin (no Google Fonts)
@@ -151,4 +157,3 @@ test.describe('Fallback Print / Save as PDF Flow (Standalone without Renderer)',
     expect(fontCheck.loadedCount).toBeGreaterThan(0);
   });
 });
-
