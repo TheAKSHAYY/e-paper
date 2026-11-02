@@ -766,7 +766,9 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     await expect(page.locator('[data-testid="section-block-borders"]')).toBeVisible();
   });
 
-  test('21. Border Controls functionality: sides, width stepper, style select, and color', async ({ page }) => {
+  test('21. Border Controls functionality: sides, width stepper, style select, and color', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#editor');
     await page.waitForTimeout(600);
@@ -797,11 +799,15 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     // Live preview box should reflect dashed border
     const previewBox = borderSection.locator('[data-testid="border-preview-box"]');
     await expect(previewBox).toBeVisible();
-    const borderTopStyle = await previewBox.evaluate((el) => window.getComputedStyle(el).borderTopStyle);
+    const borderTopStyle = await previewBox.evaluate(
+      (el) => window.getComputedStyle(el).borderTopStyle
+    );
     expect(borderTopStyle).toBe('dashed');
 
     // Also check on the canvas headline element itself
-    const headlineTopStyle = await headlineEl.evaluate((el) => window.getComputedStyle(el).borderTopStyle);
+    const headlineTopStyle = await headlineEl.evaluate(
+      (el) => window.getComputedStyle(el).borderTopStyle
+    );
     expect(headlineTopStyle).toBe('dashed');
 
     await page.screenshot({
@@ -809,7 +815,9 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     });
   });
 
-  test('22. Independent element borders: Headline border does NOT bleed to Body or Block', async ({ page }) => {
+  test('22. Independent element borders: Headline border does NOT bleed to Body or Block', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#editor');
     await page.waitForTimeout(600);
@@ -828,14 +836,20 @@ test.describe('Mobile-First Newspaper Editor & Complete Typography Control', () 
     await page.waitForTimeout(200);
 
     // Verify headline has double border
-    const headlineStyle = await headlineEl.evaluate((el) => window.getComputedStyle(el).borderBottomStyle);
+    const headlineStyle = await headlineEl.evaluate(
+      (el) => window.getComputedStyle(el).borderBottomStyle
+    );
     expect(headlineStyle).toBe('double');
 
     // Body and Article Block MUST NOT have double border
-    const bodyBottomStyle = await bodyEl.evaluate((el) => window.getComputedStyle(el).borderBottomStyle);
+    const bodyBottomStyle = await bodyEl.evaluate(
+      (el) => window.getComputedStyle(el).borderBottomStyle
+    );
     expect(bodyBottomStyle).not.toBe('double');
 
-    const articleBottomStyle = await articleEl.evaluate((el) => window.getComputedStyle(el).borderBottomStyle);
+    const articleBottomStyle = await articleEl.evaluate(
+      (el) => window.getComputedStyle(el).borderBottomStyle
+    );
     expect(articleBottomStyle).not.toBe('double');
 
     // Now switch to Block tab and set border for the block container

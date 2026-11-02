@@ -142,4 +142,185 @@ describe('PDF Preflight Validation Engine (12-Point Audit)', () => {
     expect(dateIssue).toBeDefined();
     expect(dateIssue?.severity).toBe('yellow');
   });
+
+  describe('Element-Level Text Overflow Safety (Fixed-Height & DOM)', () => {
+    it('should PASS preflight for a 280px fixed-height article when content comfortably fits', () => {
+      const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+      doc.pages = [
+        {
+          id: 'page-1',
+          pageNumber: 1,
+          sectionTitle: 'मुख्य पृष्ठ',
+          layoutMode: 'auto',
+          articles: [
+            {
+              ...doc.articles[0],
+              id: 'art-fixed-short',
+              headline: 'संक्षिप्त समाचार',
+              heightMode: 'fixed',
+              customHeight: 280,
+              body: 'यह एक संक्षिप्त समाचार है जो 280 पिक्सल के कंटेनर में सरलता से समाहित हो जाता है। कोई ओवरफ्लो नहीं है।',
+            },
+          ],
+        },
+      ];
+
+      const report = runPreflightValidation(doc, {
+        currentDate: new Date('2026-10-28T00:00:00Z'),
+      });
+      const overflowIssues = report.issues.filter((i) => i.type === 'text_overflow');
+      expect(overflowIssues).toHaveLength(0);
+      expect(report.canExport).toBe(true);
+    });
+
+    it('should BLOCK export (RED blocker) when a 280px fixed-height article contains ~350 words overflowing the container', () => {
+      const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+      const hindi350Words = new Array(350)
+        .fill('डिजिटल युग में भारतीय पत्रकारिता और समाचार पत्रों का अभिनव स्वरूप निरंतर विकसित हो रहा है।')
+        .join(' ');
+
+      doc.pages = [
+        {
+          id: 'page-1',
+          pageNumber: 1,
+          sectionTitle: 'मुख्य पृष्ठ',
+          layoutMode: 'auto',
+          articles: [
+            {
+              ...doc.articles[0],
+              id: 'art-fixed-overflow',
+              headline: 'बजट 2026: भारतीय अर्थव्यवस्था और नवाचार पर विशेष रिपोर्ट',
+              heightMode: 'fixed',
+              customHeight: 280,
+              body: hindi350Words,
+            },
+          ],
+        },
+      ];
+
+      const report = runPreflightValidation(doc, {
+        currentDate: new Date('2026-10-28T00:00:00Z'),
+      });
+      expect(report.canExport).toBe(false);
+      expect(report.errorCount).toBeGreaterThan(0);
+
+      const overflowIssue = report.issues.find(
+        (i) => i.type === 'text_overflow' && i.articleId === 'art-fixed-overflow'
+      );
+      expect(overflowIssue).toBeDefined();
+      expect(overflowIssue?.severity).toBe('red');
+      expect(overflowIssue?.autoFixAvailable).toBe(true);
+      expect(overflowIssue?.autoFixType).toBe('switch_to_auto_height');
+      expect(overflowIssue?.explanation).toContain('280px');
+    });
+
+    it('should report multiple RED blockers when multiple fixed-height articles overflow', () => {
+      const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+      const longBody = new Array(300).fill('महत्वपूर्ण संपादकीय विश्लेषण').join(' ');
+
+      doc.pages = [
+        {
+          id: 'page-1',
+          pageNumber: 1,
+          sectionTitle: 'मुख्य पृष्ठ',
+          layoutMode: 'auto',
+          articles: [
+            {
+              ...doc.articles[0],
+              id: 'art-1',
+              headline: 'लेख 1',
+              heightMode: 'fixed',
+              customHeight: 200,
+              body: longBody,
+            },
+            {
+              ...doc.articles[0],
+              id: 'art-2',
+              headline: 'लेख 2',
+              heightMode: 'fixed',
+              customHeight: 180,
+              body: longBody,
+            },
+          ],
+        },
+      ];
+
+      const report = runPreflightValidation(doc);
+      const blockers = report.issues.filter(
+        (i) => i.type === 'text_overflow' && i.severity === 'red'
+      );
+      expect(blockers).toHaveLength(2);
+      expect(report.canExport).toBe(false);
+    });
+
+    it('should flag RED blocker with exact overset pixels from live DOM measurements', () => {
+      const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+      doc.pages = [
+        {
+          id: 'page-1',
+          pageNumber: 1,
+          sectionTitle: 'मुख्य पृष्ठ',
+          layoutMode: 'auto',
+          articles: [
+            {
+              ...doc.articles[0],
+              id: 'art-dom-measured',
+              headline: 'लाइव डीओएम परीक्षण',
+              heightMode: 'fixed',
+              customHeight: 280,
+            },
+          ],
+        },
+      ];
+
+      const report = runPreflightValidation(doc, {
+        currentDate: new Date('2026-10-28T00:00:00Z'),
+        domMeasurements: [
+          {
+            articleId: 'art-dom-measured',
+            isOverflown: true,
+            scrollHeight: 376,
+            clientHeight: 280,
+          },
+        ],
+      });
+
+      expect(report.canExport).toBe(false);
+      const blocker = report.issues.find((i) => i.articleId === 'art-dom-measured');
+      expect(blocker).toBeDefined();
+      expect(blocker?.severity).toBe('red');
+      expect(blocker?.explanation).toContain('+96px');
+      expect(blocker?.autoFixType).toBe('switch_to_auto_height');
+    });
+
+    it('should resolve overflow and permit export when switched to auto-height', () => {
+      const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
+      const hindi350Words = new Array(350).fill('समाचार सामग्री').join(' ');
+
+      const art = {
+        ...doc.articles[0],
+        id: 'art-fixed-overflow',
+        headline: 'बजट 2026',
+        heightMode: 'fixed' as const,
+        customHeight: 280,
+        body: hindi350Words,
+      };
+
+      doc.pages[0].articles = [art];
+
+      // Initially blocked
+      let report = runPreflightValidation(doc, { currentDate: new Date('2026-10-28T00:00:00Z') });
+      expect(report.canExport).toBe(false);
+
+      // Apply switch_to_auto_height fix
+      art.heightMode = 'auto';
+      art.customHeight = undefined;
+
+      // Re-run validation without fixed constraint
+      report = runPreflightValidation(doc, { currentDate: new Date('2026-10-28T00:00:00Z') });
+      const overflowIssues = report.issues.filter((i) => i.type === 'text_overflow');
+      expect(overflowIssues).toHaveLength(0);
+      expect(report.canExport).toBe(true);
+    });
+  });
 });

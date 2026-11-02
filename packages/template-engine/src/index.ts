@@ -1303,6 +1303,134 @@ export function formatBodyParagraphsHtml(
     .join('');
 }
 
+export interface InnerColumnCalculationOptions {
+  enableAutoMultiColumn?: boolean;
+}
+
+/**
+ * Calculates the inner multi-column count for an article's body text based on
+ * user typography settings, outer column span, total page columns, and text volume.
+ *
+ * Guarantees:
+ * - If explicitly configured via article.typography?.bodyColumnCount or article.bodyColumnCount, uses that value (1 to 6).
+ * - If 1-column article (or span 1 of 4, or span <= 3 of 12), strictly returns 1.
+ * - Single-column articles behave exactly as before.
+ * - Short stories (< 35 words) remain 1 column to avoid single-line column fragments.
+ * - Wide stories (e.g., span 3 of 4 broadsheet, or span >= 8 of 12) format into balanced 2, 3, or 4 columns.
+ */
+export function getArticleInnerColumnCount(
+  article: Pick<Article, 'columnSpan' | 'body'> & {
+    typography?: { bodyColumnCount?: number };
+    bodyColumnCount?: number;
+  },
+  totalPageColumns: number = 4,
+  options: InnerColumnCalculationOptions = {}
+): number {
+  // 1. Explicit user preference takes absolute precedence
+  const explicit = article.typography?.bodyColumnCount ?? article.bodyColumnCount;
+  if (explicit !== undefined && explicit !== null && explicit >= 1) {
+    return Math.min(6, Math.max(1, explicit));
+  }
+
+  if (options.enableAutoMultiColumn === false) {
+    return 1;
+  }
+
+  const span = Math.min(totalPageColumns, Math.max(1, article.columnSpan));
+
+  // If article only spans 1 column on the page grid, inner column count is always 1
+  if (span <= 1) {
+    return 1;
+  }
+
+  // Text volume guard: If text is brief (< 35 words), keep 1 column to avoid awkward fragmentation
+  const wordCount = (article.body || '').trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount < 35) {
+    return 1;
+  }
+
+  // Standard 4-column broadsheet (e.g. classic-hindi-broadsheet)
+  if (totalPageColumns === 4) {
+    if (span === 2) return 2;
+    if (span === 3) return wordCount >= 70 ? 3 : 2;
+    if (span >= 4) return wordCount >= 100 ? 4 : 3;
+    return 1;
+  }
+
+  // 6-column grid
+  if (totalPageColumns === 6) {
+    if (span <= 2) return 1;
+    if (span === 3 || span === 4) return 2;
+    if (span >= 5) return wordCount >= 80 ? 3 : 2;
+    return 1;
+  }
+
+  // 8-column grid
+  if (totalPageColumns === 8) {
+    if (span <= 2) return 1;
+    if (span === 3 || span === 4) return 2;
+    if (span === 5 || span === 6) return 3;
+    if (span >= 7) return 4;
+    return 1;
+  }
+
+  // 12-column modular grid
+  if (totalPageColumns === 12) {
+    if (span <= 3) return 1;
+    if (span >= 4 && span <= 7) return 2; // e.g. 6-col half page
+    if (span >= 8 && span <= 10) return wordCount >= 70 ? 3 : 2; // e.g. 8 or 9 cols
+    if (span >= 11) return wordCount >= 100 ? 4 : 3; // e.g. 12-col full width
+    return 1;
+  }
+
+  // Fallback for custom column count: ratio-based
+  const ratio = span / totalPageColumns;
+  if (ratio >= 0.75) return wordCount >= 90 ? 4 : 3;
+  if (ratio >= 0.5) return 2;
+  return 1;
+}
+
+export interface ArticleInnerColumnCssProperties {
+  columnCount?: number;
+  columnGap?: string;
+  columnRule?: string;
+  columnFill?: 'balance';
+  WebkitColumnCount?: number;
+  WebkitColumnGap?: string;
+  WebkitColumnRule?: string;
+  WebkitColumnFill?: 'balance';
+}
+
+export function getArticleInnerColumnStyles(
+  article: Pick<Article, 'columnSpan' | 'body'> & {
+    typography?: { bodyColumnCount?: number; bodyColumnGapPt?: number; bodyColumnRule?: string };
+    bodyColumnCount?: number;
+    bodyColumnGapPt?: number;
+    bodyColumnRule?: string;
+  },
+  totalPageColumns: number = 4
+): ArticleInnerColumnCssProperties {
+  const innerCols = getArticleInnerColumnCount(article, totalPageColumns);
+  if (innerCols <= 1) {
+    return {};
+  }
+  const gapPt = article.typography?.bodyColumnGapPt ?? article.bodyColumnGapPt ?? 14;
+  const rawRule =
+    article.typography?.bodyColumnRule ?? article.bodyColumnRule ?? '1px solid #cbd5e1';
+  const rule = rawRule === 'none' ? undefined : rawRule;
+
+  return {
+    columnCount: innerCols,
+    columnGap: `${gapPt}pt`,
+    columnRule: rule,
+    columnFill: 'balance',
+    WebkitColumnCount: innerCols,
+    WebkitColumnGap: `${gapPt}pt`,
+    WebkitColumnRule: rule,
+    WebkitColumnFill: 'balance',
+  };
+}
+
 /**
  * Partitions articles across multiple newspaper pages based on physical page capacity,
  * ensuring lead and front-page stories remain on Page 1 while inside pages accommodate
@@ -1772,7 +1900,9 @@ export function renderNewspaperDocumentToHtml(
               ? 'style="flex: 1; display: flex; flex-direction: column;"'
               : '';
 
-            const imageBorderStr = elementBordersToStyleString(art.imageBorders || art.typography?.imageBorders);
+            const imageBorderStr = elementBordersToStyleString(
+              art.imageBorders || art.typography?.imageBorders
+            );
             imageHtml = `
               <figure class="article-figure placement-${art.imagePlacement} layout-${art.imageLayout ?? 'full'} aspect-${art.imageAspect ?? 'standard'}" ${figStyle}>
                 <img src="${escapeHtml(art.imageUrl ?? '')}" alt="${escapeHtml(art.imageCaption ?? art.headline ?? '')}" class="article-image aspect-${art.imageAspect ?? 'standard'}" style="object-fit: ${fit}; object-position: ${objectPos}; aspect-ratio: ${art.customImageHeight ? 'auto' : aspectStyle}; ${imgHeightStyle} ${imageBorderStr}" onerror="this.style.display='none'" />
@@ -1883,7 +2013,9 @@ export function renderNewspaperDocumentToHtml(
               `background-color: ${art.typography.subheadlineBackgroundColor};`
             );
           }
-          const subheadlineBorderStr = elementBordersToStyleString(art.typography?.subheadlineBorders);
+          const subheadlineBorderStr = elementBordersToStyleString(
+            art.typography?.subheadlineBorders
+          );
           if (subheadlineBorderStr) {
             subheadlineStylesList.push(subheadlineBorderStr);
           }
@@ -2033,6 +2165,22 @@ export function renderNewspaperDocumentToHtml(
             bodyStylesList.push(
               `-webkit-line-clamp: ${art.maxLines}; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;`
             );
+          }
+          const innerCols = getArticleInnerColumnCount(art, effectiveColumnCount);
+          if (innerCols > 1) {
+            bodyStylesList.push(`column-count: ${innerCols};`);
+            bodyStylesList.push(`-webkit-column-count: ${innerCols};`);
+            const gapPt = art.typography?.bodyColumnGapPt ?? art.bodyColumnGapPt ?? 14;
+            bodyStylesList.push(`column-gap: ${gapPt}pt;`);
+            bodyStylesList.push(`-webkit-column-gap: ${gapPt}pt;`);
+            const rawRule =
+              art.typography?.bodyColumnRule ?? art.bodyColumnRule ?? '1px solid #cbd5e1';
+            if (rawRule && rawRule !== 'none') {
+              bodyStylesList.push(`column-rule: ${rawRule};`);
+              bodyStylesList.push(`-webkit-column-rule: ${rawRule};`);
+            }
+            bodyStylesList.push(`column-fill: balance;`);
+            bodyStylesList.push(`-webkit-column-fill: balance;`);
           }
           const bodyBorderStr = elementBordersToStyleString(art.typography?.bodyBorders);
           if (bodyBorderStr) {
@@ -2507,6 +2655,9 @@ export function renderNewspaperDocumentToHtml(
       line-height: 1.45;
       text-align: justify;
       hyphens: auto;
+      text-justify: inter-word;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
 
     /* Devanagari Typography: disable automatic hyphenation to prevent severing matras/conjuncts */
@@ -2532,6 +2683,8 @@ export function renderNewspaperDocumentToHtml(
     .article-para {
       margin: 0 0 5pt 0;
       text-indent: 12pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .drop-cap:first-of-type::first-letter {

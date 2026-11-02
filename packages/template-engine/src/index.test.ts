@@ -11,6 +11,8 @@ import {
   formatBodyParagraphsHtml,
   isPredominantlyDevanagari,
   resolvePageColumnCount,
+  getArticleInnerColumnCount,
+  getArticleInnerColumnStyles,
 } from './index';
 
 describe('TemplateEngine', () => {
@@ -402,6 +404,122 @@ describe('TemplateEngine', () => {
       // Point outside canvas
       const outside = screenToPageMm({ clientX: 50, clientY: 20 }, canvasRect, scale, pageDims);
       expect(outside.isInside).toBe(false);
+    });
+  });
+
+  describe('Multi-Column Body Typography Engine (Phase 1)', () => {
+    const longHindiBody = `
+      राजधानी में आज एक भव्य समारोह के दौरान नई विकास परियोजनाओं का शिलान्यास किया गया। इस ऐतिहासिक अवसर पर विभिन्न गणमान्य व्यक्तियों ने भाग लिया और क्षेत्र के विकास के लिए सरकार की प्रतिबद्धता की सराहना की। नई सड़कों, पुलों और स्वास्थ्य केंद्रों के निर्माण से लाखों नागरिकों को सीधा लाभ मिलेगा।
+
+      स्थानीय नागरिकों ने सरकार के इस कदम का गर्मजोशी से स्वागत किया है। उद्योग व्यापार मंडल के अध्यक्ष ने कहा कि आधारभूत ढांचे में सुधार से स्थानीय अर्थव्यवस्था को नई गति मिलेगी और रोजगार के नए अवसर पैदा होंगे।
+
+      अगले वित्तीय वर्ष तक इन सभी परियोजनाओं को पूरा करने का लक्ष्य निर्धारित किया गया है। अधिकारियों को गुणवत्ता और समय-सीमा का कड़ाई से पालन करने के स्पष्ट निर्देश दिए गए हैं।
+    `;
+
+    const shortHindiBody = 'राजधानी में संक्षिप्त बैठक संपन्न।';
+
+    it('should strictly preserve single-column behavior for span 1 articles', () => {
+      const art = { columnSpan: 1, body: longHindiBody };
+      expect(getArticleInnerColumnCount(art, 4)).toBe(1);
+      expect(getArticleInnerColumnStyles(art, 4)).toEqual({});
+    });
+
+    it('should calculate balanced inner columns for multi-column articles on a 4-column broadsheet', () => {
+      const art2 = { columnSpan: 2, body: longHindiBody };
+      expect(getArticleInnerColumnCount(art2, 4)).toBe(2);
+
+      const art3 = { columnSpan: 3, body: longHindiBody };
+      expect(getArticleInnerColumnCount(art3, 4)).toBe(3);
+
+      const art4 = { columnSpan: 4, body: longHindiBody };
+      expect(getArticleInnerColumnCount(art4, 4)).toBe(4);
+    });
+
+    it('should scale appropriately on a 12-column modular grid', () => {
+      const artSpan3 = { columnSpan: 3, body: longHindiBody };
+      expect(getArticleInnerColumnCount(artSpan3, 12)).toBe(1);
+
+      const artSpan6 = { columnSpan: 6, body: longHindiBody };
+      expect(getArticleInnerColumnCount(artSpan6, 12)).toBe(2);
+
+      const artSpan8 = { columnSpan: 8, body: longHindiBody };
+      expect(getArticleInnerColumnCount(artSpan8, 12)).toBe(3);
+
+      const artSpan12 = { columnSpan: 12, body: longHindiBody };
+      expect(getArticleInnerColumnCount(artSpan12, 12)).toBe(4);
+    });
+
+    it('should safeguard short stories (< 35 words) from awkward fragmentation', () => {
+      const artShort = { columnSpan: 3, body: shortHindiBody };
+      expect(getArticleInnerColumnCount(artShort, 4)).toBe(1);
+      expect(getArticleInnerColumnStyles(artShort, 4)).toEqual({});
+    });
+
+    it('should respect explicit user overrides on article and typography', () => {
+      // User explicitly forces 1 column on wide article
+      const artForced1 = {
+        columnSpan: 3,
+        body: longHindiBody,
+        typography: { bodyColumnCount: 1 },
+      };
+      expect(getArticleInnerColumnCount(artForced1, 4)).toBe(1);
+      expect(getArticleInnerColumnStyles(artForced1, 4)).toEqual({});
+
+      // User explicitly forces 2 columns on 4-span article
+      const artForced2 = {
+        columnSpan: 4,
+        body: longHindiBody,
+        bodyColumnCount: 2,
+        bodyColumnGapPt: 18,
+        bodyColumnRule: '2px solid #000000',
+      };
+      expect(getArticleInnerColumnCount(artForced2, 4)).toBe(2);
+      const styles = getArticleInnerColumnStyles(artForced2, 4);
+      expect(styles.columnCount).toBe(2);
+      expect(styles.columnGap).toBe('18pt');
+      expect(styles.columnRule).toBe('2px solid #000000');
+      expect(styles.columnFill).toBe('balance');
+
+      // User disables rule with 'none'
+      const artNoRule = {
+        columnSpan: 2,
+        body: longHindiBody,
+        bodyColumnRule: 'none',
+      };
+      const stylesNoRule = getArticleInnerColumnStyles(artNoRule, 4);
+      expect(stylesNoRule.columnRule).toBeUndefined();
+    });
+
+    it('should render inner column CSS and Devanagari paragraph shaping rules in PDF HTML output', () => {
+      const doc = createNewspaperDocument({
+        presetId: 'classic-broadsheet',
+        title: 'दैनिक भारत',
+      });
+
+      // Update lead article to span 3 with long Hindi text
+      const leadArt = doc.articles[0]!;
+      leadArt.columnSpan = 3;
+      leadArt.body = longHindiBody;
+
+      // Ensure second article is span 1
+      if (doc.articles[1]) {
+        doc.articles[1].columnSpan = 1;
+      }
+
+      const html = renderNewspaperDocumentToHtml(doc);
+
+      // Verify print stylesheet rules for Devanagari shaping & paragraph avoidance
+      expect(html).toContain('break-inside: avoid;');
+      expect(html).toContain('page-break-inside: avoid;');
+      expect(html).toContain('word-break: keep-all;');
+      expect(html).toContain('overflow-wrap: break-word;');
+
+      // Verify lead article has multi-column inline styles
+      expect(html).toContain('column-count: 3;');
+      expect(html).toContain('-webkit-column-count: 3;');
+      expect(html).toContain('column-gap: 14pt;');
+      expect(html).toContain('column-rule: 1px solid #cbd5e1;');
+      expect(html).toContain('column-fill: balance;');
     });
   });
 });

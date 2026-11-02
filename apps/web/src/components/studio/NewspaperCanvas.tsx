@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type {
   NewspaperPage,
   NewspaperDocument,
@@ -21,22 +21,43 @@ import {
   getMastheadEmblemSvg,
   getPhysicalPageMetrics,
   screenToPageMm,
+  getArticleInnerColumnStyles,
 } from '@epaper-studio/template-engine';
 import { FreeLayoutLayer } from './FreeLayoutLayer';
 
 function toBorderCss(borders?: ElementBorders): React.CSSProperties {
   if (!borders) return {};
   const styles: React.CSSProperties = {};
-  if (borders.top && borders.top.style && borders.top.style !== 'none' && (borders.top.width ?? 0) > 0) {
+  if (
+    borders.top &&
+    borders.top.style &&
+    borders.top.style !== 'none' &&
+    (borders.top.width ?? 0) > 0
+  ) {
     styles.borderTop = `${borders.top.width}px ${borders.top.style} ${borders.top.color || '#111111'}`;
   }
-  if (borders.right && borders.right.style && borders.right.style !== 'none' && (borders.right.width ?? 0) > 0) {
+  if (
+    borders.right &&
+    borders.right.style &&
+    borders.right.style !== 'none' &&
+    (borders.right.width ?? 0) > 0
+  ) {
     styles.borderRight = `${borders.right.width}px ${borders.right.style} ${borders.right.color || '#111111'}`;
   }
-  if (borders.bottom && borders.bottom.style && borders.bottom.style !== 'none' && (borders.bottom.width ?? 0) > 0) {
+  if (
+    borders.bottom &&
+    borders.bottom.style &&
+    borders.bottom.style !== 'none' &&
+    (borders.bottom.width ?? 0) > 0
+  ) {
     styles.borderBottom = `${borders.bottom.width}px ${borders.bottom.style} ${borders.bottom.color || '#111111'}`;
   }
-  if (borders.left && borders.left.style && borders.left.style !== 'none' && (borders.left.width ?? 0) > 0) {
+  if (
+    borders.left &&
+    borders.left.style &&
+    borders.left.style !== 'none' &&
+    (borders.left.width ?? 0) > 0
+  ) {
     styles.borderLeft = `${borders.left.width}px ${borders.left.style} ${borders.left.color || '#111111'}`;
   }
   return styles;
@@ -75,6 +96,14 @@ export interface NewspaperCanvasProps {
   selectedElementPart?: SelectedElementPart;
   selectedParagraphIndex?: number | null;
   onDeselect?: () => void;
+  onReportDomMeasurements?: (
+    measurements: Array<{
+      articleId: string;
+      isOverflown: boolean;
+      scrollHeight: number;
+      clientHeight: number;
+    }>
+  ) => void;
 }
 
 export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
@@ -107,11 +136,62 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   selectedParagraphIndex,
   onDeselect,
   onTogglePageLayoutMode,
+  onReportDomMeasurements,
 }) => {
   const sheetCanvasRef = useRef<HTMLDivElement>(null);
   const touchDragRef = useRef<{ articleId: string; startX: number; startY: number } | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [draggedOverArticleId, setDraggedOverArticleId] = useState<string | null>(null);
+  const [overflownArticleMap, setOverflownArticleMap] = useState<Record<string, number>>({});
+
+  // Real-time element-level DOM overflow detector
+  useEffect(() => {
+    if (!sheetCanvasRef.current) return;
+    const cards = sheetCanvasRef.current.querySelectorAll<HTMLElement>('[data-article-id]');
+    const map: Record<string, number> = {};
+    const measurements: Array<{
+      articleId: string;
+      isOverflown: boolean;
+      scrollHeight: number;
+      clientHeight: number;
+    }> = [];
+
+    cards.forEach((card) => {
+      const artId = card.getAttribute('data-article-id');
+      if (!artId) return;
+      const clientH = card.clientHeight;
+      const scrollH = card.scrollHeight;
+      const bodyEl = card.querySelector<HTMLElement>('.article-body');
+      const bodyClientH = bodyEl?.clientHeight ?? 0;
+      const bodyScrollH = bodyEl?.scrollHeight ?? 0;
+
+      const isOver = scrollH > clientH + 4 || (bodyEl && bodyScrollH > bodyClientH + 4);
+      const oversetPx = Math.max(
+        scrollH > clientH + 4 ? scrollH - clientH : 0,
+        bodyEl && bodyScrollH > bodyClientH + 4 ? bodyScrollH - bodyClientH : 0
+      );
+
+      if (isOver && oversetPx > 0) {
+        map[artId] = Math.round(oversetPx);
+      }
+      measurements.push({
+        articleId: artId,
+        isOverflown: Boolean(isOver && oversetPx > 0),
+        scrollHeight: scrollH,
+        clientHeight: clientH,
+      });
+    });
+
+    setOverflownArticleMap(map);
+    onReportDomMeasurements?.(measurements);
+  }, [
+    page.articles,
+    scale,
+    pageSize,
+    orientation,
+    usePhysicalCanvasCoordinates,
+    onReportDomMeasurements,
+  ]);
   const isFirstPage = pageIndex === 0;
   const pageNumber = page.pageNumber ?? pageIndex + 1;
   const columnCount = resolvePageColumnCount({ layout }, page);
@@ -409,12 +489,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           ? '100%'
           : undefined;
 
+    const oversetPx = overflownArticleMap[article.id];
+    const isOverflown = Boolean(oversetPx && oversetPx > 0);
+
     return (
       <article
         key={article.id}
         data-testid={`article-card-${article.id}`}
         data-article-id={article.id}
-        className="newspaper-article"
+        className={`newspaper-article ${isOverflown ? 'has-overflow' : ''}`}
         lang={isHindi ? 'hi' : 'en'}
         draggable={!isFreeLayout}
         onDragStart={(e) => {
@@ -503,10 +586,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           outline:
             draggedOverArticleId === article.id
               ? '2px dashed #2563eb'
-              : !isFreeLayout && isSelected
-                ? `${visualOutlineWidth}px solid #2563eb`
-                : 'none',
-          outlineOffset: `${visualOutlineOffset}px`,
+              : isOverflown
+                ? isSelected
+                  ? '3px solid #dc2626'
+                  : '2px dashed #dc2626'
+                : !isFreeLayout && isSelected
+                  ? `${visualOutlineWidth}px solid #2563eb`
+                  : 'none',
+          outlineOffset: isOverflown ? '2px' : `${visualOutlineOffset}px`,
           backgroundColor:
             article.customColors?.backgroundColor ?? article.backgroundColor ?? 'transparent',
           opacity: article.opacity ?? 1,
@@ -524,6 +611,33 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             : {}),
         }}
       >
+        {/* Publisher-Facing Overflow Warning Indicator (Requirement 3) */}
+        {isOverflown && (
+          <div
+            data-testid={`article-overflow-badge-${article.id}`}
+            className="article-overflow-indicator"
+            title={`टेक्स्ट ओवरफ्लो: लेख का टेक्स्ट निर्धारित ऊंचाई से ${oversetPx}px अधिक है और कट रहा है।`}
+            style={{
+              position: 'absolute',
+              bottom: '4px',
+              right: '4px',
+              zIndex: 35,
+              backgroundColor: '#dc2626',
+              color: '#ffffff',
+              fontSize: '10.5px',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)',
+              pointerEvents: 'none',
+            }}
+          >
+            ⚠️ टेक्स्ट ओवरफ्लो (+{oversetPx}px)
+          </div>
+        )}
         {/* Mobile / Touch Friendly Reorder Toolbar when article is selected */}
         {isSelected && !isFreeLayout && (
           <div
@@ -1085,6 +1199,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               textJustify: 'inter-word',
               hyphens: isHindi ? 'manual' : 'auto',
               WebkitHyphens: isHindi ? 'manual' : 'auto',
+              wordBreak: 'keep-all',
+              overflowWrap: 'break-word',
               flex: !isFreeLayout && article.fillSpace ? 1 : undefined,
               ...(article.maxLines
                 ? {
@@ -1095,6 +1211,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   }
                 : {}),
               ...toBorderCss(article.typography?.bodyBorders),
+              ...getArticleInnerColumnStyles(article, columnCount),
             }}
           >
             {article.imagePlacement === 'side' && renderPhoto()}
@@ -1159,6 +1276,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     }
                   }}
                   style={{
+                    breakInside: 'avoid',
+                    pageBreakInside: 'avoid',
                     fontSize: paraTypo?.fontSizePt ? `${paraTypo.fontSizePt}pt` : undefined,
                     fontFamily: paraTypo?.fontFamily || undefined,
                     fontWeight: paraTypo?.fontWeight || undefined,
@@ -1300,7 +1419,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               target.closest('.newspaper-article-card') ||
               target.closest('[data-testid^="article-card-"]');
             const clickedInsideMasthead =
-              target.closest('.masthead-section') || target.closest('[data-testid="masthead-section"]');
+              target.closest('.masthead-section') ||
+              target.closest('[data-testid="masthead-section"]');
             if (!clickedInsideArticle && !clickedInsideMasthead) {
               onDeselect?.();
             }

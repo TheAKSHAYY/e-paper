@@ -89,7 +89,9 @@ export const App: React.FC = () => {
   const [selectedElementPart, setSelectedElementPart] = useState<SelectedElementPart>(null);
   const [selectedParaIndex, setSelectedParaIndex] = useState<number | null>(null);
   const [isMastheadSelected, setIsMastheadSelected] = useState<boolean>(false);
-  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'meta' | 'rules'>('title');
+  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'meta' | 'rules'>(
+    'title'
+  );
 
   // UI state
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');
@@ -152,6 +154,14 @@ export const App: React.FC = () => {
   const [isPreflightModalOpen, setIsPreflightModalOpen] = useState<boolean>(false);
   const [preflightReport, setPreflightReport] = useState<PreflightReport | null>(null);
   const [activeEditionId, setActiveEditionId] = useState<string | undefined>(undefined);
+  const [domMeasurements, setDomMeasurements] = useState<
+    Array<{
+      articleId: string;
+      isOverflown: boolean;
+      scrollHeight: number;
+      clientHeight: number;
+    }>
+  >([]);
 
   // Modals for page full and export preflight
   const [showPageFullModal, setShowPageFullModal] = useState<boolean>(false);
@@ -542,13 +552,14 @@ export const App: React.FC = () => {
   // Live Preflight Status
   const preflightStatus = useMemo(() => {
     if (!document) return null;
-    const report = runPreflightValidation(document);
+    const report = runPreflightValidation(document, { domMeasurements });
     return {
       overallStatus: report.overallStatus,
       blockerCount: report.errorCount,
       warningCount: report.warningCount,
+      canExport: report.canExport,
     };
-  }, [document]);
+  }, [document, domMeasurements]);
 
   // Auto-load most recent draft or save initial preset on mount (clean view, no aggressive auto-select)
   useEffect(() => {
@@ -1540,19 +1551,28 @@ export const App: React.FC = () => {
   // Export PDF with 12-Point Preflight Quality Guard
   const handleExportPdf = useCallback(
     async (bypassPreflight = false) => {
-      if (!bypassPreflight) {
-        const report = runPreflightValidation(document);
-        setPreflightReport(report);
-        if (!report.canExport || report.warningCount > 0) {
-          setIsPreflightModalOpen(true);
-          return;
-        }
+      const report = runPreflightValidation(document, { domMeasurements });
+      setPreflightReport(report);
+
+      if (!report.canExport) {
+        setIsPreflightModalOpen(true);
+        showNotification(
+          '🔴 PDF निर्यात अवरुद्ध: सामग्री ओवरफ्लो अथवा गंभीर त्रुटियां मौजूद हैं। कृपया पहले इन्हें ठीक करें।'
+        );
+        return;
+      }
+
+      if (!bypassPreflight && report.warningCount > 0) {
+        setIsPreflightModalOpen(true);
+        return;
       }
 
       setIsExportingPdf(true);
       showNotification('प्रिंट-रेडी PDF तैयार हो रहा है...');
       try {
         const result = await exportDocumentToPdf(document, {
+          preflightOptions: { domMeasurements },
+          bypassPreflight: true,
           onProgress: (current, total) => {
             showNotification(`PDF तैयार हो रहा है... पृष्ठ ${current}/${total}`);
           },
@@ -1579,14 +1599,14 @@ export const App: React.FC = () => {
         setIsExportingPdf(false);
       }
     },
-    [document, showNotification]
+    [document, domMeasurements, showNotification]
   );
 
   const handleRunPreflight = useCallback(() => {
-    const report = runPreflightValidation(document);
+    const report = runPreflightValidation(document, { domMeasurements });
     setPreflightReport(report);
     setIsPreflightModalOpen(true);
-  }, [document]);
+  }, [document, domMeasurements]);
 
   const handleApplyPreflightAutoFix = useCallback(
     (issue: PreflightIssue) => {
@@ -1660,13 +1680,35 @@ export const App: React.FC = () => {
           }
         }
 
-        const newReport = runPreflightValidation(cloned);
+        let nextDomMeasurements = domMeasurements;
+        if (
+          issue.autoFixType === 'switch_to_auto_height' &&
+          issue.articleId
+        ) {
+          nextDomMeasurements = domMeasurements.filter((m) => m.articleId !== issue.articleId);
+          setDomMeasurements(nextDomMeasurements);
+          for (const p of pubPages) {
+            const art = p.articles.find((a) => a.id === issue.articleId);
+            if (art) {
+              art.heightMode = 'auto';
+              art.customHeight = undefined;
+              break;
+            }
+          }
+          const rootArt = cloned.articles.find((a) => a.id === issue.articleId);
+          if (rootArt) {
+            rootArt.heightMode = 'auto';
+            rootArt.customHeight = undefined;
+          }
+        }
+
+        const newReport = runPreflightValidation(cloned, { domMeasurements: nextDomMeasurements });
         setPreflightReport(newReport);
         return cloned;
       });
       showNotification('✓ स्वतः सुधार लागू किया गया।');
     },
-    [showNotification]
+    [domMeasurements, showNotification]
   );
 
   const handleResolveAllAutoFixable = useCallback(() => {
@@ -1676,6 +1718,7 @@ export const App: React.FC = () => {
 
     setDocument((prev) => {
       const cloned = JSON.parse(JSON.stringify(prev)) as NewspaperDocument;
+      let nextDomMeasurements = domMeasurements;
       for (const issue of autoFixableIssues) {
         const pubPages = getPublicationPages(cloned);
         if (
@@ -1725,15 +1768,34 @@ export const App: React.FC = () => {
               cloned.articles = page.articles;
             }
           }
+        } else if (
+          issue.autoFixType === 'switch_to_auto_height' &&
+          issue.articleId
+        ) {
+          nextDomMeasurements = nextDomMeasurements.filter((m) => m.articleId !== issue.articleId);
+          for (const p of pubPages) {
+            const art = p.articles.find((a) => a.id === issue.articleId);
+            if (art) {
+              art.heightMode = 'auto';
+              art.customHeight = undefined;
+              break;
+            }
+          }
+          const rootArt = cloned.articles.find((a) => a.id === issue.articleId);
+          if (rootArt) {
+            rootArt.heightMode = 'auto';
+            rootArt.customHeight = undefined;
+          }
         }
       }
 
-      const newReport = runPreflightValidation(cloned);
+      setDomMeasurements(nextDomMeasurements);
+      const newReport = runPreflightValidation(cloned, { domMeasurements: nextDomMeasurements });
       setPreflightReport(newReport);
       return cloned;
     });
     showNotification('✓ सभी संभव सुधार लागू किए गए।');
-  }, [preflightReport, showNotification]);
+  }, [domMeasurements, preflightReport, showNotification]);
 
   // Master Template & Daily Edition publishing handlers
   const handleLoadEdition = useCallback(
@@ -2437,6 +2499,7 @@ export const App: React.FC = () => {
                 onSwapArticles={handleSwapArticles}
                 onMoveArticleToPage={handleMoveArticleToPage}
                 onTogglePageLayoutMode={handleTogglePageLayoutMode}
+                onReportDomMeasurements={setDomMeasurements}
               />
             </div>
 
@@ -2492,7 +2555,9 @@ export const App: React.FC = () => {
                 onSelectDrawer={setMobileDrawer}
                 currentPageNumber={safePageIndex + 1}
                 totalPages={pages.length}
-                hasSelectedArticle={Boolean(selectedArticle) || (isMastheadSelected && safePageIndex === 0)}
+                hasSelectedArticle={
+                  Boolean(selectedArticle) || (isMastheadSelected && safePageIndex === 0)
+                }
                 onExportPdf={handleExportPdf}
                 isExportingPdf={isExportingPdf}
               />

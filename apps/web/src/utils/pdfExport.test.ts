@@ -160,4 +160,57 @@ describe('Client-Side PDF Export Engine (pdfExport.ts)', () => {
     expect(result.success).toBe(true);
     expect(result.filename).toContain('A4_Landscape_Journal');
   });
+
+  it('blocks PDF export when critical element-level text overflow is present', async () => {
+    const doc = createNewspaperDocument({
+      title: 'Overflow Newspaper',
+      presetId: 'classic-broadsheet',
+    });
+    const longBody = new Array(350).fill('समाचार').join(' ');
+    const firstArticle = doc.articles[0]!;
+    const overflowingArticle = {
+      ...firstArticle,
+      id: 'art-overflow-test',
+      headline: 'अत्यधिक लंबा समाचार',
+      subheadline: firstArticle.subheadline ?? '',
+      byline: firstArticle.byline ?? '',
+      dateline: firstArticle.dateline ?? '',
+      imageCaption: firstArticle.imageCaption ?? '',
+      heightMode: 'fixed' as const,
+      customHeight: 280,
+      body: longBody,
+    };
+    if (doc.pages && doc.pages[0]) {
+      doc.pages[0].articles = [overflowingArticle];
+    }
+
+    await expect(exportDocumentToPdf(doc)).rejects.toThrow(/PDF export blocked: Unresolved critical issues exist/);
+  });
+
+  it('succeeds after switching the overflowing fixed-height article to auto-height', async () => {
+    const doc = createNewspaperDocument({
+      title: 'Auto Height Fixed Newspaper',
+      presetId: 'classic-broadsheet',
+    });
+    const longBody = new Array(350).fill('समाचार').join(' ');
+    const firstArticle = doc.articles[0]!;
+    const resolvedArticle = {
+      ...firstArticle,
+      id: 'art-overflow-resolved',
+      headline: 'समाधानित समाचार',
+      subheadline: firstArticle.subheadline ?? '',
+      byline: firstArticle.byline ?? '',
+      dateline: firstArticle.dateline ?? '',
+      imageCaption: firstArticle.imageCaption ?? '',
+      heightMode: 'auto' as const,
+      body: longBody,
+    };
+    if (doc.pages && doc.pages[0]) {
+      doc.pages[0].articles = [resolvedArticle];
+    }
+
+    const result = await exportDocumentToPdf(doc);
+    expect(result.success).toBe(true);
+    expect(result.filename).toContain('Auto_Height_Fixed_Newspaper');
+  });
 });

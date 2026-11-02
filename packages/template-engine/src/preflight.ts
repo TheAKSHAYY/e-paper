@@ -3,6 +3,7 @@ import type {
   PreflightReport,
   PreflightIssue,
   PreflightSeverity,
+  Article,
 } from '@epaper-studio/document-schema';
 import {
   PreflightReportSchema,
@@ -42,6 +43,103 @@ const PAGE_CAPACITY_WORDS: Record<string, number> = {
 };
 
 /**
+ * Estimates minimum vertical pixel height required for an article card's content,
+ * including headline, subdeck, metadata, images, and body paragraphs formatted across inner columns.
+ */
+export function estimateArticleRequiredHeightPx(
+  art: Article,
+  pageColumnCount: number = 4
+): number {
+  const span = Math.min(pageColumnCount, Math.max(1, art.columnSpan));
+
+  // Determine inner columns count
+  let innerCols = 1;
+  const explicitCols = art.typography?.bodyColumnCount ?? art.bodyColumnCount;
+  if (explicitCols && explicitCols >= 1) {
+    innerCols = Math.min(6, Math.max(1, explicitCols));
+  } else {
+    const wordCount = (art.body || '').trim().split(/\s+/).filter(Boolean).length;
+    if (span >= 2 && wordCount >= 35) {
+      if (pageColumnCount === 4) {
+        innerCols =
+          span === 2 ? 2 : span === 3 ? (wordCount >= 70 ? 3 : 2) : wordCount >= 100 ? 4 : 3;
+      } else if (span >= 4) {
+        innerCols = 2;
+      }
+    }
+  }
+
+  // Base typography metrics (at 96 DPI screen equivalent: 1pt = 1.333px)
+  const bodyFontSizePt = art.typography?.bodyFontSizePt || art.typography?.fontSizePt || 10;
+  const bodyFontSizePx = bodyFontSizePt * 1.333;
+  const bodyLineHeight = art.typography?.bodyLineHeight || 1.45;
+  const lineSpacingPx = bodyFontSizePx * bodyLineHeight;
+
+  // Approximate card width on standard broadsheet
+  const usablePageWidthPx = 1380;
+  const cardWidthPx = Math.max(120, (usablePageWidthPx / pageColumnCount) * span - 14);
+  const colWidthPx = Math.max(80, (cardWidthPx - (innerCols - 1) * 18.67) / innerCols);
+
+  // Characters per line in Devanagari (~0.55 * fontSize)
+  const charWidthPx = Math.max(4.5, bodyFontSizePx * 0.55);
+  const charsPerLine = Math.max(14, Math.floor(colWidthPx / charWidthPx));
+
+  const paragraphs = (art.body || '').split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+  let totalBodyLines = 0;
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    const lines = Math.ceil(trimmed.length / charsPerLine) || 1;
+    totalBodyLines += lines;
+  }
+
+  const linesPerCol = Math.ceil(totalBodyLines / innerCols);
+  const paraSpacingPt = art.typography?.paragraphSpacingPt ?? 5;
+  const paraSpacingPx = paraSpacingPt * 1.333;
+  const bodyHeightPx =
+    linesPerCol * lineSpacingPx + Math.max(0, paragraphs.length - 1) * paraSpacingPx;
+
+  // Headline height
+  const headlineFontSizePt = art.typography?.headlineFontSizePt || 20;
+  const headlineLineHeight = 1.2;
+  const headlineCharsPerLine = Math.max(
+    10,
+    Math.floor(cardWidthPx / (headlineFontSizePt * 1.333 * 0.55))
+  );
+  const headlineLines = Math.ceil((art.headline?.length || 15) / headlineCharsPerLine) || 1;
+  const headlineHeightPx = headlineLines * (headlineFontSizePt * 1.333 * headlineLineHeight) + 12;
+
+  // Subheadline / Deck
+  let deckHeightPx = 0;
+  if (art.subheadline) {
+    const deckFontSizePt = art.typography?.subheadlineFontSizePt || 11.5;
+    const deckCharsPerLine = Math.max(
+      15,
+      Math.floor(cardWidthPx / (deckFontSizePt * 1.333 * 0.52))
+    );
+    const deckLines = Math.ceil(art.subheadline.length / deckCharsPerLine) || 1;
+    deckHeightPx = deckLines * (deckFontSizePt * 1.333 * 1.35) + 6;
+  }
+
+  // Meta (kicker, dateline, byline)
+  let metaHeightPx = 0;
+  if (art.kickerText) metaHeightPx += 18;
+  if (art.byline || art.dateline) metaHeightPx += 20;
+
+  // Image height
+  let imageHeightPx = 0;
+  if (art.imageUrl && art.imagePlacement !== 'none' && art.imagePlacement !== 'side') {
+    imageHeightPx = art.customImageHeight || 160;
+  }
+
+  // Container paddings and margins
+  const cardPaddingPx = (art.paddingPx || 0) * 2;
+  const totalNeededPx = Math.round(
+    headlineHeightPx + deckHeightPx + metaHeightPx + imageHeightPx + bodyHeightPx + cardPaddingPx
+  );
+  return totalNeededPx;
+}
+
+/**
  * Executes the complete 12-point Preflight & Quality Assurance audit
  * on a NewspaperDocument prior to PDF export.
  */
@@ -54,16 +152,46 @@ export function runPreflightValidation(
   const now = options.currentDate || new Date();
   const currentYear = now.getFullYear();
 
-  // 1. Text Overflow Check (DOM & Heuristic)
+  // 1. Element-Level and Page-Level Text Overflow Check
   pages.forEach((page, pIdx) => {
     const isFree = page.layoutMode === 'free';
-    if (isFree) {
-      page.articles.forEach((art) => {
-        // Check DOM measurement if available
-        const domMeasurement = options.domMeasurements?.find((m) => m.articleId === art.id);
-        if (domMeasurement && domMeasurement.isOverflown) {
+    const pageCols = page.columnCount || doc.layout.columnCount || 4;
+
+    page.articles.forEach((art) => {
+      // 1A. Direct DOM measurement check (when available from live canvas)
+      // Only applies if article is in free-layout or has constrained height
+      const isConstrained =
+        isFree ||
+        art.heightMode === 'fixed' ||
+        (art.customHeight !== undefined && art.customHeight > 0);
+      const domMeasurement = options.domMeasurements?.find((m) => m.articleId === art.id);
+      if (isConstrained && domMeasurement && domMeasurement.isOverflown) {
+        const oversetPx = Math.max(0, domMeasurement.scrollHeight - domMeasurement.clientHeight);
+        issues.push({
+          id: `overflow-dom-${art.id}`,
+          type: 'text_overflow',
+          severity: 'red',
+          pageIndex: pIdx,
+          pageNumber: page.pageNumber || pIdx + 1,
+          articleId: art.id,
+          headline: art.headline,
+          title: 'सामग्री ओवरफ्लो (Text Overflow)',
+          explanation: `लेख "${art.headline || 'समाचार'}" में सामग्री अपने निर्धारित स्थान (${domMeasurement.clientHeight}px) से अधिक (${domMeasurement.scrollHeight}px) है और प्रिंट में कट जाएगी (+${oversetPx}px अतिरिक्त)।`,
+          suggestedCorrection:
+            'सामग्री संक्षिप्त करें, कंटेनर को ऑटो-हाइट में बदलें (Auto-fit करें), या फ़ॉन्ट का आकार समायोजित करें।',
+          autoFixAvailable: art.heightMode === 'fixed' || isFree,
+          autoFixType: art.heightMode === 'fixed' ? 'switch_to_auto_height' : 'reduce_font_size',
+        });
+        return;
+      }
+
+      // 1B. Element-level static check for fixed-height containers (when DOM measurements not provided)
+      if (art.heightMode === 'fixed' && art.customHeight) {
+        const estimatedHeight = estimateArticleRequiredHeightPx(art, pageCols);
+        if (estimatedHeight > art.customHeight * 1.12) {
+          const oversetPx = estimatedHeight - art.customHeight;
           issues.push({
-            id: `overflow-dom-${art.id}`,
+            id: `overflow-fixed-${art.id}`,
             type: 'text_overflow',
             severity: 'red',
             pageIndex: pIdx,
@@ -71,58 +199,59 @@ export function runPreflightValidation(
             articleId: art.id,
             headline: art.headline,
             title: 'सामग्री ओवरफ्लो (Text Overflow)',
-            explanation: `लेख "${art.headline || 'समाचार'}" में सामग्री अपने निर्धारित फ़्रेम से अधिक है और प्रिंट में कट जाएगी।`,
-            suggestedCorrection: 'फ़ॉन्ट का आकार थोड़ा घटाएं या फ़्रेम की ऊंचाई बढ़ाएं।',
+            explanation: `लेख "${art.headline || 'समाचार'}" की सामग्री निर्धारित ऊंचाई (${art.customHeight}px) से अधिक है (अनुमानित आवश्यक: ${estimatedHeight}px, +${oversetPx}px अतिरिक्त) और प्रिंट में कट जाएगी।`,
+            suggestedCorrection:
+              'कंटेनर को ऑटो-हाइट में बदलें (Auto-fit करें) या सामग्री संक्षिप्त करें।',
             autoFixAvailable: true,
-            autoFixType: 'reduce_font_size',
+            autoFixType: 'switch_to_auto_height',
           });
           return;
         }
-
-        // Heuristic area check in free mode
-        if (art.frame) {
-          const areaMm2 = art.frame.w * art.frame.h;
-          const words = (art.body || '').trim().split(/\s+/).filter(Boolean).length;
-          // ~18mm2 per word in standard 10pt text
-          if (words * 18 > areaMm2 * 1.35) {
-            issues.push({
-              id: `overflow-area-${art.id}`,
-              type: 'text_overflow',
-              severity: 'red',
-              pageIndex: pIdx,
-              pageNumber: page.pageNumber || pIdx + 1,
-              articleId: art.id,
-              headline: art.headline,
-              title: 'सामग्री क्षमता से अधिक (Content Exceeds Area)',
-              explanation: `अनुमानित शब्द संख्या (${words}) फ़्रेम क्षेत्रफल (${Math.round(areaMm2)} mm²) के अनुसार अत्यधिक है।`,
-              suggestedCorrection: 'लेख का फ़्रेम बड़ा करें या टेक्स्ट को संक्षिप्त करें।',
-              autoFixAvailable: true,
-              autoFixType: 'reduce_font_size',
-            });
-          }
-        }
-      });
-    } else {
-      // Grid mode word budget check
-      const totalWords = page.articles.reduce(
-        (sum, a) =>
-          sum + (a.headline?.split(/\s+/).length || 0) + (a.body?.split(/\s+/).length || 0),
-        0
-      );
-      const budget = PAGE_CAPACITY_WORDS[doc.metadata.pageSize] || 1500;
-      if (totalWords > budget * 1.25) {
-        issues.push({
-          id: `overflow-grid-page-${pIdx}`,
-          type: 'text_overflow',
-          severity: 'yellow',
-          pageIndex: pIdx,
-          pageNumber: page.pageNumber || pIdx + 1,
-          title: 'पृष्ठ शब्द सीमा चेतावनी (Page Word Budget)',
-          explanation: `पृष्ठ ${pIdx + 1} पर कुल शब्द (${totalWords}) अनुशंसित सीमा (${budget}) से अधिक हैं।`,
-          suggestedCorrection: 'कुछ समाचारों को अगले पृष्ठ पर स्थानांतरित करें।',
-          autoFixAvailable: false,
-        });
       }
+
+      // 1C. Free-layout frame area check (when DOM measurements not provided)
+      if (isFree && art.frame) {
+        const areaMm2 = art.frame.w * art.frame.h;
+        const words = (art.body || '').trim().split(/\s+/).filter(Boolean).length;
+        // ~18mm2 per word in standard 10pt text
+        if (words * 18 > areaMm2 * 1.35) {
+          issues.push({
+            id: `overflow-area-${art.id}`,
+            type: 'text_overflow',
+            severity: 'red',
+            pageIndex: pIdx,
+            pageNumber: page.pageNumber || pIdx + 1,
+            articleId: art.id,
+            headline: art.headline,
+            title: 'सामग्री क्षमता से अधिक (Content Exceeds Area)',
+            explanation: `अनुमानित शब्द संख्या (${words}) फ़्रेम क्षेत्रफल (${Math.round(areaMm2)} mm²) के अनुसार अत्यधिक है।`,
+            suggestedCorrection: 'लेख का फ़्रेम बड़ा करें या टेक्स्ट को संक्षिप्त करें।',
+            autoFixAvailable: true,
+            autoFixType: 'reduce_font_size',
+          });
+        }
+      }
+    });
+
+    // 1D. Page word budget check (informational/advisory warning)
+    const totalWords = page.articles.reduce(
+      (sum, a) =>
+        sum + (a.headline?.split(/\s+/).length || 0) + (a.body?.split(/\s+/).length || 0),
+      0
+    );
+    const budget = PAGE_CAPACITY_WORDS[doc.metadata.pageSize] || 1500;
+    if (totalWords > budget * 1.25) {
+      issues.push({
+        id: `overflow-grid-page-${pIdx}`,
+        type: 'text_overflow',
+        severity: 'yellow',
+        pageIndex: pIdx,
+        pageNumber: page.pageNumber || pIdx + 1,
+        title: 'पृष्ठ शब्द सीमा चेतावनी (Page Word Budget)',
+        explanation: `पृष्ठ ${pIdx + 1} पर कुल शब्द (${totalWords}) अनुशंसित सीमा (${budget}) से अधिक हैं।`,
+        suggestedCorrection: 'कुछ समाचारों को अगले पृष्ठ पर स्थानांतरित करें।',
+        autoFixAvailable: false,
+      });
     }
   });
 

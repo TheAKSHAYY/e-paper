@@ -113,10 +113,15 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
       }}
     >
       {/* Header with Title and Quick Action */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
-          🔲 {label}
-        </span>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+        }}
+      >
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>🔲 {label}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             type="button"
@@ -173,7 +178,15 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
           border: '1px solid #e2e8f0',
         }}
       >
-        <span style={{ fontSize: '9.5px', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <span
+          style={{
+            fontSize: '9.5px',
+            color: '#64748b',
+            marginBottom: '4px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}
+        >
           बॉर्डर पूर्वावलोकन (Live Preview)
         </span>
         <div
@@ -192,7 +205,10 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
           }}
         >
           <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: 600 }}>
-            {borders.top?.width || borders.right?.width || borders.bottom?.width || borders.left?.width
+            {borders.top?.width ||
+            borders.right?.width ||
+            borders.bottom?.width ||
+            borders.left?.width
               ? 'बॉर्डर सक्रिय (Active)'
               : 'कोई बॉर्डर नहीं (No border)'}
           </span>
@@ -269,7 +285,14 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
 
       {/* Thickness / Width Stepper and Range Slider */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '4px',
+          }}
+        >
           <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
             मोटाई (Width): {currentConfig.width}px
           </label>
@@ -279,7 +302,12 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
               data-testid="border-width-minus"
               onClick={() => {
                 const nextW = Math.max(0, currentConfig.width - 1);
-                const style = nextW === 0 ? 'none' : currentConfig.style === 'none' ? 'solid' : currentConfig.style;
+                const style =
+                  nextW === 0
+                    ? 'none'
+                    : currentConfig.style === 'none'
+                      ? 'solid'
+                      : currentConfig.style;
                 if (activeSide === 'all') handleApplyToAll({ width: nextW, style });
                 else handleUpdateSide(activeSide, { width: nextW, style });
               }}
@@ -297,7 +325,15 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
             >
               −
             </button>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', minWidth: '24px', textAlign: 'center' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#0f172a',
+                minWidth: '24px',
+                textAlign: 'center',
+              }}
+            >
               {currentConfig.width}px
             </span>
             <button
@@ -334,7 +370,8 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
           value={currentConfig.width}
           onChange={(e) => {
             const width = parseInt(e.target.value, 10);
-            const style = width > 0 && currentConfig.style === 'none' ? 'solid' : currentConfig.style;
+            const style =
+              width > 0 && currentConfig.style === 'none' ? 'solid' : currentConfig.style;
             if (activeSide === 'all') {
               handleApplyToAll({ width, style });
             } else {

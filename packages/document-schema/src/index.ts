@@ -182,19 +182,42 @@ export type ElementBorders = z.infer<typeof ElementBordersSchema>;
 /**
  * Converts ElementBorders into an inline CSS style string for HTML/PDF rendering.
  */
-export function elementBordersToStyleString(borders?: ElementBorders, fallbackColor?: string): string {
+export function elementBordersToStyleString(
+  borders?: ElementBorders,
+  fallbackColor?: string
+): string {
   if (!borders) return '';
   let str = '';
-  if (borders.top && borders.top.style && borders.top.style !== 'none' && (borders.top.width ?? 0) > 0) {
+  if (
+    borders.top &&
+    borders.top.style &&
+    borders.top.style !== 'none' &&
+    (borders.top.width ?? 0) > 0
+  ) {
     str += `border-top: ${borders.top.width}px ${borders.top.style} ${fallbackColor || borders.top.color || '#111111'}; `;
   }
-  if (borders.right && borders.right.style && borders.right.style !== 'none' && (borders.right.width ?? 0) > 0) {
+  if (
+    borders.right &&
+    borders.right.style &&
+    borders.right.style !== 'none' &&
+    (borders.right.width ?? 0) > 0
+  ) {
     str += `border-right: ${borders.right.width}px ${borders.right.style} ${fallbackColor || borders.right.color || '#111111'}; `;
   }
-  if (borders.bottom && borders.bottom.style && borders.bottom.style !== 'none' && (borders.bottom.width ?? 0) > 0) {
+  if (
+    borders.bottom &&
+    borders.bottom.style &&
+    borders.bottom.style !== 'none' &&
+    (borders.bottom.width ?? 0) > 0
+  ) {
     str += `border-bottom: ${borders.bottom.width}px ${borders.bottom.style} ${fallbackColor || borders.bottom.color || '#111111'}; `;
   }
-  if (borders.left && borders.left.style && borders.left.style !== 'none' && (borders.left.width ?? 0) > 0) {
+  if (
+    borders.left &&
+    borders.left.style &&
+    borders.left.style !== 'none' &&
+    (borders.left.width ?? 0) > 0
+  ) {
     str += `border-left: ${borders.left.width}px ${borders.left.style} ${fallbackColor || borders.left.color || '#111111'}; `;
   }
   return str;
@@ -283,6 +306,9 @@ export const ElementTypographySchema = z.object({
   bodyBackgroundColor: z.string().optional(),
   paragraphSpacingPt: z.number().min(0).max(48).optional(),
   textIndentPt: z.number().min(0).max(64).optional(),
+  bodyColumnCount: z.number().int().min(1).max(6).optional(),
+  bodyColumnGapPt: z.number().min(0).max(48).optional(),
+  bodyColumnRule: z.string().optional(),
   underline: z.boolean().optional(),
   textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
   opacity: z.number().min(0).max(1).optional(),
@@ -343,6 +369,11 @@ export const ArticleSchema = z.object({
   paddingPx: z.number().min(0).max(64).optional(),
   marginPx: z.number().min(0).max(64).optional(),
   kickerText: z.string().optional(),
+
+  // Inner multi-column body flow (Phase 1)
+  bodyColumnCount: z.number().int().min(1).max(6).optional(),
+  bodyColumnGapPt: z.number().min(0).max(48).optional(),
+  bodyColumnRule: z.string().optional(),
 
   // Dynamic Auto-fit & Manual Control per Block (Task 1 & 2)
   heightMode: z.enum(['auto', 'min-height', 'fixed']).optional(),

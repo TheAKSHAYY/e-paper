@@ -2,6 +2,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { getPageDimensions } from '@epaper-studio/document-schema';
 import type { NewspaperDocument } from '@epaper-studio/document-schema';
+import { runPreflightValidation, type PreflightOptions } from '@epaper-studio/template-engine';
 import { generatePrintHtml } from './browserPrintExport';
 
 export interface ExportPdfResult {
@@ -19,6 +20,10 @@ export interface ExportPdfOptions {
   quality?: number;
   /** Base URL for resolving static assets and fonts */
   baseUrl?: string;
+  /** Optional Preflight verification options (e.g. domMeasurements from canvas) */
+  preflightOptions?: PreflightOptions;
+  /** If true, bypasses the preflight safety check (default: false) */
+  bypassPreflight?: boolean;
   /** Deprecated backward compatibility options */
   rendererUrl?: string;
   apiKey?: string;
@@ -35,6 +40,20 @@ export async function exportDocumentToPdf(
   document: NewspaperDocument,
   options: ExportPdfOptions = {}
 ): Promise<ExportPdfResult> {
+  if (!options.bypassPreflight) {
+    const preflight = runPreflightValidation(document, options.preflightOptions);
+    if (!preflight.canExport) {
+      const blockers = preflight.issues.filter((i) => i.severity === 'red');
+      const detail = blockers
+        .map(
+          (b) =>
+            `${b.title} [${b.headline || b.articleId || (b.pageIndex !== undefined ? `Page ${b.pageIndex + 1}` : 'Document')}]: ${b.explanation}`
+        )
+        .join('; ');
+      throw new Error(`PDF export blocked: Unresolved critical issues exist (${detail})`);
+    }
+  }
+
   if (typeof window === 'undefined' || !window.document?.createElement) {
     throw new Error('PDF generation requires a browser environment with Canvas and DOM support.');
   }

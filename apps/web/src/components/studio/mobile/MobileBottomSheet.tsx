@@ -964,7 +964,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </div>
 
                     {/* Headline Borders */}
-                    <div data-testid="section-headline-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <div
+                      data-testid="section-headline-borders"
+                      style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+                    >
                       <BorderControls
                         label="शीर्षक बॉर्डर (Headline Borders)"
                         borders={selectedArticle.typography?.headlineBorders}
@@ -1034,7 +1037,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </div>
 
                     {/* Subheadline Borders */}
-                    <div data-testid="section-subheadline-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <div
+                      data-testid="section-subheadline-borders"
+                      style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+                    >
                       <BorderControls
                         label="उप-शीर्षक बॉर्डर (Subheadline Borders)"
                         borders={selectedArticle.typography?.subheadlineBorders}
@@ -1112,7 +1118,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </div>
 
                     {/* Body Borders */}
-                    <div data-testid="section-body-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <div
+                      data-testid="section-body-borders"
+                      style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+                    >
                       <BorderControls
                         label="मूल पाठ बॉर्डर (Body Borders)"
                         borders={selectedArticle.typography?.bodyBorders}
@@ -1342,10 +1351,15 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     )}
 
                     {/* Photo Borders */}
-                    <div data-testid="section-image-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <div
+                      data-testid="section-image-borders"
+                      style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+                    >
                       <BorderControls
                         label="फोटो बॉर्डर (Photo Borders)"
-                        borders={selectedArticle.imageBorders || selectedArticle.typography?.imageBorders}
+                        borders={
+                          selectedArticle.imageBorders || selectedArticle.typography?.imageBorders
+                        }
                         onChange={(imageBorders) =>
                           onUpdateArticle({
                             ...selectedArticle,
@@ -1655,7 +1669,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </div>
 
                     {/* Borders */}
-                    <div data-testid="section-block-borders" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <div
+                      data-testid="section-block-borders"
+                      style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+                    >
                       <BorderControls
                         label="ब्लॉक बॉर्डर (Block Borders)"
                         borders={selectedArticle.borders}
