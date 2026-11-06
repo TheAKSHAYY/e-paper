@@ -16,6 +16,7 @@
     "@epaper-studio/template-engine": "workspace:*",
     "@epaper-studio/typography": "workspace:*",
     "@epaper-studio/ui": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "react": "^19.0.0",

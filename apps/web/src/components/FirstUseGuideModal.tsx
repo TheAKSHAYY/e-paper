@@ -70,7 +70,7 @@ export const FirstUseGuideModal: React.FC<FirstUseGuideModalProps> = ({
               fontFamily: "'Rozha One', 'Noto Serif Devanagari', serif",
               fontWeight: 700,
               color: '#fff',
-              lineHeight: 1.25,
+              lineHeight: 1.35,
             }}
           >
             अपना हिंदी अख़बार कैसे बनाएँ — त्वरित मार्गदर्शिका

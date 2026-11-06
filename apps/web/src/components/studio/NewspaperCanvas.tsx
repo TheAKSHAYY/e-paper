@@ -215,11 +215,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
     pageSize,
     orientation,
     density,
-    layout.bodyFontSizePt
+    layout.bodyFontSizePt,
+    undefined,
+    doc?.metadata?.dimensions,
+    layout.margins
   );
 
   // Strict Physical Page Dimensions & Fixed Aspect Ratio (Requirement 1)
-  const dimensions = getPageDimensions(pageSize, orientation);
+  const dimensions = getPageDimensions(pageSize, orientation, doc?.metadata?.dimensions);
   const aspectRatio = dimensions.aspectRatio ?? dimensions.widthPt / dimensions.heightPt;
   const legacyBaseWidth = orientation === 'landscape' ? 1080 : 800;
   const legacyBaseHeight = Math.round(legacyBaseWidth / aspectRatio);
@@ -716,6 +719,28 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               : '6px',
           }}
         >
+          {article.continuation?.role === 'continuation' && (
+            <div
+              className="continuation-jump-from"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: usePhysicalCanvasCoordinates ? '7pt' : '10px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: '#9E3029',
+                backgroundColor: '#FBF0EE',
+                border: '1px solid #E8B4B0',
+                padding: '2px 6px',
+                borderRadius: '2px',
+                marginBottom: '4px',
+              }}
+            >
+              <span>↳ {article.continuation.jumpFromLabel || 'अग्र पृष्ठ से आगे'}</span>
+            </div>
+          )}
           {usePhysicalCanvasCoordinates ? (
             <>
               {article.subheadline && (
@@ -1321,6 +1346,30 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 </p>
               );
             })}
+          </div>
+        )}
+
+        {/* Continuation Jump-To Line */}
+        {article.continuation?.role === 'origin' && article.continuation.targetPageNumber && (
+          <div
+            className="continuation-jump-to"
+            style={{
+              marginTop: 'auto',
+              paddingTop: usePhysicalCanvasCoordinates ? '4pt' : '6px',
+              borderTop: '1px solid #171717',
+              textAlign: 'right',
+              fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
+              fontStyle: 'italic',
+              fontWeight: 600,
+              color: '#9E3029',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '4px',
+            }}
+          >
+            <span>{article.continuation.jumpToLabel || `(शेष पृष्ठ ${article.continuation.targetPageNumber} पर...)`}</span>
+            <span>→</span>
           </div>
         )}
 

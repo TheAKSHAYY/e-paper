@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type {
   PageSizePreset,
   PageOrientation,
@@ -158,7 +159,7 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                 justifyContent: 'center',
                 fontWeight: 900,
                 fontSize: '18px',
-                fontFamily: "'Noto Serif Devanagari', serif",
+                fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
               }}
             >
               प
@@ -170,7 +171,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                   fontSize: '18px',
                   fontWeight: 800,
                   color: '#111827',
-                  fontFamily: "'Noto Serif Devanagari', serif",
+                  fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                  lineHeight: 1.35,
                 }}
               >
                 नया समाचार पत्र प्रकाशन आरंभ करें
@@ -335,7 +337,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                             fontSize: '18px',
                             fontWeight: 900,
                             color: '#b91c1c',
-                            fontFamily: "'Noto Serif Devanagari', serif",
+                            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                            lineHeight: 1.35,
                           }}
                         >
                           {preset.defaultMasthead.title}
@@ -423,7 +426,8 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                       borderRadius: '2px',
                       fontSize: '15px',
                       fontWeight: 700,
-                      fontFamily: "'Noto Serif Devanagari', serif",
+                      fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                      lineHeight: 1.35,
                       color: '#111827',
                       boxSizing: 'border-box',
                     }}

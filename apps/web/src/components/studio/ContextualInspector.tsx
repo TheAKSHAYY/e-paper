@@ -29,6 +29,8 @@ import { BorderControls } from './BorderControls';
 import { downscaleImageFile } from '../../utils/imageOptimizer';
 import { TypographyControls } from './TypographyControls';
 import type { ElementTypography } from '@epaper-studio/document-schema';
+import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
+import { useI18n } from '../../i18n';
 
 export interface ContextualInspectorProps {
   selectedArticle: Article | null;
@@ -38,8 +40,11 @@ export interface ContextualInspectorProps {
   onMoveArticleUp?: (articleId: string) => void;
   onMoveArticleDown?: (articleId: string) => void;
   onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
+  onSplitArticleToContinuation?: (articleId: string, targetPageIndex: number) => void;
+  onRemoveContinuation?: (articleId: string) => void;
   onDuplicateArticle?: (article: Article) => void;
   onApplyTypographyToPage?: (typography: ElementTypography) => void;
+  onAutoAllocateOverflow?: () => void;
   totalPages: number;
   currentPageIndex: number;
   masthead: MastheadConfig;
@@ -50,6 +55,7 @@ export interface ContextualInspectorProps {
   onPageSizeChange: (size: PageSizePreset) => void;
   orientation: PageOrientation;
   onOrientationChange: (orientation: PageOrientation) => void;
+  onOpenPageSetup?: () => void;
   onDeselect: () => void;
   onCloseInspector?: () => void;
   isMastheadSelected?: boolean;
@@ -71,8 +77,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onMoveArticleUp,
   onMoveArticleDown,
   onMoveArticleToPage,
+  onSplitArticleToContinuation,
+  onRemoveContinuation,
   onDuplicateArticle,
   onApplyTypographyToPage,
+  onAutoAllocateOverflow,
   totalPages,
   currentPageIndex,
   masthead,
@@ -83,6 +92,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onPageSizeChange,
   orientation,
   onOrientationChange,
+  onOpenPageSetup,
   onDeselect,
   onCloseInspector,
   isMastheadSelected = false,
@@ -95,6 +105,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   selectedParagraphIndex,
   onSelectParagraph,
 }) => {
+  const { locale } = useI18n();
+  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
   const shouldHideHeader = hideHeader ?? isMobile;
   const [activeInspectorTab, setActiveInspectorTab] = useState<'content' | 'typography'>('content');
   const isPage1 = currentPageIndex === 0;
@@ -140,8 +152,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
     <aside
       style={{
         width: width ?? (isMobile ? '100%' : '300px'),
-        backgroundColor: '#ffffff',
-        borderLeft: isMobile ? 'none' : '1px solid #e2e8f0',
+        backgroundColor: '#FFFFFF',
+        borderLeft: isMobile ? 'none' : `1px solid ${colors.borderMuted}`,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -149,6 +161,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         overflow: 'hidden',
         userSelect: 'none',
         flexShrink: 0,
+        fontFamily: locale === 'hi' ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
       }}
     >
       {/* Inspector Header (Hidden on Mobile Drawer where Drawer Header is already present) */}
@@ -156,8 +169,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         <div
           style={{
             padding: '10px 14px',
-            borderBottom: '1px solid #e2e8f0',
-            backgroundColor: '#f8fafc',
+            borderBottom: `1px solid ${colors.borderMuted}`,
+            backgroundColor: colors.warmPaper,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -167,12 +180,12 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             <span style={{ fontSize: '13px' }}>
               {selectedArticle ? '📝' : isPage1 ? '🗞️' : '📄'}
             </span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: colors.inkBlack }}>
               {selectedArticle
-                ? 'खबर संपादक'
+                ? (locale === 'en' ? 'Story Editor' : 'खबर संपादक')
                 : isPage1
-                  ? 'मास्टहेड व पेज सेटिंग्स'
-                  : `पेज ${currentPageIndex + 1} सेटिंग्स`}
+                  ? (locale === 'en' ? 'Masthead & Page Settings' : 'मास्टहेड व पेज सेटिंग्स')
+                  : (locale === 'en' ? `Page ${currentPageIndex + 1} Settings` : `पेज ${currentPageIndex + 1} सेटिंग्स`)}
             </span>
           </div>
 
@@ -180,29 +193,29 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             {selectedArticle && (
               <button
                 onClick={onDeselect}
-                title="चयन हटाएँ"
+                title={locale === 'en' ? 'Deselect article' : 'चयन हटाएँ'}
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#64748b',
+                  color: colors.textMuted,
                   cursor: 'pointer',
                   fontSize: '11px',
                   padding: '2px 6px',
                   borderRadius: '4px',
                 }}
               >
-                चयन हटाएँ ✕
+                {locale === 'en' ? 'Deselect ✕' : 'चयन हटाएँ ✕'}
               </button>
             )}
 
             {onCloseInspector && (
               <button
                 onClick={onCloseInspector}
-                title="Collapse inspector (इंस्पेक्टर छुपाएँ)"
+                title={locale === 'en' ? 'Collapse inspector' : 'इंस्पेक्टर छुपाएँ'}
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: colors.textMuted,
                   cursor: 'pointer',
                   padding: '4px 6px',
                   borderRadius: '4px',
@@ -222,8 +235,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff',
+          borderBottom: `1px solid ${colors.borderMuted}`,
+          backgroundColor: '#FFFFFF',
         }}
       >
         <button
@@ -235,13 +248,15 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'content' ? '2px solid #b91c1c' : '2px solid transparent',
+              activeInspectorTab === 'content' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
             background: 'transparent',
-            color: activeInspectorTab === 'content' ? '#0f172a' : '#64748b',
+            color: activeInspectorTab === 'content' ? colors.pressRed : colors.textMuted,
             cursor: 'pointer',
           }}
         >
-          {selectedArticle ? 'सामग्री (Content)' : 'पेज विन्यास (Layout)'}
+          {selectedArticle
+            ? (locale === 'en' ? 'Content' : 'सामग्री')
+            : (locale === 'en' ? 'Layout' : 'पेज विन्यास')}
         </button>
 
         <button
@@ -255,13 +270,13 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'typography' ? '2px solid #b91c1c' : '2px solid transparent',
+              activeInspectorTab === 'typography' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
             background: 'transparent',
-            color: activeInspectorTab === 'typography' ? '#0f172a' : '#64748b',
+            color: activeInspectorTab === 'typography' ? colors.pressRed : colors.textMuted,
             cursor: 'pointer',
           }}
         >
-          टाइपोग्राफी (Style)
+          {locale === 'en' ? 'Typography' : 'टाइपोग्राफी'}
         </button>
       </div>
 
@@ -748,6 +763,175 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     ))}
                   </select>
                 )}
+
+                {/* Multi-Page Story Continuation / Jump Management */}
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    backgroundColor: '#FBF0EE',
+                    border: '1px solid #E8B4B0',
+                    borderRadius: '6px',
+                    marginTop: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: colors.pressRed }}>
+                      {locale === 'en' ? 'Story Continuation' : 'कथा सातत्य'}
+                    </span>
+                    {selectedArticle.continuation?.role && (
+                      <span
+                        style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          backgroundColor: colors.pressRed,
+                          color: '#FFFFFF',
+                          padding: '1px 5px',
+                          borderRadius: '3px',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {selectedArticle.continuation.role === 'origin'
+                          ? (locale === 'en' ? 'Origin' : 'मूल कथा')
+                          : (locale === 'en' ? 'Continuation' : 'सातत्य खंड')}
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedArticle.continuation?.role === 'origin' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ fontSize: '11px', color: '#171717' }}>
+                        {locale === 'en' ? 'Continued on page' : 'शेष पृष्ठ'} <strong>{selectedArticle.continuation.targetPageNumber}</strong>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>
+                        {selectedArticle.continuation.jumpToLabel}
+                      </div>
+                      {onRemoveContinuation && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveContinuation(selectedArticle.id)}
+                          style={{
+                            alignSelf: 'flex-start',
+                            padding: '3px 8px',
+                            backgroundColor: '#FFFFFF',
+                            border: `1px solid ${colors.borderMuted}`,
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            color: colors.pressRed,
+                            cursor: 'pointer',
+                            marginTop: '2px',
+                          }}
+                        >
+                          ✕ {locale === 'en' ? 'Rejoin Story' : 'सातत्य हटाएं'}
+                        </button>
+                      )}
+                    </div>
+                  ) : selectedArticle.continuation?.role === 'continuation' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ fontSize: '11px', color: '#171717' }}>
+                        {locale === 'en' ? 'Continuation fragment from origin story' : 'मूल कथा से आगे जारी खंड'}
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>
+                        {selectedArticle.continuation.jumpFromLabel}
+                      </div>
+                      {onRemoveContinuation && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveContinuation(selectedArticle.id)}
+                          style={{
+                            alignSelf: 'flex-start',
+                            padding: '3px 8px',
+                            backgroundColor: '#FFFFFF',
+                            border: `1px solid ${colors.borderMuted}`,
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            color: colors.pressRed,
+                            cursor: 'pointer',
+                            marginTop: '2px',
+                          }}
+                        >
+                          ✕ {locale === 'en' ? 'Merge Back to Origin' : 'मूल कथा में जोड़ें'}
+                        </button>
+                      )}
+                    </div>
+                  ) : totalPages > 1 && onSplitArticleToContinuation ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '10px', color: '#555' }}>
+                        {locale === 'en' ? 'Continue story to inside page:' : 'कथा को अंदर के पृष्ठ पर जारी रखें:'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <select
+                          id="continuation-target-select"
+                          defaultValue={currentPageIndex < totalPages - 1 ? currentPageIndex + 1 : 0}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#FFFFFF',
+                            border: `1px solid ${colors.borderMuted}`,
+                            borderRadius: '4px',
+                            padding: '3px 6px',
+                            fontSize: '11px',
+                          }}
+                        >
+                          {Array.from({ length: totalPages }, (_, idx) => (
+                            <option key={idx} value={idx} disabled={idx === currentPageIndex}>
+                              {locale === 'en' ? `Page ${idx + 1}` : `पृष्ठ ${idx + 1}`}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sel = document.getElementById('continuation-target-select') as HTMLSelectElement | null;
+                            const targetIdx = sel ? parseInt(sel.value, 10) : (currentPageIndex + 1);
+                            if (!isNaN(targetIdx) && targetIdx !== currentPageIndex) {
+                              onSplitArticleToContinuation(selectedArticle.id, targetIdx);
+                            }
+                          }}
+                          style={{
+                            padding: '3px 8px',
+                            backgroundColor: colors.pressRed,
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {locale === 'en' ? 'Continue →' : 'जारी रखें →'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {onAutoAllocateOverflow && (
+                    <button
+                      type="button"
+                      data-testid="btn-inspector-auto-overflow"
+                      onClick={onAutoAllocateOverflow}
+                      style={{
+                        padding: '6px 10px',
+                        backgroundColor: '#FFFFFF',
+                        border: `1px solid ${colors.pressRed}`,
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: colors.pressRed,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginTop: '4px',
+                      }}
+                    >
+                      <span>⚡</span>
+                      <span>{locale === 'en' ? 'Auto-Allocate Multi-Page Overflow' : 'स्वचालित बहु-पृष्ठीय प्रवाह'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Kicker / Super-heading */}
@@ -2908,6 +3092,32 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   ))}
                 </select>
               </div>
+
+              {onOpenPageSetup && (
+                <button
+                  type="button"
+                  onClick={onOpenPageSetup}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#EDE8E1',
+                    border: '1px solid #D6D0C5',
+                    color: '#1C1917',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  className="hover:bg-stone-200 transition-colors"
+                >
+                  <span>📐</span>
+                  <span>{locale === 'hi' ? 'विस्तृत पेज सेटअप खोलें...' : 'Open Advanced Page Setup...'}</span>
+                </button>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <div>

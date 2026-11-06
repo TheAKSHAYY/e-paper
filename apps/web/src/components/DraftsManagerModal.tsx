@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type { DraftSummary } from '../storage/types';
 import { draftStorage } from '../storage';
 
@@ -85,10 +86,10 @@ export const DraftsManagerModal: React.FC<DraftsManagerModalProps> = ({
           }}
         >
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', fontFamily: 'serif', color: '#111' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay, color: '#111', lineHeight: 1.35 }}>
               📁 सहेजे गए अख़बार (Saved Drafts)
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi, color: '#666', lineHeight: 1.5 }}>
               ब्राउज़र में सुरक्षित रखे गए ड्राफ़्ट। पहले बनाए गए संस्करण खोलें या हटाएँ।
             </p>
           </div>
@@ -204,7 +205,8 @@ export const DraftsManagerModal: React.FC<DraftsManagerModalProps> = ({
                             fontWeight: 800,
                             fontSize: '14px',
                             color: '#111',
-                            fontFamily: 'serif',
+                            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                            lineHeight: 1.35,
                           }}
                         >
                           {d.title}

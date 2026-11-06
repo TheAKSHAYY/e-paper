@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type {
   MastheadConfig,
   NewspaperLayoutConfig,
@@ -50,7 +51,8 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
           style={{
             margin: '0 0 12px 0',
             fontSize: '14px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             fontWeight: 700,
             color: '#111',
             display: 'flex',
@@ -120,7 +122,8 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
           style={{
             margin: '0 0 10px 0',
             fontSize: '14px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             fontWeight: 700,
             color: '#111',
             display: 'flex',
@@ -414,7 +417,8 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
           style={{
             margin: '0 0 10px 0',
             fontSize: '14px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             fontWeight: 700,
             color: '#111',
             display: 'flex',
@@ -449,7 +453,8 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
                 width: '100%',
                 padding: '6px 8px',
                 fontSize: '14px',
-                fontFamily: "'Noto Serif Devanagari', serif",
+                fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                lineHeight: 1.35,
                 fontWeight: 700,
                 border: '1px solid #ccc',
                 borderRadius: '4px',

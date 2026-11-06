@@ -5,6 +5,8 @@ import type {
   NewspaperLayoutConfig,
   PageSizePreset,
   PageOrientation,
+  PageDimensions,
+  PageMargins,
   NewspaperPage,
   NewspaperDocument,
   ElementTypography,
@@ -13,12 +15,12 @@ import type {
   ImageFit,
   SelectedElementPart,
 } from '@epaper-studio/document-schema';
-import { getAllNewspaperPresets } from '@epaper-studio/template-engine';
 import { TypographyControls } from '../TypographyControls';
 import { BorderControls } from '../BorderControls';
-import { LAYOUT_PRESET_OPTIONS } from '../LayoutBuilderRow';
 import { ELEMENT_PRESETS } from '../ElementsPanel';
 import { MastheadInspectorPanel } from '../MastheadInspectorPanel';
+import { PageSetupContent } from '../PageSetupContent';
+import { LayoutPresetsContent } from '../LayoutPresetsContent';
 import { downscaleImageFile } from '../../../utils/imageOptimizer';
 import type { MobileDrawerMode } from '../MobileBottomNav';
 
@@ -45,6 +47,12 @@ export interface MobileBottomSheetProps {
   onUpdateMasthead: (masthead: MastheadConfig) => void;
   onPageSizeChange: (size: PageSizePreset) => void;
   onOrientationChange: (orientation: PageOrientation) => void;
+  onPageSetupApply?: (config: {
+    pageSize: PageSizePreset;
+    orientation: PageOrientation;
+    dimensions?: PageDimensions;
+    margins?: PageMargins;
+  }) => void;
   useFreeLayout: boolean;
   onToggleFreeLayout: () => void;
   onAutoFit?: () => void;
@@ -85,8 +93,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   onUpdateMasthead,
   onPageSizeChange,
   onOrientationChange,
-  useFreeLayout,
-  onToggleFreeLayout,
+  onPageSetupApply,
+  useFreeLayout: _useFreeLayout,
+  onToggleFreeLayout: _onToggleFreeLayout,
   onOpenPublishing,
   onAutoFit,
   onApplyPreset,
@@ -102,7 +111,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   mastheadTab,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [presetTab, setPresetTab] = useState<'presets' | 'layout'>('presets');
+  const [presetTab, setPresetTab] = useState<'presets' | 'pagesetup' | 'theme'>(
+    mode === 'page-setup' ? 'pagesetup' : 'presets'
+  );
   const [activePart, setActivePart] = useState<
     'headline' | 'subheadline' | 'body' | 'image' | 'block'
   >(
@@ -113,6 +124,14 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         : 'headline'
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (mode === 'page-setup') {
+      setPresetTab('pagesetup');
+    } else if (mode === 'presets') {
+      setPresetTab('presets');
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (
@@ -134,8 +153,6 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   }, [selectedElementPart]);
 
   if (mode === 'none') return null;
-
-  const presets = getAllNewspaperPresets();
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -182,7 +199,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           ? `✎ समाचार संपादक: ${selectedArticle.headline ? selectedArticle.headline.slice(0, 20) + '...' : 'ब्लॉक'}`
           : '✎ पृष्ठ गुण व विन्यास';
       case 'presets':
-        return '❖ अख़बार प्रारूप व विन्यास';
+        return '❖ अख़बार प्रारूप व विन्यास (Presets & Layout)';
+      case 'page-setup':
+        return '📐 कागज़ आकार व विन्यास (Page Setup)';
       default:
         return 'टूलबार';
     }
@@ -2105,15 +2124,19 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         {/* ==========================================================
          * 4. PRESETS & LAYOUT DRAWER (प्रारूप व विन्यास)
          * ========================================================== */}
-        {mode === 'presets' && (
+        {/* ==========================================================
+         * 4. PRESETS, GRID & PAGE SETUP DRAWER
+         * ========================================================== */}
+        {(mode === 'presets' || mode === 'page-setup') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Sub-tab Switcher: Presets vs Grid Layout */}
+            {/* Sub-tab Switcher: Presets vs Page Setup vs Themes */}
             <div
               style={{
                 display: 'flex',
                 borderRadius: '8px',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: '#EDE8E1',
                 padding: '3px',
+                gap: '3px',
               }}
             >
               <button
@@ -2122,13 +2145,13 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                 onClick={() => setPresetTab('presets')}
                 style={{
                   flex: 1,
-                  padding: '8px',
+                  padding: '8px 4px',
                   borderRadius: '6px',
                   border: 'none',
-                  backgroundColor: presetTab === 'presets' ? '#ffffff' : 'transparent',
-                  color: presetTab === 'presets' ? '#b91c1c' : '#475569',
-                  fontWeight: 700,
-                  fontSize: '12px',
+                  backgroundColor: presetTab === 'presets' ? '#FFFFFF' : 'transparent',
+                  color: presetTab === 'presets' ? '#1C1917' : '#78716C',
+                  fontWeight: presetTab === 'presets' ? 700 : 500,
+                  fontSize: '11px',
                   cursor: 'pointer',
                   boxShadow: presetTab === 'presets' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   transition: 'all 0.15s ease',
@@ -2138,30 +2161,51 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               </button>
               <button
                 type="button"
-                data-testid="mobile-tab-layout"
-                onClick={() => setPresetTab('layout')}
+                data-testid="mobile-tab-pagesetup"
+                onClick={() => setPresetTab('pagesetup')}
                 style={{
                   flex: 1,
-                  padding: '8px',
+                  padding: '8px 4px',
                   borderRadius: '6px',
                   border: 'none',
-                  backgroundColor: presetTab === 'layout' ? '#ffffff' : 'transparent',
-                  color: presetTab === 'layout' ? '#b91c1c' : '#475569',
-                  fontWeight: 700,
-                  fontSize: '12px',
+                  backgroundColor: presetTab === 'pagesetup' ? '#FFFFFF' : 'transparent',
+                  color: presetTab === 'pagesetup' ? '#1C1917' : '#78716C',
+                  fontWeight: presetTab === 'pagesetup' ? 700 : 500,
+                  fontSize: '11px',
                   cursor: 'pointer',
-                  boxShadow: presetTab === 'layout' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  boxShadow: presetTab === 'pagesetup' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
-                ▦ लेआउट व ग्रिड (Layout & Grid)
+                📐 कागज़ आकार (Setup)
               </button>
+              {onOpenTheme && (
+                <button
+                  type="button"
+                  data-testid="mobile-tab-theme"
+                  onClick={() => setPresetTab('theme')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 4px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: presetTab === 'theme' ? '#FFFFFF' : 'transparent',
+                    color: presetTab === 'theme' ? '#1C1917' : '#78716C',
+                    fontWeight: presetTab === 'theme' ? 700 : 500,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    boxShadow: presetTab === 'theme' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  🎨 रंग थीम
+                </button>
+              )}
             </div>
 
-            {/* TAB 1: PRESETS & PUBLISHING */}
+            {/* TAB 1: PRESETS & GRID */}
             {presetTab === 'presets' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* 0. Publishing Studio: Master Templates & Daily Editions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {onOpenPublishing && (
                   <div
                     data-testid="mobile-btn-publishing"
@@ -2169,8 +2213,8 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     style={{
                       padding: '12px 14px',
                       borderRadius: '8px',
-                      backgroundColor: '#0f172a',
-                      color: '#ffffff',
+                      backgroundColor: '#1C1917',
+                      color: '#FAF8F5',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -2179,531 +2223,79 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#38bdf8' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#38BDF8' }}>
                         📰 मास्टर टेम्पलेट एवं दैनिक अंक
                       </div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                      <div style={{ fontSize: '10.5px', color: '#A8A29E', marginTop: '2px' }}>
                         दैनिक संस्करण बनाएं, पुराने अंक देखें व टेम्पलेट प्रबंधित करें
                       </div>
                     </div>
-                    <span style={{ fontSize: '16px', color: '#38bdf8' }}>➔</span>
+                    <span style={{ fontSize: '16px', color: '#38BDF8' }}>➔</span>
                   </div>
                 )}
 
-                {/* 1. Newspaper Presets */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#475569',
-                      marginBottom: '6px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    अख़बार प्रारूप (Newspaper Presets)
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {presets.map((preset) => {
-                      const isSelected = doc.layout.presetId === preset.id;
-                      return (
-                        <div
-                          key={preset.id}
-                          data-testid={`mobile-preset-${preset.id}`}
-                          onClick={() => onApplyPreset?.(preset.id)}
-                          style={{
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
-                            backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <div>
-                            <div
-                              style={{
-                                fontSize: '12.5px',
-                                fontWeight: 700,
-                                color: isSelected ? '#b91c1c' : '#0f172a',
-                              }}
-                            >
-                              {preset.name}
-                            </div>
-                            <div style={{ fontSize: '10.5px', color: '#64748b' }}>
-                              {preset.defaultColumns} कॉलम •{' '}
-                              {preset.recommendedPageSize.toUpperCase()}
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                color: '#b91c1c',
-                                backgroundColor: '#fee2e2',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              लागू है
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Page Size & Orientation */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#475569',
-                      marginBottom: '6px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    कागज़ का आकार व दिशा (Size & Orientation)
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <div>
-                      <label
-                        style={{
-                          display: 'block',
-                          fontSize: '10.5px',
-                          color: '#64748b',
-                          marginBottom: '3px',
-                        }}
-                      >
-                        आकार (Page Size)
-                      </label>
-                      <select
-                        value={doc.metadata.pageSize}
-                        onChange={(e) => onPageSizeChange(e.target.value as PageSizePreset)}
-                        style={{
-                          width: '100%',
-                          padding: '7px',
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '11.5px',
-                        }}
-                      >
-                        <option value="broadsheet">ब्रॉडशीट (Broadsheet)</option>
-                        <option value="berliner">बर्लिनर (Berliner)</option>
-                        <option value="a3">A3 पोस्टर (A3)</option>
-                        <option value="tabloid">टैब्लॉयड (Tabloid)</option>
-                        <option value="a4">A4 मानक (A4)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        style={{
-                          display: 'block',
-                          fontSize: '10.5px',
-                          color: '#64748b',
-                          marginBottom: '3px',
-                        }}
-                      >
-                        दिशा (Orientation)
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onOrientationChange(
-                            doc.metadata.orientation === 'portrait' ? 'landscape' : 'portrait'
-                          )
-                        }
-                        style={{
-                          width: '100%',
-                          padding: '7px',
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          backgroundColor: '#ffffff',
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {doc.metadata.orientation === 'portrait'
-                          ? '↕ लंबवत (Portrait)'
-                          : '↔ क्षैतिज (Landscape)'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Color Themes */}
-                {onOpenTheme && (
-                  <button
-                    type="button"
-                    onClick={onOpenTheme}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#0f172a',
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      minHeight: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <span>🎨</span> अख़बार रंग व कागज़ थीम (Color Themes)
-                  </button>
-                )}
+                <LayoutPresetsContent
+                  currentPresetId={doc.layout.presetId}
+                  layout={doc.layout}
+                  onSelectPreset={(pId) => {
+                    onApplyPreset?.(pId);
+                  }}
+                  onUpdateLayout={onUpdateLayout}
+                  onApplyLayoutRow={onApplyLayoutRow}
+                  onAutoFit={onAutoFit}
+                  onClose={onClose}
+                  isMobile={true}
+                />
               </div>
             )}
 
-            {/* TAB 2: GRID LAYOUT, COLUMNS & BUILDER */}
-            {presetTab === 'layout' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* 1. Page Column Grid Stepper & Quick Selection */}
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
-                      पृष्ठ ग्रिड कॉलम (Page Columns)
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
-                          const nextCols = Math.max(1, activeCols - 1);
-                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
-                        }}
-                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) <= 1}
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          backgroundColor: '#ffffff',
-                          cursor:
-                            (currentPage.columnCount ?? doc.layout.columnCount) <= 1
-                              ? 'not-allowed'
-                              : 'pointer',
-                          fontWeight: 700,
-                          fontSize: '12px',
-                        }}
-                      >
-                        −
-                      </button>
-                      <span
-                        style={{
-                          fontSize: '11.5px',
-                          fontWeight: 700,
-                          color: '#b91c1c',
-                          minWidth: '50px',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {currentPage.columnCount ?? doc.layout.columnCount} Cols
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
-                          const nextCols = Math.min(12, activeCols + 1);
-                          onUpdateLayout({ ...doc.layout, columnCount: nextCols });
-                        }}
-                        disabled={(currentPage.columnCount ?? doc.layout.columnCount) >= 12}
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          backgroundColor: '#ffffff',
-                          cursor:
-                            (currentPage.columnCount ?? doc.layout.columnCount) >= 12
-                              ? 'not-allowed'
-                              : 'pointer',
-                          fontWeight: 700,
-                          fontSize: '12px',
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
+            {/* TAB 2: PAGE SETUP */}
+            {presetTab === 'pagesetup' && (
+              <PageSetupContent
+                initialPageSize={doc.metadata.pageSize}
+                initialOrientation={doc.metadata.orientation}
+                initialDimensions={doc.metadata.dimensions}
+                initialMargins={doc.layout.margins}
+                onApply={(config) => {
+                  if (onPageSetupApply) {
+                    onPageSetupApply(config);
+                  } else {
+                    onPageSizeChange(config.pageSize);
+                    onOrientationChange(config.orientation);
+                  }
+                  onClose();
+                }}
+                onClose={onClose}
+                isMobile={true}
+              />
+            )}
 
-                  <div
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}
-                  >
-                    {[1, 2, 3, 4, 6, 8, 12].map((cols) => {
-                      const activeCols = currentPage.columnCount ?? doc.layout.columnCount;
-                      const isActive = activeCols === cols;
-                      return (
-                        <button
-                          key={cols}
-                          type="button"
-                          data-testid={`mobile-grid-col-${cols}`}
-                          onClick={() => onUpdateLayout({ ...doc.layout, columnCount: cols })}
-                          style={{
-                            padding: '6px 2px',
-                            borderRadius: '4px',
-                            border: isActive ? '2px solid #b91c1c' : '1px solid #cbd5e1',
-                            backgroundColor: isActive ? '#fff5f5' : '#ffffff',
-                            color: isActive ? '#b91c1c' : '#0f172a',
-                            fontWeight: isActive ? 700 : 500,
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {cols}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. 12-Column Row Presets Builder */}
-                {onApplyLayoutRow && (
-                  <div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '6px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          color: '#475569',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        12-कॉलम संयोजन (12-Col Row Presets)
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#64748b' }}>
-                        {LAYOUT_PRESET_OPTIONS.length} विकल्प
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                      {LAYOUT_PRESET_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          data-testid={`layout-preset-${opt.id}`}
-                          onClick={() => {
-                            onApplyLayoutRow(opt.columns);
-                            onClose();
-                          }}
-                          style={{
-                            padding: '8px 10px',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            backgroundColor: '#f8fafc',
-                            color: '#0f172a',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            gap: '4px',
-                            textAlign: 'left',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              width: '100%',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
-                              {opt.label}
-                            </span>
-                            <span style={{ fontSize: '9px', fontWeight: 600, color: '#64748b' }}>
-                              {opt.columns.length} भाग
-                            </span>
-                          </div>
-                          {/* Mini visual split bar */}
-                          <div
-                            style={{
-                              display: 'flex',
-                              width: '100%',
-                              height: '5px',
-                              borderRadius: '2px',
-                              overflow: 'hidden',
-                              backgroundColor: '#e2e8f0',
-                              gap: '1px',
-                            }}
-                          >
-                            {opt.columns.map((col, cIdx) => (
-                              <div
-                                key={cIdx}
-                                style={{
-                                  flex: col,
-                                  backgroundColor: cIdx % 2 === 0 ? '#b91c1c' : '#475569',
-                                  height: '100%',
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <span
-                            style={{
-                              fontSize: '9.5px',
-                              color: '#64748b',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: '100%',
-                            }}
-                          >
-                            {opt.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Spacing Density */}
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#475569',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    स्पेसिंग व घनत्व (Spacing Density)
-                  </label>
-                  <div
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}
-                  >
-                    {[
-                      { key: 'compact', label: 'सघन (Compact)' },
-                      { key: 'normal', label: 'मानक (Normal)' },
-                      { key: 'spacious', label: 'खुला (Spacious)' },
-                    ].map((d) => {
-                      const isActive = (doc.layout.spacingDensity || 'normal') === d.key;
-                      return (
-                        <button
-                          key={d.key}
-                          type="button"
-                          onClick={() =>
-                            onUpdateLayout({
-                              ...doc.layout,
-                              spacingDensity: d.key as 'compact' | 'normal' | 'spacious',
-                            })
-                          }
-                          style={{
-                            padding: '7px 4px',
-                            borderRadius: '6px',
-                            border: isActive ? '2px solid #b91c1c' : '1px solid #cbd5e1',
-                            backgroundColor: isActive ? '#fff5f5' : '#ffffff',
-                            color: isActive ? '#b91c1c' : '#0f172a',
-                            fontWeight: isActive ? 700 : 500,
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {d.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 4. Column Rule Divider Line Toggle */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onUpdateLayout({
-                        ...doc.layout,
-                        columnRule: !doc.layout.columnRule,
-                      })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: doc.layout.columnRule ? '1.5px solid #b91c1c' : '1px solid #cbd5e1',
-                      backgroundColor: doc.layout.columnRule ? '#fff5f5' : '#ffffff',
-                      color: doc.layout.columnRule ? '#b91c1c' : '#0f172a',
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span>│ कॉलम विभाजक रेखा (Column Divider)</span>
-                    <span>{doc.layout.columnRule ? '✓ चालू' : 'बंद'}</span>
-                  </button>
-                </div>
-
-                {/* 5. Free Layout & Auto-Fit Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={onToggleFreeLayout}
-                    style={{
-                      padding: '9px 12px',
-                      borderRadius: '6px',
-                      border: useFreeLayout ? '2px solid #b91c1c' : '1px solid #cbd5e1',
-                      backgroundColor: useFreeLayout ? '#fff5f5' : '#f8fafc',
-                      color: useFreeLayout ? '#b91c1c' : '#0f172a',
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      minHeight: '44px',
-                    }}
-                  >
-                    {useFreeLayout ? '🔓 मुक्त लेआउट ऑन' : '🔒 ग्रिड लेआउट ऑन'}
-                  </button>
-
-                  {onAutoFit && (
-                    <button
-                      type="button"
-                      onClick={onAutoFit}
-                      style={{
-                        padding: '9px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#f8fafc',
-                        color: '#0f172a',
-                        fontSize: '11.5px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        minHeight: '44px',
-                      }}
-                    >
-                      📐 ऑटो-फिट ग्रिड
-                    </button>
-                  )}
-                </div>
+            {/* TAB 3: THEMES */}
+            {presetTab === 'theme' && onOpenTheme && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={onOpenTheme}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #E7E2DA',
+                    backgroundColor: '#FAF8F5',
+                    color: '#1C1917',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span>🎨</span>
+                  <span>अख़बार रंग व कागज़ थीम (Color Themes)</span>
+                </button>
               </div>
             )}
           </div>

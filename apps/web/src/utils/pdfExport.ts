@@ -61,7 +61,11 @@ export async function exportDocumentToPdf(
   // Derive target physical dimensions in PostScript points (72 pt/inch)
   const pageSize = document.metadata.pageSize || 'broadsheet';
   const orientationSetting = document.metadata.orientation || 'portrait';
-  const { widthPt, heightPt } = getPageDimensions(pageSize, orientationSetting);
+  const { widthPt, heightPt } = getPageDimensions(
+    pageSize,
+    orientationSetting,
+    document.metadata.dimensions
+  );
   const isLandscape = orientationSetting === 'landscape';
   const pdfOrientation = isLandscape ? 'landscape' : 'portrait';
 

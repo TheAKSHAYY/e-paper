@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type {
   PageSizePreset,
   PageOrientation,
@@ -96,7 +97,7 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
             backgroundColor: '#fbfaf6',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '18px', fontFamily: 'serif', color: '#111' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay, color: '#111', lineHeight: 1.35 }}>
             🗞️ नया समाचार पत्र बनाएँ (Create Newspaper)
           </h3>
           <button

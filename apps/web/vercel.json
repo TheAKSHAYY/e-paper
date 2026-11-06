@@ -39,11 +39,20 @@
           "value": "*"
         }
       ]
+    },
+    {
+      "source": "/(android-chrome-.*|apple-touch-icon.*|favicon.*|og-image.png|site.webmanifest|robots.txt|sitemap.xml)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!fonts/|assets/|favicon\\.svg|manifest\\.json).*)",
+      "source": "/((?!fonts/|screenshots/|assets/|.*\\.(?:ico|png|svg|xml|txt|webmanifest|json)$).*)",
       "destination": "/index.html"
     }
   ]

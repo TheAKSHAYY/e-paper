@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type { NewspaperThemeConfig } from '@epaper-studio/document-schema';
 import { NEWSPAPER_THEME_PRESETS } from '@epaper-studio/document-schema';
 
@@ -152,7 +153,8 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                 fontSize: '16px',
                 fontWeight: 800,
                 color: '#0f172a',
-                fontFamily: "'Noto Serif Devanagari', serif",
+                fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                lineHeight: 1.35,
               }}
             >
               🎨 थीम एवं रंग अनुकूलन (Theme & Colors)

@@ -15,6 +15,8 @@ import type {
   PreflightIssue,
   MasterTemplate,
   DailyEdition,
+  PageDimensions,
+  PageMargins,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
@@ -38,9 +40,10 @@ import {
   runPreflightValidation,
   createMasterTemplateFromDocument,
   createDailyEditionFromTemplate,
+  splitArticleAtParagraph,
 } from '@epaper-studio/template-engine';
 
-import { TopBar, type ViewMode } from './components/studio/TopBar';
+import { TopBar } from './components/studio/TopBar';
 import { MobileTopBar } from './components/studio/mobile/MobileTopBar';
 import { LeftSidebar, type SidebarTab } from './components/studio/LeftSidebar';
 import { ContextualInspector } from './components/studio/ContextualInspector';
@@ -49,17 +52,94 @@ import { MobileBottomNav, type MobileDrawerMode } from './components/studio/Mobi
 import { MobileBottomSheet } from './components/studio/mobile/MobileBottomSheet';
 import { ProjectSetupModal } from './components/studio/ProjectSetupModal';
 import { PresetSelectorModal } from './components/PresetSelectorModal';
+import { PageSetupModal } from './components/studio/PageSetupModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
 import { PreflightReportModal } from './components/studio/PreflightReportModal';
 import { TemplateEditionModal } from './components/studio/TemplateEditionModal';
 import { LandingPage } from './components/landing/LandingPage';
+import { PublisherDashboard } from './components/dashboard/PublisherDashboard';
+import { PublisherOnboardingModal } from './components/onboarding/PublisherOnboardingModal';
+import { NewEditionModal } from './components/edition/NewEditionModal';
 import { draftStorage, editionStorage, templateStorage } from './storage';
 import { exportDocumentToPdf } from './utils/pdfExport';
 import { printDocumentViaIframe } from './utils/browserPrintExport';
 import { PrintInstructionsModal } from './components/studio/PrintInstructionsModal';
 import { createArticleFromPreset } from './utils/presetPlacement';
+import { UnsavedChangesModal } from './components/common/UnsavedChangesModal';
+import { useI18n } from './i18n';
+import { useAuth } from './auth/AuthContext';
+import { LoginPage } from './components/auth/LoginPage';
+import { SignUpPage } from './components/auth/SignUpPage';
+import { VerifyEmailPage } from './components/auth/VerifyEmailPage';
+import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
+import { AuthCallbackPage } from './components/auth/AuthCallbackPage';
+import { OnboardingPage } from './components/auth/OnboardingPage';
+import { AccountSettingsModal } from './components/auth/AccountSettingsModal';
+import { LegalAndSupportModal, type ModalTab } from './components/common/LegalAndSupportModal';
+
+export type ExtendedViewMode =
+  | 'landing'
+  | 'dashboard'
+  | 'split'
+  | 'preview'
+  | 'login'
+  | 'signup'
+  | 'verify-email'
+  | 'forgot-password'
+  | 'reset-password'
+  | 'auth-callback'
+  | 'onboarding';
+
+function resolveInitialViewMode(): ExtendedViewMode {
+  if (typeof window === 'undefined') return 'landing';
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+  const hash = window.location.hash.toLowerCase().replace(/^#/, '');
+  const params = new URLSearchParams(window.location.search);
+  const viewParam = params.get('view')?.toLowerCase();
+
+  // 1. Pathname matches
+  if (path === '/login') return 'login';
+  if (path === '/signup') return 'signup';
+  if (path === '/verify-email') return 'verify-email';
+  if (path === '/forgot-password') return 'forgot-password';
+  if (path === '/reset-password') return 'reset-password';
+  if (path === '/auth/callback' || path === '/auth-callback') return 'auth-callback';
+  if (path === '/onboarding') return 'onboarding';
+  if (path === '/dashboard') return 'dashboard';
+  if (path === '/editor' || path === '/studio') return 'split';
+  if (path === '/preview') return 'preview';
+
+  // 2. Hash matches
+  if (hash === 'login') return 'login';
+  if (hash === 'signup') return 'signup';
+  if (hash === 'verify-email') return 'verify-email';
+  if (hash === 'forgot-password') return 'forgot-password';
+  if (hash === 'reset-password') return 'reset-password';
+  if (hash === 'auth-callback' || hash === 'auth/callback') return 'auth-callback';
+  if (hash === 'onboarding') return 'onboarding';
+  if (hash === 'dashboard') return 'dashboard';
+  if (hash === 'editor' || hash === 'split') return 'split';
+  if (hash === 'preview') return 'preview';
+  if (hash === 'landing') return 'landing';
+
+  // 3. Query param matches
+  if (viewParam === 'login') return 'login';
+  if (viewParam === 'signup') return 'signup';
+  if (viewParam === 'verify-email') return 'verify-email';
+  if (viewParam === 'forgot-password') return 'forgot-password';
+  if (viewParam === 'reset-password') return 'reset-password';
+  if (viewParam === 'auth-callback') return 'auth-callback';
+  if (viewParam === 'onboarding') return 'onboarding';
+  if (viewParam === 'dashboard') return 'dashboard';
+  if (viewParam === 'editor' || viewParam === 'split') return 'split';
+  if (viewParam === 'preview') return 'preview';
+  if (viewParam === 'landing') return 'landing';
+
+  return 'landing';
+}
 
 declare global {
   interface Window {
@@ -71,6 +151,7 @@ declare global {
 }
 
 export const App: React.FC = () => {
+  const { locale } = useI18n();
   // Main publication state initialized with authentic classic Hindi broadsheet preset or URL param
   const [document, setDocument] = useState<NewspaperDocument>(() => {
     if (typeof window !== 'undefined') {
@@ -96,17 +177,12 @@ export const App: React.FC = () => {
   // UI state
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== 'undefined') {
-      if (window.location.hash === '#editor') {
-        return 'split';
-      }
-      if (window.location.hash === '#landing' || window.location.search.includes('view=landing')) {
-        return 'landing';
-      }
-    }
-    return 'landing';
-  });
+  const { isAuthenticated, isLoading: isAuthLoading, signOut } = useAuth();
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [legalModalTab, setLegalModalTab] = useState<ModalTab | null>(null);
+
+  const [viewMode, setViewMode] = useState<ExtendedViewMode>(() => resolveInitialViewMode());
   const [scale, setScale] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -219,36 +295,148 @@ export const App: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth : 1280
   );
 
-  // Hash-based routing for landing vs editor
-  useEffect(() => {
-    const handleHash = () => {
-      if (window.location.hash === '#landing') {
-        setViewMode('landing');
-      } else if (window.location.hash === '#editor') {
-        setViewMode('split');
+  // Publisher Onboarding & New Edition Modal state
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [isNewEditionModalOpen, setIsNewEditionModalOpen] = useState<boolean>(false);
+
+  const navigateToView = useCallback(
+    (mode: ExtendedViewMode, extraParams?: Record<string, string>) => {
+      setViewMode(mode);
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (mode === 'landing') {
+          url.pathname = '/';
+          url.hash = '';
+          url.searchParams.delete('view');
+        } else if (mode === 'split') {
+          url.pathname = '/editor';
+          url.hash = '#editor';
+          url.searchParams.delete('view');
+        } else {
+          url.pathname = `/${mode}`;
+          url.hash = `#${mode}`;
+          url.searchParams.delete('view');
+        }
+        if (extraParams) {
+          Object.entries(extraParams).forEach(([k, v]) => {
+            url.searchParams.set(k, v);
+          });
+        }
+        window.history.pushState({}, '', url.toString());
       }
+    },
+    []
+  );
+
+  const handleViewModeChange = useCallback(
+    (mode: ExtendedViewMode) => {
+      navigateToView(mode);
+    },
+    [navigateToView]
+  );
+
+  // History popstate and hashchange synchronization
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setViewMode(resolveInitialViewMode());
     };
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
-  const handleViewModeChange = useCallback((mode: ViewMode) => {
-    setViewMode(mode);
-    if (typeof window !== 'undefined') {
-      if (mode === 'landing') {
-        window.location.hash = '#landing';
-      } else {
-        window.location.hash = '#editor';
+  // Protected route access control
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!isAuthenticated) {
+      if (viewMode === 'dashboard') {
+        navigateToView('login', { returnUrl: '/dashboard' });
+      } else if (viewMode === 'onboarding') {
+        navigateToView('login', { returnUrl: '/onboarding' });
+      }
+    } else {
+      if (viewMode === 'login' || viewMode === 'signup') {
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('returnUrl');
+        const safeDestination = returnUrl && returnUrl.startsWith('/') ? returnUrl : '/dashboard';
+        if (safeDestination === '/editor') {
+          navigateToView('split');
+        } else if (safeDestination === '/onboarding') {
+          navigateToView('onboarding');
+        } else {
+          navigateToView('dashboard');
+        }
       }
     }
-  }, []);
+  }, [viewMode, isAuthenticated, isAuthLoading, navigateToView]);
+
+  const handleSignOut = useCallback(async () => {
+    setIsAccountSettingsOpen(false);
+    await signOut();
+    showNotification(
+      locale === 'hi'
+        ? 'आप सफलतापूर्वक साइन आउट हो गए हैं।'
+        : 'Signed out successfully.'
+    );
+    navigateToView('landing');
+  }, [signOut, showNotification, locale, navigateToView]);
 
   // Modals state
   const [isSetupOpen, setIsSetupOpen] = useState<boolean>(false);
   const [isPresetsOpen, setIsPresetsOpen] = useState<boolean>(false);
+  const [isPageSetupOpen, setIsPageSetupOpen] = useState<boolean>(false);
   const [isDraftsOpen, setIsDraftsOpen] = useState<boolean>(false);
   const [isMastheadGalleryOpen, setIsMastheadGalleryOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+
+  // New Edition and Dashboard opening handlers
+  const handleCreateNewEdition = useCallback(
+    async (newDoc: NewspaperDocument, newEditionName: string) => {
+      setDocument(newDoc);
+      setCurrentPageIndex(0);
+      setSelectedArticleId(null);
+      try {
+        const masterTpl = createMasterTemplateFromDocument(newDoc, newEditionName);
+        const edition = createDailyEditionFromTemplate(masterTpl, {
+          editionName: newEditionName,
+          editionDate: newDoc.masthead.date || new Date().toISOString().split('T')[0],
+        });
+        edition.document = newDoc;
+        edition.saveStatus = 'saved';
+        await editionStorage.saveEdition(edition);
+        setActiveEditionId(edition.id);
+        showNotification(`नया संस्करण "${newEditionName}" सफलतापूर्वक तैयार किया गया।`);
+      } catch (e) {
+        console.error('[NewEdition] Error creating initial edition record:', e);
+      }
+      handleViewModeChange('split');
+    },
+    [handleViewModeChange, showNotification]
+  );
+
+  const handleOpenEdition = useCallback(
+    async (editionId?: string) => {
+      if (editionId) {
+        try {
+          const edition = await editionStorage.getEdition(editionId);
+          if (edition && edition.document) {
+            setDocument(edition.document);
+            setActiveEditionId(edition.id);
+            setCurrentPageIndex(0);
+            showNotification(`संस्करण "${edition.editionName}" खोला गया।`);
+          }
+        } catch (e) {
+          console.error('[OpenEdition] Error loading edition:', e);
+        }
+      }
+      handleViewModeChange('split');
+    },
+    [handleViewModeChange, showNotification]
+  );
 
   // Undo / Redo history state stack
   const [history, setHistory] = useState<NewspaperDocument[]>([document]);
@@ -379,11 +567,18 @@ export const App: React.FC = () => {
         document.metadata.pageSize,
         document.metadata.orientation,
         document.layout.spacingDensity,
-        document.layout.bodyFontSizePt
+        document.layout.bodyFontSizePt,
+        undefined,
+        document.metadata.dimensions,
+        document.layout.margins
       );
       return { widthPx: metrics.widthPx, heightPx: metrics.heightPx };
     }
-    const dims = getPageDimensions(document.metadata.pageSize, document.metadata.orientation);
+    const dims = getPageDimensions(
+      document.metadata.pageSize,
+      document.metadata.orientation,
+      document.metadata.dimensions
+    );
     const aspect = dims.aspectRatio ?? dims.widthPt / dims.heightPt;
     const baseW = document.metadata.orientation === 'landscape' ? 1080 : 800;
     return { widthPx: baseW, heightPx: Math.round(baseW / aspect) };
@@ -391,7 +586,9 @@ export const App: React.FC = () => {
     usePhysicalCanvasCoordinates,
     document.metadata.pageSize,
     document.metadata.orientation,
+    document.metadata.dimensions,
     document.layout.spacingDensity,
+    document.layout.margins,
     document.layout.bodyFontSizePt,
   ]);
 
@@ -1327,6 +1524,175 @@ export const App: React.FC = () => {
     [safePageIndex, pages.length, currentPage.articles, showNotification]
   );
 
+  // Split article across pages (Multi-Page Continuation)
+  const handleSplitArticleToContinuation = useCallback(
+    (articleId: string, targetPageIndex: number) => {
+      if (
+        targetPageIndex === safePageIndex ||
+        targetPageIndex < 0 ||
+        targetPageIndex >= pages.length
+      ) {
+        return;
+      }
+
+      const art = currentPage.articles.find((a) => a.id === articleId);
+      if (!art) return;
+
+      const paragraphs = art.body.split(/\n\n+/).filter((p) => p.trim().length > 0);
+      if (paragraphs.length < 2) {
+        showNotification('कथा को जारी रखने के लिए कम से कम 2 पैराग्राफ होने चाहिए। (At least 2 paragraphs required)');
+        return;
+      }
+
+      const splitIndex = Math.max(2, Math.floor(paragraphs.length / 2));
+      const result = splitArticleAtParagraph(art, splitIndex, {
+        originPageNumber: safePageIndex + 1,
+        targetPageNumber: targetPageIndex + 1,
+      });
+
+      if (!result) {
+        showNotification('कथा का विभाजन नहीं किया जा सका।');
+        return;
+      }
+
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        const sourcePage = currentPages[safePageIndex];
+        const destPage = currentPages[targetPageIndex];
+        if (!sourcePage || !destPage) return prev;
+
+        const updatedSourceArticles = sourcePage.articles.map((a) =>
+          a.id === articleId ? result.originArticle : a
+        );
+        const updatedDestArticles = [
+          ...destPage.articles,
+          { ...result.continuationArticle, orderIndex: destPage.articles.length },
+        ];
+
+        const updatedPages = currentPages.map((p, idx) => {
+          if (idx === safePageIndex) return { ...p, articles: updatedSourceArticles };
+          if (idx === targetPageIndex) return { ...p, articles: updatedDestArticles };
+          return p;
+        });
+
+        return {
+          ...prev,
+          pages: updatedPages,
+          articles: updatedPages[0]?.articles ?? [],
+          metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+
+      setHasUnsavedChanges(true);
+      showNotification(`कथा पृष्ठ ${targetPageIndex + 1} पर सफलतापूर्वक जारी की गई।`);
+    },
+    [safePageIndex, pages.length, currentPage.articles, showNotification]
+  );
+
+  // Remove continuation and rejoin story
+  const handleRemoveContinuation = useCallback(
+    (articleId: string) => {
+      setDocument((prev) => {
+        const currentPages = getPublicationPages(prev);
+        let targetPageIdx = -1;
+        let targetArt: Article | null = null;
+        for (let i = 0; i < currentPages.length; i++) {
+          const page = currentPages[i];
+          if (!page) continue;
+          const found = page.articles.find((a) => a.id === articleId);
+          if (found) {
+            targetPageIdx = i;
+            targetArt = found;
+            break;
+          }
+        }
+        if (!targetArt || !targetArt.continuation) return prev;
+
+        const isOrigin = targetArt.continuation.role === 'origin';
+        const partnerId = isOrigin
+          ? targetArt.continuation.nextArticleId
+          : targetArt.continuation.previousArticleId;
+
+        let partnerPageIdx = -1;
+        let partnerArt: Article | null = null;
+        if (partnerId) {
+          for (let i = 0; i < currentPages.length; i++) {
+            const page = currentPages[i];
+            if (!page) continue;
+            const found = page.articles.find((a) => a.id === partnerId);
+            if (found) {
+              partnerPageIdx = i;
+              partnerArt = found;
+              break;
+            }
+          }
+        }
+
+        if (isOrigin) {
+          const fullBody = partnerArt ? `${targetArt.body}\n\n${partnerArt.body}` : targetArt.body;
+          const { continuation: _c, ...rest } = targetArt;
+          const mergedOrigin: Article = { ...rest, body: fullBody };
+
+          const updatedPages = currentPages.map((p, idx) => {
+            if (idx === targetPageIdx) {
+              return {
+                ...p,
+                articles: p.articles.map((a) => (a.id === articleId ? mergedOrigin : a)),
+              };
+            }
+            if (partnerPageIdx !== -1 && idx === partnerPageIdx) {
+              return {
+                ...p,
+                articles: p.articles.filter((a) => a.id !== partnerId),
+              };
+            }
+            return p;
+          });
+
+          return {
+            ...prev,
+            pages: updatedPages,
+            articles: updatedPages[0]?.articles ?? [],
+            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+          };
+        } else if (partnerArt && partnerPageIdx !== -1) {
+          const fullBody = `${partnerArt.body}\n\n${targetArt.body}`;
+          const { continuation: _c, ...rest } = partnerArt;
+          const mergedOrigin: Article = { ...rest, body: fullBody };
+
+          const updatedPages = currentPages.map((p, idx) => {
+            if (idx === partnerPageIdx) {
+              return {
+                ...p,
+                articles: p.articles.map((a) => (a.id === partnerId ? mergedOrigin : a)),
+              };
+            }
+            if (idx === targetPageIdx) {
+              return {
+                ...p,
+                articles: p.articles.filter((a) => a.id !== articleId),
+              };
+            }
+            return p;
+          });
+
+          return {
+            ...prev,
+            pages: updatedPages,
+            articles: updatedPages[0]?.articles ?? [],
+            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+          };
+        }
+
+        return prev;
+      });
+
+      setHasUnsavedChanges(true);
+      showNotification('सातत्य हटा दिया गया और कथा को पुनः संयोजित किया गया।');
+    },
+    [showNotification]
+  );
+
   // Duplicate article on current page
   const handleDuplicateArticle = useCallback(
     (target: string | Article) => {
@@ -1520,6 +1886,42 @@ export const App: React.FC = () => {
     setHasUnsavedChanges(true);
   }, []);
 
+  const handlePageSetupApply = useCallback(
+    (config: {
+      pageSize: PageSizePreset;
+      orientation: PageOrientation;
+      dimensions?: PageDimensions;
+      margins?: PageMargins;
+    }) => {
+      setDocument((prev) => {
+        const dimensions =
+          config.dimensions ??
+          getPageDimensions(config.pageSize, config.orientation, config.dimensions);
+        return {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            pageSize: config.pageSize,
+            orientation: config.orientation,
+            dimensions,
+            updatedAt: new Date().toISOString(),
+          },
+          layout: {
+            ...prev.layout,
+            margins: config.margins ?? prev.layout.margins,
+          },
+        };
+      });
+      setHasUnsavedChanges(true);
+      showNotification(
+        locale === 'hi'
+          ? `कागज़ आकार अपडेट हुआ: ${config.pageSize} (${config.orientation})`
+          : `Page setup updated: ${config.pageSize} (${config.orientation})`
+      );
+    },
+    [locale, showNotification]
+  );
+
   // Save draft or active edition manually
   const handleSaveDraft = useCallback(async () => {
     setIsSaving(true);
@@ -1547,6 +1949,34 @@ export const App: React.FC = () => {
       setIsSaving(false);
     }
   }, [document, activeEditionId, showNotification]);
+
+  // Unsaved changes confirmation dialog state
+  const [isUnsavedConfirmOpen, setIsUnsavedConfirmOpen] = useState<boolean>(false);
+  const [pendingExitDestination, setPendingExitDestination] = useState<'dashboard' | 'landing'>('dashboard');
+
+  const handleRequestExit = useCallback(
+    (destination: 'dashboard' | 'landing' = 'dashboard') => {
+      if (hasUnsavedChanges) {
+        setPendingExitDestination(destination);
+        setIsUnsavedConfirmOpen(true);
+      } else {
+        handleSaveDraft();
+        handleViewModeChange(destination);
+      }
+    },
+    [hasUnsavedChanges, handleSaveDraft, handleViewModeChange]
+  );
+
+  const handleConfirmSaveAndExit = useCallback(async () => {
+    await handleSaveDraft();
+    setIsUnsavedConfirmOpen(false);
+    handleViewModeChange(pendingExitDestination);
+  }, [handleSaveDraft, pendingExitDestination, handleViewModeChange]);
+
+  const handleConfirmDiscardAndExit = useCallback(() => {
+    setIsUnsavedConfirmOpen(false);
+    handleViewModeChange(pendingExitDestination);
+  }, [pendingExitDestination, handleViewModeChange]);
 
   // Export PDF with 12-Point Preflight Quality Guard
   const handleExportPdf = useCallback(
@@ -2025,16 +2455,91 @@ export const App: React.FC = () => {
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      {/* VIEWPORT ROUTING: LANDING PAGE vs STUDIO WORKSPACE */}
+      {/* VIEWPORT ROUTING: LANDING PAGE vs AUTH vs PUBLISHER DASHBOARD vs STUDIO WORKSPACE */}
       {viewMode === 'landing' ? (
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <LandingPage
-            onStartCreating={() => setIsSetupOpen(true)}
+            onStartCreating={() => setIsNewEditionModalOpen(true)}
             onSelectTemplate={(presetId) => {
               handleApplyPreset(presetId, true);
               handleViewModeChange('split');
             }}
+            onOpenDashboard={() => handleViewModeChange('dashboard')}
             onOpenStudio={() => handleViewModeChange('split')}
+            onSignIn={() => handleViewModeChange('login')}
+          />
+        </div>
+      ) : viewMode === 'login' ? (
+        <LoginPage
+          onNavigateToSignUp={() => navigateToView('signup')}
+          onNavigateToForgotPassword={() => navigateToView('forgot-password')}
+          onSuccess={() => {
+            const params = new URLSearchParams(window.location.search);
+            const returnUrl = params.get('returnUrl');
+            if (returnUrl === '/editor') {
+              navigateToView('split');
+            } else if (returnUrl === '/onboarding') {
+              navigateToView('onboarding');
+            } else {
+              navigateToView('dashboard');
+            }
+          }}
+          onBackToLanding={() => navigateToView('landing')}
+        />
+      ) : viewMode === 'signup' ? (
+        <SignUpPage
+          onNavigateToLogin={() => navigateToView('login')}
+          onNavigateToVerifyEmail={(email) => {
+            setPendingVerificationEmail(email);
+            navigateToView('verify-email');
+          }}
+          onSuccessDirect={() => navigateToView('onboarding')}
+          onBackToLanding={() => navigateToView('landing')}
+          onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+        />
+      ) : viewMode === 'verify-email' ? (
+        <VerifyEmailPage
+          email={pendingVerificationEmail || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('email') || '' : '')}
+          onNavigateToLogin={() => navigateToView('login')}
+          onBackToLanding={() => navigateToView('landing')}
+        />
+      ) : viewMode === 'forgot-password' ? (
+        <ForgotPasswordPage
+          onNavigateToLogin={() => navigateToView('login')}
+          onBackToLanding={() => navigateToView('landing')}
+        />
+      ) : viewMode === 'reset-password' ? (
+        <ResetPasswordPage
+          onNavigateToLogin={() => navigateToView('login')}
+          onBackToLanding={() => navigateToView('landing')}
+        />
+      ) : viewMode === 'auth-callback' ? (
+        <AuthCallbackPage
+          onSuccess={(destination) => {
+            if (destination === '/onboarding') navigateToView('onboarding');
+            else if (destination === '/editor') navigateToView('split');
+            else navigateToView('dashboard');
+          }}
+          onNavigateToLogin={() => navigateToView('login')}
+        />
+      ) : viewMode === 'onboarding' ? (
+        <OnboardingPage
+          onComplete={() => navigateToView('dashboard')}
+          onBackToLanding={() => navigateToView('landing')}
+        />
+      ) : viewMode === 'dashboard' ? (
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <PublisherDashboard
+            onNewEdition={() => setIsNewEditionModalOpen(true)}
+            onOpenEditor={(id) => handleOpenEdition(id)}
+            onEditProfile={() => setIsOnboardingOpen(true)}
+            onBackToLanding={() => handleViewModeChange('landing')}
+            onOpenTemplates={() => {
+              handleViewModeChange('split');
+              setIsTemplateEditionModalOpen(true);
+            }}
+            onOpenSettings={() => setIsAccountSettingsOpen(true)}
+            onSignOut={handleSignOut}
           />
         </div>
       ) : (
@@ -2062,7 +2567,10 @@ export const App: React.FC = () => {
                   }
                 }
               }}
-              onBack={() => handleViewModeChange('landing')}
+              onBack={() => handleRequestExit('dashboard')}
+              onOpenDashboard={() => handleRequestExit('dashboard')}
+              onOpenLanding={() => handleRequestExit('landing')}
+              onRenameTitle={handleRenameTitle}
               currentPageNumber={safePageIndex + 1}
               totalPages={pages.length}
               onPrevPage={() => {
@@ -2078,6 +2586,8 @@ export const App: React.FC = () => {
               canUndo={historyIndex > 0}
               canRedo={historyIndex < history.length - 1}
               onOpenTheme={() => setIsThemeModalOpen(true)}
+              onOpenPageSetup={() => setMobileDrawer('page-setup')}
+              onOpenPresets={() => setMobileDrawer('presets')}
             />
           ) : (
             <TopBar
@@ -2091,7 +2601,13 @@ export const App: React.FC = () => {
               isSaving={isSaving}
               onSaveDraft={handleSaveDraft}
               viewMode={viewMode}
-              onViewModeChange={handleViewModeChange}
+              onViewModeChange={(mode) => {
+                if (mode === 'landing' || mode === 'dashboard') {
+                  handleRequestExit(mode);
+                } else {
+                  handleViewModeChange(mode);
+                }
+              }}
               scale={scale}
               onScaleChange={setScale}
               onFitPage={handleFitPage}
@@ -2110,6 +2626,7 @@ export const App: React.FC = () => {
               onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
               onNewPublication={() => setIsSetupOpen(true)}
               onOpenTemplates={() => setIsPresetsOpen(true)}
+              onOpenPageSetup={() => setIsPageSetupOpen(true)}
               onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
               onOpenDrafts={() => setIsDraftsOpen(true)}
               onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
@@ -2513,6 +3030,8 @@ export const App: React.FC = () => {
                 onMoveArticleUp={handleMoveArticleUp}
                 onMoveArticleDown={handleMoveArticleDown}
                 onMoveArticleToPage={handleMoveArticleToPage}
+                onSplitArticleToContinuation={handleSplitArticleToContinuation}
+                onRemoveContinuation={handleRemoveContinuation}
                 onDuplicateArticle={handleDuplicateArticle}
                 onApplyTypographyToPage={handleApplyTypographyToPage}
                 totalPages={pages.length}
@@ -2525,6 +3044,7 @@ export const App: React.FC = () => {
                 onPageSizeChange={handlePageSizeChange}
                 orientation={document.metadata.orientation}
                 onOrientationChange={handleOrientationChange}
+                onOpenPageSetup={() => setIsPageSetupOpen(true)}
                 selectedElementPart={selectedElementPart}
                 selectedParagraphIndex={selectedParaIndex}
                 onSelectParagraph={setSelectedParaIndex}
@@ -2587,6 +3107,7 @@ export const App: React.FC = () => {
                 onUpdateMasthead={handleUpdateMasthead}
                 onPageSizeChange={handlePageSizeChange}
                 onOrientationChange={handleOrientationChange}
+                onPageSetupApply={handlePageSetupApply}
                 useFreeLayout={useFreeLayout}
                 onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
                 onAutoFit={() => handleAutoFitPage(safePageIndex)}
@@ -2647,6 +3168,16 @@ export const App: React.FC = () => {
         currentPresetId={document.layout.presetId}
         onClose={() => setIsPresetsOpen(false)}
         onApplyPreset={handleApplyPreset}
+      />
+
+      <PageSetupModal
+        isOpen={isPageSetupOpen}
+        onClose={() => setIsPageSetupOpen(false)}
+        initialPageSize={document.metadata.pageSize}
+        initialOrientation={document.metadata.orientation}
+        initialDimensions={document.metadata.dimensions}
+        initialMargins={document.layout.margins}
+        onApply={handlePageSetupApply}
       />
 
       <MastheadGalleryModal
@@ -3016,6 +3547,48 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 7. PUBLISHER ONBOARDING MODAL */}
+      <PublisherOnboardingModal
+        isOpen={isOnboardingOpen}
+        onComplete={(p) => {
+          setIsOnboardingOpen(false);
+          showNotification(`प्रकाशक प्रोफ़ाइल "${p.publisherName}" सहेजी गई।`);
+          handleViewModeChange('dashboard');
+        }}
+        onCancel={() => setIsOnboardingOpen(false)}
+      />
+
+      {/* 8. NEW EDITION WIZARD MODAL */}
+      <NewEditionModal
+        isOpen={isNewEditionModalOpen}
+        onClose={() => setIsNewEditionModalOpen(false)}
+        onCreateEdition={handleCreateNewEdition}
+      />
+
+      {/* 9. UNSAVED CHANGES PROTECTION MODAL */}
+      <UnsavedChangesModal
+        isOpen={isUnsavedConfirmOpen}
+        documentTitle={document.metadata.title}
+        destinationName={pendingExitDestination}
+        onSaveAndExit={handleConfirmSaveAndExit}
+        onDiscardAndExit={handleConfirmDiscardAndExit}
+        onCancel={() => setIsUnsavedConfirmOpen(false)}
+      />
+
+      {/* 10. ACCOUNT SETTINGS MODAL */}
+      <AccountSettingsModal
+        isOpen={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        onSignOut={handleSignOut}
+      />
+
+      {/* 11. LEGAL AND SUPPORT MODAL */}
+      <LegalAndSupportModal
+        isOpen={legalModalTab !== null}
+        initialTab={legalModalTab || 'terms'}
+        onClose={() => setLegalModalTab(null)}
+      />
     </div>
   );
 };

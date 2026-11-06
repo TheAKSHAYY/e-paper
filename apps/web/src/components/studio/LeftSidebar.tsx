@@ -1,6 +1,8 @@
 import React from 'react';
 import type { NewspaperPage, Article, NewspaperPresetId } from '@epaper-studio/document-schema';
 import { getAllNewspaperPresets } from '@epaper-studio/template-engine';
+import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
+import { useI18n } from '../../i18n';
 import { ElementsPanel } from './ElementsPanel';
 import { LayoutBuilderRow } from './LayoutBuilderRow';
 
@@ -60,6 +62,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   width,
 }) => {
   const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
+  const { locale } = useI18n();
+  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
   const presets = getAllNewspaperPresets();
 
   return (
@@ -67,8 +71,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       data-testid="left-sidebar"
       style={{
         width: width ?? (isMobile ? '100%' : '280px'),
-        backgroundColor: '#ffffff',
-        borderRight: isMobile ? 'none' : '1px solid #e2e8f0',
+        backgroundColor: '#FFFFFF',
+        borderRight: isMobile ? 'none' : `1px solid ${colors.borderMuted}`,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -83,8 +87,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <div
           style={{
             display: 'flex',
-            borderBottom: '1px solid #e2e8f0',
-            backgroundColor: '#f8fafc',
+            borderBottom: `1px solid ${colors.borderMuted}`,
+            backgroundColor: colors.warmPaper,
             padding: '4px 6px 0',
             gap: '4px',
             alignItems: 'center',
@@ -98,9 +102,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontSize: '11px',
               fontWeight: 700,
               border: 'none',
-              borderBottom: activeTab === 'pages' ? '2px solid #b91c1c' : '2px solid transparent',
-              background: activeTab === 'pages' ? '#ffffff' : 'transparent',
-              color: activeTab === 'pages' ? '#0f172a' : '#64748b',
+              borderBottom: activeTab === 'pages' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              background: activeTab === 'pages' ? '#FFFFFF' : 'transparent',
+              color: activeTab === 'pages' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
               borderTopLeftRadius: '4px',
               borderTopRightRadius: '4px',
@@ -109,7 +113,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               justifyContent: 'center',
             }}
           >
-            पेज ({pages.length})
+            {locale === 'en' ? 'Pages' : 'पृष्ठ'} ({pages.length})
           </button>
 
           <button
@@ -120,9 +124,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontSize: '11px',
               fontWeight: 700,
               border: 'none',
-              borderBottom: activeTab === 'blocks' ? '2px solid #b91c1c' : '2px solid transparent',
-              background: activeTab === 'blocks' ? '#ffffff' : 'transparent',
-              color: activeTab === 'blocks' ? '#0f172a' : '#64748b',
+              borderBottom: activeTab === 'blocks' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              background: activeTab === 'blocks' ? '#FFFFFF' : 'transparent',
+              color: activeTab === 'blocks' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
               borderTopLeftRadius: '4px',
               borderTopRightRadius: '4px',
@@ -131,7 +135,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               justifyContent: 'center',
             }}
           >
-            तत्व (Catalog)
+            {locale === 'en' ? 'Elements' : 'तत्व'}
           </button>
 
           <button
@@ -143,9 +147,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontWeight: 700,
               border: 'none',
               borderBottom:
-                activeTab === 'templates' ? '2px solid #b91c1c' : '2px solid transparent',
-              background: activeTab === 'templates' ? '#ffffff' : 'transparent',
-              color: activeTab === 'templates' ? '#0f172a' : '#64748b',
+                activeTab === 'templates' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              background: activeTab === 'templates' ? '#FFFFFF' : 'transparent',
+              color: activeTab === 'templates' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
               borderTopLeftRadius: '4px',
               borderTopRightRadius: '4px',
@@ -154,13 +158,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               justifyContent: 'center',
             }}
           >
-            प्रारूप (Presets)
+            {locale === 'en' ? 'Presets' : 'प्रारूप'}
           </button>
 
           {onCloseSidebar && (
             <button
               onClick={onCloseSidebar}
-              title="Collapse sidebar (साइडबार छुपाएँ)"
+              title={locale === 'en' ? 'Collapse sidebar' : 'साइडबार छुपाएँ'}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -337,7 +341,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             fontSize: '12px',
                             fontWeight: 600,
                             color: '#0f172a',
-                            fontFamily: "'Noto Serif Devanagari', serif",
+                            fontFamily: PUBLISHER_DESIGN_SYSTEM.fonts.hindiEditorial,
+                            lineHeight: 1.35,
                           }}
                         >
                           {page.sectionTitle || (isFirst ? 'मुख्य पृष्ठ' : `पेज ${index + 1}`)}
@@ -489,7 +494,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             fontSize: '13px',
                             fontWeight: 700,
                             color: '#0f172a',
-                            fontFamily: "'Noto Serif Devanagari', serif",
+                            fontFamily: PUBLISHER_DESIGN_SYSTEM.fonts.hindiEditorial,
+                            lineHeight: 1.35,
                           }}
                         >
                           {preset.name}

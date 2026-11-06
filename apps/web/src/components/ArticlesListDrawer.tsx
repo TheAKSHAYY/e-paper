@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type { Article, ArticlePriority } from '@epaper-studio/document-schema';
 
 export interface ArticlesListDrawerProps {
@@ -41,7 +42,8 @@ export const ArticlesListDrawer: React.FC<ArticlesListDrawerProps> = ({
           style={{
             margin: 0,
             fontSize: '13px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             fontWeight: 700,
             color: '#333',
           }}
@@ -157,7 +159,8 @@ export const ArticlesListDrawer: React.FC<ArticlesListDrawerProps> = ({
                     style={{
                       fontSize: '13.5px',
                       fontWeight: 700,
-                      fontFamily: "'Noto Serif Devanagari', serif",
+                      fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                      lineHeight: 1.35,
                       color: '#111',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',

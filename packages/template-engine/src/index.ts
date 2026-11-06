@@ -6,6 +6,9 @@ import {
   type NewspaperPresetId,
   type PageSizePreset,
   type PageOrientation,
+  type PageDimensions,
+  type PageMargins,
+  type ColumnRuleStyle,
   type Article,
   type ElementTypography,
   type MastheadConfig,
@@ -31,6 +34,9 @@ export {
   RECOMMENDED_HINDI_FONT_COMBINATIONS,
   DEVANAGARI_FONTS,
   SELF_HOSTED_FONTS_CSS,
+  type PageDimensions,
+  type PageMargins,
+  type ColumnRuleStyle,
 };
 
 export * from './freeLayout.js';
@@ -842,6 +848,7 @@ export function createNewspaperDocument(options: CreateNewspaperOptions = {}): N
     presetId,
     columnCount: preset.defaultColumns,
     columnRule: preset.columnRule,
+    columnRuleStyle: 'solid',
     mastheadFont:
       preset.mastheadFont ?? (language === 'hi' ? "'Rozha One', serif" : preset.headlineFont),
     headlineFont:
@@ -1007,8 +1014,30 @@ export interface PageDimensionsResult {
  */
 export function getPageDimensionsPt(
   pageSize: PageSizePreset,
-  orientation: PageOrientation = 'portrait'
+  orientation: PageOrientation = 'portrait',
+  customDims?: Partial<PageDimensions>
 ): PageDimensionsResult {
+  if (
+    pageSize === 'custom' &&
+    customDims &&
+    typeof customDims.widthPt === 'number' &&
+    customDims.widthPt > 0 &&
+    typeof customDims.heightPt === 'number' &&
+    customDims.heightPt > 0
+  ) {
+    const isLandscape = orientation === 'landscape';
+    const rawW = customDims.widthPt;
+    const rawH = customDims.heightPt;
+    const widthPt = isLandscape ? Math.max(rawW, rawH) : Math.min(rawW, rawH);
+    const heightPt = isLandscape ? Math.min(rawW, rawH) : Math.max(rawW, rawH);
+    return {
+      widthPt,
+      heightPt,
+      widthIn: Number((widthPt / 72).toFixed(4)),
+      heightIn: Number((heightPt / 72).toFixed(4)),
+    };
+  }
+
   const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
   const isLandscape = orientation === 'landscape';
   const widthPt = isLandscape ? def.heightPt : def.widthPt;
@@ -1078,20 +1107,32 @@ export function getPhysicalPageMetrics(
   orientation: PageOrientation = 'portrait',
   density: SpacingDensity = 'normal',
   customBodyFontSizePt?: number,
-  customHeadlineFontSizePt?: number
+  customHeadlineFontSizePt?: number,
+  customDims?: Partial<PageDimensions>,
+  customMargins?: PageMargins
 ): PhysicalPageMetrics {
-  const { widthPt, heightPt } = getPageDimensionsPt(pageSize, orientation);
+  const { widthPt, heightPt } = getPageDimensionsPt(pageSize, orientation, customDims);
   // CSS pixels at standard 96 DPI: 1 pt = 96/72 px = 1.3333 px.
   // 1 mm = 96 / 25.4 px = 3.7795 px.
   const widthPx = Math.round((widthPt * 96) / 72);
   const heightPx = Math.round((heightPt * 96) / 72);
 
-  const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
-  const isLandscape = orientation === 'landscape';
-  const widthMm = isLandscape ? def.heightMm : def.widthMm;
-  const heightMm = isLandscape ? def.widthMm : def.heightMm;
+  let widthMm: number;
+  let heightMm: number;
+  if (pageSize === 'custom' && customDims && customDims.widthPt && customDims.heightPt) {
+    widthMm = Number(((widthPt * 25.4) / 72).toFixed(1));
+    heightMm = Number(((heightPt * 25.4) / 72).toFixed(1));
+  } else {
+    const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
+    const isLandscape = orientation === 'landscape';
+    widthMm = isLandscape ? def.heightMm : def.widthMm;
+    heightMm = isLandscape ? def.widthMm : def.heightMm;
+  }
 
-  const paddingPt = density === 'compact' ? 18 : density === 'spacious' ? 32 : 24;
+  let paddingPt = density === 'compact' ? 18 : density === 'spacious' ? 32 : 24;
+  if (customMargins && typeof customMargins.topMm === 'number') {
+    paddingPt = (customMargins.topMm * 72) / 25.4;
+  }
   const gapPt = density === 'compact' ? 10 : density === 'spacious' ? 20 : 14;
 
   const paddingPx = (paddingPt * 96) / 72;
@@ -1583,7 +1624,10 @@ export function renderNewspaperDocumentToHtml(
     doc.metadata.pageSize,
     doc.metadata.orientation,
     doc.layout.spacingDensity,
-    doc.layout.bodyFontSizePt
+    doc.layout.bodyFontSizePt,
+    undefined,
+    doc.metadata.dimensions,
+    doc.layout.margins
   );
   const { widthPt, heightPt, paddingPt, gapPt, bodyFontSizePt } = metrics;
   const columnCount = resolvePageColumnCount(doc);
@@ -2035,8 +2079,14 @@ export function renderNewspaperDocumentToHtml(
           const bylineColorStyle =
             bylineStylesList.length > 0 ? `style="${bylineStylesList.join(' ')}"` : '';
 
+          const jumpFromBadge =
+            art.continuation?.role === 'continuation' && art.continuation.jumpFromLabel
+              ? `<div class="article-jump-from" style="font-size: 8pt; font-weight: 700; color: #b91c1c; text-transform: uppercase; margin-bottom: 3pt;">${escapeHtml(art.continuation.jumpFromLabel)}</div>`
+              : '';
+
           const headlineHtml = `
             <div class="article-header priority-${priority}">
+              ${jumpFromBadge}
               ${art.subheadline ? `<p class="article-deck" ${subheadlineColorStyle}>${escapeHtml(art.subheadline)}</p>` : ''}
               <h2 class="article-headline" ${headlineColorStyle}>${escapeHtml(art.headline)}</h2>
               ${art.byline ? `<div class="article-byline" ${bylineColorStyle}>${escapeHtml(art.byline)}</div>` : ''}
@@ -2202,6 +2252,11 @@ export function renderNewspaperDocumentToHtml(
                 art.paragraphTypography
               )}
               ${specializedExtraHtml}
+              ${
+                art.continuation?.role === 'origin' && art.continuation.jumpToLabel
+                  ? `<div class="article-jump-to" style="font-size: 8pt; font-weight: 700; font-style: italic; color: #b91c1c; margin-top: 6pt; padding-top: 4pt; border-top: 1px dotted #cbd5e1; text-align: right;">${escapeHtml(art.continuation.jumpToLabel)}</div>`
+                  : ''
+              }
             </div>
           `;
 
@@ -2805,3 +2860,6 @@ export function renderNewspaperDocumentToHtml(
 
 export * from './templates.js';
 export * from './preflight.js';
+export * from './balancer.js';
+export * from './segmenter.js';
+export * from './multiPageAllocator.js';

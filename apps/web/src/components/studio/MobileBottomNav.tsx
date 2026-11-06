@@ -1,6 +1,8 @@
 import React from 'react';
+import { useI18n } from '../../i18n';
+import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
-export type MobileDrawerMode = 'pages' | 'blocks' | 'inspector' | 'presets' | 'none';
+export type MobileDrawerMode = 'pages' | 'blocks' | 'inspector' | 'presets' | 'page-setup' | 'none';
 
 export interface MobileBottomNavProps {
   activeDrawer: MobileDrawerMode;
@@ -21,10 +23,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onExportPdf,
   isExportingPdf,
 }) => {
+  const { locale } = useI18n();
+  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
+
   return (
     <nav
       data-testid="mobile-bottom-nav"
-      aria-label="मोबाइल नेविगेशन टूलबार"
+      aria-label={locale === 'hi' ? 'मोबाइल नेविगेशन टूलबार' : 'Mobile Editor Navigation'}
       style={{
         position: 'fixed',
         bottom: 0,
@@ -32,24 +37,26 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         right: 0,
         height: 'calc(58px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        backgroundColor: '#0f172a',
-        borderTop: '1px solid #1e293b',
+        backgroundColor: '#1C1917',
+        borderTop: '1px solid #2B2825',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingLeft: '4px',
-        paddingRight: '4px',
+        paddingLeft: '6px',
+        paddingRight: '6px',
         boxSizing: 'border-box',
         zIndex: 100,
         userSelect: 'none',
+        boxShadow: '0 -4px 16px rgba(0,0,0,0.25)',
+        fontFamily: locale === 'hi' ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
       }}
     >
-      {/* 1. Pages Button (पेज) */}
+      {/* 1. Pages Button */}
       <button
         type="button"
         data-testid="mobile-nav-pages"
         onClick={() => onSelectDrawer(activeDrawer === 'pages' ? 'none' : 'pages')}
-        aria-label={`पेज ${currentPageNumber}/${totalPages}`}
+        aria-label={`${locale === 'hi' ? 'पृष्ठ' : 'Page'} ${currentPageNumber}/${totalPages}`}
         aria-expanded={activeDrawer === 'pages'}
         style={{
           display: 'flex',
@@ -57,10 +64,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           gap: '2px',
-          background: activeDrawer === 'pages' ? '#1e293b' : 'transparent',
+          background: activeDrawer === 'pages' ? '#2B2825' : 'transparent',
           border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'pages' ? '#38bdf8' : '#94a3b8',
+          borderRadius: '8px',
+          color: activeDrawer === 'pages' ? '#FAF8F5' : '#A8A29E',
           cursor: 'pointer',
           padding: '6px 4px',
           fontSize: '11px',
@@ -73,16 +80,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
         <span style={{ whiteSpace: 'nowrap' }}>
-          पेज {currentPageNumber}/{totalPages}
+          {locale === 'hi' ? `पेज ${currentPageNumber}/${totalPages}` : `P. ${currentPageNumber}/${totalPages}`}
         </span>
       </button>
 
-      {/* 2. Add Block Button (+ ब्लॉक) */}
+      {/* 2. Add Block Button */}
       <button
         type="button"
         data-testid="mobile-nav-blocks"
         onClick={() => onSelectDrawer(activeDrawer === 'blocks' ? 'none' : 'blocks')}
-        aria-label="नया समाचार ब्लॉक जोड़ें"
+        aria-label={locale === 'hi' ? 'नया समाचार ब्लॉक जोड़ें' : 'Add Article Block'}
         aria-expanded={activeDrawer === 'blocks'}
         style={{
           display: 'flex',
@@ -90,10 +97,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           gap: '2px',
-          background: activeDrawer === 'blocks' ? '#1e293b' : 'transparent',
+          background: activeDrawer === 'blocks' ? '#2B2825' : 'transparent',
           border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'blocks' ? '#ef4444' : '#94a3b8',
+          borderRadius: '8px',
+          color: activeDrawer === 'blocks' ? '#F87171' : '#A8A29E',
           cursor: 'pointer',
           padding: '6px 4px',
           fontSize: '11px',
@@ -105,15 +112,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
-        <span style={{ whiteSpace: 'nowrap' }}>+ ब्लॉक</span>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {locale === 'hi' ? '+ ब्लॉक' : '+ Block'}
+        </span>
       </button>
 
-      {/* 3. Editor / Inspector Button (संपादक / गुण) */}
+      {/* 3. Editor / Inspector Button */}
       <button
         type="button"
         data-testid="mobile-nav-inspector"
         onClick={() => onSelectDrawer(activeDrawer === 'inspector' ? 'none' : 'inspector')}
-        aria-label={hasSelectedArticle ? 'लेख संपादक' : 'पृष्ठ गुण'}
+        aria-label={hasSelectedArticle ? (locale === 'hi' ? 'लेख संपादक' : 'Story Inspector') : (locale === 'hi' ? 'पृष्ठ गुण' : 'Page Inspector')}
         aria-expanded={activeDrawer === 'inspector'}
         style={{
           display: 'flex',
@@ -121,10 +130,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           gap: '2px',
-          background: activeDrawer === 'inspector' ? '#1e293b' : 'transparent',
+          background: activeDrawer === 'inspector' ? '#2B2825' : 'transparent',
           border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'inspector' ? '#60a5fa' : '#94a3b8',
+          borderRadius: '8px',
+          color: activeDrawer === 'inspector' ? '#60A5FA' : '#A8A29E',
           cursor: 'pointer',
           padding: '6px 4px',
           fontSize: '11px',
@@ -137,7 +146,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>✎</span>
-        <span style={{ whiteSpace: 'nowrap' }}>संपादक</span>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {locale === 'hi' ? 'संपादक' : 'Inspector'}
+        </span>
         {hasSelectedArticle && (
           <span
             data-testid="inspector-selection-dot"
@@ -148,18 +159,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: '#38bdf8',
+              backgroundColor: '#38BDF8',
             }}
           />
         )}
       </button>
 
-      {/* 4. Format / Presets Button (प्रारूप) */}
+      {/* 4. Format / Presets Button */}
       <button
         type="button"
         data-testid="mobile-nav-presets"
         onClick={() => onSelectDrawer(activeDrawer === 'presets' ? 'none' : 'presets')}
-        aria-label="अख़बार प्रारूप व विन्यास"
+        aria-label={locale === 'hi' ? 'अख़बार प्रारूप व विन्यास' : 'Layout & Presets'}
         aria-expanded={activeDrawer === 'presets'}
         style={{
           display: 'flex',
@@ -167,10 +178,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           gap: '2px',
-          background: activeDrawer === 'presets' ? '#1e293b' : 'transparent',
+          background: activeDrawer === 'presets' ? '#2B2825' : 'transparent',
           border: 'none',
-          borderRadius: '6px',
-          color: activeDrawer === 'presets' ? '#a78bfa' : '#94a3b8',
+          borderRadius: '8px',
+          color: activeDrawer === 'presets' ? '#C084FC' : '#A8A29E',
           cursor: 'pointer',
           padding: '6px 4px',
           fontSize: '11px',
@@ -182,26 +193,28 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
-        <span style={{ whiteSpace: 'nowrap' }}>प्रारूप</span>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {locale === 'hi' ? 'प्रारूप' : 'Layout'}
+        </span>
       </button>
 
-      {/* 5. Direct PDF Export Button (PDF) */}
+      {/* 5. Direct PDF Export Button */}
       <button
         type="button"
         data-testid="mobile-nav-pdf"
         onClick={onExportPdf}
         disabled={isExportingPdf}
-        aria-label="अख़बार का PDF डाउनलोड करें"
+        aria-label={locale === 'hi' ? 'अख़बार का PDF डाउनलोड करें' : 'Download Vector PDF'}
         style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '2px',
-          backgroundColor: '#b91c1c',
+          backgroundColor: colors.pressRed,
           border: 'none',
-          borderRadius: '6px',
-          color: '#ffffff',
+          borderRadius: '8px',
+          color: '#FFFFFF',
           cursor: isExportingPdf ? 'wait' : 'pointer',
           padding: '6px 8px',
           fontSize: '11px',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type {
   Article,
   ArticlePriority,
@@ -108,7 +109,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
             style={{
               margin: 0,
               fontSize: '16px',
-              fontFamily: "'Noto Serif Devanagari', serif",
+              fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+              lineHeight: 1.35,
               color: '#111',
             }}
           >
@@ -174,7 +176,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               color: '#222',
-              fontFamily: "'Noto Serif Devanagari', serif",
+              fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
+              lineHeight: 1.35,
             }}
           >
             शीर्षक लिखें (Headline) <span style={{ color: '#b22222' }}>*</span>
@@ -198,7 +201,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
             width: '100%',
             padding: '10px 12px',
             fontSize: '15px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             fontWeight: 700,
             border: '1px solid #c5c0b5',
             borderRadius: '6px',
@@ -218,7 +222,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
             fontWeight: 600,
             color: '#444',
             marginBottom: '4px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
+            lineHeight: 1.35,
           }}
         >
           छोटी हेडलाइन / उप-शीर्षक (Subheadline / Deck)
@@ -233,7 +238,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
             width: '100%',
             padding: '8px 10px',
             fontSize: '13px',
-            fontFamily: "'Noto Serif Devanagari', serif",
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+            lineHeight: 1.35,
             border: '1px solid #ccc',
             borderRadius: '4px',
             boxSizing: 'border-box',
@@ -250,7 +256,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               color: '#222',
-              fontFamily: "'Noto Serif Devanagari', serif",
+              fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
+              lineHeight: 1.35,
             }}
           >
             खबर का पूरा विवरण (News Body) <span style={{ color: '#b22222' }}>*</span>
@@ -270,8 +277,8 @@ export const ArticleEditorForm: React.FC<ArticleEditorFormProps> = ({
             width: '100%',
             padding: '10px 12px',
             fontSize: '13.5px',
-            fontFamily: "'Noto Serif Devanagari', serif",
-            lineHeight: 1.5,
+            fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
+            lineHeight: 1.6,
             border: '1px solid #c5c0b5',
             borderRadius: '6px',
             boxSizing: 'border-box',

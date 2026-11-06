@@ -1,0 +1,7 @@
+# Robots.txt for E-Paper Studio
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://epaperstudio.app/sitemap.xml
+

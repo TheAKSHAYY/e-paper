@@ -61,7 +61,15 @@ export type MinimalDocument = z.infer<typeof MinimalDocumentSchema>;
  * Newspaper Publishing Document Schema (Phase 1)
  * ==================================================================== */
 
-export const PageSizePresetSchema = z.enum(['broadsheet', 'tabloid', 'berliner', 'a3', 'a4']);
+export const PageSizePresetSchema = z.enum([
+  'broadsheet',
+  'tabloid',
+  'berliner',
+  'a3',
+  'a4',
+  'a5',
+  'custom',
+]);
 
 export type PageSizePreset = z.infer<typeof PageSizePresetSchema>;
 
@@ -122,7 +130,34 @@ export const PAGE_SIZE_DEFINITIONS: Record<PageSizePreset, PageSizeDefinition> =
     aspectRatio: '1:1.41',
     description: 'Universal office print format, ideal for desktop printing and digital bulletins.',
   },
+  a5: {
+    name: 'ISO A5 (148mm × 210mm)',
+    widthPt: 419.53,
+    heightPt: 595.28,
+    widthMm: 148,
+    heightMm: 210,
+    aspectRatio: '1:1.41',
+    description: 'Compact digest format popular for community gazettes and local bulletins.',
+  },
+  custom: {
+    name: 'Custom Dimensions',
+    widthPt: 841.89,
+    heightPt: 1190.55,
+    widthMm: 297,
+    heightMm: 420,
+    aspectRatio: '1:1.41',
+    description: 'User-configured custom newspaper or publication dimensions.',
+  },
 };
+
+export const PageMarginsSchema = z.object({
+  topMm: z.number().min(0).max(100).default(8.5),
+  bottomMm: z.number().min(0).max(100).default(8.5),
+  leftMm: z.number().min(0).max(100).default(8.5),
+  rightMm: z.number().min(0).max(100).default(8.5),
+  unit: z.enum(['mm', 'in', 'pt']).default('mm'),
+});
+export type PageMargins = z.infer<typeof PageMarginsSchema>;
 
 export const ArticlePrioritySchema = z.enum(['lead', 'major', 'minor', 'brief']);
 export type ArticlePriority = z.infer<typeof ArticlePrioritySchema>;
@@ -319,6 +354,26 @@ export type ElementTypography = z.infer<typeof ElementTypographySchema>;
 export type SelectedElementPart =
   'headline' | 'subheadline' | 'body' | 'image' | 'caption' | 'block' | null;
 
+export const ContinuationTypeSchema = z.enum(['origin', 'continuation']);
+export type ContinuationType = z.infer<typeof ContinuationTypeSchema>;
+
+export const ArticleContinuationSchema = z.object({
+  role: ContinuationTypeSchema.default('origin'),
+  rootArticleId: z.string().min(1),
+  continuationIndex: z.number().int().nonnegative().default(0),
+  previousArticleId: z.string().optional(),
+  nextArticleId: z.string().optional(),
+  targetPageNumber: z.union([z.number().int().positive(), z.literal('auto')]).optional(),
+  targetPageId: z.string().optional(),
+  jumpToLabel: z.string().optional(),
+  jumpFromLabel: z.string().optional(),
+  jumpHeadline: z.string().optional(),
+  paragraphRange: z.tuple([z.number().int().nonnegative(), z.number().int().positive()]).optional(),
+  allowContinuation: z.boolean().default(true),
+});
+
+export type ArticleContinuation = z.infer<typeof ArticleContinuationSchema>;
+
 export const ArticleSchema = z.object({
   id: z.string().min(1),
   elementType: ElementTypeSchema.optional(),
@@ -404,8 +459,15 @@ export const ArticleSchema = z.object({
   typography: ElementTypographySchema.optional(),
   paragraphTypography: z.record(z.string(), ElementTypographySchema).optional(),
   locked: z.boolean().optional(),
+  lockSpan: z.boolean().optional(),
+  lockPosition: z.boolean().optional(),
+  isReserved: z.boolean().optional(),
+  reservationType: z
+    .enum(['editorial_whitespace', 'ad_placeholder', 'pullquote_slot', 'photo_sink'])
+    .optional(),
   zIndex: z.number().int().optional(),
   imageAlignment: z.enum(['left', 'center', 'right', 'full']).optional(),
+  continuation: ArticleContinuationSchema.optional(),
 });
 
 export type Article = z.infer<typeof ArticleSchema>;
@@ -448,8 +510,41 @@ export function getImageAspectRatio(aspect: Article['imageAspect']): string {
 
 export function getPageDimensions(
   pageSize: PageSizePreset,
-  orientation: PageOrientation = 'portrait'
+  orientation: PageOrientation = 'portrait',
+  customDims?: Partial<PageDimensions>
 ): PageDimensions {
+  if (
+    pageSize === 'custom' &&
+    customDims &&
+    typeof customDims.widthPt === 'number' &&
+    customDims.widthPt > 0 &&
+    typeof customDims.heightPt === 'number' &&
+    customDims.heightPt > 0
+  ) {
+    const isLandscape = orientation === 'landscape';
+    const rawW = customDims.widthPt;
+    const rawH = customDims.heightPt;
+    const widthPt = isLandscape ? Math.max(rawW, rawH) : Math.min(rawW, rawH);
+    const heightPt = isLandscape ? Math.min(rawW, rawH) : Math.max(rawW, rawH);
+    const widthMm = Number(((widthPt * 25.4) / 72).toFixed(1));
+    const heightMm = Number(((heightPt * 25.4) / 72).toFixed(1));
+    const widthIn = Number((widthPt / 72).toFixed(4));
+    const heightIn = Number((heightPt / 72).toFixed(4));
+    const aspectRatio = widthPt / heightPt;
+    return {
+      widthPt,
+      heightPt,
+      widthMm,
+      heightMm,
+      widthIn,
+      heightIn,
+      aspectRatio,
+      aspectRatioLabel: `${widthMm}×${heightMm}mm`,
+      dpi: customDims.dpi ?? 300,
+      grayscaleLevels: customDims.grayscaleLevels ?? 16,
+    };
+  }
+
   const def = PAGE_SIZE_DEFINITIONS[pageSize] ?? PAGE_SIZE_DEFINITIONS.broadsheet;
   const isLandscape = orientation === 'landscape';
   const widthPt = isLandscape ? def.heightPt : def.widthPt;
@@ -638,11 +733,15 @@ export const NEWSPAPER_THEME_PRESETS: NewspaperThemeConfig[] = [
   },
 ];
 
+export const ColumnRuleStyleSchema = z.enum(['solid', 'dashed', 'none']);
+export type ColumnRuleStyle = z.infer<typeof ColumnRuleStyleSchema>;
+
 export const NewspaperLayoutConfigSchema = z.object({
   presetId: NewspaperPresetIdSchema.default('classic-hindi-broadsheet'),
   /** Standard 12-column newspaper layout engine (2 to 12 columns) */
   columnCount: z.number().int().min(2).max(12).default(12),
   columnRule: z.boolean().default(true),
+  columnRuleStyle: ColumnRuleStyleSchema.optional().default('solid'),
   gridRowLayouts: z.array(z.string()).optional(),
   mastheadFont: z.string().default("'Rozha One', serif"),
   headlineFont: z.string().default("'Noto Serif Devanagari', serif"),
@@ -651,6 +750,7 @@ export const NewspaperLayoutConfigSchema = z.object({
   headlineWeight: z.number().int().min(300).max(900).default(700),
   bodyFontSizePt: z.number().min(8).max(16).default(10),
   spacingDensity: SpacingDensitySchema.default('normal'),
+  margins: PageMarginsSchema.optional(),
   showFooter: z.boolean().default(true),
   footerText: z.string().optional().default(''),
   theme: NewspaperThemeConfigSchema.optional(),
@@ -1027,6 +1127,10 @@ export const PreflightCheckTypeSchema = z.enum([
   'invalid_page_config',
   'outdated_date',
   'blank_pages',
+  'layout_overset',
+  'continuation_broken',
+  'continuation_text_mismatch',
+  'continuation_target_invalid',
 ]);
 
 export type PreflightCheckType = z.infer<typeof PreflightCheckTypeSchema>;

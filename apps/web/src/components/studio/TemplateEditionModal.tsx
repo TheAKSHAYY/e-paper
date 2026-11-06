@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type { MasterTemplate, DailyEdition } from '@epaper-studio/document-schema';
 import {
   templateStorage,
@@ -185,6 +186,7 @@ export const TemplateEditionModal: React.FC<TemplateEditionModalProps> = ({
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
           overflow: 'hidden',
           border: '1px solid #cbd5e1',
+          fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
         }}
       >
         {/* Header with Navigation Tabs */}
@@ -207,7 +209,14 @@ export const TemplateEditionModal: React.FC<TemplateEditionModalProps> = ({
             <div>
               <h2
                 id="publishing-manager-title"
-                style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#f8fafc' }}
+                style={{
+                  margin: 0,
+                  fontSize: '17px',
+                  fontWeight: 800,
+                  color: '#f8fafc',
+                  fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                  lineHeight: 1.35,
+                }}
               >
                 📰 प्रकाशन प्रबंधन स्टूडियो (Publishing Studio)
               </h2>

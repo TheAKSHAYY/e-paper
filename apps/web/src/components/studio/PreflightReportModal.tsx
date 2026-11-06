@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
 import type { PreflightReport, PreflightIssue } from '@epaper-studio/document-schema';
 
 export interface PreflightReportModalProps {
@@ -99,6 +100,7 @@ export const PreflightReportModal: React.FC<PreflightReportModalProps> = ({
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
           overflow: 'hidden',
           border: '1px solid #e2e8f0',
+          fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
         }}
       >
         {/* Modal Header */}

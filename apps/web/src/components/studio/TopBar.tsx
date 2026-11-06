@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { PageSizePreset } from '@epaper-studio/document-schema';
+import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
+import { useI18n } from '../../i18n';
+import { LanguageSelector } from '../common/LanguageSelector';
 
-export type ViewMode = 'landing' | 'split' | 'preview';
+export type ViewMode = 'landing' | 'dashboard' | 'split' | 'preview';
 
 export interface TopBarProps {
   publicationTitle: string;
@@ -25,6 +28,7 @@ export interface TopBarProps {
   onToggleFreeLayout?: () => void;
   onNewPublication: () => void;
   onOpenTemplates: () => void;
+  onOpenPageSetup?: () => void;
   onOpenMastheadGallery?: () => void;
   onOpenDrafts: () => void;
   onOpenPublishing?: () => void;
@@ -39,6 +43,7 @@ export interface TopBarProps {
   onPrintPdf?: () => void;
   isPrintingPdf?: boolean;
   onAutoFit?: () => void;
+  onAutoAllocateOverflow?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -73,6 +78,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleFreeLayout,
   onNewPublication,
   onOpenTemplates,
+  onOpenPageSetup,
   onOpenPublishing,
   preflightStatus,
   onOpenPreflight,
@@ -81,6 +87,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onPrintPdf,
   isPrintingPdf = false,
   onAutoFit,
+  onAutoAllocateOverflow,
   onUndo,
   onRedo,
   canUndo = false,
@@ -93,6 +100,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleInspector,
   isInspectorOpen = true,
 }) => {
+  const { t, locale } = useI18n();
+  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
+  const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
+
   const [isRenaming, setIsRenaming] = useState(false);
   const [editedTitle, setEditedTitle] = useState(publicationTitle);
   const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -116,10 +127,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header
       style={{
-        backgroundColor: '#111827',
-        color: '#f8fafc',
-        height: '48px',
-        borderBottom: '1px solid #1f2937',
+        backgroundColor: colors.inkBlack,
+        color: '#FAF8F5',
+        height: '50px',
+        borderBottom: `1px solid #2B2825`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -141,12 +152,12 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            title={isSidebarOpen ? 'साइडबार छिपाएं' : 'साइडबार दिखाएं'}
+            title={isSidebarOpen ? (locale === 'en' ? 'Hide sidebar' : 'साइडबार छिपाएं') : (locale === 'en' ? 'Show sidebar' : 'साइडबार दिखाएं')}
             aria-label="Toggle sidebar"
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#9ca3af',
+              color: '#A8A29E',
               cursor: 'pointer',
               padding: '6px',
               borderRadius: '2px',
@@ -163,7 +174,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Brand Crest */}
         <div
           onClick={() => onViewModeChange('landing')}
-          title="मुख्य पृष्ठ पर लौटें (Return to Home)"
+          title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -176,15 +187,15 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               width: '22px',
               height: '22px',
-              backgroundColor: '#b91c1c',
+              backgroundColor: colors.pressRed,
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
               fontSize: '13px',
-              fontFamily: "'Noto Serif Devanagari', serif",
-              borderRadius: '2px',
+              fontFamily: fonts.hindiEditorial,
+              borderRadius: '3px',
             }}
           >
             प
@@ -194,14 +205,36 @@ export const TopBar: React.FC<TopBarProps> = ({
               fontSize: '14px',
               fontWeight: 800,
               color: '#ffffff',
-              fontFamily: "'Noto Serif Devanagari', 'Playfair Display', serif",
+              fontFamily: `${fonts.display}, ${fonts.hindiEditorial}`,
             }}
           >
             E-Paper Studio
           </span>
         </div>
 
-        <div style={{ height: '14px', width: '1px', backgroundColor: '#374151', flexShrink: 0 }} />
+        {/* Dashboard Shortcut Button */}
+        <button
+          onClick={() => onViewModeChange('dashboard')}
+          title={locale === 'en' ? 'Go to Publisher Dashboard' : 'प्रकाशक डैशबोर्ड पर जाएं'}
+          style={{
+            background: '#262422',
+            border: '1px solid #3D3835',
+            borderRadius: '3px',
+            color: '#E6E0D5',
+            padding: '3px 8px',
+            fontSize: '11.5px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span>🏠</span>
+          <span className="hidden sm:inline">{t.common.dashboard}</span>
+        </button>
+
+        <div style={{ height: '14px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
 
         {/* Editable Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0 }}>
@@ -220,13 +253,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                 }
               }}
               style={{
-                backgroundColor: '#1f2937',
+                backgroundColor: '#262422',
                 color: '#ffffff',
-                border: '1px solid #3b82f6',
+                border: `1px solid ${colors.pressRed}`,
                 borderRadius: '2px',
                 padding: '2px 6px',
                 fontSize: '12px',
-                fontFamily: "'Noto Serif Devanagari', serif",
+                fontFamily: fonts.hindiEditorial,
                 fontWeight: 700,
                 outline: 'none',
               }}
@@ -234,13 +267,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           ) : (
             <span
               onClick={() => setIsRenaming(true)}
-              title="नाम बदलने के लिए क्लिक करें"
+              title={locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'}
               style={{
                 fontSize: '12.5px',
-                color: '#e5e7eb',
+                color: '#E6E0D5',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "'Noto Serif Devanagari', serif",
+                fontFamily: fonts.hindiEditorial,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 maxWidth: '180px',
@@ -260,7 +293,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 background: 'none',
                 border: 'none',
                 fontSize: '11px',
-                color: '#f59e0b',
+                color: '#F59E0B',
                 cursor: 'pointer',
                 padding: '2px 4px',
                 flexShrink: 0,
@@ -270,15 +303,15 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
             >
               <span>●</span>
-              <span>{isSaving ? 'सहेजा जा रहा है...' : 'अनसेव्ड'}</span>
+              <span>{isSaving ? (locale === 'en' ? 'Saving...' : 'सहेजा जा रहा है...') : (locale === 'en' ? 'Unsaved' : 'अनसेव्ड')}</span>
             </button>
           ) : (
             <span
               data-testid="autosave-status-badge"
-              title="सभी बदलाव स्वतः सहेजे गए हैं"
+              title={locale === 'en' ? 'All changes saved locally' : 'सभी बदलाव स्वतः सहेजे गए हैं'}
               style={{
                 fontSize: '11px',
-                color: '#10b981',
+                color: '#34D399',
                 flexShrink: 0,
                 display: 'flex',
                 alignItems: 'center',
@@ -286,7 +319,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
             >
               <span>✓</span>
-              <span>स्वतः सहेजा गया</span>
+              <span>{locale === 'en' ? 'Saved' : 'स्वतः सहेजा गया'}</span>
             </span>
           )}
         </div>
@@ -300,7 +333,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          backgroundColor: '#1f2937',
+          backgroundColor: '#262422',
+          border: '1px solid #3D3835',
           padding: '2px 8px',
           borderRadius: '3px',
           flexShrink: 0,
@@ -311,11 +345,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            title="पूर्ववत करें / Undo (Ctrl+Z)"
+            title={`${t.common.undo} (Ctrl+Z)`}
             style={{
               backgroundColor: 'transparent',
               border: 'none',
-              color: canUndo ? '#f3f4f6' : '#4b5563',
+              color: canUndo ? '#FAF8F5' : '#57534E',
               cursor: canUndo ? 'pointer' : 'not-allowed',
               padding: '2px 4px',
               fontSize: '13px',
@@ -327,11 +361,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            title="फिर से करें / Redo (Ctrl+Y)"
+            title={`${t.common.redo} (Ctrl+Y)`}
             style={{
               backgroundColor: 'transparent',
               border: 'none',
-              color: canRedo ? '#f3f4f6' : '#4b5563',
+              color: canRedo ? '#FAF8F5' : '#57534E',
               cursor: canRedo ? 'pointer' : 'not-allowed',
               padding: '2px 4px',
               fontSize: '13px',
@@ -342,16 +376,16 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
 
         <button
           disabled={currentPageNumber <= 1}
           onClick={() => onSelectPage(currentPageNumber - 1)}
-          title="पिछला पेज"
+          title={locale === 'en' ? 'Previous page' : 'पिछला पेज'}
           style={{
             background: 'transparent',
             border: 'none',
-            color: currentPageNumber <= 1 ? '#4b5563' : '#d1d5db',
+            color: currentPageNumber <= 1 ? '#57534E' : '#E6E0D5',
             cursor: currentPageNumber <= 1 ? 'not-allowed' : 'pointer',
             padding: '2px 4px',
             fontSize: '11px',
@@ -360,18 +394,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           ◀
         </button>
 
-        <span style={{ fontSize: '11.5px', color: '#f3f4f6', fontWeight: 600 }}>
+        <span style={{ fontSize: '11.5px', color: '#FAF8F5', fontWeight: 600 }}>
           {currentPageNumber} / {totalPages}
         </span>
 
         <button
           disabled={currentPageNumber >= totalPages}
           onClick={() => onSelectPage(currentPageNumber + 1)}
-          title="अगला पेज"
+          title={locale === 'en' ? 'Next page' : 'अगला पेज'}
           style={{
             background: 'transparent',
             border: 'none',
-            color: currentPageNumber >= totalPages ? '#4b5563' : '#d1d5db',
+            color: currentPageNumber >= totalPages ? '#57534E' : '#E6E0D5',
             cursor: currentPageNumber >= totalPages ? 'not-allowed' : 'pointer',
             padding: '2px 4px',
             fontSize: '11px',
@@ -380,12 +414,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           ▶
         </button>
 
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
 
         <span
           style={{
             fontSize: '10.5px',
-            color: '#9ca3af',
+            color: '#A8A29E',
             textTransform: 'uppercase',
             fontWeight: 700,
           }}
@@ -393,17 +427,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           {pageSize}
         </span>
 
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#374151' }} />
+        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
 
         {/* Inline Zoom Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
           <button
             onClick={() => onScaleChange(Math.max(0.25, Math.round((scale - 0.1) * 100) / 100))}
-            title="ज़ूम कम करें"
+            title={t.common.zoomOut}
             style={{
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              color: '#d1d5db',
+              backgroundColor: '#1C1917',
+              border: '1px solid #3D3835',
+              color: '#E6E0D5',
               borderRadius: '2px',
               fontSize: '12px',
               fontWeight: 700,
@@ -419,9 +453,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             value={roundedScale}
             onChange={(e) => onScaleChange(parseFloat(e.target.value))}
             style={{
-              backgroundColor: '#1f2937',
-              color: '#f3f4f6',
-              border: '1px solid #374151',
+              backgroundColor: '#1C1917',
+              color: '#FAF8F5',
+              border: '1px solid #3D3835',
               borderRadius: '2px',
               fontSize: '11px',
               fontWeight: 600,
@@ -431,7 +465,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             }}
           >
             {!standardScales.includes(roundedScale) && (
-              <option value={roundedScale}>{Math.round(scale * 100)}% (फ़िट)</option>
+              <option value={roundedScale}>{Math.round(scale * 100)}% ({locale === 'en' ? 'Fit' : 'फ़िट'})</option>
             )}
             {standardScales.map((val) => (
               <option key={val} value={val}>
@@ -442,11 +476,11 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           <button
             onClick={() => onScaleChange(Math.min(3.0, Math.round((scale + 0.1) * 100) / 100))}
-            title="ज़ूम बढ़ाएं"
+            title={t.common.zoomIn}
             style={{
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              color: '#d1d5db',
+              backgroundColor: '#1C1917',
+              border: '1px solid #3D3835',
+              color: '#E6E0D5',
               borderRadius: '2px',
               fontSize: '12px',
               fontWeight: 700,
@@ -461,11 +495,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           {onFitPage && (
             <button
               onClick={onFitPage}
-              title="पूरा पेज फ़िट करें (Fit to Page)"
+              title={t.common.zoomFit}
               style={{
                 backgroundColor: 'transparent',
-                border: '1px solid #374151',
-                color: '#9ca3af',
+                border: '1px solid #3D3835',
+                color: '#A8A29E',
                 borderRadius: '2px',
                 fontSize: '10.5px',
                 fontWeight: 600,
@@ -474,18 +508,18 @@ export const TopBar: React.FC<TopBarProps> = ({
                 marginLeft: '2px',
               }}
             >
-              पेज
+              {locale === 'en' ? 'Fit' : 'पेज'}
             </button>
           )}
 
           {onFitWidth && (
             <button
               onClick={onFitWidth}
-              title="पेज की चौड़ाई स्क्रीन पर फ़िट करें (Fit to Width)"
+              title={locale === 'en' ? 'Fit page width' : 'पेज की चौड़ाई स्क्रीन पर फ़िट करें'}
               style={{
                 backgroundColor: 'transparent',
-                border: '1px solid #374151',
-                color: '#9ca3af',
+                border: '1px solid #3D3835',
+                color: '#A8A29E',
                 borderRadius: '2px',
                 fontSize: '10.5px',
                 fontWeight: 600,
@@ -493,7 +527,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 cursor: 'pointer',
               }}
             >
-              चौड़ाई
+              {locale === 'en' ? 'Width' : 'चौड़ाई'}
             </button>
           )}
 
@@ -502,13 +536,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               onClick={onTogglePhysicalCoordinates}
               title={
                 usePhysicalCanvasCoordinates
-                  ? 'भौतिक माप सक्रिय (1:1 Physical Canvas Mode - WYSIWYG). क्लिक करके 800px लेगसी पर स्विच करें'
-                  : 'लेगसी 800px कैनवस सक्रिय. क्लिक करके 1:1 भौतिक माप (Physical Canvas) सक्रिय करें'
+                  ? (locale === 'en' ? '1:1 Physical Canvas (WYSIWYG) active. Click to switch to legacy 800px' : 'भौतिक माप सक्रिय (1:1 Physical Canvas Mode). क्लिक करके 800px लेगसी पर स्विच करें')
+                  : (locale === 'en' ? 'Legacy 800px canvas active. Click to switch to 1:1 physical mm' : 'लेगसी 800px कैनवस सक्रिय. क्लिक करके 1:1 भौतिक माप सक्रिय करें')
               }
               style={{
-                backgroundColor: usePhysicalCanvasCoordinates ? '#065f46' : '#374151',
-                border: usePhysicalCanvasCoordinates ? '1px solid #10b981' : '1px solid #4b5563',
-                color: usePhysicalCanvasCoordinates ? '#a7f3d0' : '#9ca3af',
+                backgroundColor: usePhysicalCanvasCoordinates ? '#143522' : '#262422',
+                border: usePhysicalCanvasCoordinates ? '1px solid #166534' : '1px solid #3D3835',
+                color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#A8A29E',
                 borderRadius: '2px',
                 fontSize: '10px',
                 fontWeight: 700,
@@ -527,13 +561,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               onClick={onToggleFreeLayout}
               title={
                 useFreeLayout
-                  ? 'मुक्त लेआउट मोड सक्रिय (Free Placement Mode). क्लिक करके ऑटो-फ्लो पर स्विच करें'
-                  : 'ऑटो-फ्लो मोड सक्रिय. क्लिक करके मुक्त लेआउट (Free Placement) सक्षम करें'
+                  ? (locale === 'en' ? 'Free placement mode active. Click to switch to auto-flow' : 'मुक्त लेआउट मोड सक्रिय. क्लिक करके ऑटो-फ्लो पर स्विच करें')
+                  : (locale === 'en' ? 'Auto-flow mode active. Click to enable free placement' : 'ऑटो-फ्लो मोड सक्रिय. क्लिक करके मुक्त लेआउट सक्षम करें')
               }
               style={{
-                backgroundColor: useFreeLayout ? '#1e1b4b' : '#374151',
-                border: useFreeLayout ? '1px solid #6366f1' : '1px solid #4b5563',
-                color: useFreeLayout ? '#c7d2fe' : '#9ca3af',
+                backgroundColor: useFreeLayout ? '#2A1B3D' : '#262422',
+                border: useFreeLayout ? '1px solid #7C3AED' : '1px solid #3D3835',
+                color: useFreeLayout ? '#D8B4FE' : '#A8A29E',
                 borderRadius: '2px',
                 fontSize: '10px',
                 fontWeight: 700,
@@ -552,12 +586,15 @@ export const TopBar: React.FC<TopBarProps> = ({
        * RIGHT: Return to Home, Templates, Export PDF & Inspector
        * ======================================================== */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        {/* Language Selector */}
+        <LanguageSelector variant="pill" />
+
         <button
           onClick={() => onViewModeChange('landing')}
-          title="मुख्य पृष्ठ पर लौटें"
+          title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
           style={{
             backgroundColor: 'transparent',
-            color: '#9ca3af',
+            color: '#A8A29E',
             border: 'none',
             padding: '5px 8px',
             fontSize: '11.5px',
@@ -565,16 +602,16 @@ export const TopBar: React.FC<TopBarProps> = ({
             cursor: 'pointer',
           }}
         >
-          ← मुख्य पृष्ठ
+          ← {locale === 'en' ? 'Home' : 'मुख्य पृष्ठ'}
         </button>
 
         <button
           onClick={onNewPublication}
-          title="नया अख़बार बनाएं"
+          title={locale === 'en' ? 'Create new edition' : 'नया अख़बार बनाएं'}
           style={{
-            backgroundColor: '#1f2937',
-            color: '#e5e7eb',
-            border: '1px solid #374151',
+            backgroundColor: '#262422',
+            color: '#E6E0D5',
+            border: '1px solid #3D3835',
             borderRadius: '2px',
             padding: '5px 8px',
             fontSize: '11.5px',
@@ -582,7 +619,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             cursor: 'pointer',
           }}
         >
-          + नया
+          + {t.common.create}
         </button>
 
         {/* Publishing Studio: Master Templates & Daily Editions */}
@@ -590,11 +627,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             data-testid="btn-publishing-studio"
             onClick={onOpenPublishing}
-            title="मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन"
+            title={locale === 'en' ? 'Master templates and daily editions' : 'मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन'}
             style={{
-              backgroundColor: '#1e293b',
-              color: '#38bdf8',
-              border: '1px solid #0284c7',
+              backgroundColor: '#262422',
+              color: '#38BDF8',
+              border: '1px solid #0369A1',
               borderRadius: '2px',
               padding: '5px 8px',
               fontSize: '11.5px',
@@ -606,36 +643,61 @@ export const TopBar: React.FC<TopBarProps> = ({
             }}
           >
             <span>📰</span>
-            <span>प्रकाशन</span>
+            <span>{locale === 'en' ? 'Publishing' : 'प्रकाशन'}</span>
+          </button>
+        )}
+
+        {onOpenPageSetup && (
+          <button
+            onClick={onOpenPageSetup}
+            data-testid="topbar-btn-pagesetup"
+            title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार व विन्यास'}
+            style={{
+              backgroundColor: '#262422',
+              color: '#FAF8F5',
+              border: '1px solid #3D3835',
+              borderRadius: '4px',
+              padding: '5px 9px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>📐</span>
+            <span>{locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}</span>
           </button>
         )}
 
         <button
           onClick={onOpenTemplates}
-          title="टेम्पलेट प्रारूप"
+          data-testid="topbar-btn-presets"
+          title={locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
           style={{
-            backgroundColor: '#1f2937',
-            color: '#e5e7eb',
-            border: '1px solid #374151',
-            borderRadius: '2px',
+            backgroundColor: '#262422',
+            color: '#E6E0D5',
+            border: '1px solid #3D3835',
+            borderRadius: '4px',
             padding: '5px 8px',
             fontSize: '11.5px',
             fontWeight: 600,
             cursor: 'pointer',
           }}
         >
-          प्रारूप
+          {locale === 'en' ? 'Presets' : 'प्रारूप'}
         </button>
 
         {/* Auto Fit Button */}
         {onAutoFit && (
           <button
             onClick={onAutoFit}
-            title="पेज के आर्टिकल को ऑटो-फ़िट करें और खाली जगह भरें (Auto Fit)"
+            title={locale === 'en' ? 'Balance columns on this page' : 'पेज के कॉलम संतुलित करें'}
             style={{
-              backgroundColor: '#0284c7',
-              color: '#ffffff',
-              border: 'none',
+              backgroundColor: '#262422',
+              color: '#38BDF8',
+              border: '1px solid #0284C7',
               borderRadius: '2px',
               padding: '5px 10px',
               fontSize: '11px',
@@ -646,7 +708,32 @@ export const TopBar: React.FC<TopBarProps> = ({
               gap: '4px',
             }}
           >
-            ⚡ ऑटो-फ़िट
+            ⚡ {locale === 'en' ? 'Balance' : 'संतुलन'}
+          </button>
+        )}
+
+        {/* Multi-Page Story Auto-Allocation Engine Button */}
+        {onAutoAllocateOverflow && (
+          <button
+            data-testid="btn-auto-overflow"
+            onClick={onAutoAllocateOverflow}
+            title={locale === 'en' ? 'Auto-allocate story overflow across multiple pages' : 'अतिप्रवाहित खबरों को स्वतः अगले पृष्ठों पर प्रवाहित करें'}
+            style={{
+              backgroundColor: '#262422',
+              color: '#FCA5A5',
+              border: `1px solid ${colors.pressRed}`,
+              borderRadius: '2px',
+              padding: '5px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>📄+</span>
+            <span>{locale === 'en' ? 'Auto Overflow' : 'ऑटो-फ्लो'}</span>
           </button>
         )}
 
@@ -654,11 +741,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onOpenTheme && (
           <button
             onClick={onOpenTheme}
-            title="अख़बार का रंग व थीम बदलें (Colors & Themes)"
+            title={locale === 'en' ? 'Customize theme and colors' : 'अख़बार का रंग व थीम बदलें'}
             style={{
-              backgroundColor: '#7c3aed',
-              color: '#ffffff',
-              border: 'none',
+              backgroundColor: '#262422',
+              color: '#D8B4FE',
+              border: '1px solid #7C3AED',
               borderRadius: '2px',
               padding: '5px 10px',
               fontSize: '11px',
@@ -669,7 +756,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               gap: '4px',
             }}
           >
-            🎨 रंग / थीम
+            🎨 {locale === 'en' ? 'Theme' : 'थीम'}
           </button>
         )}
 
@@ -677,11 +764,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onExportProjectJson && (
           <button
             onClick={onExportProjectJson}
-            title="प्रोजेक्ट का बैकअप JSON डाउनलोड करें (Export Project Backup)"
+            title={locale === 'en' ? 'Export project backup JSON' : 'प्रोजेक्ट का बैकअप JSON डाउनलोड करें'}
             style={{
-              backgroundColor: '#334155',
-              color: '#f8fafc',
-              border: 'none',
+              backgroundColor: '#262422',
+              color: '#E6E0D5',
+              border: '1px solid #3D3835',
               borderRadius: '2px',
               padding: '5px 8px',
               fontSize: '11px',
@@ -692,7 +779,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               gap: '3px',
             }}
           >
-            📁 बैकअप
+            📁 {locale === 'en' ? 'Backup' : 'बैकअप'}
           </button>
         )}
 
@@ -713,11 +800,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             />
             <button
               onClick={() => jsonInputRef.current?.click()}
-              title="बैकअप JSON से प्रोजेक्ट लोड करें (Import Project JSON)"
+              title={locale === 'en' ? 'Import project from JSON backup' : 'बैकअप JSON से प्रोजेक्ट लोड करें'}
               style={{
-                backgroundColor: '#334155',
-                color: '#f8fafc',
-                border: 'none',
+                backgroundColor: '#262422',
+                color: '#E6E0D5',
+                border: '1px solid #3D3835',
                 borderRadius: '2px',
                 padding: '5px 8px',
                 fontSize: '11px',
@@ -728,7 +815,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 gap: '3px',
               }}
             >
-              📂 इम्पोर्ट
+              📂 {locale === 'en' ? 'Import' : 'इम्पोर्ट'}
             </button>
           </>
         )}
@@ -738,18 +825,33 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             data-testid="btn-preflight-status"
             onClick={onOpenPreflight}
-            title="12-पॉइंट PDF प्रीफ़्लाइट जांच रिपोर्ट खोलें"
+            title={locale === 'en' ? 'Open preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'}
             style={{
               backgroundColor:
                 preflightStatus?.overallStatus === 'green'
-                  ? '#065f46'
+                  ? '#143522'
                   : preflightStatus?.overallStatus === 'yellow'
-                    ? '#92400e'
+                    ? '#3B280A'
                     : preflightStatus?.overallStatus === 'red'
-                      ? '#991b1b'
-                      : '#1e293b',
-              color: '#ffffff',
-              border: 'none',
+                      ? '#3D1414'
+                      : '#262422',
+              color:
+                preflightStatus?.overallStatus === 'green'
+                  ? '#86EFAC'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#FDE047'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#FCA5A5'
+                      : '#E6E0D5',
+              border: `1px solid ${
+                preflightStatus?.overallStatus === 'green'
+                  ? '#166534'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#854D0E'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#991B1B'
+                      : '#3D3835'
+              }`,
               borderRadius: '2px',
               padding: '5px 10px',
               fontSize: '11px',
@@ -771,12 +873,12 @@ export const TopBar: React.FC<TopBarProps> = ({
             </span>
             <span>
               {preflightStatus?.overallStatus === 'green'
-                ? 'प्रीफ़्लाइट OK'
+                ? (locale === 'en' ? 'Preflight OK' : 'प्रीफ़्लाइट OK')
                 : preflightStatus?.overallStatus === 'yellow'
-                  ? `प्रीफ़्लाइट (${preflightStatus.warningCount})`
+                  ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.warningCount})`
                   : preflightStatus?.overallStatus === 'red'
-                    ? `प्रीफ़्लाइट (${preflightStatus.blockerCount})`
-                    : 'प्रीफ़्लाइट जांच'}
+                    ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.blockerCount})`
+                    : (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')}
             </span>
           </button>
         )}
@@ -786,9 +888,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           data-testid="btn-export-pdf"
           onClick={onExportPdf}
           disabled={isExportingPdf}
-          title="300 DPI प्रेस-रेडी वेक्टर PDF डाउनलोड करें"
+          title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
           style={{
-            backgroundColor: '#b91c1c',
+            backgroundColor: colors.pressRed,
             color: '#ffffff',
             border: 'none',
             borderRadius: '2px',
@@ -802,7 +904,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           }}
         >
           <span>📥</span>
-          <span>{isExportingPdf ? 'डाउनलोड...' : 'PDF'}</span>
+          <span>{isExportingPdf ? (locale === 'en' ? 'Exporting...' : 'डाउनलोड...') : 'PDF'}</span>
         </button>
 
         {/* Fallback Browser Print / Save as PDF Button */}
@@ -811,11 +913,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             data-testid="btn-print-pdf"
             onClick={onPrintPdf}
             disabled={isPrintingPdf}
-            title="ब्राउज़र प्रिंट / PDF के रूप में सहेजें (बिना सर्वर)"
+            title={locale === 'en' ? 'Browser print / Save as PDF' : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें'}
             style={{
-              backgroundColor: '#1e293b',
-              color: '#f8fafc',
-              border: '1px solid #475569',
+              backgroundColor: '#262422',
+              color: '#FAF8F5',
+              border: '1px solid #3D3835',
               borderRadius: '2px',
               padding: '5px 10px',
               fontSize: '11.5px',
@@ -827,19 +929,19 @@ export const TopBar: React.FC<TopBarProps> = ({
             }}
           >
             <span>🖨️</span>
-            <span>{isPrintingPdf ? 'तैयार...' : 'प्रिंट / PDF'}</span>
+            <span>{isPrintingPdf ? (locale === 'en' ? 'Preparing...' : 'तैयार...') : (locale === 'en' ? 'Print' : 'प्रिंट')}</span>
           </button>
         )}
 
         {onToggleInspector && (
           <button
             onClick={onToggleInspector}
-            title={isInspectorOpen ? 'पैनल छिपाएं' : 'पैनल दिखाएं'}
+            title={isInspectorOpen ? (locale === 'en' ? 'Hide inspector' : 'पैनल छिपाएं') : (locale === 'en' ? 'Show inspector' : 'पैनल दिखाएं')}
             style={{
-              backgroundColor: isInspectorOpen ? '#1e293b' : 'transparent',
+              backgroundColor: isInspectorOpen ? '#36322E' : 'transparent',
               border: '1px solid',
-              borderColor: isInspectorOpen ? '#475569' : '#374151',
-              color: isInspectorOpen ? '#60a5fa' : '#9ca3af',
+              borderColor: isInspectorOpen ? colors.pressRed : '#3D3835',
+              color: isInspectorOpen ? '#FAF8F5' : '#A8A29E',
               borderRadius: '2px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -851,7 +953,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             }}
           >
             <span>⚙</span>
-            <span>पैनल</span>
+            <span>{locale === 'en' ? 'Panel' : 'पैनल'}</span>
           </button>
         )}
       </div>
