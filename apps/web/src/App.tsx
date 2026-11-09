@@ -41,6 +41,7 @@ import {
   createMasterTemplateFromDocument,
   createDailyEditionFromTemplate,
   splitArticleAtParagraph,
+  isPageCapacityFull,
 } from '@epaper-studio/template-engine';
 
 import { TopBar } from './components/studio/TopBar';
@@ -241,6 +242,8 @@ export const App: React.FC = () => {
 
   // Modals for page full and export preflight
   const [showPageFullModal, setShowPageFullModal] = useState<boolean>(false);
+  const [isPageDomOverflown, setIsPageDomOverflown] = useState<boolean>(false);
+  const [pendingBlock, setPendingBlock] = useState<Partial<Article> | null>(null);
   const [preflightWarnings, setPreflightWarnings] = useState<Array<{
     pageIndex: number;
     articleId: string;
@@ -758,6 +761,42 @@ export const App: React.FC = () => {
     };
   }, [document, domMeasurements]);
 
+  const handleReportDomMeasurements = useCallback(
+    (
+      measurements: Array<{
+        articleId: string;
+        isOverflown: boolean;
+        scrollHeight: number;
+        clientHeight: number;
+      }>,
+      pageOverflown?: boolean
+    ) => {
+      setDomMeasurements(measurements);
+      if (pageOverflown !== undefined) {
+        setIsPageDomOverflown(pageOverflown);
+      }
+    },
+    []
+  );
+
+  // Real-time capacity and overflow status for the active page
+  const currentPageCapacity = useMemo(() => {
+    if (!currentPage || !document) {
+      return {
+        isFull: false,
+        message: '',
+        wordCount: 0,
+        wordBudget: 1500,
+        articleCount: 0,
+        maxArticles: 8,
+      };
+    }
+    return isPageCapacityFull(currentPage, document, {
+      domMeasurements,
+      isPageDomOverflown,
+    });
+  }, [currentPage, document, domMeasurements, isPageDomOverflown]);
+
   // Auto-load most recent draft or save initial preset on mount (clean view, no aggressive auto-select)
   useEffect(() => {
     let mounted = true;
@@ -1038,6 +1077,37 @@ export const App: React.FC = () => {
   // Add block to current page
   const handleAddBlock = useCallback(
     (blockTemplate: Partial<Article> = {}) => {
+      // Guard: Check if current page is full or adding this block would exceed page capacity
+      const capacityStatus = isPageCapacityFull(currentPage, document, {
+        domMeasurements,
+        isPageDomOverflown,
+        additionalArticle: blockTemplate,
+      });
+
+      if (capacityStatus.isFull) {
+        setPendingBlock(blockTemplate);
+        setShowPageFullModal(true);
+        showNotification(
+          capacityStatus.message ||
+            `पृष्ठ ${safePageIndex + 1} भर चुका है! नई सामग्री जोड़ने के लिए नया पृष्ठ बनाएँ।`
+        );
+        return;
+      }
+
+      // Free placement: find nearest free rectangular module (4mm)
+      if (useFreeLayout && currentPage.layoutMode === 'free') {
+        const blockW = blockTemplate.frame?.w ?? 90;
+        const blockH = blockTemplate.frame?.h ?? 60;
+        const slotResult = findNearestFreeSlot(currentPage, document, blockW, blockH, 4);
+
+        if (!slotResult.found || !slotResult.slot) {
+          setPendingBlock(blockTemplate);
+          setShowPageFullModal(true);
+          return;
+        }
+        blockTemplate.frame = slotResult.slot;
+      }
+
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const resolvedColumnCount = resolvePageColumnCount(document, currentPage);
       const newArticle = createArticleFromPreset(blockTemplate, {
@@ -1045,19 +1115,6 @@ export const App: React.FC = () => {
         defaultColumnCount: resolvedColumnCount,
         orderIndex: currentPage.articles.length,
       });
-
-      // Free placement: find nearest free rectangular module (4mm)
-      if (useFreeLayout && currentPage.layoutMode === 'free') {
-        const blockW = newArticle.frame?.w ?? 90;
-        const blockH = newArticle.frame?.h ?? 60;
-        const slotResult = findNearestFreeSlot(currentPage, document, blockW, blockH, 4);
-
-        if (!slotResult.found || !slotResult.slot) {
-          setShowPageFullModal(true);
-          return;
-        }
-        newArticle.frame = slotResult.slot;
-      }
 
       setDocument((prev) => {
         const currentPages = getPublicationPages(prev);
@@ -1083,7 +1140,15 @@ export const App: React.FC = () => {
         `Added "${newArticle.headline.slice(0, 25)}..." to Page ${safePageIndex + 1}`
       );
     },
-    [document, currentPage, useFreeLayout, safePageIndex, showNotification]
+    [
+      document,
+      currentPage,
+      domMeasurements,
+      isPageDomOverflown,
+      useFreeLayout,
+      safePageIndex,
+      showNotification,
+    ]
   );
 
   // Update article frame (free placement)
@@ -1702,6 +1767,22 @@ export const App: React.FC = () => {
         (typeof target !== 'string' ? target : null);
       if (!art) return;
 
+      // Guard: Check if current page is full or duplication would exceed capacity
+      const capacityStatus = isPageCapacityFull(currentPage, document, {
+        domMeasurements,
+        isPageDomOverflown,
+        additionalArticle: art,
+      });
+
+      if (capacityStatus.isFull) {
+        setPendingBlock(art);
+        setShowPageFullModal(true);
+        showNotification(
+          `पृष्ठ ${safePageIndex + 1} भर चुका है! खबर की प्रति नए पृष्ठ पर जोड़ने के लिए नया पृष्ठ जोड़ें।`
+        );
+        return;
+      }
+
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const duplicated: Article = {
         ...art,
@@ -1732,8 +1813,63 @@ export const App: React.FC = () => {
       setHasUnsavedChanges(true);
       showNotification(`खबर की प्रति बनाई गई`);
     },
-    [currentPage.articles, safePageIndex, showNotification]
+    [
+      currentPage,
+      document,
+      domMeasurements,
+      isPageDomOverflown,
+      safePageIndex,
+      showNotification,
+    ]
   );
+
+  const handleConfirmAddPageWithPendingBlock = useCallback(() => {
+    setShowPageFullModal(false);
+    const blockToAdd = pendingBlock;
+    setPendingBlock(null);
+
+    const currentTotalPages = getPublicationPages(document).length;
+    const targetPageIndex = currentTotalPages;
+
+    // 1. Create a new page
+    handleAddPage();
+
+    // 2. If there was a pending block, add it to the newly created page
+    if (blockToAdd) {
+      setTimeout(() => {
+        setDocument((prev) => {
+          const currentPages = getPublicationPages(prev);
+          const targetPage = currentPages[targetPageIndex] || currentPages[currentPages.length - 1];
+          if (!targetPage) return prev;
+
+          const resolvedColumnCount = resolvePageColumnCount(prev, targetPage);
+          const newId =
+            blockToAdd.id || `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          const newArticle = createArticleFromPreset(blockToAdd, {
+            newId,
+            defaultColumnCount: resolvedColumnCount,
+            orderIndex: targetPage.articles.length,
+          });
+
+          const updatedPageArticles = [...targetPage.articles, newArticle];
+          const updatedPages = currentPages.map((p, idx) =>
+            idx === (targetPageIndex < currentPages.length ? targetPageIndex : currentPages.length - 1)
+              ? { ...p, articles: updatedPageArticles }
+              : p
+          );
+
+          return {
+            ...prev,
+            pages: updatedPages,
+            articles: prev.articles,
+            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+          };
+        });
+
+        showNotification(`नया पृष्ठ जोड़कर उस पर सामग्री जोड़ दी गई!`);
+      }, 50);
+    }
+  }, [document, handleAddPage, pendingBlock, showNotification]);
 
   // Apply typography to all articles on current page
   const handleApplyTypographyToPage = useCallback(
@@ -2604,6 +2740,7 @@ export const App: React.FC = () => {
               totalPages={pages.length}
               onSelectPage={(pageNum) => handleSelectPage(pageNum - 1)}
               pageSize={document.metadata.pageSize}
+              isPageFull={currentPageCapacity.isFull}
               hasUnsavedChanges={hasUnsavedChanges}
               isSaving={isSaving}
               onSaveDraft={handleSaveDraft}
@@ -2734,6 +2871,7 @@ export const App: React.FC = () => {
                 onApplyLayoutRow={handleApplyLayoutRow}
                 onExportPdf={() => handleExportPdf(false)}
                 isExportingPdf={isExportingPdf}
+                isPageFull={currentPageCapacity.isFull}
               />
             )}
 
@@ -3052,7 +3190,8 @@ export const App: React.FC = () => {
                 onSwapArticles={handleSwapArticles}
                 onMoveArticleToPage={handleMoveArticleToPage}
                 onTogglePageLayoutMode={handleTogglePageLayoutMode}
-                onReportDomMeasurements={setDomMeasurements}
+                onReportDomMeasurements={handleReportDomMeasurements}
+                isPageFull={currentPageCapacity.isFull}
               />
             </div>
 
@@ -3101,6 +3240,7 @@ export const App: React.FC = () => {
                 onCloseMasthead={() => setIsMastheadSelected(false)}
                 onExportPdf={() => handleExportPdf(false)}
                 isExportingPdf={isExportingPdf}
+                isPageFull={currentPageCapacity.isFull}
               />
             )}
           </div>
@@ -3399,21 +3539,26 @@ export const App: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄⚠️</div>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>📄⚠️</div>
             <h3
               style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#111827' }}
             >
-              Page bhar gaya - naya page jodein?
+              पृष्ठ {safePageIndex + 1} भर चुका है! (Page Full)
             </h3>
             <p
-              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.5 }}
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.6 }}
             >
-              इस पृष्ठ पर और नया ब्लॉक जोड़ने के लिए पर्याप्त खाली जगह नहीं बची है। क्या आप अगला
-              पृष्ठ जोड़ना चाहते हैं?
+              इस पृष्ठ पर और सामग्री जोड़ने के लिए स्थान उपलब्ध नहीं है। सामग्री जोड़ने से खबर प्रिंट सीमा से बाहर कट जाएगी।
+              <br />
+              <strong>क्या आप नया पृष्ठ जोड़कर उस पर यह सामग्री रखना चाहते हैं?</strong>
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
-                onClick={() => setShowPageFullModal(false)}
+                type="button"
+                onClick={() => {
+                  setShowPageFullModal(false);
+                  setPendingBlock(null);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '4px',
@@ -3425,15 +3570,13 @@ export const App: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                रद्द करें
+                रद्द करें (Cancel)
               </button>
               <button
-                onClick={() => {
-                  setShowPageFullModal(false);
-                  handleAddPage();
-                }}
+                type="button"
+                onClick={handleConfirmAddPageWithPendingBlock}
                 style={{
-                  padding: '8px 16px',
+                  padding: '8px 18px',
                   borderRadius: '4px',
                   border: 'none',
                   background: '#b91c1c',
@@ -3441,9 +3584,12 @@ export const App: React.FC = () => {
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                + नया पेज जोड़ें
+                <span>+</span> हाँ, नया पृष्ठ जोड़ें (+ Page)
               </button>
             </div>
           </div>

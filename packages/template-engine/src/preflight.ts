@@ -4,6 +4,7 @@ import type {
   PreflightIssue,
   PreflightSeverity,
   Article,
+  NewspaperPage,
 } from '@epaper-studio/document-schema';
 import {
   PreflightReportSchema,
@@ -13,6 +14,7 @@ import {
   validateFrameInsidePrintableArea,
 } from '@epaper-studio/document-schema';
 import { balanceNewspaperPage } from './balancer.js';
+import { findNearestFreeSlot } from './freeLayout.js';
 
 export interface PreflightOptions {
   /** Optional reference date (default: today's ISO string / current date) */
@@ -42,7 +44,7 @@ export interface PreflightOptions {
   checkColumnBalancing?: boolean;
 }
 
-const PAGE_CAPACITY_WORDS: Record<string, number> = {
+export const PAGE_CAPACITY_WORDS: Record<string, number> = {
   a3: 1800,
   a4: 850,
   tabloid: 1200,
@@ -675,4 +677,172 @@ export function runPreflightValidation(
   };
 
   return PreflightReportSchema.parse(report);
+}
+
+export interface PageCapacityStatus {
+  isFull: boolean;
+  reason?:
+    | 'dom_overflow'
+    | 'element_overflow'
+    | 'free_slot_exhausted'
+    | 'word_budget_exceeded'
+    | 'max_articles_exceeded'
+    | 'grid_area_exhausted';
+  message: string;
+  wordCount: number;
+  wordBudget: number;
+  articleCount: number;
+  maxArticles: number;
+}
+
+/**
+ * Validates whether a newspaper page has reached its maximum physical and typographic capacity,
+ * preventing accidental content overflow and clipping.
+ */
+export function isPageCapacityFull(
+  page: NewspaperPage,
+  doc: NewspaperDocument,
+  options: {
+    domMeasurements?: Array<{
+      articleId: string;
+      isOverflown: boolean;
+      scrollHeight: number;
+      clientHeight: number;
+    }>;
+    isPageDomOverflown?: boolean;
+    additionalArticle?: Partial<Article>;
+  } = {}
+): PageCapacityStatus {
+  const pageSize = doc.metadata.pageSize || 'broadsheet';
+  const orientation = doc.metadata.orientation || 'portrait';
+  const wordBudget = PAGE_CAPACITY_WORDS[pageSize] || 1500;
+  const maxArticles = pageSize === 'a4' ? 6 : pageSize === 'tabloid' ? 8 : 12;
+
+  // 1. Check DOM-level overflow if reported by the live canvas
+  if (options.isPageDomOverflown) {
+    return {
+      isFull: true,
+      reason: 'dom_overflow',
+      message: 'पृष्ठ की सामग्री प्रिंट सुरक्षित क्षेत्र से बाहर जा रही है।',
+      wordCount: 0,
+      wordBudget,
+      articleCount: page.articles.length,
+      maxArticles,
+    };
+  }
+
+  // 2. Check if any individual article on this page has visual DOM overflow
+  if (options.domMeasurements && options.domMeasurements.length > 0) {
+    const pageArticleIds = new Set(page.articles.map((a) => a.id));
+    const hasOverflownArticle = options.domMeasurements.some(
+      (m) => pageArticleIds.has(m.articleId) && m.isOverflown
+    );
+    if (hasOverflownArticle) {
+      return {
+        isFull: true,
+        reason: 'element_overflow',
+        message: 'इस पृष्ठ पर खबरों में टेक्स्ट ओवरफ्लो है और जगह समाप्त हो चुकी है।',
+        wordCount: 0,
+        wordBudget,
+        articleCount: page.articles.length,
+        maxArticles,
+      };
+    }
+  }
+
+  // 3. Free Layout: check slot availability
+  if (page.layoutMode === 'free') {
+    const blockW = options.additionalArticle?.frame?.w ?? 90;
+    const blockH = options.additionalArticle?.frame?.h ?? 60;
+    const slot = findNearestFreeSlot(page, doc, blockW, blockH, 4);
+    if (!slot.found || !slot.slot) {
+      return {
+        isFull: true,
+        reason: 'free_slot_exhausted',
+        message: 'इस पृष्ठ पर नए ब्लॉक के लिए पर्याप्त खाली जगह नहीं बची है।',
+        wordCount: 0,
+        wordBudget,
+        articleCount: page.articles.length,
+        maxArticles,
+      };
+    }
+  }
+
+  // 4. Calculate total words with or without additional article
+  const articlesToEvaluate = options.additionalArticle
+    ? [...page.articles, options.additionalArticle as Article]
+    : page.articles;
+
+  const totalWords = articlesToEvaluate.reduce(
+    (sum, a) =>
+      sum +
+      (a.headline ? a.headline.trim().split(/\s+/).filter(Boolean).length : 0) +
+      (a.body ? a.body.trim().split(/\s+/).filter(Boolean).length : 0),
+    0
+  );
+
+  // If word count exceeds 115% of page capacity budget
+  if (totalWords > wordBudget * 1.15) {
+    return {
+      isFull: true,
+      reason: 'word_budget_exceeded',
+      message: `पृष्ठ शब्द सीमा (${totalWords}/${wordBudget} शब्द) पूरी हो चुकी है।`,
+      wordCount: totalWords,
+      wordBudget,
+      articleCount: articlesToEvaluate.length,
+      maxArticles,
+    };
+  }
+
+  // 5. Maximum practical article count per page
+  if (articlesToEvaluate.length > maxArticles) {
+    return {
+      isFull: true,
+      reason: 'max_articles_exceeded',
+      message: `इस पृष्ठ पर अधिकतम समाचार संख्या (${maxArticles}) पूरी हो चुकी है।`,
+      wordCount: totalWords,
+      wordBudget,
+      articleCount: articlesToEvaluate.length,
+      maxArticles,
+    };
+  }
+
+  // 6. Grid Area Volumetric Check (Auto Layout)
+  if (page.layoutMode !== 'free') {
+    const pageCols = page.columnCount || doc.layout.columnCount || 4;
+    const isFirstPage = (page.pageNumber ?? 1) === 1;
+    const dims = getPageDimensions(pageSize, orientation, doc.metadata.dimensions);
+    const usableHeightPx = (dims.heightPt * 96) / 72;
+    const headerHeightPx = isFirstPage ? 160 : 40;
+    const footerHeightPx = 35;
+    const availableColumnHeightPx = Math.max(100, usableHeightPx - headerHeightPx - footerHeightPx);
+    const totalGridCapacityPx = pageCols * availableColumnHeightPx;
+
+    const totalOccupiedPx = articlesToEvaluate.reduce((sum, art) => {
+      const span = Math.min(pageCols, Math.max(1, art.columnSpan || 1));
+      const estHeight = estimateArticleRequiredHeightPx(art, pageCols);
+      return sum + span * estHeight;
+    }, 0);
+
+    if (totalOccupiedPx > totalGridCapacityPx * 1.08) {
+      return {
+        isFull: true,
+        reason: 'grid_area_exhausted',
+        message: 'इस पृष्ठ का ग्रिड क्षेत्र पूरी तरह भर चुका है।',
+        wordCount: totalWords,
+        wordBudget,
+        articleCount: articlesToEvaluate.length,
+        maxArticles,
+      };
+    }
+  }
+
+  return {
+    isFull: false,
+    message: 'पृष्ठ पर सामग्री जोड़ने के लिए स्थान उपलब्ध है।',
+    wordCount: totalWords,
+    wordBudget,
+    articleCount: articlesToEvaluate.length,
+    maxArticles,
+  };
 }

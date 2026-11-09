@@ -55,6 +55,7 @@ export interface TopBarProps {
   isSidebarOpen?: boolean;
   onToggleInspector?: () => void;
   isInspectorOpen?: boolean;
+  isPageFull?: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -99,6 +100,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   isSidebarOpen = true,
   onToggleInspector,
   isInspectorOpen = true,
+  isPageFull = false,
 }) => {
   const { t, locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -415,8 +417,25 @@ export const TopBar: React.FC<TopBarProps> = ({
           ◀
         </button>
 
-        <span style={{ fontSize: '11.5px', color: '#FAF8F5', fontWeight: 600 }}>
-          {currentPageNumber} / {totalPages}
+        <span style={{ fontSize: '11.5px', color: '#FAF8F5', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <span>{currentPageNumber} / {totalPages}</span>
+          {isPageFull && (
+            <span
+              title={locale === 'en' ? 'Page is full! Add a new page for additional content.' : 'पेज भर चुका है! नई सामग्री के लिए नया पेज जोड़ें।'}
+              style={{
+                fontSize: '9.5px',
+                padding: '1px 5px',
+                borderRadius: '3px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                fontWeight: 700,
+                letterSpacing: '0.4px',
+                lineHeight: 1.2,
+              }}
+            >
+              FULL
+            </span>
+          )}
         </span>
 
         <button

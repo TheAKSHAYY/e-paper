@@ -248,7 +248,7 @@ describe('TemplateEngine', () => {
         },
       ];
 
-      const html = renderNewspaperDocumentToHtml(doc);
+      const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
       expect(html).toContain('lang="hi"');
       expect(html).toContain('newspaper-article.lang-hi');
       expect(html).toContain('hyphens: manual');
@@ -307,7 +307,7 @@ describe('TemplateEngine', () => {
       doc.pages[0].articles = articles;
       doc.articles = articles;
 
-      const html = renderNewspaperDocumentToHtml(doc);
+      const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
       // 1. Grid container must have inline 12-column template
       expect(html).toContain('grid-template-columns: repeat(12, 1fr);');
@@ -351,7 +351,7 @@ describe('TemplateEngine', () => {
       doc.pages[0].articles = articles;
       doc.articles = articles;
 
-      const html = renderNewspaperDocumentToHtml(doc);
+      const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
       // 1. Grid container must have inline 4-column template resolved from layout.columnCount
       expect(html).toContain('grid-template-columns: repeat(4, 1fr);');
@@ -512,7 +512,7 @@ describe('TemplateEngine', () => {
         doc.articles[1].columnSpan = 1;
       }
 
-      const html = renderNewspaperDocumentToHtml(doc);
+      const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
       // Verify print stylesheet rules for Devanagari shaping & paragraph avoidance
       expect(html).toContain('break-inside: avoid;');
@@ -553,7 +553,7 @@ describe('TemplateEngine', () => {
         doc.pages[0].articles = fourArticles;
       }
 
-      const html = renderNewspaperDocumentToHtml(doc);
+      const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
       // Verify that there is strictly 1 .newspaper-page rendered
       const pageOccurrences = (html.match(/class="newspaper-page"/g) || []).length;

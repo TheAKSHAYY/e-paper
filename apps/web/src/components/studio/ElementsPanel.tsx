@@ -11,6 +11,7 @@ export interface ElementsPanelProps {
   onMoveArticleUp: (id: string) => void;
   onMoveArticleDown: (id: string) => void;
   pageNumber: number;
+  isPageFull?: boolean;
 }
 
 export interface ElementPreset {
@@ -534,6 +535,7 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
   onMoveArticleUp,
   onMoveArticleDown,
   pageNumber,
+  isPageFull = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'applied' | 'catalog'>('catalog');
   const [categoryFilter, setCategoryFilter] = useState<ElementType | 'all'>('all');
@@ -840,6 +842,32 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             WebkitOverflowScrolling: 'touch',
           }}
         >
+          {/* Page Full Warning Banner */}
+          {isPageFull && (
+            <div
+              style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '6px',
+                padding: '10px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                color: '#991b1b',
+              }}
+            >
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <div>
+                <strong style={{ display: 'block', fontSize: '12px' }}>पृष्ठ {pageNumber} भर चुका है! (Page Full)</strong>
+                <span style={{ fontSize: '11px', color: '#b91c1c' }}>
+                  अतिरिक्त सामग्री जोड़ने के लिए नया पृष्ठ जोड़ें या स्थान खाली करें।
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Category Filter Tabs */}
           <div
             style={{

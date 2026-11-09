@@ -1546,6 +1546,11 @@ export function partitionArticlesForPages(doc: NewspaperDocument): Article[][] {
 export interface RenderHtmlOptions {
   includePrintStyles?: boolean;
   baseUrl?: string;
+  /**
+   * When true, strictly renders the pages present in doc.pages without automatic overflow partitioning.
+   * Ensures 100% WYSIWYG fidelity between the studio canvas and client-side PDF export.
+   */
+  strictPages?: boolean;
 }
 
 export function getMastheadEmblemSvg(emblem?: string, customUrl?: string): string {
@@ -1666,13 +1671,11 @@ export function renderNewspaperDocumentToHtml(
   let pagesToRender: PageRenderUnit[];
 
   const explicitPages = doc.pages;
-  const hasExplicitPages =
-    explicitPages &&
-    explicitPages.length > 0 &&
-    (explicitPages.length > 1 || (explicitPages[0]?.articles?.length ?? 0) >= (doc.articles?.length ?? 0));
+  const isExplicitMultiPage = explicitPages && explicitPages.length > 1;
+  const isStrictSinglePage = _options.strictPages && explicitPages && explicitPages.length === 1;
 
-  if (explicitPages && hasExplicitPages) {
-    // Explicit multi-page or single-page publication (honors user's exact page count)
+  if (explicitPages && (isExplicitMultiPage || isStrictSinglePage)) {
+    // Explicit publication pages (honors exact page count in strict mode or explicit multi-page)
     pagesToRender = explicitPages.map((p, idx) => ({
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,

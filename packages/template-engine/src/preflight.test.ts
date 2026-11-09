@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createNewspaperDocument, runPreflightValidation } from './index';
+import { createNewspaperDocument, runPreflightValidation, isPageCapacityFull } from './index';
 
 describe('PDF Preflight Validation Engine (12-Point Audit)', () => {
   it('should report GREEN status when document is healthy and well-formed', () => {
@@ -321,6 +321,41 @@ describe('PDF Preflight Validation Engine (12-Point Audit)', () => {
       const overflowIssues = report.issues.filter((i) => i.type === 'text_overflow');
       expect(overflowIssues).toHaveLength(0);
       expect(report.canExport).toBe(true);
+    });
+
+    it('should detect when page capacity is full and prevent adding more content', () => {
+      const doc = createNewspaperDocument({ presetId: 'compact-local', pageSize: 'a4' });
+      const page = doc.pages[0];
+
+      // Page with default seed articles is not full
+      const initialStatus = isPageCapacityFull(page, doc);
+      expect(initialStatus.isFull).toBe(false);
+
+      // 1. Report full when live DOM overflow is detected
+      const domOverflowStatus = isPageCapacityFull(page, doc, { isPageDomOverflown: true });
+      expect(domOverflowStatus.isFull).toBe(true);
+      expect(domOverflowStatus.reason).toBe('dom_overflow');
+
+      // 2. Report full when word budget limit is exceeded on A4
+      const heavyArticles = Array.from({ length: 6 }).map((_, i) => ({
+        ...doc.articles[0],
+        id: `story-heavy-${i}`,
+        body: new Array(220).fill('महत्वपूर्ण विस्तृत समाचार विवरण').join(' '),
+      }));
+      const heavyPage = { ...page, articles: heavyArticles };
+
+      const wordBudgetStatus = isPageCapacityFull(heavyPage, doc);
+      expect(wordBudgetStatus.isFull).toBe(true);
+      expect(wordBudgetStatus.reason).toBe('word_budget_exceeded');
+
+      // 3. Report full when adding an additional article would exceed capacity
+      const fullStatusWithNew = isPageCapacityFull(page, doc, {
+        additionalArticle: {
+          headline: 'अत्यधिक बड़ा समाचार',
+          body: new Array(1200).fill('अतिरिक्त शब्द सीमा').join(' '),
+        },
+      });
+      expect(fullStatusWithNew.isFull).toBe(true);
     });
   });
 });

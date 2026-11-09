@@ -20,7 +20,10 @@ export function generatePrintHtml(doc: NewspaperDocument, baseUrl?: string): str
       : 'http://localhost:5173/';
   const effectiveBaseUrl = baseUrl || origin;
 
-  const html = renderNewspaperDocumentToHtml(doc, { baseUrl: effectiveBaseUrl });
+  const html = renderNewspaperDocumentToHtml(doc, {
+    baseUrl: effectiveBaseUrl,
+    strictPages: true,
+  });
 
   // Additional print overrides to ensure browser print dialog renders exact backgrounds and dimensions
   const printExtraCss = `

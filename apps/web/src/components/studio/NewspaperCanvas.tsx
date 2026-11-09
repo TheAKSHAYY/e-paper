@@ -96,13 +96,15 @@ export interface NewspaperCanvasProps {
   selectedElementPart?: SelectedElementPart;
   selectedParagraphIndex?: number | null;
   onDeselect?: () => void;
+  isPageFull?: boolean;
   onReportDomMeasurements?: (
     measurements: Array<{
       articleId: string;
       isOverflown: boolean;
       scrollHeight: number;
       clientHeight: number;
-    }>
+    }>,
+    isPageOverflown?: boolean
   ) => void;
 }
 
@@ -118,6 +120,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   selectedArticleId,
   usePhysicalCanvasCoordinates = true,
   useFreeLayout = false,
+  isPageFull = false,
   doc,
   onSelectArticle,
   onMoveArticleUp: _onMoveArticleUp,
@@ -182,8 +185,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
       });
     });
 
+    const sheetEl = sheetCanvasRef.current;
+    const gridEl = sheetEl?.querySelector<HTMLElement>('[data-testid="newspaper-articles-grid"]');
+    const isSheetOver = sheetEl ? sheetEl.scrollHeight > sheetEl.clientHeight + 4 : false;
+    const isGridOver = gridEl ? gridEl.scrollHeight > gridEl.clientHeight + 4 : false;
+    const isAnyArticleOver = Object.keys(map).length > 0;
+    const isPageOverflown = isSheetOver || isGridOver || isAnyArticleOver;
+
     setOverflownArticleMap(map);
-    onReportDomMeasurements?.(measurements);
+    onReportDomMeasurements?.(measurements, isPageOverflown);
   }, [
     page.articles,
     scale,
@@ -2087,12 +2097,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     <div
                       style={{
                         gridColumn: `span ${columnCount}`,
-                        border: `${visualDropBorderWidth}px dashed #2563eb`,
-                        backgroundColor: 'rgba(239, 246, 255, 0.92)',
+                        border: `${visualDropBorderWidth}px dashed ${isPageFull ? '#dc2626' : '#2563eb'}`,
+                        backgroundColor: isPageFull ? 'rgba(254, 242, 242, 0.95)' : 'rgba(239, 246, 255, 0.92)',
                         borderRadius: '6px',
                         padding: '16px',
                         textAlign: 'center',
-                        color: '#1d4ed8',
+                        color: isPageFull ? '#991b1b' : '#1d4ed8',
                         fontWeight: 600,
                         fontSize: '13px',
                         display: 'flex',
@@ -2100,13 +2110,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                         justifyContent: 'center',
                         gap: '8px',
                         marginBottom: '8px',
-                        boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
+                        boxShadow: isPageFull ? '0 4px 12px rgba(220,38,38,0.15)' : '0 4px 12px rgba(37,99,235,0.15)',
                         zIndex: 20,
                       }}
                     >
-                      <span style={{ fontSize: '18px' }}>📥</span>
+                      <span style={{ fontSize: '18px' }}>{isPageFull ? '⚠️' : '📥'}</span>
                       <span>
-                        Drop block to insert into Page {pageNumber} ({columnCount}-column grid)
+                        {isPageFull
+                          ? `पृष्ठ ${pageNumber} भर चुका है! सामग्री जोड़ने के लिए नया पृष्ठ जोड़ें (+ Add Page)`
+                          : `Drop block to insert into Page ${pageNumber} (${columnCount}-column grid)`}
                       </span>
                     </div>
                   )}

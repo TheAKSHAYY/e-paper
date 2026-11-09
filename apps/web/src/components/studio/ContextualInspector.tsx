@@ -69,6 +69,7 @@ export interface ContextualInspectorProps {
   onSelectParagraph?: (index: number | null) => void;
   onExportPdf?: () => void;
   isExportingPdf?: boolean;
+  isPageFull?: boolean;
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -108,6 +109,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onSelectParagraph,
   onExportPdf,
   isExportingPdf = false,
+  isPageFull: _isPageFull = false,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;

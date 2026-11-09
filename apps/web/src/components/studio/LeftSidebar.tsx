@@ -35,6 +35,7 @@ export interface LeftSidebarProps {
   width?: string | number;
   onExportPdf?: () => void;
   isExportingPdf?: boolean;
+  isPageFull?: boolean;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -64,6 +65,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   width,
   onExportPdf,
   isExportingPdf = false,
+  isPageFull = false,
 }) => {
   const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
   const { locale } = useI18n();
@@ -448,6 +450,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             onMoveArticleUp={onMoveArticleUp}
             onMoveArticleDown={onMoveArticleDown}
             pageNumber={currentPageIndex + 1}
+            isPageFull={isPageFull}
           />
         )}
 
