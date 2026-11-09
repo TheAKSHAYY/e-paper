@@ -1718,14 +1718,11 @@ export function renderNewspaperDocumentToHtml(
   let pagesToRender: PageRenderUnit[];
 
   const explicitPages = doc.pages;
-  const isExplicitMultiPage = Boolean(explicitPages && explicitPages.length > 1);
-  const isStrictSinglePage = Boolean(
-    _options.strictPages && explicitPages && explicitPages.length === 1
-  );
+  const hasExplicitPages = Boolean(explicitPages && explicitPages.length > 0);
 
-  if (explicitPages && (isExplicitMultiPage || isStrictSinglePage) && !_options.autoPaginate) {
+  if (hasExplicitPages && !_options.autoPaginate) {
     // Explicit publication pages (strictly honors user's page count and layout)
-    pagesToRender = explicitPages.map((p, idx) => ({
+    pagesToRender = explicitPages!.map((p, idx) => ({
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,
       layoutMode: p.layoutMode ?? 'auto',
@@ -2953,3 +2950,5 @@ export * from './segmenter.js';
 export * from './multiPageAllocator.js';
 export * from './mastheadPresets.js';
 export * from './editorialPresets.js';
+export * from './completePageTemplates.js';
+export * from './articleLayoutPresets.js';

@@ -17,6 +17,7 @@ import type {
   DailyEdition,
   PageDimensions,
   PageMargins,
+  EditorialPreset,
 } from '@epaper-studio/document-schema';
 import {
   getPublicationPages,
@@ -56,6 +57,8 @@ import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { PageSetupModal } from './components/studio/PageSetupModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { MastheadDesignerModal } from './components/studio/MastheadDesignerModal';
+import { TemplateGalleryModal } from './components/studio/TemplateGalleryModal';
+import type { CompletePageTemplate, MastheadPresetItem } from '@epaper-studio/template-engine';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
 import { PreflightReportModal } from './components/studio/PreflightReportModal';
@@ -395,6 +398,30 @@ export const App: React.FC = () => {
   const [isMastheadGalleryOpen, setIsMastheadGalleryOpen] = useState<boolean>(false);
   const [isMastheadDesignerOpen, setIsMastheadDesignerOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [editorMode, setEditorMode] = useState<'simple' | 'pro'>('simple');
+  const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState<boolean>(false);
+
+  // Complete Page Template Application Handler
+  const handleApplyCompleteTemplate = useCallback(
+    (template: CompletePageTemplate, replaceArticles: boolean) => {
+      const newDoc = template.createDocument();
+      if (!replaceArticles && document) {
+        const existingArticles = document.pages?.[0]?.articles || document.articles || [];
+        if (existingArticles.length > 0 && newDoc.pages && newDoc.pages[0]) {
+          newDoc.pages[0] = {
+            ...newDoc.pages[0],
+            articles: existingArticles,
+          };
+          newDoc.articles = existingArticles;
+        }
+      }
+      setDocument(newDoc);
+      setSelectedArticleId(null);
+      setCurrentPageIndex(0);
+      showNotification(`✓ '${template.name}' टेम्पलेट सफलतापूर्वक लागू किया गया`);
+    },
+    [document, showNotification]
+  );
 
   // New Edition and Dashboard opening handlers
   const handleCreateNewEdition = useCallback(
@@ -1982,6 +2009,33 @@ export const App: React.FC = () => {
     [safePageIndex]
   );
 
+  const handleApplyMastheadPresetFromGallery = useCallback(
+    (preset: MastheadPresetItem) => {
+      handleUpdateMasthead({
+        ...document.masthead,
+        ...preset.config,
+      });
+      showNotification(`✓ '${preset.name}' मास्टहेड लागू किया गया`);
+    },
+    [document.masthead, handleUpdateMasthead, showNotification]
+  );
+
+  const handleApplyArticleLayoutFromGallery = useCallback(
+    (preset: EditorialPreset) => {
+      handleAddBlock(preset.data);
+      showNotification(`✓ '${preset.name}' आलेख लेआउट जोड़ा गया`);
+    },
+    [handleAddBlock, showNotification]
+  );
+
+  const handleApplyEditorialPresetFromGallery = useCallback(
+    (preset: EditorialPreset) => {
+      handleAddBlock(preset.data);
+      showNotification(`✓ '${preset.name}' जोड़ा गया`);
+    },
+    [handleAddBlock, showNotification]
+  );
+
   const handlePageSizeChange = useCallback((pageSize: PageSizePreset) => {
     setDocument((prev) => {
       const dimensions = getPageDimensions(pageSize, prev.metadata.orientation);
@@ -2757,7 +2811,10 @@ export const App: React.FC = () => {
               useFreeLayout={useFreeLayout}
               onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
               onNewPublication={() => setIsSetupOpen(true)}
-              onOpenTemplates={() => setIsPresetsOpen(true)}
+              editorMode={editorMode}
+              onToggleEditorMode={() => setEditorMode((m) => (m === 'simple' ? 'pro' : 'simple'))}
+              onOpenTemplateGallery={() => setIsTemplateGalleryOpen(true)}
+              onOpenTemplates={() => setIsTemplateGalleryOpen(true)}
               onOpenPageSetup={() => setIsPageSetupOpen(true)}
               onOpenMastheadDesigner={() => setIsMastheadDesignerOpen(true)}
               onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
@@ -3230,6 +3287,7 @@ export const App: React.FC = () => {
                   setSelectedParaIndex(null);
                 }}
                 onCloseMasthead={() => setIsMastheadSelected(false)}
+                editorMode={editorMode}
                 onExportPdf={() => handleExportPdf(false)}
                 isExportingPdf={isExportingPdf}
                 isPageFull={currentPageCapacity.isFull}
@@ -3365,6 +3423,16 @@ export const App: React.FC = () => {
           showNotification('✓ मास्टहेड सफलतापूर्वक अपडेट किया गया (Masthead updated)');
         }}
         onClose={() => setIsMastheadDesignerOpen(false)}
+      />
+
+      <TemplateGalleryModal
+        isOpen={isTemplateGalleryOpen}
+        onClose={() => setIsTemplateGalleryOpen(false)}
+        onApplyCompleteTemplate={handleApplyCompleteTemplate}
+        onApplyMastheadPreset={handleApplyMastheadPresetFromGallery}
+        onApplyArticleLayout={handleApplyArticleLayoutFromGallery}
+        onApplyEditorialPreset={handleApplyEditorialPresetFromGallery}
+        currentDoc={document}
       />
 
       <DraftsManagerModal

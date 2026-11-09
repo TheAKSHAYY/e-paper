@@ -555,12 +555,18 @@ export class RendererWorker {
       }
 
       // Render vector PDF via Chromium print engine
+      const pageRanges =
+        options.strictPages && doc.pages && doc.pages.length > 0
+          ? `1-${doc.pages.length}`
+          : undefined;
+
       const pdfBuffer = await page.pdf({
         width: `${widthIn}in`,
         height: `${heightIn}in`,
         printBackground: true,
         margin: { top: '0in', right: '0in', bottom: '0in', left: '0in' },
         preferCSSPageSize: true,
+        ...(pageRanges ? { pageRanges } : {}),
       });
 
       const metadata = inspectPdf(pdfBuffer);

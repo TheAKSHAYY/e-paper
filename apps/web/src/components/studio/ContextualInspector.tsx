@@ -71,6 +71,7 @@ export interface ContextualInspectorProps {
   onExportPdf?: () => void;
   isExportingPdf?: boolean;
   isPageFull?: boolean;
+  editorMode?: 'simple' | 'pro';
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -112,6 +113,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   onExportPdf,
   isExportingPdf = false,
   isPageFull: _isPageFull = false,
+  editorMode = 'simple',
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -331,8 +333,29 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
              * 1. ARTICLE / STORY INSPECTOR (WHEN ARTICLE IS SELECTED)
              * ========================================================== */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Position & Dimensions in Millimeters (Free Layout Mode) */}
-              {selectedArticle.frame && (
+              {/* Simple Mode indicator banner */}
+              {editorMode === 'simple' && (
+                <div
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #86efac',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '11.5px',
+                    color: '#166534',
+                    fontWeight: 600,
+                  }}
+                >
+                  <span>✨ सरल संपादन मोड (Simple Mode)</span>
+                  <span style={{ fontSize: '10.5px', color: '#15803d' }}>ग्रिड सुरक्षित</span>
+                </div>
+              )}
+
+              {/* Position & Dimensions in Millimeters (Free Layout Mode - Pro only) */}
+              {selectedArticle.frame && editorMode === 'pro' && (
                 <div
                   style={{
                     backgroundColor: '#f0fdf4',

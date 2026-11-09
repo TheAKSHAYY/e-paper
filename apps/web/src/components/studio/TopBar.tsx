@@ -57,6 +57,9 @@ export interface TopBarProps {
   onToggleInspector?: () => void;
   isInspectorOpen?: boolean;
   isPageFull?: boolean;
+  editorMode?: 'simple' | 'pro';
+  onToggleEditorMode?: () => void;
+  onOpenTemplateGallery?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -103,6 +106,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleInspector,
   isInspectorOpen = true,
   isPageFull = false,
+  editorMode = 'simple',
+  onToggleEditorMode,
+  onOpenTemplateGallery,
 }) => {
   const { t, locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -601,10 +607,67 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* ========================================================
-       * RIGHT: HERO PDF BUTTON (FIRST!), Tools & Publishing
+       * RIGHT: MODE TOGGLE, TEMPLATE GALLERY, HERO PDF BUTTON & Tools
        * ======================================================== */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-        {/* PRIMARY HERO PDF EXPORT BUTTON - POSITIONED FIRST SO IT IS NEVER CLIPPED */}
+        {/* MODE TOGGLE PILL: SIMPLE MODE vs PRO MODE */}
+        {onToggleEditorMode && (
+          <button
+            onClick={onToggleEditorMode}
+            data-testid="topbar-btn-editor-mode"
+            title={
+              editorMode === 'simple'
+                ? 'पेशेवर संपादक पर जाएं (Switch to Professional Mode)'
+                : 'सरल मोड पर जाएं (Switch to Simple Mode)'
+            }
+            style={{
+              backgroundColor: editorMode === 'simple' ? '#166534' : '#1e293b',
+              color: '#ffffff',
+              border: editorMode === 'simple' ? '1px solid #22c55e' : '1px solid #475569',
+              borderRadius: '20px',
+              padding: '5px 12px',
+              fontSize: '11.5px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              boxShadow: editorMode === 'simple' ? '0 1px 4px rgba(34, 197, 94, 0.3)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{editorMode === 'simple' ? '✨ सरल मोड' : '⚙️ पेशेवर मोड'}</span>
+          </button>
+        )}
+
+        {/* TEMPLATE GALLERY BUTTON (DESIGN BADLEIN) */}
+        {onOpenTemplateGallery && (
+          <button
+            onClick={onOpenTemplateGallery}
+            data-testid="topbar-btn-template-gallery"
+            title={locale === 'en' ? 'Open Template Library' : 'रेडीमेड अखबार टेम्पलेट चुनें'}
+            style={{
+              backgroundColor: '#b91c1c',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 4px rgba(185, 28, 28, 0.25)',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <span style={{ fontSize: '13px' }}>📰</span>
+            <span>{locale === 'en' ? 'Templates' : 'डिजाइन बदलें'}</span>
+          </button>
+        )}
+
+        {/* PRIMARY HERO PDF EXPORT BUTTON - POSITIONED PROMINENTLY */}
         <button
           data-testid="btn-export-pdf"
           onClick={onExportPdf}
