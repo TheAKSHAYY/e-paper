@@ -3,13 +3,14 @@
 **Status:** Architecture & Technical Specification (Phase 2A Revision)  
 **Date:** November 2, 2026  
 **Target:** Professional Newspaper Composition for Multilingual & Devanagari Publishers  
-**Constraints:** Analysis & Specification Only — Zero Application Code Modified  
+**Constraints:** Analysis & Specification Only — Zero Application Code Modified
 
 ---
 
 ## 1. Executive Summary & Problem Diagnosis
 
 Existing page layouts in E-Paper Studio exhibit noticeable visual defects when publishers add or modify content:
+
 1. **Narrow Vertical Strips:** Long articles forced into 1-column spans create 800px tall, unreadable vertical ribbons.
 2. **Accidental White-Space Voids:** Rows containing mixed-length articles leave large empty boxes underneath shorter stories because CSS grid row tracks expand to match the tallest article in that row.
 3. **Horizontal Span Wrap Gaps:** Adding an article that exceeds remaining column tracks in a row forces an early wrap, leaving right-hand columns completely hollow.
@@ -22,13 +23,17 @@ This revised specification defines the **Modular Newspaper Composition Engine (M
 ## 2. True 2D Layout Model
 
 ### A. Why Horizontal Bands Are Insufficient
+
 A layout model that merely groups stories into horizontal bands whose spans sum to $C$ (the page column count) fails in vertical space balancing:
+
 - Suppose a band spanning 4 columns contains Article A ($S=2$, 400 words $\to 350\text{px}$ tall) and Article B ($S=2$, 80 words $\to 130\text{px}$ tall).
 - If treated as a single horizontal band, the band height is locked to $350\text{px}$.
 - The space underneath Article B ($2\text{ cols} \times 220\text{px}$) remains an unfillable void unless the 2D space beneath Article B is modeled as an independent rectangular slot where secondary articles can stack vertically.
 
 ### B. The 2D Modular Grid Coordinate Space
+
 The page content area is formalized as a continuous 2D Cartesian region subdivided into discrete horizontal column tracks and vertical grid units:
+
 - **Horizontal Tracks:** $C \in \{4, 6, 8, 12\}$ column tracks.
   - Column track $c \in [0, C-1]$ starts at:
     $$x_c = X_{\text{origin}} + c \cdot (W_{\text{col}} + G_{\text{col}})$$
@@ -60,7 +65,9 @@ The page content area is formalized as a continuous 2D Cartesian region subdivid
 ```
 
 ### C. Available Rectangular Region Tracking
+
 The engine models available space using an **Occupancy Rectangle Ledger** $\mathcal{L}_{\text{free}}$:
+
 1. Initially, $\mathcal{L}_{\text{free}} = \{ \text{PrintableArea} \}$.
 2. Locked elements and fixed advertisements are subtracted from $\mathcal{L}_{\text{free}}$, splitting free space into maximal disjoint rectangular regions.
 3. As articles are placed, remaining free regions update dynamically.
@@ -71,16 +78,17 @@ The engine models available space using an **Occupancy Rectangle Ledger** $\math
 
 We evaluate four distinct algorithmic paradigms for newspaper page composition:
 
-| Algorithm Paradigm | Time Complexity | Space Complexity | Strengths | Weaknesses | Suitability for Newspaper Studio |
-| :--- | :---: | :---: | :--- | :--- | :---: |
-| **1. Greedy First-Fit Decreasing (FFD)** | $O(N \log N)$ | $O(N)$ | Simplest to implement; immediate execution (<1ms). | Trapped in local sub-optima; leaves large jagged voids; cannot pair short articles together under a tall neighbor. | ❌ Poor editorial quality |
-| **2. Skyline / MaxRects 2D Bin Packing** | $O(N^2)$ to $O(N^3)$ | $O(N)$ | Proven 2D geometric efficiency; prevents overlaps by construction. | Assumes rigid, fixed-dimension rectangles. In journalism, article height is **elastic** (changes dynamically with column span). | ❌ Incompatible with elastic text |
-| **3. Pure Branch-and-Bound / Backtracking** | $O(S^N)$ worst-case | $O(N)$ | Finds mathematically optimal global score; guarantees optimal baselines. | Exponential state expansion. For $N=12$ stories with 4 span choices, $4^{12} \approx 16.7\text{M}$ leaves; risks 50–200ms UI pauses without heavy pruning. | ⚠️ Over-engineered, latency risk |
-| **4. Hybrid Deterministic Modular Heuristic (HDMH)** | $O(N \cdot C^2)$ | $O(N + C)$ | **Recommended.** Bounded search space; models 2D modular sector decomposition; handles elastic text heights natively; deterministic; <10ms execution. | Requires structured sector splitting heuristics. |  **Recommended** |
+| Algorithm Paradigm                                   |   Time Complexity    | Space Complexity | Strengths                                                                                                                                             | Weaknesses                                                                                                                                                 | Suitability for Newspaper Studio  |
+| :--------------------------------------------------- | :------------------: | :--------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------: |
+| **1. Greedy First-Fit Decreasing (FFD)**             |    $O(N \log N)$     |      $O(N)$      | Simplest to implement; immediate execution (<1ms).                                                                                                    | Trapped in local sub-optima; leaves large jagged voids; cannot pair short articles together under a tall neighbor.                                         |     ❌ Poor editorial quality     |
+| **2. Skyline / MaxRects 2D Bin Packing**             | $O(N^2)$ to $O(N^3)$ |      $O(N)$      | Proven 2D geometric efficiency; prevents overlaps by construction.                                                                                    | Assumes rigid, fixed-dimension rectangles. In journalism, article height is **elastic** (changes dynamically with column span).                            | ❌ Incompatible with elastic text |
+| **3. Pure Branch-and-Bound / Backtracking**          | $O(S^N)$ worst-case  |      $O(N)$      | Finds mathematically optimal global score; guarantees optimal baselines.                                                                              | Exponential state expansion. For $N=12$ stories with 4 span choices, $4^{12} \approx 16.7\text{M}$ leaves; risks 50–200ms UI pauses without heavy pruning. | ⚠️ Over-engineered, latency risk  |
+| **4. Hybrid Deterministic Modular Heuristic (HDMH)** |   $O(N \cdot C^2)$   |    $O(N + C)$    | **Recommended.** Bounded search space; models 2D modular sector decomposition; handles elastic text heights natively; deterministic; <10ms execution. | Requires structured sector splitting heuristics.                                                                                                           |          **Recommended**          |
 
 ### Recommendation & Justification: Hybrid Deterministic Modular Heuristic (HDMH)
 
 The **Hybrid Deterministic Modular Heuristic (HDMH)** is recommended because:
+
 1. Real newspaper layouts are **modular**, not arbitrary 2D packing puzzles. Human editors arrange pages into 2 to 4 vertical sectors (Lead Sector, Mid-Page Body, Bottom Anchor/Ad Band).
 2. By decomposing the page into horizontal bands and allowing multi-story vertical column stacking within multi-column sectors, HDMH combines the global alignment of modular design with the flexibility of 2D sub-slotting.
 3. Its computational complexity is strictly polynomial: $O(N \cdot C^2)$. For an 8-column broadsheet with 10 articles, the solver evaluates fewer than 640 states, executing in **< 8ms** on any standard client browser without web workers or server round-trips.
@@ -97,44 +105,44 @@ function balanceNewspaperPage(
 ): BalancingResult {
   const columnCount = resolvePageColumnCount(doc, page);
   const bounds = getPageLayoutBounds(page, doc);
-  
+
   // 1. Separate Locked and Unlocked Elements
-  const lockedArticles = page.articles.filter(a => a.locked || a.lockPosition);
-  const unlockedArticles = page.articles.filter(a => !a.locked && !a.lockPosition);
-  
+  const lockedArticles = page.articles.filter((a) => a.locked || a.lockPosition);
+  const unlockedArticles = page.articles.filter((a) => !a.locked && !a.lockPosition);
+
   // 2. Build Obstacle Map from Locked Articles and Ads
   const obstacleMap = buildObstacleMap(lockedArticles, bounds, columnCount);
-  
+
   // 3. Sort Unlocked Articles by Editorial Importance and Content Volume
   const sortedArticles = sortEditorialPriority(unlockedArticles);
-  
+
   // 4. Calculate Content Volume and Permissible Span Matrix
-  const candidateProfiles = sortedArticles.map(art => {
+  const candidateProfiles = sortedArticles.map((art) => {
     return calculatePermissibleSpans(art, columnCount, doc.layout);
   });
-  
+
   // 5. Partition Page into Modular Vertical Bands
   const bands = generateModularBands(bounds, obstacleMap, candidateProfiles, columnCount);
-  
+
   // 6. Pack Articles into Bands with 2D Vertical Column Stacking
   const placements: PlacedArticle[] = [];
   for (const band of bands) {
     const bandPlacements = solveBandPlacement(band, candidateProfiles, columnCount);
     placements.push(...bandPlacements);
   }
-  
+
   // 7. Tune Inner Multi-Columns and Micro-Spacing
   harmonizeBaselinesAndInnerColumns(placements, doc.layout);
-  
+
   // 8. Evaluate Score and Verify Acceptance Criteria
   const score = evaluateLayoutScore(placements, bounds, obstacleMap);
   const overflowIssues = detectUnplacedArticles(unlockedArticles, placements);
-  
+
   return {
     balancedArticles: assembleBalancedArticles(page.articles, placements),
     score,
     overflowIssues,
-    hasChanges: checkHasGeometryChanged(page.articles, placements)
+    hasChanges: checkHasGeometryChanged(page.articles, placements),
   };
 }
 ```
@@ -146,7 +154,9 @@ function balanceNewspaperPage(
 Inner multi-column body formatting must **never be set blindly equal to the outer page column span**. Doing so causes severe typographical collapse in Devanagari script.
 
 ### A. Physical Column Width Limits for Devanagari Script
-In Devanagari typography, words cannot be hyphenated arbitrarily without severing complex conjuncts (*samyuktaksaras*) and vowel signs (*matras*).
+
+In Devanagari typography, words cannot be hyphenated arbitrarily without severing complex conjuncts (_samyuktaksaras_) and vowel signs (_matras_).
+
 - An average Hindi news word occupies 5.5 characters ($\approx 32\text{pt}$ at $10\text{pt}$ font size).
 - Long compound words (e.g., `अंतरराष्ट्रीय`, `पर्यावरणविदों`, `विश्वविद्यालय`) measure $65 - 85\text{pt}$ wide.
 - If a column is narrower than **$45\text{mm}$ ($128\text{pt}$)**, lines hold only 2 to 3 words. Under justified text alignment (`text-align: justify; text-justify: inter-word;`), this produces severe typographical rivers (wide empty white gaps between words) and clipped conjuncts.
@@ -154,6 +164,7 @@ In Devanagari typography, words cannot be hyphenated arbitrarily without severin
 ### B. Inner Body Column Selection Rules
 
 Let:
+
 - $S_{\text{outer}}$ = Outer grid column span ($1$ to $C$).
 - $W(S_{\text{outer}})$ = Physical width of the article container.
 - $W_{\text{inner}}(c) = \frac{W(S_{\text{outer}}) - (c - 1) \cdot G_{\text{inner}}}{c}$ = Width of an individual inner body column.
@@ -161,7 +172,7 @@ Let:
 
 The inner column count $c_{\text{inner}}$ is determined deterministically:
 
-$$\begin{cases}
+$$ \begin{cases}
 c_{\text{inner}} = 1, & \text{if } S_{\text{outer}} = 1 \text{ or } N_{\text{words}} < 120 \\
 c_{\text{inner}} = 2, & \text{if } S_{\text{outer}} \in \{2, 3\} \text{ and } N_{\text{words}} \ge 120 \text{ and } W_{\text{inner}}(2) \ge 45\text{mm} \\
 c_{\text{inner}} = 3, & \text{if } S_{\text{outer}} \ge 3 \text{ and } N_{\text{words}} \ge 280 \text{ and } W_{\text{inner}}(3) \ge 45\text{mm} \\
@@ -259,7 +270,7 @@ In strict compliance with user instructions:
 - **Reporting Overset Content:** When total article content exceeds the printable area of the current page, the balancer:
   1. Fills the current page with the highest-priority articles up to optimal density ($88\%$).
   2. Flags remaining unplaced articles in a clear, publisher-facing **Editorial Overset Notice**:
-     > **"अतिरिक्त सामग्री चेतावनी (Overflow Advisory):"**  
+     > **"अतिरिक्त सामग्री चेतावनी (Overflow Advisory):"**
      > 2 लेख (व्यापार समाचार, खेल संक्षेप) इस पृष्ठ पर सुरक्षित रूप से नहीं समा सकते। कृपया पृष्ठ का आकार बदलें या इन लेखों को पृष्ठ 2 पर स्थानांतरित करें।
   3. Leaves the unplaced articles in the page's staging shelf without deleting their text.
 
@@ -335,3 +346,4 @@ flowchart LR
 ---
 
 *This revised specification is submitted for review. No application code has been modified.*
+$$

@@ -117,7 +117,9 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
               }}
             />
             <p style={{ fontSize: '13px', color: '#6B7280' }}>
-              {locale === 'hi' ? 'सत्र स्थापित किया जा रहा है...' : 'Establishing newsroom session...'}
+              {locale === 'hi'
+                ? 'सत्र स्थापित किया जा रहा है...'
+                : 'Establishing newsroom session...'}
             </p>
           </div>
         )}
@@ -144,7 +146,9 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
               {locale === 'hi' ? 'सत्यापन सफल!' : 'Verification Complete!'}
             </p>
             <p style={{ fontSize: '12px', color: '#6B7280' }}>
-              {locale === 'hi' ? 'आपको रीडायरेक्ट किया जा रहा है...' : 'Redirecting to your dashboard...'}
+              {locale === 'hi'
+                ? 'आपको रीडायरेक्ट किया जा रहा है...'
+                : 'Redirecting to your dashboard...'}
             </p>
           </div>
         )}
@@ -167,7 +171,9 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
             >
               ⚠️
             </div>
-            <p style={{ fontSize: '13px', color: '#991B1B', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+            <p
+              style={{ fontSize: '13px', color: '#991B1B', margin: '0 0 20px 0', lineHeight: 1.5 }}
+            >
               {errorMessage}
             </p>
             <button
@@ -194,4 +200,3 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
     </AuthLayout>
   );
 };
-

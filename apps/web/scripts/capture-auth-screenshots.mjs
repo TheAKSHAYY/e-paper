@@ -262,7 +262,9 @@ async function run() {
       fullPage: true,
     });
 
-    console.log('[Capture Phase 2] All visual regression screenshots captured successfully with exit code 0!');
+    console.log(
+      '[Capture Phase 2] All visual regression screenshots captured successfully with exit code 0!'
+    );
   } finally {
     await browser.close();
     server.httpServer.close();

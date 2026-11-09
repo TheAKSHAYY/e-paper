@@ -63,7 +63,8 @@ export const hi: TranslationDictionary = {
     howItWorksHeading: 'कार्यप्रणाली',
     howItWorksSubtitle: 'कथा संपादन से लेकर मुद्रण-योग्य पीडीएफ तक तीन सरल चरण।',
     whyStudioHeading: 'ई-पेपर स्टूडियो ही क्यों',
-    whyStudioSubtitle: 'उन प्रकाशकों के लिए विशेष रूप से निर्मित जो संपादकीय गरिमा, मुद्रण कला और स्वतंत्र वितरण को महत्व देते हैं।',
+    whyStudioSubtitle:
+      'उन प्रकाशकों के लिए विशेष रूप से निर्मित जो संपादकीय गरिमा, मुद्रण कला और स्वतंत्र वितरण को महत्व देते हैं।',
     pricingHeading: 'पारदर्शी एवं स्वतंत्र प्रकाशन प्रणाली',
     pricingSubtitle: 'ओपन-सोर्स सॉफ़्टवेयर की स्वतंत्रता और डेटा की पूर्ण स्थानीय सुरक्षा।',
     communityTierTitle: 'सामुदायिक संस्करण',
@@ -150,7 +151,8 @@ export const hi: TranslationDictionary = {
     sidebarTabTemplates: 'टेम्पलेट्स',
     sidebarTabPreflight: 'प्रीफ़्लाइट',
     inspectorTitle: 'कथा संपादक',
-    selectArticlePrompt: 'कैनवास पर किसी भी लेख को चुनकर उसकी सामग्री और मुद्रण कला को संपादित करें।',
+    selectArticlePrompt:
+      'कैनवास पर किसी भी लेख को चुनकर उसकी सामग्री और मुद्रण कला को संपादित करें।',
   },
   inspector: {
     storySectionTitle: 'लेख की सामग्री',

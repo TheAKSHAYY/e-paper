@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { publisherProfileStorage, type PublisherProfile } from '../../storage/PublisherProfileStorage';
+import {
+  publisherProfileStorage,
+  type PublisherProfile,
+} from '../../storage/PublisherProfileStorage';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface PublisherOnboardingModalProps {
@@ -17,10 +20,12 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
   const [publisherName, setPublisherName] = useState(current.publisherName || '');
   const [newspaperTitle, setNewspaperTitle] = useState(current.newspaperTitle || 'दैनिक नवप्रभात');
   const [tagline, setTagline] = useState(current.tagline || 'सत्य, निष्पक्षता और जनसेवा का प्रतीक');
-  const [primaryLanguage, setPrimaryLanguage] = useState<'hi' | 'en'>(current.primaryLanguage || 'hi');
-  const [preferredPageSize, setPreferredPageSize] = useState<'broadsheet' | 'tabloid' | 'berliner' | 'a3' | 'a4'>(
-    current.preferredPageSize || 'broadsheet'
+  const [primaryLanguage, setPrimaryLanguage] = useState<'hi' | 'en'>(
+    current.primaryLanguage || 'hi'
   );
+  const [preferredPageSize, setPreferredPageSize] = useState<
+    'broadsheet' | 'tabloid' | 'berliner' | 'a3' | 'a4'
+  >(current.preferredPageSize || 'broadsheet');
   const [email, setEmail] = useState(current.email || '');
 
   if (!isOpen) return null;
@@ -101,14 +106,26 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             प्रकाशक ऑनबोर्डिंग (Publisher Setup)
           </h2>
           <p style={{ fontSize: '13px', color: colors.textSecondary, margin: 0 }}>
-            अपने समाचार पत्र और प्रकाशन की बुनियादी जानकारी दर्ज करें। यह जानकारी मास्टहेड और प्रिंट संस्करणों पर दिखाई देगी।
+            अपने समाचार पत्र और प्रकाशन की बुनियादी जानकारी दर्ज करें। यह जानकारी मास्टहेड और प्रिंट
+            संस्करणों पर दिखाई देगी।
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+        >
           {/* Publisher Name */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: colors.inkBlack,
+                marginBottom: '4px',
+              }}
+            >
               संपादक / प्रकाशक का नाम (Editor / Publisher Name) *
             </label>
             <input
@@ -132,7 +149,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
 
           {/* Newspaper Name */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: colors.inkBlack,
+                marginBottom: '4px',
+              }}
+            >
               समाचार पत्र का नाम (Publication Title) *
             </label>
             <input
@@ -156,7 +181,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
 
           {/* Tagline */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: colors.inkBlack,
+                marginBottom: '4px',
+              }}
+            >
               ध्येय वाक्य / उप-शीर्षक (Tagline / Motto)
             </label>
             <input
@@ -180,7 +213,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
           {/* Language & Preferred Size Row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  color: colors.inkBlack,
+                  marginBottom: '4px',
+                }}
+              >
                 प्राथमिक भाषा (Language)
               </label>
               <select
@@ -203,7 +244,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  color: colors.inkBlack,
+                  marginBottom: '4px',
+                }}
+              >
                 मानक प्रिंट साइज़ (Default Size)
               </label>
               <select
@@ -231,7 +280,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
 
           {/* Email (Optional) */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: colors.inkBlack,
+                marginBottom: '4px',
+              }}
+            >
               ईमेल संपर्क (Publisher Email - Optional)
             </label>
             <input
@@ -253,7 +310,9 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}
+          >
             {onCancel && (
               <button
                 type="button"
@@ -295,4 +354,3 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
     </div>
   );
 };
-

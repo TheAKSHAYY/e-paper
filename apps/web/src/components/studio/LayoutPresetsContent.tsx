@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { APP_UI_TYPOGRAPHY } from '@epaper-studio/ui';
-import type {
-  NewspaperPresetId,
-  NewspaperLayoutConfig,
-} from '@epaper-studio/document-schema';
+import type { NewspaperPresetId, NewspaperLayoutConfig } from '@epaper-studio/document-schema';
 import { getAllNewspaperPresets } from '@epaper-studio/template-engine';
 import { LAYOUT_PRESET_OPTIONS } from './LayoutBuilderRow';
 import { useI18n } from '../../i18n';
@@ -128,7 +125,8 @@ export const LayoutPresetsContent: React.FC<LayoutPresetsContentProps> = ({
         flexDirection: 'column',
         gap: '16px',
         color: '#1C1917',
-        fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
+        fontFamily:
+          locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
       }}
     >
       {/* ── Sub-Navigation Tabs ── */}
@@ -595,8 +593,7 @@ export const LayoutPresetsContent: React.FC<LayoutPresetsContentProps> = ({
                     layout.columnRule && layout.columnRuleStyle !== 'dashed'
                       ? '#FFFFFF'
                       : '#FAF8F5',
-                  fontWeight:
-                    layout.columnRule && layout.columnRuleStyle !== 'dashed' ? 700 : 500,
+                  fontWeight: layout.columnRule && layout.columnRuleStyle !== 'dashed' ? 700 : 500,
                   fontSize: '12px',
                   color: '#1C1917',
                   cursor: 'pointer',
@@ -621,8 +618,7 @@ export const LayoutPresetsContent: React.FC<LayoutPresetsContentProps> = ({
                     layout.columnRule && layout.columnRuleStyle === 'dashed'
                       ? '#FFFFFF'
                       : '#FAF8F5',
-                  fontWeight:
-                    layout.columnRule && layout.columnRuleStyle === 'dashed' ? 700 : 500,
+                  fontWeight: layout.columnRule && layout.columnRuleStyle === 'dashed' ? 700 : 500,
                   fontSize: '12px',
                   color: '#1C1917',
                   cursor: 'pointer',

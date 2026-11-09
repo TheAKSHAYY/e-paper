@@ -63,7 +63,8 @@ export const en: TranslationDictionary = {
     howItWorksHeading: 'How It Works',
     howItWorksSubtitle: 'From article intake to physical vector print in three streamlined steps.',
     whyStudioHeading: 'Why E-Paper Studio',
-    whyStudioSubtitle: 'Purpose-built for publishers who value editorial authority, typographic craft, and independent distribution.',
+    whyStudioSubtitle:
+      'Purpose-built for publishers who value editorial authority, typographic craft, and independent distribution.',
     pricingHeading: 'Transparent Local-First Publishing',
     pricingSubtitle: 'Open-source software freedom with complete data ownership.',
     communityTierTitle: 'Community Edition',
@@ -150,7 +151,8 @@ export const en: TranslationDictionary = {
     sidebarTabTemplates: 'Templates',
     sidebarTabPreflight: 'Preflight',
     inspectorTitle: 'Story Inspector',
-    selectArticlePrompt: 'Click any article on the canvas to inspect and edit its content and typography.',
+    selectArticlePrompt:
+      'Click any article on the canvas to inspect and edit its content and typography.',
   },
   inspector: {
     storySectionTitle: 'Article Content',

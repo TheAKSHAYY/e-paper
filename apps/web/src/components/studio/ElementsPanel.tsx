@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import type { Article, ElementType } from '@epaper-studio/document-schema';
+import React, { useState, useEffect, useMemo } from 'react';
+import type {
+  Article,
+  ElementType,
+  EditorialPresetCategory,
+  EditorialPreset,
+} from '@epaper-studio/document-schema';
+import { BUILTIN_EDITORIAL_PRESETS } from '@epaper-studio/template-engine';
+import { editorialPresetsStorage } from '../../storage/LocalStorageEditorialPresetsAdapter';
 
 export interface ElementsPanelProps {
   articles: Article[];
@@ -17,11 +24,12 @@ export interface ElementsPanelProps {
 export interface ElementPreset {
   id: string;
   name: string;
-  category: ElementType;
+  category: ElementType | EditorialPresetCategory;
   description: string;
   icon: string;
   defaultSpan: number;
   data: Partial<Article>;
+  isCustom?: boolean;
 }
 
 export const ELEMENT_PRESETS: ElementPreset[] = [
@@ -538,28 +546,114 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
   isPageFull = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'applied' | 'catalog'>('catalog');
-  const [categoryFilter, setCategoryFilter] = useState<ElementType | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customPresets, setCustomPresets] = useState<EditorialPreset[]>([]);
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false);
+  const [customPresetName, setCustomPresetName] = useState('');
 
-  const filteredPresets = ELEMENT_PRESETS.filter((p) => {
-    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
-    const matchesQuery =
-      searchQuery.trim() === '' ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesQuery;
-  });
+  useEffect(() => {
+    void loadCustomPresets();
+  }, []);
 
-  const getElementTypeBadge = (type?: ElementType) => {
+  const loadCustomPresets = async () => {
+    const list = await editorialPresetsStorage.getCustomEditorialPresets();
+    setCustomPresets(list);
+  };
+
+  const selectedArticle = articles.find((a) => a.id === selectedArticleId);
+
+  const handleSaveCurrentAsPreset = async () => {
+    if (!selectedArticle || !customPresetName.trim()) return;
+    const newPreset: EditorialPreset = {
+      id: `custom-preset-${Date.now()}`,
+      name: customPresetName.trim(),
+      category: 'custom',
+      description: 'उपयोगकर्ता द्वारा सहेजा गया कस्टम ब्लॉक।',
+      icon: '⭐',
+      defaultSpan: selectedArticle.columnSpan || 4,
+      isCustom: true,
+      data: {
+        ...selectedArticle,
+      },
+    };
+    await editorialPresetsStorage.saveCustomEditorialPreset(newPreset);
+    setCustomPresetName('');
+    setShowSavePresetModal(false);
+    await loadCustomPresets();
+  };
+
+  const handleDeleteCustomPreset = async (id: string) => {
+    await editorialPresetsStorage.deleteCustomEditorialPreset(id);
+    await loadCustomPresets();
+  };
+
+  const combinedPresets: ElementPreset[] = useMemo(() => {
+    const fromBuiltinEditorial: ElementPreset[] = BUILTIN_EDITORIAL_PRESETS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      description: p.description,
+      icon: p.icon,
+      defaultSpan: p.defaultSpan,
+      data: p.data,
+      isCustom: false,
+    }));
+
+    const fromCustom: ElementPreset[] = customPresets.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: 'custom',
+      description: p.description || 'कस्टम ब्लॉक',
+      icon: p.icon || '⭐',
+      defaultSpan: p.defaultSpan || 4,
+      data: p.data,
+      isCustom: true,
+    }));
+
+    return [...ELEMENT_PRESETS, ...fromBuiltinEditorial, ...fromCustom];
+  }, [customPresets]);
+
+  const filteredPresets = useMemo(() => {
+    return combinedPresets.filter((p) => {
+      const matchesCategory =
+        categoryFilter === 'all' ||
+        p.category === categoryFilter ||
+        (categoryFilter === 'custom' && p.isCustom);
+      const matchesQuery =
+        searchQuery.trim() === '' ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesQuery;
+    });
+  }, [combinedPresets, categoryFilter, searchQuery]);
+
+  const getElementTypeBadge = (type?: string) => {
     switch (type) {
+      case 'breaking-banner':
       case 'top-headline':
-        return { label: 'मुख्य सुर्खी', color: '#b91c1c', bg: '#fef2f2' };
-      case 'short-news':
-        return { label: 'संक्षिप्त', color: '#2563eb', bg: '#eff6ff' };
+        return { label: 'ब्रेकिंग', color: '#b91c1c', bg: '#fef2f2' };
+      case 'main-headline':
+        return { label: 'मुख्य सुर्खी', color: '#991b1b', bg: '#fee2e2' };
+      case 'secondary-headline':
+        return { label: '2-कॉलम डेक', color: '#1d4ed8', bg: '#eff6ff' };
+      case 'section-divider':
+        return { label: 'विभाजक', color: '#475569', bg: '#f1f5f9' };
+      case 'special-report':
+        return { label: 'विशेष पड़ताल', color: '#b45309', bg: '#fffbeb' };
+      case 'category-label':
+        return { label: 'श्रेणी पट्टी', color: '#15803d', bg: '#f0fdf4' };
+      case 'dateline-strip':
+        return { label: 'दिनांक पट्टी', color: '#0369a1', bg: '#f0f9ff' };
+      case 'ad-banner':
       case 'advertisement':
         return { label: 'विज्ञापन', color: '#b45309', bg: '#fffbeb' };
       case 'rashifal':
         return { label: 'राशिफल', color: '#7c3aed', bg: '#f5f3ff' };
+      case 'custom':
+        return { label: 'कस्टम', color: '#d97706', bg: '#fef3c7' };
+      case 'short-news':
+        return { label: 'संक्षिप्त', color: '#2563eb', bg: '#eff6ff' };
       case 'block':
       default:
         return { label: 'आर्टिकल', color: '#334155', bg: '#f1f5f9' };
@@ -860,7 +954,9 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             >
               <span style={{ fontSize: '18px' }}>⚠️</span>
               <div>
-                <strong style={{ display: 'block', fontSize: '12px' }}>पृष्ठ {pageNumber} भर चुका है! (Page Full)</strong>
+                <strong style={{ display: 'block', fontSize: '12px' }}>
+                  पृष्ठ {pageNumber} भर चुका है! (Page Full)
+                </strong>
                 <span style={{ fontSize: '11px', color: '#b91c1c' }}>
                   अतिरिक्त सामग्री जोड़ने के लिए नया पृष्ठ जोड़ें या स्थान खाली करें।
                 </span>
@@ -886,20 +982,26 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
           >
             {[
               { id: 'all', label: 'सभी (All)' },
-              { id: 'block', label: 'आर्टिकल (Blocks)' },
-              { id: 'top-headline', label: 'सुर्खियाँ (Headlines)' },
-              { id: 'short-news', label: 'संक्षिप्त (Short News)' },
-              { id: 'advertisement', label: 'विज्ञापन (Ads)' },
-              { id: 'rashifal', label: 'राशिफल (Rashifal)' },
+              { id: 'breaking-banner', label: '🚨 ब्रेकिंग (Breaking)' },
+              { id: 'main-headline', label: '📰 मुख्य सुर्खियां (Lead)' },
+              { id: 'secondary-headline', label: '📄 2-कॉलम डेक (Decks)' },
+              { id: 'section-divider', label: '➿ खंड विभाजक (Dividers)' },
+              { id: 'special-report', label: '🔍 विशेष पड़ताल (Reports)' },
+              { id: 'category-label', label: '🏷️ श्रेणी पट्टी (Tags)' },
+              { id: 'dateline-strip', label: '📍 दिनांक पट्टी (Dateline)' },
+              { id: 'ad-banner', label: '📢 विज्ञापन (Ads)' },
+              { id: 'rashifal', label: '♈ राशिफल (Horoscope)' },
+              { id: 'block', label: '📦 मानक ब्लॉक (Blocks)' },
+              { id: 'custom', label: '⭐ सहेजे गए (Custom)' },
             ].map((cat) => (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setCategoryFilter(cat.id as 'all' | ElementType)}
+                onClick={() => setCategoryFilter(cat.id)}
                 style={{
-                  padding: '0 14px',
+                  padding: '0 12px',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: '11.5px',
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
@@ -908,8 +1010,8 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                   color: categoryFilter === cat.id ? '#ffffff' : '#334155',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
-                  minHeight: '36px',
-                  height: '36px',
+                  minHeight: '32px',
+                  height: '32px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -920,6 +1022,131 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Save Selected Article as Preset Card */}
+          {selectedArticle && (
+            <div
+              style={{
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '11.5px',
+                    color: '#166534',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  चयनित:{' '}
+                  {selectedArticle.headline
+                    ? selectedArticle.headline.slice(0, 36) + '...'
+                    : 'अनाम ब्लॉक'}
+                </strong>
+                <span style={{ fontSize: '10.5px', color: '#15803d' }}>
+                  इसे पुनः उपयोग हेतु कस्टम प्रीसेट के रूप में सहेजें
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSavePresetModal(!showSavePresetModal)}
+                style={{
+                  backgroundColor: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '5px 10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ⭐ प्रीसेट सहेजें
+              </button>
+            </div>
+          )}
+
+          {showSavePresetModal && selectedArticle && (
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #86efac',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  marginBottom: '6px',
+                }}
+              >
+                कस्टम प्रीसेट का नाम दें:
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="उदा. मेरा विशेष ब्रेकिंग ब्लॉक..."
+                  value={customPresetName}
+                  onChange={(e) => setCustomPresetName(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '12px',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveCurrentAsPreset}
+                  style={{
+                    backgroundColor: '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  सहेजें
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSavePresetModal(false)}
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  रद्द
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Search bar */}
           <div style={{ marginBottom: '12px', flexShrink: 0 }}>
@@ -979,18 +1206,37 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                         {preset.name}
                       </span>
                     </div>
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        backgroundColor: badge.bg,
-                        color: badge.color,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      {badge.label}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          backgroundColor: badge.bg,
+                          color: badge.color,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+                      {preset.isCustom && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomPreset(preset.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#94a3b8',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            padding: '0 2px',
+                          }}
+                          title="हटाएं"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <p style={{ margin: 0, fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
@@ -1012,22 +1258,25 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => onAddElement(preset.data)}
+                      disabled={isPageFull}
                       style={{
-                        backgroundColor: '#b91c1c',
+                        backgroundColor: isPageFull ? '#94a3b8' : '#b91c1c',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '6px',
                         padding: '5px 12px',
                         fontSize: '11px',
                         fontWeight: 700,
-                        cursor: 'pointer',
+                        cursor: isPageFull ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px',
                         transition: 'background 0.15s ease',
                       }}
+                      title={isPageFull ? `पृष्ठ ${pageNumber} भर चुका है!` : undefined}
                     >
-                      <span>+</span> पेज {pageNumber} पर जोड़ें
+                      <span>+</span>{' '}
+                      {isPageFull ? 'पृष्ठ भर चुका है' : `पेज ${pageNumber} पर जोड़ें`}
                     </button>
                   </div>
                 </div>

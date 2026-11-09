@@ -26,13 +26,19 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [publicationName, setPublicationName] = useState(profile?.publicationName || '');
   const [tagline, setTagline] = useState(profile?.publicationTagline || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [profileMessage, setProfileMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Password Form State
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   if (!isOpen) return null;
 
@@ -51,7 +57,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       if (res.success) {
         setProfileMessage({
           type: 'success',
-          text: locale === 'hi' ? 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई।' : 'Profile updated successfully.',
+          text:
+            locale === 'hi' ? 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई।' : 'Profile updated successfully.',
         });
       } else {
         setProfileMessage({ type: 'error', text: res.error || 'Failed to update profile.' });
@@ -83,7 +90,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       if (res.success) {
         setPasswordMessage({
           type: 'success',
-          text: locale === 'hi' ? 'पासवर्ड सफलतापूर्वक बदल दिया गया है।' : 'Password updated successfully.',
+          text:
+            locale === 'hi'
+              ? 'पासवर्ड सफलतापूर्वक बदल दिया गया है।'
+              : 'Password updated successfully.',
         });
         setNewPassword('');
         setConfirmPassword('');
@@ -140,12 +150,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           }}
         >
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: colors.inkBlack, margin: '0 0 2px 0' }}>
+            <h2
+              style={{
+                fontSize: '18px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '0 0 2px 0',
+              }}
+            >
               {locale === 'hi' ? 'खाता एवं सुरक्षा सेटिंग्स' : 'Account & Security Settings'}
             </h2>
-            <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>
-              {user?.email}
-            </p>
+            <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>{user?.email}</p>
           </div>
           <button
             onClick={onClose}
@@ -224,7 +239,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               background: 'none',
               cursor: 'pointer',
               color: activeTab === 'profile' ? '#111827' : '#6B7280',
-              borderBottom: activeTab === 'profile' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
+              borderBottom:
+                activeTab === 'profile' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
             }}
           >
             {locale === 'hi' ? 'संपादकीय प्रोफ़ाइल' : 'Editorial Profile'}
@@ -239,7 +255,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               background: 'none',
               cursor: 'pointer',
               color: activeTab === 'security' ? '#111827' : '#6B7280',
-              borderBottom: activeTab === 'security' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
+              borderBottom:
+                activeTab === 'security' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
             }}
           >
             {locale === 'hi' ? 'सुरक्षा एवं सत्र' : 'Security & Session'}
@@ -267,7 +284,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               )}
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: '6px',
+                  }}
+                >
                   {locale === 'hi' ? 'संपादक का नाम' : 'Editor Name'}
                 </label>
                 <input
@@ -286,7 +311,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: '6px',
+                  }}
+                >
                   {locale === 'hi' ? 'समाचार पत्र का नाम' : 'Publication Title'}
                 </label>
                 <input
@@ -305,7 +338,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: '6px',
+                  }}
+                >
                   {locale === 'hi' ? 'टैगलाइन' : 'Tagline'}
                 </label>
                 <input
@@ -324,7 +365,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: '6px',
+                  }}
+                >
                   {locale === 'hi' ? 'इंटरफ़ेस भाषा' : 'Interface Language'}
                 </label>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -406,7 +455,9 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   marginBottom: '24px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>
                     {locale === 'hi' ? 'प्रमाणीकरण मोड' : 'Auth Mode'}
                   </span>
@@ -432,7 +483,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
               {/* Password Change Form */}
               <form onSubmit={handleSavePassword} style={{ marginBottom: '28px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#111827', margin: '0 0 12px 0' }}>
+                <h3
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 12px 0',
+                  }}
+                >
                   {locale === 'hi' ? 'पासवर्ड बदलें' : 'Change Password'}
                 </h3>
 
@@ -453,7 +511,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 )}
 
                 <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#4B5563', marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#4B5563',
+                      marginBottom: '4px',
+                    }}
+                  >
                     {locale === 'hi' ? 'नया पासवर्ड' : 'New Password'}
                   </label>
                   <input
@@ -473,7 +539,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#4B5563', marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#4B5563',
+                      marginBottom: '4px',
+                    }}
+                  >
                     {locale === 'hi' ? 'नए पासवर्ड की पुष्टि करें' : 'Confirm New Password'}
                   </label>
                   <input
@@ -520,13 +594,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '20px 0' }} />
 
               {/* Sign Out Button */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
                     {locale === 'hi' ? 'सत्र समाप्त करें' : 'Sign Out'}
                   </div>
                   <div style={{ fontSize: '11px', color: '#6B7280' }}>
-                    {locale === 'hi' ? 'इस डिवाइस पर अपने सत्र से लॉग आउट करें।' : 'Log out of your session on this device.'}
+                    {locale === 'hi'
+                      ? 'इस डिवाइस पर अपने सत्र से लॉग आउट करें।'
+                      : 'Log out of your session on this device.'}
                   </div>
                 </div>
                 <button
@@ -556,4 +634,3 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     </div>
   );
 };
-

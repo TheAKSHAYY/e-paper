@@ -86,10 +86,26 @@ export const DraftsManagerModal: React.FC<DraftsManagerModalProps> = ({
           }}
         >
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay, color: '#111', lineHeight: 1.35 }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: '18px',
+                fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+                color: '#111',
+                lineHeight: 1.35,
+              }}
+            >
               📁 सहेजे गए अख़बार (Saved Drafts)
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi, color: '#666', lineHeight: 1.5 }}>
+            <p
+              style={{
+                margin: '4px 0 0 0',
+                fontSize: '12px',
+                fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiUi,
+                color: '#666',
+                lineHeight: 1.5,
+              }}
+            >
               ब्राउज़र में सुरक्षित रखे गए ड्राफ़्ट। पहले बनाए गए संस्करण खोलें या हटाएँ।
             </p>
           </div>

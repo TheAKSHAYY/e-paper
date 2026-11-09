@@ -69,7 +69,9 @@ export interface OnboardingData {
 
 export interface AuthContextType extends AuthState {
   signIn: (params: SignInParams) => Promise<{ success: boolean; error?: string }>;
-  signUp: (params: SignUpParams) => Promise<{ success: boolean; requiresVerification: boolean; error?: string }>;
+  signUp: (
+    params: SignUpParams
+  ) => Promise<{ success: boolean; requiresVerification: boolean; error?: string }>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -79,4 +81,3 @@ export interface AuthContextType extends AuthState {
   changePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
 }
-

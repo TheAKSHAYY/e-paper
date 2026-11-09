@@ -1,4 +1,5 @@
 # E-Paper Studio — Complete Product Transformation Report
+
 ## Master Autonomous Transformation: Editorial Newspaper Publishing Platform
 
 **Platform:** E-Paper Studio  
@@ -46,13 +47,16 @@ stateDiagram-v2
 ## 3. Stage-by-Stage Implementation Summary
 
 ### Stage 0 — Repository & Skill Audit
+
 - Comprehensive audit of monorepo packages, build pipelines, and skills (`frontend-design`, `ui-ux-pro-max`, `design-system`, `brand`, `tailwind-patterns`).
 - Verified base commit `44b7f06187d5bcd8a756af8d7e425c81ec9d0c8c` had 184 passing tests and zero regressions.
 
 ### Stage 1 — Product Architecture & Progress Ledger
+
 - Established `docs/PRODUCT-TRANSFORMATION-PROGRESS.md` to record milestones, architectural decisions, and verification gates across all 17 stages.
 
 ### Stage 2 — Unified Design System
+
 - Extended `packages/ui/src/index.ts` with `PUBLISHER_DESIGN_SYSTEM` tokens:
   - **Warm Paper:** `#F4F0E7`
   - **Ink Black:** `#171717`
@@ -62,6 +66,7 @@ stateDiagram-v2
 - Added unit tests in `packages/ui/src/index.test.ts` (2/2 passing).
 
 ### Stage 3 — Public Landing Page
+
 - Re-architected `apps/web/src/components/landing/LandingPage.tsx` with:
   - Sticky editorial header with brand mark and responsive hamburger drawer.
   - Editorial hero with headline badges and real-time live preview tabs.
@@ -71,18 +76,21 @@ stateDiagram-v2
   - Multi-device preview showcase and transparent self-hosted tier pricing.
 
 ### Stages 4 & 5 — Publisher Profile, Onboarding & Dashboard
+
 - Created `apps/web/src/storage/PublisherProfileStorage.ts` with unit test `apps/web/src/storage/PublisherProfileStorage.test.ts` (3/3 passing).
 - Built `apps/web/src/components/onboarding/PublisherOnboardingModal.tsx` for publication onboarding.
 - Built `apps/web/src/components/dashboard/PublisherDashboard.tsx` with edition management, status pills, metrics summary, and an authentic empty state.
 
 ### Stage 6 — New Newspaper / Edition Creation Wizard
+
 - Implemented `apps/web/src/components/edition/NewEditionModal.tsx`:
-  1. *Step 1: Publication Identity* (Name, tagline, city/edition, issue number, date).
-  2. *Step 2: Physical Page Geometry* (Broadsheet 315×470mm, Berliner 315×470mm, Tabloid 280×430mm, A3, A4).
-  3. *Step 3: Master Template Selection* (Daily Morning Broadsheet, Tabloid Metro, Evening Standard, Weekly Review).
-  4. *Step 4: Summary & Generation* (Review page counts, column geometry, and generate instant edition).
+  1. _Step 1: Publication Identity_ (Name, tagline, city/edition, issue number, date).
+  2. _Step 2: Physical Page Geometry_ (Broadsheet 315×470mm, Berliner 315×470mm, Tabloid 280×430mm, A3, A4).
+  3. _Step 3: Master Template Selection_ (Daily Morning Broadsheet, Tabloid Metro, Evening Standard, Weekly Review).
+  4. _Step 4: Summary & Generation_ (Review page counts, column geometry, and generate instant edition).
 
 ### Stage 10 — Phase 2B Multi-Page Story Continuation Engine
+
 - Extended canonical schema in `packages/document-schema/src/index.ts`:
   - `ArticleContinuationSchema`: `role` (`'origin' | 'continuation'`), `rootArticleId`, `continuationIndex`, `previousArticleId`, `nextArticleId`, `targetPageNumber`, `jumpToLabel`, `jumpFromLabel`, `jumpHeadline`, `paragraphRange`, `allowContinuation`.
 - Implemented `packages/template-engine/src/segmenter.ts`:
@@ -95,11 +103,13 @@ stateDiagram-v2
 - Created `packages/template-engine/src/continuation.test.ts` (7/7 tests passing).
 
 ### Stage 7, 8 & 9 — Desktop, Mobile & Tablet Editor Experiences
+
 - **Canvas Rendering:** Updated `apps/web/src/components/studio/NewspaperCanvas.tsx` to render continuation jump-from badges in the article header and jump-to lines at the bottom of the article body.
 - **Inspector Controls:** Added story continuation management in `apps/web/src/components/studio/ContextualInspector.tsx`, enabling publishers to jump a story to inside pages with a single click or rejoin it at any time.
 - **Mobile & Tablet:** Verified touch targets (44px min), persistent canvas viewport scaling, and bottom sheet drawers.
 
 ### Stages 11 & 12 — Preflight & PDF Export Integration
+
 - **Preflight Checks:** Added Checks 14, 15, and 16 in `packages/template-engine/src/preflight.ts`:
   - Check 14: `continuation_broken` (verifies matching partner article exists).
   - Check 15: `continuation_text_mismatch` (verifies zero content loss).
@@ -110,22 +120,22 @@ stateDiagram-v2
 
 ## 4. Verification Matrix & Quality Standard
 
-| Quality Check | Command | Result | Details |
-| :--- | :--- | :---: | :--- |
-| **Monorepo Typecheck** | `pnpm typecheck` | **PASS** | 0 errors across all 7 workspace packages |
-| **ESLint Linting** | `pnpm lint` | **PASS** | 0 errors, 0 warnings across entire monorepo |
-| **Unit & Integration Tests** | `pnpm test` | **PASS** | 194 passed, 0 failed across 24 test files |
-| **Production Build** | `pnpm build` | **PASS** | All packages compiled, web bundle built in 13.49s |
-| **Preview Font Delivery** | `apps/web/src/preview.test.ts` | **PASS** | 41/41 self-hosted fonts return 200 OK |
-| **Vector PDF Generation** | `apps/renderer/src/index.test.ts` | **PASS** | 16/16 tests pass, exact physical mm geometry |
-| **Visual Regression** | Playwright Preview Runner | **PASS** | High-resolution screenshots captured at 2x DPR |
+| Quality Check                | Command                           |  Result  | Details                                           |
+| :--------------------------- | :-------------------------------- | :------: | :------------------------------------------------ |
+| **Monorepo Typecheck**       | `pnpm typecheck`                  | **PASS** | 0 errors across all 7 workspace packages          |
+| **ESLint Linting**           | `pnpm lint`                       | **PASS** | 0 errors, 0 warnings across entire monorepo       |
+| **Unit & Integration Tests** | `pnpm test`                       | **PASS** | 194 passed, 0 failed across 24 test files         |
+| **Production Build**         | `pnpm build`                      | **PASS** | All packages compiled, web bundle built in 13.49s |
+| **Preview Font Delivery**    | `apps/web/src/preview.test.ts`    | **PASS** | 41/41 self-hosted fonts return 200 OK             |
+| **Vector PDF Generation**    | `apps/renderer/src/index.test.ts` | **PASS** | 16/16 tests pass, exact physical mm geometry      |
+| **Visual Regression**        | Playwright Preview Runner         | **PASS** | High-resolution screenshots captured at 2x DPR    |
 
 ---
 
 ## 5. Preserved User Assets & Safety Audit
 
 In accordance with strict monorepo safety guardrails:
+
 1. **No Destructive Operations:** Zero user templates, mock profiles, or existing test suites were deleted or overwritten.
 2. **Backward Compatibility:** All existing documents without `continuation` continue to open and render in their normal single-page layout without schema migration errors.
 3. **No Unrequested Git Commits:** All modifications remain cleanly staged in the local working directory awaiting explicit user instruction.
-

@@ -7,7 +7,8 @@ import * as fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(__dirname, '..');
-const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+const artifactDir =
+  'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
 const port = 4199;
 
 async function run() {
@@ -52,7 +53,9 @@ async function run() {
     await page.goto(`http://localhost:${port}/?view=landing`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
 
-    console.log(`[Typography Verification] Initial page load requested ${fontRequests.length} fonts totaling ${(totalFontBytes / 1024).toFixed(1)} KB.`);
+    console.log(
+      `[Typography Verification] Initial page load requested ${fontRequests.length} fonts totaling ${(totalFontBytes / 1024).toFixed(1)} KB.`
+    );
     for (const f of fontRequests) {
       console.log(`   - ${f.fontName}: ${(f.size / 1024).toFixed(1)} KB`);
     }
@@ -153,7 +156,7 @@ async function run() {
     // 3. Desktop Captures (English & Hindi)
     // -------------------------------------------------------------
     console.log('[Typography Verification] 3. Capturing Desktop Views (EN & HI)...');
-    
+
     // Switch to English
     const enBtn = await page.locator('button:has-text("EN")').first();
     if (await enBtn.isVisible()) {
@@ -210,10 +213,12 @@ async function run() {
     // 5. Modal Typography Verification
     // -------------------------------------------------------------
     console.log('[Typography Verification] 5. Capturing Modal Typography...');
-    
+
     // Open About Modal
     await page.evaluate(() => {
-      const aboutBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('परिचय') || b.textContent.includes('About'));
+      const aboutBtn = Array.from(document.querySelectorAll('button')).find(
+        (b) => b.textContent.includes('परिचय') || b.textContent.includes('About')
+      );
       if (aboutBtn) aboutBtn.click();
     });
     await page.waitForTimeout(500);
@@ -230,7 +235,10 @@ async function run() {
       totalFontBytes,
       fontRequests,
     };
-    fs.writeFileSync(path.join(artifactDir, 'typography-metrics.json'), JSON.stringify(metricsData, null, 2));
+    fs.writeFileSync(
+      path.join(artifactDir, 'typography-metrics.json'),
+      JSON.stringify(metricsData, null, 2)
+    );
 
     console.log('[Typography Verification] Complete! Results saved to artifacts.');
   } finally {
@@ -243,4 +251,3 @@ run().catch((err) => {
   console.error('[Verification Error]', err);
   process.exit(1);
 });
-

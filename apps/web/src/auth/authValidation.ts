@@ -14,22 +14,30 @@ export interface PasswordStrength {
 /**
  * Validates standard RFC 5322 compatible email format
  */
-export function validateEmail(email: string, locale: 'en' | 'hi' = 'en'): { isValid: boolean; error?: string } {
+export function validateEmail(
+  email: string,
+  locale: 'en' | 'hi' = 'en'
+): { isValid: boolean; error?: string } {
   if (!email || !email.trim()) {
     return {
       isValid: false,
-      error: locale === 'hi' ? 'कृपया अपना ईमेल पता दर्ज करें।' : 'Please enter your email address.',
+      error:
+        locale === 'hi' ? 'कृपया अपना ईमेल पता दर्ज करें।' : 'Please enter your email address.',
     };
   }
 
   const trimmed = email.trim();
   // Standard strict email regex
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
   if (!emailRegex.test(trimmed)) {
     return {
       isValid: false,
-      error: locale === 'hi' ? 'कृपया एक मान्य ईमेल पता दर्ज करें (उदा. editor@newspaper.com)।' : 'Please enter a valid email address (e.g. editor@newspaper.com).',
+      error:
+        locale === 'hi'
+          ? 'कृपया एक मान्य ईमेल पता दर्ज करें (उदा. editor@newspaper.com)।'
+          : 'Please enter a valid email address (e.g. editor@newspaper.com).',
     };
   }
 
@@ -114,7 +122,8 @@ export function evaluatePasswordStrength(password: string): PasswordStrength {
       labelHindi: 'अच्छा',
       color: '#2563EB', // Blue
       feedback: feedback.length > 0 ? feedback : ['Add a symbol to make it stronger'],
-      feedbackHindi: feedbackHindi.length > 0 ? feedbackHindi : ['अधिक मजबूती के लिए विशेष चिह्न जोड़ें'],
+      feedbackHindi:
+        feedbackHindi.length > 0 ? feedbackHindi : ['अधिक मजबूती के लिए विशेष चिह्न जोड़ें'],
     };
   }
 
@@ -128,7 +137,10 @@ export function evaluatePasswordStrength(password: string): PasswordStrength {
   };
 }
 
-export function validatePassword(password: string, locale: 'en' | 'hi' = 'en'): { isValid: boolean; error?: string } {
+export function validatePassword(
+  password: string,
+  locale: 'en' | 'hi' = 'en'
+): { isValid: boolean; error?: string } {
   if (!password) {
     return {
       isValid: false,
@@ -139,7 +151,10 @@ export function validatePassword(password: string, locale: 'en' | 'hi' = 'en'): 
   if (password.length < 8) {
     return {
       isValid: false,
-      error: locale === 'hi' ? 'पासवर्ड कम से कम ८ वर्णों का होना चाहिए।' : 'Password must be at least 8 characters long.',
+      error:
+        locale === 'hi'
+          ? 'पासवर्ड कम से कम ८ वर्णों का होना चाहिए।'
+          : 'Password must be at least 8 characters long.',
     };
   }
 
@@ -165,7 +180,10 @@ export function validatePasswordMatch(
  * Only allows relative paths on the same origin (e.g. '/dashboard', '/editor').
  * Explicitly rejects protocol-relative URLs ('//attacker.com'), absolute URLs ('https://...'), and javascript schemes.
  */
-export function sanitizeRedirectUrl(target: string | null | undefined, fallback = '/dashboard'): string {
+export function sanitizeRedirectUrl(
+  target: string | null | undefined,
+  fallback = '/dashboard'
+): string {
   if (!target || typeof target !== 'string') {
     return fallback;
   }

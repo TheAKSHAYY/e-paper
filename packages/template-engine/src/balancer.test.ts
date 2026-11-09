@@ -33,18 +33,94 @@ function createTestArticle(
   overrides: Partial<Article> = {}
 ): Article {
   const hindiWords = [
-    'प्रधानमंत्री', 'ने', 'नई', 'दिल्ली', 'में', 'आयोजित', 'अंतरराष्ट्रीय', 'शिखर', 'सम्मेलन',
-    'का', 'उद्घाटन', 'किया।', 'इस', 'अवसर', 'पर', 'उन्होंने', 'कहा', 'कि', 'भारत', 'आर्थिक',
-    'विकास', 'और', 'तकनीकी', 'नवाचार', 'के', 'क्षेत्र', 'में', 'वैश्विक', 'स्तर', 'पर', 'अग्रणी',
-    'भूमिका', 'निभा', 'रहा', 'है।', 'पर्यावरण', 'संरक्षण', 'और', 'सतत', 'विकास', 'हमारी',
-    'प्राथमिकता', 'है।', 'ग्रामीण', 'क्षेत्रों', 'में', 'डिजिटल', 'क्रांति', 'से', 'परिवर्तन', 'आया', 'है।'
+    'प्रधानमंत्री',
+    'ने',
+    'नई',
+    'दिल्ली',
+    'में',
+    'आयोजित',
+    'अंतरराष्ट्रीय',
+    'शिखर',
+    'सम्मेलन',
+    'का',
+    'उद्घाटन',
+    'किया।',
+    'इस',
+    'अवसर',
+    'पर',
+    'उन्होंने',
+    'कहा',
+    'कि',
+    'भारत',
+    'आर्थिक',
+    'विकास',
+    'और',
+    'तकनीकी',
+    'नवाचार',
+    'के',
+    'क्षेत्र',
+    'में',
+    'वैश्विक',
+    'स्तर',
+    'पर',
+    'अग्रणी',
+    'भूमिका',
+    'निभा',
+    'रहा',
+    'है।',
+    'पर्यावरण',
+    'संरक्षण',
+    'और',
+    'सतत',
+    'विकास',
+    'हमारी',
+    'प्राथमिकता',
+    'है।',
+    'ग्रामीण',
+    'क्षेत्रों',
+    'में',
+    'डिजिटल',
+    'क्रांति',
+    'से',
+    'परिवर्तन',
+    'आया',
+    'है।',
   ];
 
   const englishWords = [
-    'The', 'government', 'announced', 'a', 'comprehensive', 'package', 'for', 'infrastructure',
-    'development', 'and', 'economic', 'growth.', 'Officials', 'stated', 'that', 'the', 'initiative',
-    'aims', 'to', 'boost', 'manufacturing,', 'create', 'sustainable', 'jobs,', 'and', 'modernize',
-    'urban', 'transportation', 'networks', 'across', 'key', 'regions', 'nationwide.'
+    'The',
+    'government',
+    'announced',
+    'a',
+    'comprehensive',
+    'package',
+    'for',
+    'infrastructure',
+    'development',
+    'and',
+    'economic',
+    'growth.',
+    'Officials',
+    'stated',
+    'that',
+    'the',
+    'initiative',
+    'aims',
+    'to',
+    'boost',
+    'manufacturing,',
+    'create',
+    'sustainable',
+    'jobs,',
+    'and',
+    'modernize',
+    'urban',
+    'transportation',
+    'networks',
+    'across',
+    'key',
+    'regions',
+    'nationwide.',
   ];
 
   const vocab = isHindi ? hindiWords : englishWords;
@@ -305,7 +381,8 @@ describe('Intelligent Newspaper Column Balancer Engine (Phase 2A Step 1 Correcte
     const actualBrowserDomHeight = 376;
     const estimatedHeight = estimateArticleRequiredHeightPx(art, 4, 1376);
 
-    const deviationPct = Math.abs((estimatedHeight - actualBrowserDomHeight) / actualBrowserDomHeight) * 100;
+    const deviationPct =
+      Math.abs((estimatedHeight - actualBrowserDomHeight) / actualBrowserDomHeight) * 100;
     // Must be calibrated within 15% (previously failed at +37.0%)
     expect(deviationPct).toBeLessThan(15.0);
   });

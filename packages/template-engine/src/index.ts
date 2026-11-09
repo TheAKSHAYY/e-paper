@@ -12,6 +12,7 @@ import {
   type Article,
   type ElementTypography,
   type MastheadConfig,
+  type MastheadSlot,
   type NewspaperLayoutConfig,
   type NewspaperPage,
   type SpacingDensity,
@@ -1551,6 +1552,10 @@ export interface RenderHtmlOptions {
    * Ensures 100% WYSIWYG fidelity between the studio canvas and client-side PDF export.
    */
   strictPages?: boolean;
+  /**
+   * When true, automatically partitions articles into multiple pages for legacy documents without explicit pages.
+   */
+  autoPaginate?: boolean;
 }
 
 export function getMastheadEmblemSvg(emblem?: string, customUrl?: string): string {
@@ -1602,6 +1607,48 @@ export function getMastheadEmblemSvg(emblem?: string, customUrl?: string): strin
     return `<img class="masthead-emblem-img" src="${escapeHtml(customUrl)}" alt="Emblem" style="height: 40px; width: auto; object-fit: contain;" />`;
   }
   return '';
+}
+
+export function renderMastheadSlotHtml(slot?: MastheadSlot): string {
+  if (!slot || !slot.enabled || slot.type === 'none') return '';
+  const borderStyle = slot.border ? `1px solid ${slot.borderColor || '#cbd5e1'}` : 'none';
+  const bgStyle = slot.backgroundColor || '#f8fafc';
+  const textColor = slot.textColor || '#1e293b';
+  const w = slot.widthPx || 110;
+  const h = slot.heightPx || 65;
+
+  let innerContent = '';
+  if (slot.type === 'image' && slot.imageUrl) {
+    innerContent = `<img src="${escapeHtml(slot.imageUrl)}" alt="${escapeHtml(slot.title || 'Ear Panel')}" style="width: 100%; height: 100%; object-fit: ${slot.objectFit || 'contain'}; object-position: ${slot.objectPosition || 'center'}; display: block;" />`;
+  } else if (slot.type === 'ad') {
+    innerContent = `
+      <div style="padding: 4px; display: flex; flex-direction: column; justify-content: center; height: 100%; box-sizing: border-box; text-align: center;">
+        ${slot.imageUrl ? `<img src="${escapeHtml(slot.imageUrl)}" alt="" style="max-height: 32px; max-width: 100%; object-fit: contain; margin: 0 auto 2px auto;" />` : ''}
+        ${slot.title ? `<div style="font-weight: 700; font-size: 7.5pt; line-height: 1.15; margin-bottom: 2px;">${escapeHtml(slot.title)}</div>` : ''}
+        ${slot.text ? `<div style="font-size: 6.5pt; line-height: 1.1; opacity: 0.85;">${escapeHtml(slot.text)}</div>` : ''}
+      </div>
+    `;
+  } else if (slot.type === 'emblem') {
+    innerContent = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 100%; width: 100%;">
+        ${slot.imageUrl ? `<img src="${escapeHtml(slot.imageUrl)}" alt="Emblem" style="max-height: 80%; max-width: 80%; object-fit: contain;" />` : ''}
+      </div>
+    `;
+  } else if (slot.type === 'text') {
+    innerContent = `
+      <div style="padding: 4px; display: flex; flex-direction: column; justify-content: center; height: 100%; box-sizing: border-box; text-align: center;">
+        ${slot.title ? `<div style="font-weight: 700; font-size: 8pt; line-height: 1.1;">${escapeHtml(slot.title)}</div>` : ''}
+        ${slot.subtitle ? `<div style="font-size: 6.5pt; color: ${textColor}; opacity: 0.8;">${escapeHtml(slot.subtitle)}</div>` : ''}
+        ${slot.text ? `<div style="font-size: 6pt; margin-top: 2px;">${escapeHtml(slot.text)}</div>` : ''}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="masthead-slot" style="width: ${w}px; height: ${h}px; min-width: ${w}px; min-height: ${h}px; border: ${borderStyle}; background-color: ${bgStyle}; color: ${textColor}; overflow: hidden; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      ${innerContent}
+    </div>
+  `;
 }
 
 /**
@@ -1671,11 +1718,13 @@ export function renderNewspaperDocumentToHtml(
   let pagesToRender: PageRenderUnit[];
 
   const explicitPages = doc.pages;
-  const isExplicitMultiPage = explicitPages && explicitPages.length > 1;
-  const isStrictSinglePage = _options.strictPages && explicitPages && explicitPages.length === 1;
+  const isExplicitMultiPage = Boolean(explicitPages && explicitPages.length > 1);
+  const isStrictSinglePage = Boolean(
+    _options.strictPages && explicitPages && explicitPages.length === 1
+  );
 
-  if (explicitPages && (isExplicitMultiPage || isStrictSinglePage)) {
-    // Explicit publication pages (honors exact page count in strict mode or explicit multi-page)
+  if (explicitPages && (isExplicitMultiPage || isStrictSinglePage) && !_options.autoPaginate) {
+    // Explicit publication pages (strictly honors user's page count and layout)
     pagesToRender = explicitPages.map((p, idx) => ({
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,
@@ -1782,8 +1831,27 @@ export function renderNewspaperDocumentToHtml(
         `
             : '';
 
+        const leftSlotHtml = renderMastheadSlotHtml(mh.leftSlot);
+        const rightSlotHtml = renderMastheadSlotHtml(mh.rightSlot);
+        const centerLogoHtml =
+          mh.showCenterLogo && mh.centerLogoUrl
+            ? `<div class="masthead-center-logo-box" style="margin-bottom: 4px;">
+                <img src="${escapeHtml(mh.centerLogoUrl)}" alt="${escapeHtml(mh.title)}" style="max-width: ${mh.centerLogoWidthPx || 240}px; max-height: ${mh.centerLogoHeightPx || 60}px; object-fit: ${mh.centerLogoObjectFit || 'contain'}; display: block; margin: 0 auto;" />
+              </div>`
+            : '';
+
+        const customHeaderStyle = [
+          mh.backgroundColor ? `background-color: ${mh.backgroundColor};` : '',
+          mh.borderColor ? `border-color: ${mh.borderColor};` : '',
+          typeof mh.paddingTopPt === 'number' ? `padding-top: ${mh.paddingTopPt}pt;` : '',
+          typeof mh.paddingBottomPt === 'number' ? `padding-bottom: ${mh.paddingBottomPt}pt;` : '',
+          mh.headerMinHeightPt ? `min-height: ${mh.headerMinHeightPt}pt;` : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
         headerHtml = `
-          <header class="masthead-section rule-${ruleStyle}">
+          <header class="masthead-section rule-${ruleStyle}" style="${customHeaderStyle}">
             ${announcementHtml}
             ${
               showTopStrip
@@ -1814,7 +1882,7 @@ export function renderNewspaperDocumentToHtml(
                   ${
                     mh.showTagline !== false && tagline
                       ? `
-                    <span class="meta-tagline">${escapeHtml(tagline)}</span>
+                    <span class="meta-tagline" style="${mh.taglineColor ? `color: ${mh.taglineColor};` : ''}">${escapeHtml(tagline)}</span>
                   `
                       : ''
                   }
@@ -1861,11 +1929,18 @@ export function renderNewspaperDocumentToHtml(
                 : ''
             }
 
-            <div class="masthead-main-row align-${alignment}">
-              ${emblemHtml}
-              <h1 class="masthead-title" style="font-family: ${effectiveFont}; font-size: ${effectiveFontSize}pt;">
-                ${escapeHtml(mh.title)}
-              </h1>
+            <div class="masthead-main-row align-${alignment}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+              ${leftSlotHtml}
+              <div class="masthead-center-box" style="flex: 1; display: flex; flex-direction: column; align-items: ${alignment === 'left' ? 'flex-start' : 'center'}; justify-content: center; text-align: ${alignment};">
+                ${centerLogoHtml}
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  ${emblemHtml}
+                  <h1 class="masthead-title" style="font-family: ${effectiveFont}; font-size: ${effectiveFontSize}pt; ${mh.titleColor ? `color: ${mh.titleColor};` : ''} margin: 0; line-height: 1.05;">
+                    ${escapeHtml(mh.title)}
+                  </h1>
+                </div>
+              </div>
+              ${rightSlotHtml}
             </div>
 
             ${
@@ -2355,7 +2430,8 @@ export function renderNewspaperDocumentToHtml(
       const footerPageInfo = isHindiDoc
         ? `पृष्ठ ${pageNumber} / ${totalPages}`
         : `Page ${pageNumber} of ${totalPages}`;
-      const newspaperTitle = doc.masthead.title || doc.metadata.title || (isHindiDoc ? 'ई-पेपर' : 'E-Paper');
+      const newspaperTitle =
+        doc.masthead.title || doc.metadata.title || (isHindiDoc ? 'ई-पेपर' : 'E-Paper');
       const footerEditionText = isHindiDoc
         ? `${newspaperTitle} • डिजिटल व प्रिंट संस्करण`
         : `${newspaperTitle} • ${doc.masthead.edition || 'Digital & Print Edition'}`;
@@ -2875,3 +2951,5 @@ export * from './preflight.js';
 export * from './balancer.js';
 export * from './segmenter.js';
 export * from './multiPageAllocator.js';
+export * from './mastheadPresets.js';
+export * from './editorialPresets.js';

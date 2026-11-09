@@ -124,7 +124,13 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
           <div style={{ marginBottom: '24px' }}>
             <label
               htmlFor="forgot-email"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'पंजीकृत ईमेल पता' : 'Registered Email Address'}
             </label>
@@ -179,7 +185,9 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
                 : 'Send Reset Link →'}
           </button>
 
-          <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: '#6B7280' }}>
+          <div
+            style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: '#6B7280' }}
+          >
             <button
               type="button"
               onClick={onNavigateToLogin}
@@ -201,4 +209,3 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
     </AuthLayout>
   );
 };
-

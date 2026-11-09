@@ -65,7 +65,10 @@ export function segmentArticleContent(
   const originPage = options.originPageNumber ?? 1;
 
   // Split strictly by paragraph breaks
-  const rawParagraphs = article.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const rawParagraphs = article.body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (rawParagraphs.length < 2) {
     // Single-paragraph story: cannot cleanly split across pages without mid-paragraph truncation
     return null;

@@ -19,7 +19,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onBackToLanding,
 }) => {
   const { locale } = useI18n();
-  const { signIn, isLoading: isAuthLoading, error: authError, clearError, authMode, configurationError } = useAuth();
+  const {
+    signIn,
+    isLoading: isAuthLoading,
+    error: authError,
+    clearError,
+    authMode,
+    configurationError,
+  } = useAuth();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
 
   const [email, setEmail] = useState('');
@@ -98,7 +105,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
             <div>
               <div style={{ fontWeight: 700, marginBottom: '2px' }}>
-                {locale === 'hi' ? 'क्लाउड ऑथेंटिकेशन कॉन्फ़िगर नहीं है' : 'Cloud Auth Not Configured'}
+                {locale === 'hi'
+                  ? 'क्लाउड ऑथेंटिकेशन कॉन्फ़िगर नहीं है'
+                  : 'Cloud Auth Not Configured'}
               </div>
               <div>
                 {configurationError ||
@@ -127,8 +136,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               justifyContent: 'space-between',
             }}
           >
-            <span>🛠️ {locale === 'hi' ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}</span>
-            <span style={{ fontSize: '10px', backgroundColor: '#DBEAFE', padding: '1px 5px', borderRadius: '3px' }}>
+            <span>
+              🛠️{' '}
+              {locale === 'hi' ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}
+            </span>
+            <span
+              style={{
+                fontSize: '10px',
+                backgroundColor: '#DBEAFE',
+                padding: '1px 5px',
+                borderRadius: '3px',
+              }}
+            >
               {locale === 'hi' ? 'क्लाउड डिस्कनेक्टेड' : 'No Cloud'}
             </span>
           </div>
@@ -199,7 +218,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
         {/* Password Field */}
         <div style={{ marginBottom: '18px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '6px',
+            }}
+          >
             <label
               htmlFor="login-password"
               style={{
@@ -289,8 +315,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               cursor: 'pointer',
             }}
           />
-          <label htmlFor="remember-me" style={{ fontSize: '13px', color: '#4B5563', cursor: 'pointer' }}>
-            {locale === 'hi' ? 'इस ब्राउज़र पर सत्र याद रखें' : 'Remember my session on this device'}
+          <label
+            htmlFor="remember-me"
+            style={{ fontSize: '13px', color: '#4B5563', cursor: 'pointer' }}
+          >
+            {locale === 'hi'
+              ? 'इस ब्राउज़र पर सत्र याद रखें'
+              : 'Remember my session on this device'}
           </label>
         </div>
 
@@ -360,4 +391,3 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     </AuthLayout>
   );
 };
-

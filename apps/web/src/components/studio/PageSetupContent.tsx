@@ -224,7 +224,8 @@ export const PageSetupContent: React.FC<PageSetupContentProps> = ({
         flexDirection: 'column',
         gap: '16px',
         color: '#1C1917',
-        fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
+        fontFamily:
+          locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
       }}
     >
       {/* ── Sub-Navigation Tabs ── */}

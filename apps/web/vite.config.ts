@@ -74,7 +74,7 @@ function newspaperPdfServerPlugin(): Plugin {
         worker = new RendererWorker({ timeoutMs: 35000 });
       }
 
-      const result = await worker.renderToPdf(document);
+      const result = await worker.renderToPdf(document, { strictPages: true });
 
       const asciiTitle =
         (document.metadata?.title || 'newspaper')

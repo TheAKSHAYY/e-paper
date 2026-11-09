@@ -59,7 +59,8 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
         justifyContent: 'center',
         zIndex: 1000,
         padding: '16px',
-        fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
+        fontFamily:
+          locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
       }}
       onClick={onClose}
     >
@@ -99,7 +100,10 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
                   fontSize: '16px',
                   fontWeight: 700,
                   color: '#1C1917',
-                  fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                  fontFamily:
+                    locale === 'hi'
+                      ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                      : APP_UI_TYPOGRAPHY.fonts.display,
                   lineHeight: locale === 'hi' ? 1.35 : 1.25,
                 }}
               >

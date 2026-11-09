@@ -472,6 +472,35 @@ export const ArticleSchema = z.object({
 
 export type Article = z.infer<typeof ArticleSchema>;
 
+export const EditorialPresetCategorySchema = z.enum([
+  'breaking-banner',
+  'main-headline',
+  'secondary-headline',
+  'section-divider',
+  'special-report',
+  'category-label',
+  'dateline-strip',
+  'ad-banner',
+  'block',
+  'short-news',
+  'rashifal',
+  'custom',
+]);
+export type EditorialPresetCategory = z.infer<typeof EditorialPresetCategorySchema>;
+
+export const EditorialPresetSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  category: EditorialPresetCategorySchema,
+  description: z.string().default(''),
+  icon: z.string().default('📰'),
+  defaultSpan: z.number().default(4),
+  isCustom: z.boolean().default(false),
+  data: ArticleSchema.partial(),
+  createdAt: z.string().optional(),
+});
+export type EditorialPreset = z.infer<typeof EditorialPresetSchema>;
+
 /**
  * Computes the CSS `object-position` value from an Article's focal point fields.
  * Precise X/Y values (0-1) take priority over the coarse 9-point preset.
@@ -592,6 +621,25 @@ export const MastheadEmblemSchema = z.enum([
 ]);
 export type MastheadEmblem = z.infer<typeof MastheadEmblemSchema>;
 
+export const MastheadSlotSchema = z.object({
+  enabled: z.boolean().optional(),
+  type: z.enum(['image', 'ad', 'emblem', 'text', 'none']).optional(),
+  imageUrl: z.string().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  text: z.string().optional(),
+  linkUrl: z.string().optional(),
+  widthPx: z.number().optional(),
+  heightPx: z.number().optional(),
+  border: z.boolean().optional(),
+  borderColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  objectFit: z.enum(['contain', 'cover', 'fill']).optional(),
+  objectPosition: z.string().optional(),
+});
+export type MastheadSlot = z.infer<typeof MastheadSlotSchema>;
+
 export const MastheadConfigSchema = z.object({
   // Core title & branding
   title: z.string().min(1, 'Publication name is required').default('जनवाणी समाचार'),
@@ -606,6 +654,30 @@ export const MastheadConfigSchema = z.object({
   ruleStyle: MastheadRuleStyleSchema.default('ornate-double'),
   emblem: MastheadEmblemSchema.default('none'),
   customEmblemUrl: z.string().optional().default(''),
+
+  // Independent Left and Right Slots (Ear Ads / Sponsor Badges / Logos)
+  leftSlot: MastheadSlotSchema.optional(),
+  rightSlot: MastheadSlotSchema.optional(),
+
+  // Optional Center Logo Image
+  centerLogoUrl: z.string().optional(),
+  showCenterLogo: z.boolean().optional(),
+  centerLogoWidthPx: z.number().optional(),
+  centerLogoHeightPx: z.number().optional(),
+  centerLogoObjectFit: z.enum(['contain', 'cover', 'fill']).optional(),
+
+  // Custom Colors & Background
+  titleColor: z.string().optional(),
+  taglineColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  borderColor: z.string().optional(),
+
+  // Adjustable Height, Spacing & Padding
+  paddingTopPt: z.number().optional(),
+  paddingBottomPt: z.number().optional(),
+  borderTopWidth: z.number().optional(),
+  borderBottomWidth: z.number().optional(),
+  headerMinHeightPt: z.number().optional(),
 
   // Weather & Air Quality
   weatherCity: z.string().default('नई दिल्ली'),

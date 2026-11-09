@@ -20,7 +20,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSignIn,
 }) => {
   const { t, locale } = useI18n();
-  const [activeScreenshot, setActiveScreenshot] = useState<'editor' | 'continuation' | 'dashboard'>('editor');
+  const [activeScreenshot, setActiveScreenshot] = useState<'editor' | 'continuation' | 'dashboard'>(
+    'editor'
+  );
   const [activeShowcaseLanguage, setActiveShowcaseLanguage] = useState<'en' | 'hi'>('en');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -144,7 +146,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               >
                 E-Paper Studio
               </span>
-              <span style={{ fontSize: '10px', color: '#78716C', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#78716C',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
                 Newspaper Publishing
               </span>
             </div>
@@ -162,35 +171,70 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             <button
               onClick={() => scrollToSection('masthead-hero')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                color: '#57534E',
+                cursor: 'pointer',
+              }}
               className="hover:text-stone-900 transition-colors"
             >
               {locale === 'hi' ? 'मुखपृष्ठ' : 'Cover'}
             </button>
             <button
               onClick={() => scrollToSection('showcase')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                color: '#57534E',
+                cursor: 'pointer',
+              }}
               className="hover:text-stone-900 transition-colors"
             >
               {t.landing.navTemplates}
             </button>
             <button
               onClick={() => scrollToSection('features')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                color: '#57534E',
+                cursor: 'pointer',
+              }}
               className="hover:text-stone-900 transition-colors"
             >
               {t.landing.navFeatures}
             </button>
             <button
               onClick={() => scrollToSection('workflow')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                color: '#57534E',
+                cursor: 'pointer',
+              }}
               className="hover:text-stone-900 transition-colors"
             >
               {locale === 'hi' ? 'कार्यप्रणाली' : 'Process'}
             </button>
             <button
               onClick={() => openModal('about')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                color: '#57534E',
+                cursor: 'pointer',
+              }}
               className="hover:text-stone-900 transition-colors"
             >
               {locale === 'hi' ? 'परिचय' : 'About'}
@@ -297,38 +341,110 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             <button
               onClick={() => scrollToSection('masthead-hero')}
-              style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#1C1917',
+                cursor: 'pointer',
+              }}
             >
               {locale === 'hi' ? 'मुखपृष्ठ' : 'Cover Story'}
             </button>
             <button
               onClick={() => scrollToSection('showcase')}
-              style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#1C1917',
+                cursor: 'pointer',
+              }}
             >
               {t.landing.navTemplates}
             </button>
             <button
               onClick={() => scrollToSection('features')}
-              style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#1C1917',
+                cursor: 'pointer',
+              }}
             >
               {t.landing.navFeatures}
             </button>
             <button
               onClick={() => scrollToSection('workflow')}
-              style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#1C1917',
+                cursor: 'pointer',
+              }}
             >
               {locale === 'hi' ? 'कार्यप्रणाली' : 'Process'}
             </button>
             <button
-              onClick={() => { setIsMobileMenuOpen(false); openModal('about'); }}
-              style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                openModal('about');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#1C1917',
+                cursor: 'pointer',
+              }}
             >
               {locale === 'hi' ? 'स्टूडियो परिचय' : 'About'}
             </button>
             {onOpenDashboard && (
               <button
-                onClick={() => { setIsMobileMenuOpen(false); onOpenDashboard(); }}
-                style={{ background: 'none', border: 'none', textAlign: 'left', minHeight: '44px', display: 'flex', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#1C1917', cursor: 'pointer' }}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenDashboard();
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  textAlign: 'left',
+                  minHeight: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#1C1917',
+                  cursor: 'pointer',
+                }}
               >
                 {t.common.dashboard}
               </button>
@@ -377,7 +493,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 fontSize: 'clamp(38px, 6vw, 76px)',
                 lineHeight: locale === 'hi' ? 1.25 : 0.95,
                 fontWeight: 900,
-                fontFamily: locale === 'hi' ? "'Rozha One', 'Noto Serif Devanagari', serif" : "'Playfair Display', Georgia, serif",
+                fontFamily:
+                  locale === 'hi'
+                    ? "'Rozha One', 'Noto Serif Devanagari', serif"
+                    : "'Playfair Display', Georgia, serif",
                 fontStyle: locale === 'hi' ? 'normal' : 'italic',
                 letterSpacing: locale === 'hi' ? '0em' : '-0.04em',
                 color: '#1C1917',
@@ -477,7 +596,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 marginBottom: '16px',
               }}
             >
-              {locale === 'hi' ? 'मुख्य आलेख • ६,८००-शब्दों का विशेष निबंध' : 'COVER STORY · A 6,800-WORD FEATURE'}
+              {locale === 'hi'
+                ? 'मुख्य आलेख • ६,८००-शब्दों का विशेष निबंध'
+                : 'COVER STORY · A 6,800-WORD FEATURE'}
             </div>
 
             {/* Giant Editorial Serif Italic Headline (Exact Ref 1) */}
@@ -485,7 +606,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               style={{
                 fontSize: 'clamp(32px, 4.5vw, 56px)',
                 fontWeight: 800,
-                fontFamily: locale === 'hi' ? "'Noto Serif Devanagari', 'Rozha One', serif" : "'Playfair Display', Georgia, serif",
+                fontFamily:
+                  locale === 'hi'
+                    ? "'Noto Serif Devanagari', 'Rozha One', serif"
+                    : "'Playfair Display', Georgia, serif",
                 fontStyle: locale === 'hi' ? 'normal' : 'italic',
                 lineHeight: locale === 'hi' ? 1.3 : 1.08,
                 letterSpacing: locale === 'hi' ? '-0.01em' : '-0.03em',
@@ -574,7 +698,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ====================================================================
        * SECTION 3: PRODUCT CENTERPIECE (Genuine Studio Screenshot Showcase)
        * ==================================================================== */}
-      <section style={{ padding: '64px 24px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E2DA' }}>
+      <section
+        style={{
+          padding: '64px 24px',
+          backgroundColor: '#FFFFFF',
+          borderBottom: '1px solid #E7E2DA',
+        }}
+      >
         <div style={{ maxWidth: '1120px', margin: '0 auto', textAlign: 'center' }}>
           {/* Subtle Pill */}
           <div
@@ -594,7 +724,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               border: '1px solid #E0DAD0',
             }}
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#1C1917' }} />
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#1C1917',
+              }}
+            />
             {locale === 'hi' ? 'स्टूडियो पूर्वावलोकन' : 'Interactive Studio Preview'}
           </div>
 
@@ -608,9 +745,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               letterSpacing: '-0.02em',
             }}
           >
-            {locale === 'hi' ? 'पेशेवर मुद्रण डेस्कटॉप का प्रत्यक्ष अनुभव' : 'Engineered for Real Newspaper Production'}
+            {locale === 'hi'
+              ? 'पेशेवर मुद्रण डेस्कटॉप का प्रत्यक्ष अनुभव'
+              : 'Engineered for Real Newspaper Production'}
           </h2>
-          <p style={{ fontSize: '15px', color: '#57534E', maxWidth: '640px', margin: '0 auto 32px auto' }}>
+          <p
+            style={{
+              fontSize: '15px',
+              color: '#57534E',
+              maxWidth: '640px',
+              margin: '0 auto 32px auto',
+            }}
+          >
             {locale === 'hi'
               ? '८-कॉलम ब्रॉडशीट से लेकर स्वतः पृष्ठ निरंतरता तक — बिना किसी जटिल सॉफ्टवेयर के।'
               : 'Inspect live editor modes: broadsheet grid layout, automatic multi-page jump balancing, and publication dashboard.'}
@@ -654,7 +800,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 cursor: 'pointer',
                 backgroundColor: activeScreenshot === 'continuation' ? '#FFFFFF' : 'transparent',
                 color: activeScreenshot === 'continuation' ? '#1C1917' : '#78716C',
-                boxShadow: activeScreenshot === 'continuation' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                boxShadow:
+                  activeScreenshot === 'continuation' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               }}
             >
               {locale === 'hi' ? 'स्टोरी निरंतरता' : 'Story Continuation'}
@@ -700,16 +847,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 gap: '8px',
               }}
             >
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#E0DAD0' }} />
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#E0DAD0' }} />
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#E0DAD0' }} />
-              <span style={{ fontSize: '11px', color: '#78716C', fontFamily: 'monospace', marginLeft: '8px' }}>
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#E0DAD0',
+                }}
+              />
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#E0DAD0',
+                }}
+              />
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#E0DAD0',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '11px',
+                  color: '#78716C',
+                  fontFamily: 'monospace',
+                  marginLeft: '8px',
+                }}
+              >
                 epaperstudio.app / workspace /{' '}
                 {activeScreenshot === 'editor'
                   ? 'broadsheet-editor'
                   : activeScreenshot === 'continuation'
-                  ? 'multipage-flow'
-                  : 'editions-archive'}
+                    ? 'multipage-flow'
+                    : 'editions-archive'}
               </span>
             </div>
 
@@ -827,7 +1002,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
               >
                 {/* SVG Hexagonal Wireframe Diagram */}
-                <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="180"
+                  height="180"
+                  viewBox="0 0 180 180"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <polygon
                     points="90,15 155,52.5 155,127.5 90,165 25,127.5 25,52.5"
                     stroke="#D6D0C5"
@@ -868,21 +1049,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
               </div>
 
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}>
+              <h3
+                style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}
+              >
                 {locale === 'hi' ? 'ग्रिड संतुलन' : 'Grid Balancing'}
               </h3>
               <p style={{ fontSize: '13px', color: '#78716C', lineHeight: 1.4, margin: 0 }}>
-                {locale === 'hi'
-                  ? '८ और ४-कॉलम समतुल्यता'
-                  : 'Multi-column height balancing'}
+                {locale === 'hi' ? '८ और ४-कॉलम समतुल्यता' : 'Multi-column height balancing'}
               </p>
             </div>
 
             {/* Connecting Arrow 1 (SVG dashed arrow) */}
-            <div style={{ color: '#A8A29E', padding: '0 8px', display: 'flex', alignItems: 'center' }} className="arrow-connector">
+            <div
+              style={{ color: '#A8A29E', padding: '0 8px', display: 'flex', alignItems: 'center' }}
+              className="arrow-connector"
+            >
               <svg width="48" height="12" viewBox="0 0 48 12" fill="none">
-                <line x1="0" y1="6" x2="40" y2="6" stroke="#A8A29E" strokeWidth="1.5" strokeDasharray="3 3" />
-                <path d="M38 3L44 6L38 9" stroke="#A8A29E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <line
+                  x1="0"
+                  y1="6"
+                  x2="40"
+                  y2="6"
+                  stroke="#A8A29E"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <path
+                  d="M38 3L44 6L38 9"
+                  stroke="#A8A29E"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
 
@@ -907,8 +1105,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
               >
                 {/* SVG Modular Geometry Wireframe */}
-                <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="25" y="25" width="130" height="130" stroke="#D6D0C5" strokeWidth="1.5" strokeDasharray="4 4" />
+                <svg
+                  width="180"
+                  height="180"
+                  viewBox="0 0 180 180"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    x="25"
+                    y="25"
+                    width="130"
+                    height="130"
+                    stroke="#D6D0C5"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
                   <circle cx="90" cy="90" r="50" stroke="#E7E2DA" strokeWidth="1" />
                   <line x1="25" y1="25" x2="155" y2="155" stroke="#E7E2DA" strokeWidth="1" />
                   <line x1="25" y1="155" x2="155" y2="25" stroke="#E7E2DA" strokeWidth="1" />
@@ -937,7 +1149,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
               </div>
 
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}>
+              <h3
+                style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}
+              >
                 {locale === 'hi' ? 'स्टोरी निरंतरता' : 'Story Continuation'}
               </h3>
               <p style={{ fontSize: '13px', color: '#78716C', lineHeight: 1.4, margin: 0 }}>
@@ -948,10 +1162,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Connecting Arrow 2 (SVG dashed arrow) */}
-            <div style={{ color: '#A8A29E', padding: '0 8px', display: 'flex', alignItems: 'center' }} className="arrow-connector">
+            <div
+              style={{ color: '#A8A29E', padding: '0 8px', display: 'flex', alignItems: 'center' }}
+              className="arrow-connector"
+            >
               <svg width="48" height="12" viewBox="0 0 48 12" fill="none">
-                <line x1="0" y1="6" x2="40" y2="6" stroke="#A8A29E" strokeWidth="1.5" strokeDasharray="3 3" />
-                <path d="M38 3L44 6L38 9" stroke="#A8A29E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <line
+                  x1="0"
+                  y1="6"
+                  x2="40"
+                  y2="6"
+                  stroke="#A8A29E"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <path
+                  d="M38 3L44 6L38 9"
+                  stroke="#A8A29E"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
 
@@ -976,8 +1207,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
               >
                 {/* SVG Concentric Radar Grid */}
-                <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="90" cy="90" r="70" stroke="#D6D0C5" strokeWidth="1.5" strokeDasharray="4 4" />
+                <svg
+                  width="180"
+                  height="180"
+                  viewBox="0 0 180 180"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="90"
+                    cy="90"
+                    r="70"
+                    stroke="#D6D0C5"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
                   <circle cx="90" cy="90" r="45" stroke="#E7E2DA" strokeWidth="1" />
                   <circle cx="90" cy="90" r="22" stroke="#E7E2DA" strokeWidth="1" />
                   <line x1="90" y1="10" x2="90" y2="170" stroke="#E7E2DA" strokeWidth="1" />
@@ -1007,13 +1251,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
               </div>
 
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}>
+              <h3
+                style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 4px 0' }}
+              >
                 {locale === 'hi' ? '३०० DPI प्रेस पीडीएफ' : '300 DPI Vector PDF'}
               </h3>
               <p style={{ fontSize: '13px', color: '#78716C', lineHeight: 1.4, margin: 0 }}>
-                {locale === 'hi'
-                  ? 'मुद्रण-योग्य वेक्टर निर्यात'
-                  : 'Press-ready vector export'}
+                {locale === 'hi' ? 'मुद्रण-योग्य वेक्टर निर्यात' : 'Press-ready vector export'}
               </p>
             </div>
           </div>
@@ -1047,7 +1291,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ====================================================================
        * SECTION 5: BENTO CAPABILITIES (Exact Reference 2 "Built for scale")
        * ==================================================================== */}
-      <section id="features" style={{ padding: '80px 24px', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+      <section
+        id="features"
+        style={{
+          padding: '80px 24px',
+          backgroundColor: '#F9FAFB',
+          borderBottom: '1px solid #E5E7EB',
+        }}
+      >
         <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
           {/* Section Header with Pill Tag (Exact Ref 2) */}
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
@@ -1078,7 +1329,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 lineHeight: 1.2,
               }}
             >
-              {locale === 'hi' ? 'मुद्रण के लिए निर्मित, विश्वसनीयता के लिए इंजीनियर' : 'Built for scale, engineered for trust'}
+              {locale === 'hi'
+                ? 'मुद्रण के लिए निर्मित, विश्वसनीयता के लिए इंजीनियर'
+                : 'Built for scale, engineered for trust'}
             </h2>
           </div>
 
@@ -1106,7 +1359,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="bento-card-4"
             >
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 8px 0',
+                  }}
+                >
                   {locale === 'hi' ? 'मल्टी-फॉर्मेट आउटपुट' : 'Omnichannel alerts'}
                 </h3>
                 <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.5, margin: 0 }}>
@@ -1124,17 +1384,95 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <line x1="120" y1="90" x2="120" y2="28" stroke="#E5E7EB" strokeWidth="1" />
                   <line x1="120" y1="90" x2="172" y2="42" stroke="#E5E7EB" strokeWidth="1" />
                   <line x1="120" y1="90" x2="215" y2="72" stroke="#E5E7EB" strokeWidth="1" />
-                  <path d="M 20 80 Q 120 10 220 80" stroke="#E5E7EB" strokeWidth="1.5" strokeDasharray="3 3" />
-                  <circle cx="25" cy="72" r="14" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1.5" />
-                  <text x="25" y="76" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6B7280">PDF</text>
-                  <circle cx="68" cy="42" r="14" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1.5" />
-                  <text x="68" y="46" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6B7280">Web</text>
+                  <path
+                    d="M 20 80 Q 120 10 220 80"
+                    stroke="#E5E7EB"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 3"
+                  />
+                  <circle
+                    cx="25"
+                    cy="72"
+                    r="14"
+                    fill="#FFFFFF"
+                    stroke="#E5E7EB"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="25"
+                    y="76"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="600"
+                    fill="#6B7280"
+                  >
+                    PDF
+                  </text>
+                  <circle
+                    cx="68"
+                    cy="42"
+                    r="14"
+                    fill="#FFFFFF"
+                    stroke="#E5E7EB"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="68"
+                    y="46"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="600"
+                    fill="#6B7280"
+                  >
+                    Web
+                  </text>
                   <circle cx="120" cy="28" r="16" fill="#F97316" />
-                  <text x="120" y="32" textAnchor="middle" fontSize="11" fontWeight="700" fill="#FFFFFF">EP</text>
-                  <circle cx="172" cy="42" r="14" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1.5" />
-                  <text x="172" y="46" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6B7280">E-Ink</text>
-                  <circle cx="215" cy="72" r="14" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1.5" />
-                  <text x="215" y="76" textAnchor="middle" fontSize="10" fontWeight="600" fill="#6B7280">App</text>
+                  <text
+                    x="120"
+                    y="32"
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight="700"
+                    fill="#FFFFFF"
+                  >
+                    EP
+                  </text>
+                  <circle
+                    cx="172"
+                    cy="42"
+                    r="14"
+                    fill="#FFFFFF"
+                    stroke="#E5E7EB"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="172"
+                    y="46"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="600"
+                    fill="#6B7280"
+                  >
+                    E-Ink
+                  </text>
+                  <circle
+                    cx="215"
+                    cy="72"
+                    r="14"
+                    fill="#FFFFFF"
+                    stroke="#E5E7EB"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="215"
+                    y="76"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="600"
+                    fill="#6B7280"
+                  >
+                    App
+                  </text>
                 </svg>
               </div>
             </div>
@@ -1155,7 +1493,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="bento-card-4"
             >
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 8px 0',
+                  }}
+                >
                   {locale === 'hi' ? 'स्मार्ट कॉलम संतुलन' : 'Smart movement'}
                 </h3>
                 <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.5, margin: 0 }}>
@@ -1168,7 +1513,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Concentric Circles + Shield (Ref 2) */}
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
                 <svg width="150" height="95" viewBox="0 0 150 95" fill="none">
-                  <circle cx="75" cy="48" r="42" stroke="#F3F4F6" strokeWidth="1" strokeDasharray="3 3" />
+                  <circle
+                    cx="75"
+                    cy="48"
+                    r="42"
+                    stroke="#F3F4F6"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                  />
                   <circle cx="75" cy="48" r="32" stroke="#E5E7EB" strokeWidth="1" />
                   <circle cx="75" cy="48" r="22" stroke="#F3F4F6" strokeWidth="1" />
                   <line x1="15" y1="48" x2="135" y2="48" stroke="#E5E7EB" strokeWidth="0.75" />
@@ -1178,7 +1530,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <circle cx="43" cy="48" r="1.5" fill="#9CA3AF" />
                   <circle cx="107" cy="48" r="1.5" fill="#9CA3AF" />
                   <circle cx="75" cy="48" r="14" fill="#FFF7ED" stroke="#FED7AA" strokeWidth="1" />
-                  <path d="M 70 44 L 75 41 L 80 44 V 49 Q 75 54 75 54 Q 70 49 70 49 Z" fill="#F97316" />
+                  <path
+                    d="M 70 44 L 75 41 L 80 44 V 49 Q 75 54 75 54 Q 70 49 70 49 Z"
+                    fill="#F97316"
+                  />
                 </svg>
               </div>
             </div>
@@ -1199,7 +1554,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="bento-card-4"
             >
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#111827',
+                    margin: '0 0 8px 0',
+                  }}
+                >
                   {locale === 'hi' ? 'संपादकीय अधिकार' : 'Granular permissions'}
                 </h3>
                 <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.5, margin: 0 }}>
@@ -1222,38 +1584,119 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '10px', color: '#16A34A', backgroundColor: '#F0FDF4', border: '1px solid #DCFCE7', padding: '2px 8px', borderRadius: '9999px', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: '#16A34A',
+                      backgroundColor: '#F0FDF4',
+                      border: '1px solid #DCFCE7',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      fontWeight: 600,
+                    }}
+                  >
                     ● Invite sent!
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', fontSize: '11px', color: '#6B7280' }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontSize: '11px',
+                      color: '#6B7280',
+                    }}
+                  >
                     Assign a role
                   </div>
-                  <div style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#9CA3AF', color: '#FFFFFF', fontSize: '11px', fontWeight: 600 }}>
+                  <div
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      backgroundColor: '#9CA3AF',
+                      color: '#FFFFFF',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                  >
                     Send Invite
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#4B5563' }}>👤</div>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        backgroundColor: '#F3F4F6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        color: '#4B5563',
+                      }}
+                    >
+                      👤
+                    </div>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>Admin</div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>
+                        Admin
+                      </div>
                       <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Full account control</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#4B5563' }}>👤</div>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        backgroundColor: '#F3F4F6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        color: '#4B5563',
+                      }}
+                    >
+                      👤
+                    </div>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>Designer</div>
-                      <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Typography & layout styling</div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>
+                        Designer
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#9CA3AF' }}>
+                        Typography & layout styling
+                      </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#4B5563' }}>👤</div>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        backgroundColor: '#F3F4F6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        color: '#4B5563',
+                      }}
+                    >
+                      👤
+                    </div>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>View Only</div>
-                      <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Proofing & reader access</div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#111827' }}>
+                        View Only
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#9CA3AF' }}>
+                        Proofing & reader access
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1271,10 +1714,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="bento-card-6"
             >
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+              <h3
+                style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}
+              >
                 {locale === 'hi' ? 'सटीक टाइपोमेट्रिक पैमाना' : 'Dynamic typometric scale'}
               </h3>
-              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#6B7280',
+                  lineHeight: 1.5,
+                  margin: '0 0 16px 0',
+                }}
+              >
                 {locale === 'hi'
                   ? 'देवनागरी संयुक्ताक्षरों और लैटिन शीर्षकों के लिए ०.२५pt सूक्ष्म-आकार ट्यूनिंग और बेसलाइन ग्रिड।'
                   : 'Monitor and control headline leading, baseline grid snapping, and bilingual font pair optical sizing in real time.'}
@@ -1289,14 +1741,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   border: '1px solid #E5E7EB',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>Leading & Baseline Snapping</span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#F97316' }}>135% · 12pt Grid</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+                    Leading & Baseline Snapping
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#F97316' }}>
+                    135% · 12pt Grid
+                  </span>
                 </div>
-                <div style={{ height: '8px', backgroundColor: '#E5E7EB', borderRadius: '9999px', overflow: 'hidden' }}>
-                  <div style={{ width: '82%', height: '100%', backgroundColor: '#111827', borderRadius: '9999px' }} />
+                <div
+                  style={{
+                    height: '8px',
+                    backgroundColor: '#E5E7EB',
+                    borderRadius: '9999px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '82%',
+                      height: '100%',
+                      backgroundColor: '#111827',
+                      borderRadius: '9999px',
+                    }}
+                  />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#9CA3AF', marginTop: '6px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '10px',
+                    color: '#9CA3AF',
+                    marginTop: '6px',
+                  }}
+                >
                   <span>0pt Delta</span>
                   <span>Deterministic Auto-Balance</span>
                 </div>
@@ -1314,10 +1799,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="bento-card-6"
             >
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+              <h3
+                style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}
+              >
                 {locale === 'hi' ? 'पूर्ण डेटा गोपनीयता व लोकल-फर्स्ट' : 'Bank-grade protection'}
               </h3>
-              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#6B7280',
+                  lineHeight: 1.5,
+                  margin: '0 0 16px 0',
+                }}
+              >
                 {locale === 'hi'
                   ? 'शून्य टेलीमेट्री — सभी मसौदे और संस्करण आपके ब्राउज़र के भीतर सुरक्षित एनक्रिप्टेड रहते हैं।'
                   : 'Secure your newspaper newsroom with zero cloud telemetry, local IndexedDB storage, and client-side PDF compilation.'}
@@ -1336,15 +1830,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#111827', color: '#FAF8F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      backgroundColor: '#111827',
+                      color: '#FAF8F5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                    }}
+                  >
                     🔒
                   </div>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#111827' }}>Zero-Cloud Client Compilation</div>
-                    <div style={{ fontSize: '10px', color: '#6B7280' }}>100% On-Device IndexedDB · AES-GCM Encrypted</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#111827' }}>
+                      Zero-Cloud Client Compilation
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#6B7280' }}>
+                      100% On-Device IndexedDB · AES-GCM Encrypted
+                    </div>
                   </div>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: '9999px', backgroundColor: '#F0FDF4', color: '#16A34A', border: '1px solid #DCFCE7', fontSize: '11px', fontWeight: 700 }}>
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#F0FDF4',
+                    color: '#16A34A',
+                    border: '1px solid #DCFCE7',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                  }}
+                >
                   Verified
                 </span>
               </div>
@@ -1356,9 +1876,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ====================================================================
        * SECTION 6: INTERACTIVE NEWSPAPER TEMPLATES
        * ==================================================================== */}
-      <section id="showcase" style={{ padding: '80px 24px', backgroundColor: '#FAF8F5', borderBottom: '1px solid #E7E2DA' }}>
+      <section
+        id="showcase"
+        style={{
+          padding: '80px 24px',
+          backgroundColor: '#FAF8F5',
+          borderBottom: '1px solid #E7E2DA',
+        }}
+      >
         <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', flexWrap: 'wrap', gap: '16px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              marginBottom: '40px',
+              flexWrap: 'wrap',
+              gap: '16px',
+            }}
+          >
             <div>
               <div
                 style={{
@@ -1451,18 +1987,58 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#78716C', textTransform: 'uppercase' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '14px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: '#78716C',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     {locale === 'hi' ? '८-कॉलम राष्ट्रीय मानक' : '8-Column National'}
                   </span>
-                  <span style={{ backgroundColor: '#F5F2EB', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      backgroundColor: '#F5F2EB',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                  >
                     Broadsheet (600×750mm)
                   </span>
                 </div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif", color: '#1C1917', margin: '0 0 10px 0' }}>
-                  {activeShowcaseLanguage === 'hi' ? 'दैनिक जागरण शैली ब्रॉडशीट' : 'The Morning Chronicle'}
+                <h3
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    color: '#1C1917',
+                    margin: '0 0 10px 0',
+                  }}
+                >
+                  {activeShowcaseLanguage === 'hi'
+                    ? 'दैनिक जागरण शैली ब्रॉडशीट'
+                    : 'The Morning Chronicle'}
                 </h3>
-                <p style={{ fontSize: '13px', color: '#57534E', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+                <p
+                  style={{
+                    fontSize: '13px',
+                    color: '#57534E',
+                    lineHeight: 1.6,
+                    margin: '0 0 20px 0',
+                  }}
+                >
                   {activeShowcaseLanguage === 'hi'
                     ? 'राष्ट्रीय दैनिक समाचार पत्रों के लिए उपयुक्त प्रामाणिक 8-कॉलम लेआउट, देवनागरी हेडिंग और विज्ञापन स्लॉट्स।'
                     : 'The grand standard for national broadsheets with 8-column modular grid, editorial kicker, and deep lead stories.'}
@@ -1501,18 +2077,58 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#78716C', textTransform: 'uppercase' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '14px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: '#78716C',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     {locale === 'hi' ? '६-कॉलम यूरोपीय प्रारूप' : '6-Column European'}
                   </span>
-                  <span style={{ backgroundColor: '#F5F2EB', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      backgroundColor: '#F5F2EB',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                  >
                     Berliner (315×470mm)
                   </span>
                 </div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif", color: '#1C1917', margin: '0 0 10px 0' }}>
-                  {activeShowcaseLanguage === 'hi' ? 'नवभारत आधुनिक बर्लिनर' : 'The Continental Daily'}
+                <h3
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    color: '#1C1917',
+                    margin: '0 0 10px 0',
+                  }}
+                >
+                  {activeShowcaseLanguage === 'hi'
+                    ? 'नवभारत आधुनिक बर्लिनर'
+                    : 'The Continental Daily'}
                 </h3>
-                <p style={{ fontSize: '13px', color: '#57534E', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+                <p
+                  style={{
+                    fontSize: '13px',
+                    color: '#57534E',
+                    lineHeight: 1.6,
+                    margin: '0 0 20px 0',
+                  }}
+                >
                   {activeShowcaseLanguage === 'hi'
                     ? 'आधुनिक पाठक के लिए संतुलित 6-कॉलम ग्रिड, जिसमें सुगम पाठन और उत्कृष्ट दृश्य पदानुक्रम शामिल है।'
                     : 'Balanced modern daily layout optimized for handheld reading with high typographic density.'}
@@ -1551,18 +2167,58 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#78716C', textTransform: 'uppercase' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '14px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: '#78716C',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     {locale === 'hi' ? '५-कॉलम स्थानीय अख़बार' : '5-Column Local Daily'}
                   </span>
-                  <span style={{ backgroundColor: '#F5F2EB', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      backgroundColor: '#F5F2EB',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                  >
                     Tabloid (280×430mm)
                   </span>
                 </div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif", color: '#1C1917', margin: '0 0 10px 0' }}>
-                  {activeShowcaseLanguage === 'hi' ? 'दैनिक प्रभात टैब्लॉयड' : 'City Standard Tabloid'}
+                <h3
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    color: '#1C1917',
+                    margin: '0 0 10px 0',
+                  }}
+                >
+                  {activeShowcaseLanguage === 'hi'
+                    ? 'दैनिक प्रभात टैब्लॉयड'
+                    : 'City Standard Tabloid'}
                 </h3>
-                <p style={{ fontSize: '13px', color: '#57534E', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+                <p
+                  style={{
+                    fontSize: '13px',
+                    color: '#57534E',
+                    lineHeight: 1.6,
+                    margin: '0 0 20px 0',
+                  }}
+                >
                   {activeShowcaseLanguage === 'hi'
                     ? 'स्थानीय और साप्ताहिक समाचार पत्रों के लिए 5-कॉलम सघन प्रारूप, तुरंत डाउनलोड एवं प्रिंटिंग।'
                     : 'High-impact 5-column compact tabloid designed for local news, cultural bulletins, and rapid reading.'}
@@ -1629,7 +2285,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   : 'Transform Your Workflow with Ease Starting Today'}
               </h2>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '24px' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: '24px',
+              }}
+            >
               <p
                 style={{
                   fontSize: '16px',
@@ -1711,14 +2374,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             {/* Column 1: COMPANY (Ref 4) */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#1C1917', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#1C1917',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '16px',
+                }}
+              >
                 COMPANY
               </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
                 <li>
                   <button
                     onClick={() => openModal('about')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'हमारे बारे में (About Us)' : 'About Us'}
@@ -1727,7 +2415,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('about')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'कैरियर' : 'Careers'}
@@ -1736,7 +2431,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('about')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'प्रेस विज्ञप्ति' : 'Press'}
@@ -1745,7 +2447,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('contact')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'संपर्क करें' : 'Contact'}
@@ -1756,14 +2465,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Column 2: SUPPORT (Ref 4) */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#1C1917', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#1C1917',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '16px',
+                }}
+              >
                 SUPPORT
               </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
                 <li>
                   <button
                     onClick={() => openModal('faq')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'सहायता केंद्र' : 'Help Center'}
@@ -1772,7 +2506,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('faq')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'अक्सर पूछे जाने वाले सवाल' : 'FAQs'}
@@ -1781,7 +2522,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('privacy')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'गोपनीयता नीति' : 'Privacy Policy'}
@@ -1790,7 +2538,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <li>
                   <button
                     onClick={() => openModal('terms')}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#57534E', cursor: 'pointer' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '13px',
+                      color: '#57534E',
+                      cursor: 'pointer',
+                    }}
                     className="hover:text-stone-900 transition-colors"
                   >
                     {locale === 'hi' ? 'सेवा की शर्तें' : 'Terms of Service'}
@@ -1801,10 +2556,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Column 3: SOCIAL (Ref 4) */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#1C1917', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#1C1917',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '16px',
+                }}
+              >
                 SOCIAL
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '16px', fontWeight: 700, color: '#1C1917' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: '#1C1917',
+                }}
+              >
                 <a
                   href="https://x.com"
                   target="_blank"
@@ -1853,9 +2626,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               gap: '12px',
             }}
           >
-            <span>
-              © {new Date().getFullYear()} E-Paper Studio. All rights reserved.
-            </span>
+            <span>© {new Date().getFullYear()} E-Paper Studio. All rights reserved.</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span>Local-First · Zero-Telemetry · 300 DPI Vector PDF</span>
             </div>

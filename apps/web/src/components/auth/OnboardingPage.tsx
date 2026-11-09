@@ -11,10 +11,7 @@ export interface OnboardingPageProps {
 
 const ONBOARDING_STEP_KEY = 'epaper_studio_onboarding_step';
 
-export const OnboardingPage: React.FC<OnboardingPageProps> = ({
-  onComplete,
-  onBackToLanding,
-}) => {
+export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBackToLanding }) => {
   const { locale, setLocale } = useI18n();
   const { user, profile, completeOnboarding } = useAuth();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -44,17 +41,22 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
     profile?.publicationName || (locale === 'hi' ? 'दैनिक नवप्रभात' : 'The Morning Chronicle')
   );
   const [publicationTagline, setPublicationTagline] = useState(
-    profile?.publicationTagline || (locale === 'hi' ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'Independent Voice of Truth')
+    profile?.publicationTagline ||
+      (locale === 'hi' ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'Independent Voice of Truth')
   );
   const [primaryLanguage, setPrimaryLanguage] = useState<'en' | 'hi'>(locale);
-  const [preferredPageSize, setPreferredPageSize] = useState<'broadsheet' | 'tabloid' | 'berliner' | 'a3' | 'a4'>('broadsheet');
+  const [preferredPageSize, setPreferredPageSize] = useState<
+    'broadsheet' | 'tabloid' | 'berliner' | 'a3' | 'a4'
+  >('broadsheet');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFinish = async () => {
     if (!publicationName.trim()) {
-      setError(locale === 'hi' ? 'कृपया प्रकाशन का नाम दर्ज करें।' : 'Please enter your publication name.');
+      setError(
+        locale === 'hi' ? 'कृपया प्रकाशन का नाम दर्ज करें।' : 'Please enter your publication name.'
+      );
       return;
     }
 
@@ -156,7 +158,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '18px' }}>
             <label
               htmlFor="onboarding-name"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'आपका नाम (मुख्य संपादक)' : 'Your Name (Chief Editor)'}
             </label>
@@ -182,7 +190,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '24px' }}>
             <label
               htmlFor="onboarding-email"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'ईमेल खाता' : 'Account Email'}
             </label>
@@ -238,7 +252,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '18px' }}>
             <label
               htmlFor="pub-name"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'समाचार पत्र का नाम' : 'Newspaper Title'}
             </label>
@@ -264,7 +284,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '24px' }}>
             <label
               htmlFor="pub-tagline"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'टैगलाइन / ध्येय वाक्य' : 'Publication Tagline (Optional)'}
             </label>
@@ -273,7 +299,11 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
               type="text"
               value={publicationTagline}
               onChange={(e) => setPublicationTagline(e.target.value)}
-              placeholder={locale === 'hi' ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'Voice of the Independent Newsroom'}
+              placeholder={
+                locale === 'hi'
+                  ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक'
+                  : 'Voice of the Independent Newsroom'
+              }
               style={{
                 width: '100%',
                 padding: '10px 14px',
@@ -308,7 +338,11 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
               type="button"
               onClick={() => {
                 if (!publicationName.trim()) {
-                  setError(locale === 'hi' ? 'कृपया प्रकाशन का नाम दर्ज करें।' : 'Please enter your publication name.');
+                  setError(
+                    locale === 'hi'
+                      ? 'कृपया प्रकाशन का नाम दर्ज करें।'
+                      : 'Please enter your publication name.'
+                  );
                   return;
                 }
                 setError(null);
@@ -340,7 +374,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '18px' }}>
             <label
               htmlFor="pref-language"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '8px',
+              }}
             >
               {locale === 'hi' ? 'प्राथमिक भाषा' : 'Primary Editorial Language'}
             </label>
@@ -392,7 +432,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
           <div style={{ marginBottom: '24px' }}>
             <label
               htmlFor="pref-pagesize"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '8px',
+              }}
             >
               {locale === 'hi' ? 'डिफ़ॉल्ट मुद्रण प्रारूप' : 'Default Print Geometry'}
             </label>
@@ -404,7 +450,9 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
               ].map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => setPreferredPageSize(item.id as 'broadsheet' | 'tabloid' | 'berliner')}
+                  onClick={() =>
+                    setPreferredPageSize(item.id as 'broadsheet' | 'tabloid' | 'berliner')
+                  }
                   style={{
                     padding: '10px 14px',
                     borderRadius: '8px',
@@ -417,14 +465,18 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{item.name}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
+                      {item.name}
+                    </div>
                     <div style={{ fontSize: '11px', color: '#6B7280' }}>{item.sub}</div>
                   </div>
                   <input
                     type="radio"
                     name="page_size"
                     checked={preferredPageSize === item.id}
-                    onChange={() => setPreferredPageSize(item.id as 'broadsheet' | 'tabloid' | 'berliner')}
+                    onChange={() =>
+                      setPreferredPageSize(item.id as 'broadsheet' | 'tabloid' | 'berliner')
+                    }
                     style={{ accentColor: colors.inkBlack }}
                   />
                 </div>
@@ -515,17 +567,23 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#6B7280' }}>{locale === 'hi' ? 'मुख्य संपादक:' : 'Editor in Chief:'}</span>
+              <span style={{ color: '#6B7280' }}>
+                {locale === 'hi' ? 'मुख्य संपादक:' : 'Editor in Chief:'}
+              </span>
               <span style={{ fontWeight: 600, color: '#111827' }}>{fullName}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#6B7280' }}>{locale === 'hi' ? 'प्रकाशन भाषा:' : 'Language:'}</span>
+              <span style={{ color: '#6B7280' }}>
+                {locale === 'hi' ? 'प्रकाशन भाषा:' : 'Language:'}
+              </span>
               <span style={{ fontWeight: 600, color: '#111827' }}>
                 {primaryLanguage === 'hi' ? 'हिन्दी (Hindi)' : 'English'}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#6B7280' }}>{locale === 'hi' ? 'पृष्ठ प्रारूप:' : 'Geometry:'}</span>
+              <span style={{ color: '#6B7280' }}>
+                {locale === 'hi' ? 'पृष्ठ प्रारूप:' : 'Geometry:'}
+              </span>
               <span style={{ fontWeight: 600, color: '#111827', textTransform: 'capitalize' }}>
                 {preferredPageSize}
               </span>
@@ -564,4 +622,3 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
     </AuthLayout>
   );
 };
-

@@ -15,6 +15,7 @@ export interface MastheadInspectorPanelProps {
   presetId?: NewspaperPresetId;
   onClose?: () => void;
   initialTab?: 'title' | 'meta' | 'rules';
+  onOpenDesigner?: () => void;
 }
 
 export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
@@ -23,6 +24,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   presetId = 'classic-hindi-broadsheet',
   onClose,
   initialTab,
+  onOpenDesigner,
 }) => {
   const [activeTab, setActiveTab] = useState<'title' | 'meta' | 'rules'>(initialTab || 'title');
 
@@ -133,6 +135,32 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           )}
         </div>
       </div>
+
+      {onOpenDesigner && (
+        <button
+          type="button"
+          onClick={onOpenDesigner}
+          data-testid="btn-open-masthead-designer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            backgroundColor: '#0f172a',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}
+        >
+          <span>🎨</span>
+          <span>उन्नत मास्टहेड स्टूडियो खोलें (Open Full Designer)</span>
+        </button>
+      )}
 
       {/* Navigation Sub-Tabs */}
       <div

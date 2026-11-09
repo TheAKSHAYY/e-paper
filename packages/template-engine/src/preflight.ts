@@ -63,7 +63,10 @@ export function countVisualTextUnits(text: string): number {
   if (!text) return 0;
   if (/[\u0900-\u097F]/.test(text)) {
     // Strip Devanagari combining marks (matras, viramas, nukta, anusvara)
-    const baseText = text.replace(/[\u0901-\u0903\u093C\u093E-\u094F\u0951-\u0957\u0962-\u0963]/g, '');
+    const baseText = text.replace(
+      /[\u0901-\u0903\u093C\u093E-\u094F\u0951-\u0957\u0962-\u0963]/g,
+      ''
+    );
     return Math.max(1, baseText.length);
   }
   return text.length;
@@ -287,8 +290,7 @@ export function runPreflightValidation(
 
     // 1D. Page word budget check (informational/advisory warning)
     const totalWords = page.articles.reduce(
-      (sum, a) =>
-        sum + (a.headline?.split(/\s+/).length || 0) + (a.body?.split(/\s+/).length || 0),
+      (sum, a) => sum + (a.headline?.split(/\s+/).length || 0) + (a.body?.split(/\s+/).length || 0),
       0
     );
     const budget = PAGE_CAPACITY_WORDS[doc.metadata.pageSize] || 1500;
@@ -586,10 +588,15 @@ export function runPreflightValidation(
   }
 
   // 14. Multi-Page Story Continuation Integrity Checks
-  const allArticlesWithPages: Array<{ article: Article; pageIndex: number; pageNumber: number }> = [];
+  const allArticlesWithPages: Array<{ article: Article; pageIndex: number; pageNumber: number }> =
+    [];
   pages.forEach((p, pIdx) => {
     p.articles.forEach((art) => {
-      allArticlesWithPages.push({ article: art, pageIndex: pIdx, pageNumber: p.pageNumber || pIdx + 1 });
+      allArticlesWithPages.push({
+        article: art,
+        pageIndex: pIdx,
+        pageNumber: p.pageNumber || pIdx + 1,
+      });
     });
   });
 
@@ -614,10 +621,15 @@ export function runPreflightValidation(
             headline: article.headline,
             title: 'कथा सातत्य विच्छेद (Orphan Continuation)',
             explanation: `लेख "${article.headline || 'समाचार'}" का अगला भाग (Continuation) दस्तावेज़ में नहीं मिला। पाठक अधूरी खबर पढ़ेंगे।`,
-            suggestedCorrection: 'लेख का अगला भाग अंदर के पृष्ठ पर जोड़ें अथवा इस लेख से सातत्य संदर्भ हटाएं।',
+            suggestedCorrection:
+              'लेख का अगला भाग अंदर के पृष्ठ पर जोड़ें अथवा इस लेख से सातत्य संदर्भ हटाएं।',
             autoFixAvailable: false,
           });
-        } else if (c.targetPageNumber && typeof c.targetPageNumber === 'number' && c.targetPageNumber !== nextEntry.pageNumber) {
+        } else if (
+          c.targetPageNumber &&
+          typeof c.targetPageNumber === 'number' &&
+          c.targetPageNumber !== nextEntry.pageNumber
+        ) {
           issues.push({
             id: `continuation-target-mismatch-${article.id}`,
             type: 'continuation_target_invalid',
@@ -826,7 +838,18 @@ export function isPageCapacityFull(
     );
     const usableWidthPx = metrics.widthPx - metrics.paddingPx * 2;
     const usableHeightPx = metrics.heightPx - metrics.paddingPx * 2;
-    const headerHeightPx = isFirstPage ? 160 : 40;
+
+    // Compute realistic header height depending on page size and masthead elements
+    let headerHeightPx = 40;
+    if (isFirstPage) {
+      const mh = doc.masthead;
+      const hasSlots = mh?.leftSlot?.enabled || mh?.rightSlot?.enabled;
+      const hasLogo = mh?.showCenterLogo && mh?.centerLogoUrl;
+      const hasAnnouncement = mh?.showAnnouncementStrip && mh?.announcementStripText;
+      const baseHeader = pageSize === 'a4' ? 160 : pageSize === 'tabloid' ? 200 : 220;
+      headerHeightPx =
+        baseHeader + (hasSlots ? 25 : 0) + (hasLogo ? 35 : 0) + (hasAnnouncement ? 22 : 0);
+    }
     const footerHeightPx = 35;
     const availableColumnHeightPx = Math.max(100, usableHeightPx - headerHeightPx - footerHeightPx);
 
@@ -834,6 +857,7 @@ export function isPageCapacityFull(
     let currentRowCols = 0;
     let currentRowMaxH = 0;
     let totalGridHeightPx = 0;
+    let rowCount = 0;
 
     for (const art of articlesToEvaluate) {
       const span = Math.min(pageCols, Math.max(1, art.columnSpan || 1));
@@ -843,14 +867,18 @@ export function isPageCapacityFull(
         totalGridHeightPx += currentRowMaxH;
         currentRowCols = span;
         currentRowMaxH = estHeight;
+        rowCount++;
       } else {
         currentRowCols += span;
         currentRowMaxH = Math.max(currentRowMaxH, estHeight);
       }
     }
     totalGridHeightPx += currentRowMaxH;
+    if (rowCount > 0) {
+      totalGridHeightPx += rowCount * metrics.gapPx;
+    }
 
-    if (totalGridHeightPx > availableColumnHeightPx * 1.05) {
+    if (totalGridHeightPx > availableColumnHeightPx * 1.02) {
       return {
         isFull: true,
         reason: 'grid_area_exhausted',

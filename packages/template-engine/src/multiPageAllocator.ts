@@ -1,8 +1,4 @@
-import type {
-  Article,
-  NewspaperDocument,
-  NewspaperPage,
-} from '@epaper-studio/document-schema';
+import type { Article, NewspaperDocument, NewspaperPage } from '@epaper-studio/document-schema';
 import { balanceNewspaperPage } from './balancer.js';
 import { segmentArticleContent } from './segmenter.js';
 
@@ -117,7 +113,11 @@ export function allocateMultiPageDocumentOverflow(
     // Process each unplaced story
     for (const unplacedArt of unplaced) {
       // 1. Locked element check: locked ads or articles must not be moved or split
-      if (unplacedArt.locked || unplacedArt.lockPosition || unplacedArt.elementType === 'advertisement') {
+      if (
+        unplacedArt.locked ||
+        unplacedArt.lockPosition ||
+        unplacedArt.elementType === 'advertisement'
+      ) {
         retainedArticlesOnCurrentPage.push(unplacedArt);
         oversetStories.push({
           articleId: unplacedArt.id,

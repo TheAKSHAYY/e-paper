@@ -61,4 +61,3 @@ describe('LocalStoragePublisherProfileAdapter', () => {
     expect(profile.newspaperTitle).toBe('दैनिक नवप्रभात');
   });
 });
-

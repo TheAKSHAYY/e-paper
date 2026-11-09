@@ -6,9 +6,11 @@ import { runPreflightValidation } from './preflight.js';
 
 describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   const createMockStory = (id: string, headline: string, paraCount: number = 4): Article => {
-    const paragraphs = Array.from({ length: paraCount }, (_, idx) => (
-      `पैराग्राफ ${idx + 1}: राष्ट्र निर्माण में सतत विकास, बुनियादी ढांचे का विस्तार, डिजिटल नवाचार और सामाजिक समरसता एक महत्वपूर्ण भूमिका निभाते हैं। यह संवाद जनहित में जारी किया गया है।`
-    ));
+    const paragraphs = Array.from(
+      { length: paraCount },
+      (_, idx) =>
+        `पैराग्राफ ${idx + 1}: राष्ट्र निर्माण में सतत विकास, बुनियादी ढांचे का विस्तार, डिजिटल नवाचार और सामाजिक समरसता एक महत्वपूर्ण भूमिका निभाते हैं। यह संवाद जनहित में जारी किया गया है।`
+    );
     return {
       id,
       headline,
@@ -21,7 +23,10 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   };
 
   it('1. should leave a balanced single-page document intact when all stories fit within budget', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
     // Only 2 short articles fit cleanly on Page 1
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -39,11 +44,14 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('2. should automatically allocate overflowing stories to Page 2 when Page 1 capacity is exceeded', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
     // Place 30 major multi-paragraph stories on Page 1, heavily exceeding physical page height capacity
-    const heavyStories: Article[] = Array.from({ length: 30 }, (_, idx) => (
+    const heavyStories: Article[] = Array.from({ length: 30 }, (_, idx) =>
       createMockStory(`heavy-art-${idx + 1}`, `राष्ट्रीय समाचार अंक ${idx + 1}`, 5)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -60,11 +68,14 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('3. should preserve 100% of paragraph text across origin and continuation fragments (Zero Content Loss)', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
     const longArticle = createMockStory('split-test-story', 'महा-कथा: विज्ञान और भविष्य', 6);
-    const fillerStories = Array.from({ length: 10 }, (_, idx) => (
+    const fillerStories = Array.from({ length: 10 }, (_, idx) =>
       createMockStory(`filler-${idx + 1}`, `पूरक कथा ${idx + 1}`, 4)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -79,10 +90,7 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
       const continuation = allArticles.find((a) => a.continuation?.previousArticleId === origin.id);
       expect(continuation).toBeDefined();
 
-      const combinedParas = [
-        ...origin.body.split(/\n\n+/),
-        ...continuation!.body.split(/\n\n+/),
-      ];
+      const combinedParas = [...origin.body.split(/\n\n+/), ...continuation!.body.split(/\n\n+/)];
       const originalParas = longArticle.body.split(/\n\n+/);
 
       expect(combinedParas.length).toBe(originalParas.length);
@@ -91,7 +99,10 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('4. should protect locked advertisements and obstacles from being moved or split', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
     const lockedAd: Article = {
       id: 'locked-front-page-ad',
       headline: 'विशेष वाणिज्यिक विज्ञापन',
@@ -110,9 +121,9 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
       },
     };
 
-    const fillerStories = Array.from({ length: 12 }, (_, idx) => (
+    const fillerStories = Array.from({ length: 12 }, (_, idx) =>
       createMockStory(`story-${idx + 1}`, `संवाद संख्या ${idx + 1}`, 4)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -131,11 +142,14 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('5. should enforce maxPages ceiling and report actionable overset diagnostics when capacity is reached', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
     // Massive volume of stories: 60 stories with 6 paragraphs each
-    const massiveVolume = Array.from({ length: 60 }, (_, idx) => (
+    const massiveVolume = Array.from({ length: 60 }, (_, idx) =>
       createMockStory(`massive-${idx + 1}`, `अति-विस्तृत समाचार ${idx + 1}`, 6)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -150,10 +164,13 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('6. should be idempotent and repeated-balancing safe without creating duplicate continuation fragments', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
-    const stories = Array.from({ length: 14 }, (_, idx) => (
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
+    const stories = Array.from({ length: 14 }, (_, idx) =>
       createMockStory(`idempotent-${idx + 1}`, `समाचार ${idx + 1}`, 4)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -175,10 +192,13 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
   });
 
   it('7. should pass preflight checks 14, 15, and 16 on the multi-page allocated document', () => {
-    const baseDoc = createNewspaperDocument({ pageSize: 'tabloid', presetId: 'classic-hindi-broadsheet' });
-    const stories = Array.from({ length: 12 }, (_, idx) => (
+    const baseDoc = createNewspaperDocument({
+      pageSize: 'tabloid',
+      presetId: 'classic-hindi-broadsheet',
+    });
+    const stories = Array.from({ length: 12 }, (_, idx) =>
       createMockStory(`preflight-story-${idx + 1}`, `मुख्य संवाद ${idx + 1}`, 5)
-    ));
+    );
 
     const testDoc: NewspaperDocument = {
       ...baseDoc,
@@ -189,11 +209,12 @@ describe('Automatic Multi-Page Overflow & Continuation Allocator', () => {
     const preflight = runPreflightValidation(result.document);
 
     // Filter continuation-specific issues
-    const continuationIssues = preflight.issues.filter((i) => (
-      i.type === 'continuation_broken' ||
-      i.type === 'continuation_text_mismatch' ||
-      i.type === 'continuation_target_invalid'
-    ));
+    const continuationIssues = preflight.issues.filter(
+      (i) =>
+        i.type === 'continuation_broken' ||
+        i.type === 'continuation_text_mismatch' ||
+        i.type === 'continuation_target_invalid'
+    );
 
     expect(continuationIssues.length).toBe(0);
   });

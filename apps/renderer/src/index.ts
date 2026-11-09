@@ -474,7 +474,7 @@ export class RendererWorker {
    */
   public async renderToPdf(
     doc: NewspaperDocument,
-    options: { timeoutMs?: number } = {}
+    options: { timeoutMs?: number; strictPages?: boolean } = {}
   ): Promise<RenderPdfResult> {
     const timeout = options.timeoutMs ?? this.config.timeoutMs;
     const releaseSlot = await this.acquireSlot(timeout);
@@ -484,7 +484,9 @@ export class RendererWorker {
       doc.metadata.orientation
     );
 
-    const html = renderNewspaperDocumentToHtml(doc);
+    const html = renderNewspaperDocumentToHtml(doc, {
+      strictPages: options.strictPages,
+    });
     const browser = await this.getBrowser();
     const page = await browser.newPage();
 
@@ -593,7 +595,7 @@ export class RendererWorker {
       doc.metadata.orientation
     );
     const scale = options.scale ?? 1;
-    const html = renderNewspaperDocumentToHtml(doc);
+    const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
     const browser = await this.getBrowser();
     const page = await browser.newPage();
@@ -646,7 +648,7 @@ export class RendererWorker {
       doc.metadata.orientation
     );
     const scale = options.scale ?? 1;
-    const html = renderNewspaperDocumentToHtml(doc);
+    const html = renderNewspaperDocumentToHtml(doc, { strictPages: true });
 
     const browser = await this.getBrowser();
     const page = await browser.newPage();

@@ -89,7 +89,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
             >
               E-Paper Studio
             </span>
-            <span style={{ fontSize: '10px', color: '#78716C', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: '10px',
+                color: '#78716C',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
               {locale === 'hi' ? 'समाचार पत्र प्रकाशन' : 'Newspaper Publishing'}
             </span>
           </div>
@@ -150,7 +157,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
                 color: colors.inkBlack,
                 margin: '0 0 8px 0',
                 letterSpacing: '-0.02em',
-                fontFamily: locale === 'hi' ? "'Noto Serif Devanagari', 'Rozha One', serif" : "'Playfair Display', Georgia, serif",
+                fontFamily:
+                  locale === 'hi'
+                    ? "'Noto Serif Devanagari', 'Rozha One', serif"
+                    : "'Playfair Display', Georgia, serif",
               }}
             >
               {title}
@@ -177,13 +187,24 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
           backgroundColor: '#FAF8F5',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
           <span>© {new Date().getFullYear()} E-Paper Studio</span>
           <span>·</span>
-          <span>{locale === 'hi' ? 'लोकल-फर्स्ट एवं सुरक्षित एन्क्रिप्शन' : 'Local-First · Zero-Telemetry · Encrypted'}</span>
+          <span>
+            {locale === 'hi'
+              ? 'लोकल-फर्स्ट एवं सुरक्षित एन्क्रिप्शन'
+              : 'Local-First · Zero-Telemetry · Encrypted'}
+          </span>
         </div>
       </footer>
     </div>
   );
 };
-

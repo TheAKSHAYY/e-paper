@@ -29,6 +29,7 @@ export interface TopBarProps {
   onNewPublication: () => void;
   onOpenTemplates: () => void;
   onOpenPageSetup?: () => void;
+  onOpenMastheadDesigner?: () => void;
   onOpenMastheadGallery?: () => void;
   onOpenDrafts: () => void;
   onOpenPublishing?: () => void;
@@ -80,6 +81,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onNewPublication,
   onOpenTemplates,
   onOpenPageSetup,
+  onOpenMastheadDesigner,
   onOpenPublishing,
   preflightStatus,
   onOpenPreflight,
@@ -170,12 +172,26 @@ export const TopBar: React.FC<TopBarProps> = ({
        * LEFT: Brand, Sidebar Toggle, Document Title & Save Status
        * ======================================================== */}
       <div
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px', flexShrink: 0 }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          minWidth: '180px',
+          flexShrink: 0,
+        }}
       >
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            title={isSidebarOpen ? (locale === 'en' ? 'Hide sidebar' : 'साइडबार छिपाएं') : (locale === 'en' ? 'Show sidebar' : 'साइडबार दिखाएं')}
+            title={
+              isSidebarOpen
+                ? locale === 'en'
+                  ? 'Hide sidebar'
+                  : 'साइडबार छिपाएं'
+                : locale === 'en'
+                  ? 'Show sidebar'
+                  : 'साइडबार दिखाएं'
+            }
             aria-label="Toggle sidebar"
             style={{
               background: 'transparent',
@@ -290,7 +306,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           ) : (
             <span
               onClick={() => setIsRenaming(true)}
-              title={locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'}
+              title={
+                locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'
+              }
               style={{
                 fontSize: '12.5px',
                 color: '#E6E0D5',
@@ -326,7 +344,15 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
             >
               <span>●</span>
-              <span>{isSaving ? (locale === 'en' ? 'Saving...' : 'सहेजा जा रहा है...') : (locale === 'en' ? 'Unsaved' : 'अनसेव्ड')}</span>
+              <span>
+                {isSaving
+                  ? locale === 'en'
+                    ? 'Saving...'
+                    : 'सहेजा जा रहा है...'
+                  : locale === 'en'
+                    ? 'Unsaved'
+                    : 'अनसेव्ड'}
+              </span>
             </button>
           ) : (
             <span
@@ -417,11 +443,26 @@ export const TopBar: React.FC<TopBarProps> = ({
           ◀
         </button>
 
-        <span style={{ fontSize: '11.5px', color: '#FAF8F5', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <span>{currentPageNumber} / {totalPages}</span>
+        <span
+          style={{
+            fontSize: '11.5px',
+            color: '#FAF8F5',
+            fontWeight: 600,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span>
+            {currentPageNumber} / {totalPages}
+          </span>
           {isPageFull && (
             <span
-              title={locale === 'en' ? 'Page is full! Add a new page for additional content.' : 'पेज भर चुका है! नई सामग्री के लिए नया पेज जोड़ें।'}
+              title={
+                locale === 'en'
+                  ? 'Page is full! Add a new page for additional content.'
+                  : 'पेज भर चुका है! नई सामग्री के लिए नया पेज जोड़ें।'
+              }
               style={{
                 fontSize: '9.5px',
                 padding: '1px 5px',
@@ -508,7 +549,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             }}
           >
             {!standardScales.includes(roundedScale) && (
-              <option value={roundedScale}>{Math.round(scale * 100)}% ({locale === 'en' ? 'Fit' : 'फ़िट'})</option>
+              <option value={roundedScale}>
+                {Math.round(scale * 100)}% ({locale === 'en' ? 'Fit' : 'फ़िट'})
+              </option>
             )}
             {standardScales.map((val) => (
               <option key={val} value={val}>
@@ -566,9 +609,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           data-testid="btn-export-pdf"
           onClick={onExportPdf}
           disabled={isExportingPdf}
-          title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
+          title={
+            locale === 'en'
+              ? 'Download print-ready vector PDF'
+              : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'
+          }
           style={{
-            backgroundColor: isExportingPdf ? '#991B1B' : (colors.pressRed || '#DC2626'),
+            backgroundColor: isExportingPdf ? '#991B1B' : colors.pressRed || '#DC2626',
             color: '#ffffff',
             border: 'none',
             borderRadius: '4px',
@@ -585,7 +632,15 @@ export const TopBar: React.FC<TopBarProps> = ({
           }}
         >
           <span style={{ fontSize: '13px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
-          <span>{isExportingPdf ? (locale === 'en' ? 'Exporting...' : 'डाउनलोड...') : (locale === 'en' ? 'Download PDF' : 'PDF डाउनलोड')}</span>
+          <span>
+            {isExportingPdf
+              ? locale === 'en'
+                ? 'Exporting...'
+                : 'डाउनलोड...'
+              : locale === 'en'
+                ? 'Download PDF'
+                : 'PDF डाउनलोड'}
+          </span>
         </button>
 
         {/* Preflight Validation Status Button */}
@@ -593,7 +648,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             data-testid="btn-preflight-status"
             onClick={onOpenPreflight}
-            title={locale === 'en' ? 'Open preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'}
+            title={
+              locale === 'en'
+                ? 'Open preflight validation report'
+                : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'
+            }
             style={{
               backgroundColor:
                 preflightStatus?.overallStatus === 'green'
@@ -642,12 +701,16 @@ export const TopBar: React.FC<TopBarProps> = ({
             </span>
             <span>
               {preflightStatus?.overallStatus === 'green'
-                ? (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')
+                ? locale === 'en'
+                  ? 'Preflight'
+                  : 'प्रीफ़्लाइट'
                 : preflightStatus?.overallStatus === 'yellow'
                   ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.warningCount})`
                   : preflightStatus?.overallStatus === 'red'
                     ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.blockerCount})`
-                    : (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')}
+                    : locale === 'en'
+                      ? 'Preflight'
+                      : 'प्रीफ़्लाइट'}
             </span>
           </button>
         )}
@@ -657,7 +720,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             data-testid="btn-publishing-studio"
             onClick={onOpenPublishing}
-            title={locale === 'en' ? 'Master templates and daily editions' : 'मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन'}
+            title={
+              locale === 'en'
+                ? 'Master templates and daily editions'
+                : 'मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन'
+            }
             style={{
               backgroundColor: '#1E293B',
               color: '#38BDF8',
@@ -683,7 +750,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             onClick={() => setIsToolsOpen((prev) => !prev)}
             aria-expanded={isToolsOpen}
             aria-haspopup="true"
-            title={locale === 'en' ? 'Presets, layout, theme, backup & print tools' : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'}
+            title={
+              locale === 'en'
+                ? 'Presets, layout, theme, backup & print tools'
+                : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'
+            }
             style={{
               backgroundColor: isToolsOpen ? '#36322E' : '#262422',
               color: isToolsOpen ? '#FAF8F5' : '#E6E0D5',
@@ -701,7 +772,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <span>🛠️</span>
             <span>{locale === 'en' ? 'Tools' : 'टूल्स'}</span>
-            <span style={{ fontSize: '8px', marginLeft: '2px', opacity: 0.7 }}>{isToolsOpen ? '▲' : '▼'}</span>
+            <span style={{ fontSize: '8px', marginLeft: '2px', opacity: 0.7 }}>
+              {isToolsOpen ? '▲' : '▼'}
+            </span>
           </button>
 
           {isToolsOpen && (
@@ -748,7 +821,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <span style={{ fontSize: '13px' }}>📑</span>
-                <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}</span>
+                <span style={{ flex: 1, fontWeight: 600 }}>
+                  {locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
+                </span>
               </button>
 
               {onOpenPageSetup && (
@@ -777,7 +852,43 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>📐</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}
+                  </span>
+                </button>
+              )}
+
+              {onOpenMastheadDesigner && (
+                <button
+                  onClick={() => {
+                    onOpenMastheadDesigner();
+                    setIsToolsOpen(false);
+                  }}
+                  data-testid="topbar-btn-masthead-designer"
+                  title={
+                    locale === 'en' ? 'Masthead & Header Designer' : 'मास्टहेड डिज़ाइनर एवं प्रीसेट'
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    fontSize: '11.5px',
+                    color: '#FAF8F5',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ fontSize: '13px' }}>🗞️</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Masthead Designer' : 'मास्टहेड डिज़ाइनर'}
+                  </span>
                 </button>
               )}
 
@@ -787,7 +898,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                     onAutoFit();
                     setIsToolsOpen(false);
                   }}
-                  title={locale === 'en' ? 'Balance columns on this page' : 'पेज के कॉलम संतुलित करें'}
+                  title={
+                    locale === 'en' ? 'Balance columns on this page' : 'पेज के कॉलम संतुलित करें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -806,7 +919,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>⚡</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Balance Columns' : 'कॉलम संतुलन'}</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Balance Columns' : 'कॉलम संतुलन'}
+                  </span>
                 </button>
               )}
 
@@ -817,7 +932,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                     onAutoAllocateOverflow();
                     setIsToolsOpen(false);
                   }}
-                  title={locale === 'en' ? 'Auto-allocate story overflow across multiple pages' : 'अतिप्रवाहित खबरों को स्वतः अगले पृष्ठों पर प्रवाहित करें'}
+                  title={
+                    locale === 'en'
+                      ? 'Auto-allocate story overflow across multiple pages'
+                      : 'अतिप्रवाहित खबरों को स्वतः अगले पृष्ठों पर प्रवाहित करें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -836,7 +955,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>📄+</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Auto-allocate Overflow' : 'ऑटो-फ्लो पृष्ठ'}</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Auto-allocate Overflow' : 'ऑटो-फ्लो पृष्ठ'}
+                  </span>
                 </button>
               )}
 
@@ -846,7 +967,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                     onOpenTheme();
                     setIsToolsOpen(false);
                   }}
-                  title={locale === 'en' ? 'Customize theme and colors' : 'अख़बार का रंग व थीम बदलें'}
+                  title={
+                    locale === 'en' ? 'Customize theme and colors' : 'अख़बार का रंग व थीम बदलें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -865,7 +988,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>🎨</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Theme & Colors' : 'थीम व रंग'}</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Theme & Colors' : 'थीम व रंग'}
+                  </span>
                 </button>
               )}
 
@@ -878,8 +1003,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }}
                   title={
                     useFreeLayout
-                      ? (locale === 'en' ? 'Switch to auto-flow mode' : 'ऑटो-फ्लो मोड पर स्विच करें')
-                      : (locale === 'en' ? 'Switch to free placement mode' : 'मुक्त लेआउट मोड सक्षम करें')
+                      ? locale === 'en'
+                        ? 'Switch to auto-flow mode'
+                        : 'ऑटो-फ्लो मोड पर स्विच करें'
+                      : locale === 'en'
+                        ? 'Switch to free placement mode'
+                        : 'मुक्त लेआउट मोड सक्षम करें'
                   }
                   style={{
                     display: 'flex',
@@ -901,8 +1030,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                   <span style={{ fontSize: '13px' }}>🔲</span>
                   <span style={{ flex: 1 }}>
                     {useFreeLayout
-                      ? (locale === 'en' ? 'Layout: Free Mode ✓' : 'लेआउट: मुक्त विन्यास ✓')
-                      : (locale === 'en' ? 'Layout: Auto Grid' : 'लेआउट: ऑटो ग्रिड')}
+                      ? locale === 'en'
+                        ? 'Layout: Free Mode ✓'
+                        : 'लेआउट: मुक्त विन्यास ✓'
+                      : locale === 'en'
+                        ? 'Layout: Auto Grid'
+                        : 'लेआउट: ऑटो ग्रिड'}
                   </span>
                 </button>
               )}
@@ -932,7 +1065,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>↔️</span>
-                  <span style={{ flex: 1 }}>{locale === 'en' ? 'Fit Page Width' : 'चौड़ाई फ़िट करें'}</span>
+                  <span style={{ flex: 1 }}>
+                    {locale === 'en' ? 'Fit Page Width' : 'चौड़ाई फ़िट करें'}
+                  </span>
                 </button>
               )}
 
@@ -944,8 +1079,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }}
                   title={
                     usePhysicalCanvasCoordinates
-                      ? (locale === 'en' ? 'Switch to legacy 800px' : '800px लेगसी पर स्विच करें')
-                      : (locale === 'en' ? 'Switch to 1:1 physical mm' : '1:1 भौतिक माप सक्रिय करें')
+                      ? locale === 'en'
+                        ? 'Switch to legacy 800px'
+                        : '800px लेगसी पर स्विच करें'
+                      : locale === 'en'
+                        ? 'Switch to 1:1 physical mm'
+                        : '1:1 भौतिक माप सक्रिय करें'
                   }
                   style={{
                     display: 'flex',
@@ -967,8 +1106,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                   <span style={{ fontSize: '13px' }}>📐</span>
                   <span style={{ flex: 1 }}>
                     {usePhysicalCanvasCoordinates
-                      ? (locale === 'en' ? 'Canvas: 1:1 mm (WYSIWYG) ✓' : 'कैनवस: 1:1 mm ✓')
-                      : (locale === 'en' ? 'Canvas: 800px Mode' : 'कैनवस: 800px')}
+                      ? locale === 'en'
+                        ? 'Canvas: 1:1 mm (WYSIWYG) ✓'
+                        : 'कैनवस: 1:1 mm ✓'
+                      : locale === 'en'
+                        ? 'Canvas: 800px Mode'
+                        : 'कैनवस: 800px'}
                   </span>
                 </button>
               )}
@@ -981,7 +1124,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                     setIsToolsOpen(false);
                   }}
                   disabled={isPrintingPdf}
-                  title={locale === 'en' ? 'Browser print / Save as PDF' : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें'}
+                  title={
+                    locale === 'en'
+                      ? 'Browser print / Save as PDF'
+                      : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1000,7 +1147,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>🖨️</span>
-                  <span style={{ flex: 1 }}>{locale === 'en' ? 'Browser Print' : 'ब्राउज़र प्रिंट'}</span>
+                  <span style={{ flex: 1 }}>
+                    {locale === 'en' ? 'Browser Print' : 'ब्राउज़र प्रिंट'}
+                  </span>
                 </button>
               )}
 
@@ -1012,7 +1161,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                     onExportProjectJson();
                     setIsToolsOpen(false);
                   }}
-                  title={locale === 'en' ? 'Export project backup JSON' : 'प्रोजेक्ट का बैकअप JSON डाउनलोड करें'}
+                  title={
+                    locale === 'en'
+                      ? 'Export project backup JSON'
+                      : 'प्रोजेक्ट का बैकअप JSON डाउनलोड करें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1031,7 +1184,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>📁</span>
-                  <span style={{ flex: 1 }}>{locale === 'en' ? 'Export Project JSON' : 'प्रोजेक्ट JSON बैकअप'}</span>
+                  <span style={{ flex: 1 }}>
+                    {locale === 'en' ? 'Export Project JSON' : 'प्रोजेक्ट JSON बैकअप'}
+                  </span>
                 </button>
               )}
 
@@ -1041,7 +1196,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                     jsonInputRef.current?.click();
                     setIsToolsOpen(false);
                   }}
-                  title={locale === 'en' ? 'Import project from JSON backup' : 'बैकअप JSON से प्रोजेक्ट लोड करें'}
+                  title={
+                    locale === 'en'
+                      ? 'Import project from JSON backup'
+                      : 'बैकअप JSON से प्रोजेक्ट लोड करें'
+                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1060,7 +1219,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>📂</span>
-                  <span style={{ flex: 1 }}>{locale === 'en' ? 'Import Project JSON' : 'प्रोजेक्ट JSON इम्पोर्ट'}</span>
+                  <span style={{ flex: 1 }}>
+                    {locale === 'en' ? 'Import Project JSON' : 'प्रोजेक्ट JSON इम्पोर्ट'}
+                  </span>
                 </button>
               )}
 
@@ -1117,7 +1278,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <span style={{ fontSize: '13px' }}>←</span>
-                <span style={{ flex: 1 }}>{locale === 'en' ? 'Exit to Home' : 'मुख्य पृष्ठ पर लौटें'}</span>
+                <span style={{ flex: 1 }}>
+                  {locale === 'en' ? 'Exit to Home' : 'मुख्य पृष्ठ पर लौटें'}
+                </span>
               </button>
             </div>
           )}
@@ -1147,11 +1310,19 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onToggleInspector && (
           <button
             onClick={onToggleInspector}
-            title={isInspectorOpen ? (locale === 'en' ? 'Hide inspector panel' : 'पैनल छिपाएं') : (locale === 'en' ? 'Show inspector panel' : 'पैनल दिखाएं')}
+            title={
+              isInspectorOpen
+                ? locale === 'en'
+                  ? 'Hide inspector panel'
+                  : 'पैनल छिपाएं'
+                : locale === 'en'
+                  ? 'Show inspector panel'
+                  : 'पैनल दिखाएं'
+            }
             style={{
               backgroundColor: isInspectorOpen ? '#36322E' : 'transparent',
               border: '1px solid',
-              borderColor: isInspectorOpen ? (colors.pressRed || '#DC2626') : '#3D3835',
+              borderColor: isInspectorOpen ? colors.pressRed || '#DC2626' : '#3D3835',
               color: isInspectorOpen ? '#FAF8F5' : '#A8A29E',
               borderRadius: '4px',
               cursor: 'pointer',

@@ -3,6 +3,7 @@ import type {
   NewspaperPage,
   NewspaperDocument,
   MastheadConfig,
+  MastheadSlot,
   NewspaperLayoutConfig,
   PageSizePreset,
   PageOrientation,
@@ -188,9 +189,25 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
     const sheetEl = sheetCanvasRef.current;
     const gridEl = sheetEl?.querySelector<HTMLElement>('[data-testid="newspaper-articles-grid"]');
     const isSheetOver = sheetEl ? sheetEl.scrollHeight > sheetEl.clientHeight + 4 : false;
+    const gridWrapperEl = gridEl?.parentElement;
+    const isWrapperOver = gridWrapperEl
+      ? gridWrapperEl.scrollHeight > gridWrapperEl.clientHeight + 2
+      : false;
     const isGridOver = gridEl ? gridEl.scrollHeight > gridEl.clientHeight + 4 : false;
+
+    const footerEl = sheetEl?.querySelector<HTMLElement>('.newspaper-folio-footer');
+    let isTouchingFooter = false;
+    if (gridEl && footerEl) {
+      const gridRect = gridEl.getBoundingClientRect();
+      const footerRect = footerEl.getBoundingClientRect();
+      if (gridRect.bottom > footerRect.top + 2) {
+        isTouchingFooter = true;
+      }
+    }
+
     const isAnyArticleOver = Object.keys(map).length > 0;
-    const isPageOverflown = isSheetOver || isGridOver || isAnyArticleOver;
+    const isPageOverflown =
+      isSheetOver || isGridOver || isWrapperOver || isTouchingFooter || isAnyArticleOver;
 
     setOverflownArticleMap(map);
     onReportDomMeasurements?.(measurements, isPageOverflown);
@@ -304,6 +321,133 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
     } catch (err) {
       console.error('Failed to parse dropped newspaper block', err);
     }
+  };
+
+  const renderCanvasMastheadSlot = (slot?: MastheadSlot, slotId: 'left' | 'right' = 'left') => {
+    if (!slot || !slot.enabled || slot.type === 'none') return null;
+    const w = slot.widthPx || 110;
+    const h = slot.heightPx || 65;
+
+    return (
+      <div
+        data-testid={`masthead-${slotId}-slot`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectMasthead?.('title');
+        }}
+        style={{
+          width: `${w}px`,
+          height: `${h}px`,
+          minWidth: `${w}px`,
+          minHeight: `${h}px`,
+          border: slot.border ? `1px solid ${slot.borderColor || '#cbd5e1'}` : 'none',
+          backgroundColor: slot.backgroundColor || '#f8fafc',
+          color: slot.textColor || '#1e293b',
+          overflow: 'hidden',
+          borderRadius: '3px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          cursor: 'pointer',
+        }}
+      >
+        {slot.type === 'image' && slot.imageUrl && (
+          <img
+            src={slot.imageUrl}
+            alt={slot.title || 'Slot'}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: slot.objectFit || 'contain',
+              objectPosition: slot.objectPosition || 'center',
+              display: 'block',
+            }}
+          />
+        )}
+        {slot.type === 'ad' && (
+          <div
+            style={{
+              padding: '4px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              height: '100%',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+            }}
+          >
+            {slot.imageUrl && (
+              <img
+                src={slot.imageUrl}
+                alt=""
+                style={{
+                  maxHeight: '32px',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  margin: '0 auto 2px auto',
+                }}
+              />
+            )}
+            {slot.title && (
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: '10px',
+                  lineHeight: 1.15,
+                  marginBottom: '2px',
+                }}
+              >
+                {slot.title}
+              </div>
+            )}
+            {slot.text && (
+              <div style={{ fontSize: '9px', lineHeight: 1.1, opacity: 0.85 }}>{slot.text}</div>
+            )}
+          </div>
+        )}
+        {slot.type === 'emblem' && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              width: '100%',
+            }}
+          >
+            {slot.imageUrl ? (
+              <img
+                src={slot.imageUrl}
+                alt="Emblem"
+                style={{ maxHeight: '80%', maxWidth: '80%', objectFit: 'contain' }}
+              />
+            ) : (
+              <span style={{ fontSize: '24px' }}>🛡️</span>
+            )}
+          </div>
+        )}
+        {slot.type === 'text' && (
+          <div
+            style={{
+              padding: '4px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              height: '100%',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+            }}
+          >
+            {slot.title && (
+              <div style={{ fontWeight: 700, fontSize: '11px', lineHeight: 1.1 }}>{slot.title}</div>
+            )}
+            {slot.subtitle && <div style={{ fontSize: '9px', opacity: 0.8 }}>{slot.subtitle}</div>}
+            {slot.text && <div style={{ fontSize: '8.5px', marginTop: '2px' }}>{slot.text}</div>}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const emblemSvg = getMastheadEmblemSvg(masthead.emblem, masthead.customEmblemUrl);
@@ -1378,7 +1522,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               gap: '4px',
             }}
           >
-            <span>{article.continuation.jumpToLabel || `(शेष पृष्ठ ${article.continuation.targetPageNumber} पर...)`}</span>
+            <span>
+              {article.continuation.jumpToLabel ||
+                `(शेष पृष्ठ ${article.continuation.targetPageNumber} पर...)`}
+            </span>
             <span>→</span>
           </div>
         )}
@@ -1535,9 +1682,21 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               className="masthead-section"
               style={{
                 ...getRuleBorderStyle(),
-                paddingBottom: usePhysicalCanvasCoordinates
-                  ? `${physicalMetrics.spacingPt.mastheadPaddingBottomPt}pt`
-                  : '8px',
+                backgroundColor: masthead.backgroundColor || undefined,
+                borderColor: masthead.borderColor || undefined,
+                paddingTop:
+                  typeof masthead.paddingTopPt === 'number'
+                    ? `${masthead.paddingTopPt}pt`
+                    : undefined,
+                paddingBottom:
+                  typeof masthead.paddingBottomPt === 'number'
+                    ? `${masthead.paddingBottomPt}pt`
+                    : usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.spacingPt.mastheadPaddingBottomPt}pt`
+                      : '8px',
+                minHeight: masthead.headerMinHeightPt
+                  ? `${masthead.headerMinHeightPt}pt`
+                  : undefined,
                 marginBottom: usePhysicalCanvasCoordinates
                   ? `${physicalMetrics.spacingPt.mastheadMarginBottomPt}pt`
                   : '16px',
@@ -1693,7 +1852,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 </div>
               )}
 
-              {/* 2. Main Masthead Row */}
+              {/* 2. Main Masthead Row with Left Slot, Center Box/Logo, and Right Slot */}
               <div
                 className="masthead-main-row"
                 data-testid="masthead-main-row"
@@ -1704,46 +1863,76 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent:
-                    masthead.alignment === 'left'
-                      ? 'flex-start'
-                      : masthead.alignment === 'justified'
-                        ? 'space-between'
-                        : 'center',
-                  gap: usePhysicalCanvasCoordinates ? '14pt' : '16px',
+                  justifyContent: 'space-between',
+                  gap: usePhysicalCanvasCoordinates ? '12pt' : '12px',
                   padding: usePhysicalCanvasCoordinates ? '4pt 0 6pt 0' : undefined,
                   margin: usePhysicalCanvasCoordinates ? 0 : '4px 0 8px',
-                  textAlign:
-                    masthead.alignment === 'left'
-                      ? 'left'
-                      : masthead.alignment === 'justified'
-                        ? 'justify'
-                        : 'center',
+                  width: '100%',
                   cursor: 'pointer',
                 }}
               >
-                {masthead.showEmblem && emblemSvg && (
-                  <div
-                    style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                    dangerouslySetInnerHTML={{ __html: emblemSvg }}
-                  />
-                )}
-                <h1
-                  data-testid="masthead-title"
+                {renderCanvasMastheadSlot(masthead.leftSlot, 'left')}
+
+                <div
                   style={{
-                    fontFamily: masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",
-                    fontSize: usePhysicalCanvasCoordinates
-                      ? `${masthead.fontSizePt || 48}pt`
-                      : `${masthead.fontSizePt || 52}px`,
-                    fontWeight: 900,
-                    lineHeight: 1.05,
-                    margin: 0,
-                    color: 'var(--masthead-color, #111111)',
-                    letterSpacing: '-0.02em',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: masthead.alignment === 'left' ? 'flex-start' : 'center',
+                    justifyContent: 'center',
+                    textAlign: masthead.alignment === 'left' ? 'left' : 'center',
                   }}
                 >
-                  {masthead.title}
-                </h1>
+                  {masthead.showCenterLogo && masthead.centerLogoUrl && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <img
+                        src={masthead.centerLogoUrl}
+                        alt={masthead.title}
+                        style={{
+                          maxWidth: `${masthead.centerLogoWidthPx || 240}px`,
+                          maxHeight: `${masthead.centerLogoHeightPx || 60}px`,
+                          objectFit: masthead.centerLogoObjectFit || 'contain',
+                          display: 'block',
+                          margin: '0 auto',
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {masthead.showEmblem && emblemSvg && (
+                      <div
+                        style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                        dangerouslySetInnerHTML={{ __html: emblemSvg }}
+                      />
+                    )}
+                    <h1
+                      data-testid="masthead-title"
+                      style={{
+                        fontFamily:
+                          masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",
+                        fontSize: usePhysicalCanvasCoordinates
+                          ? `${masthead.fontSizePt || 48}pt`
+                          : `${masthead.fontSizePt || 52}px`,
+                        fontWeight: 900,
+                        lineHeight: 1.05,
+                        margin: 0,
+                        color: masthead.titleColor || 'var(--masthead-color, #111111)',
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      {masthead.title}
+                    </h1>
+                  </div>
+                </div>
+
+                {renderCanvasMastheadSlot(masthead.rightSlot, 'right')}
               </div>
 
               {/* 3. Masthead Bottom Folio Strip */}
@@ -2098,7 +2287,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       style={{
                         gridColumn: `span ${columnCount}`,
                         border: `${visualDropBorderWidth}px dashed ${isPageFull ? '#dc2626' : '#2563eb'}`,
-                        backgroundColor: isPageFull ? 'rgba(254, 242, 242, 0.95)' : 'rgba(239, 246, 255, 0.92)',
+                        backgroundColor: isPageFull
+                          ? 'rgba(254, 242, 242, 0.95)'
+                          : 'rgba(239, 246, 255, 0.92)',
                         borderRadius: '6px',
                         padding: '16px',
                         textAlign: 'center',
@@ -2110,7 +2301,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                         justifyContent: 'center',
                         gap: '8px',
                         marginBottom: '8px',
-                        boxShadow: isPageFull ? '0 4px 12px rgba(220,38,38,0.15)' : '0 4px 12px rgba(37,99,235,0.15)',
+                        boxShadow: isPageFull
+                          ? '0 4px 12px rgba(220,38,38,0.15)'
+                          : '0 4px 12px rgba(37,99,235,0.15)',
                         zIndex: 20,
                       }}
                     >
@@ -2159,7 +2352,11 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     fontSize: '7pt',
-                    fontFamily: (doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? "'Hind', 'Noto Serif Devanagari', sans-serif" : 'var(--editorial-font-sans)',
+                    fontFamily:
+                      doc?.metadata?.language === 'hi' ||
+                      /[\u0900-\u097F]/.test(masthead.title || '')
+                        ? "'Hind', 'Noto Serif Devanagari', sans-serif"
+                        : 'var(--editorial-font-sans)',
                     textTransform: 'uppercase',
                     color: '#666',
                     letterSpacing: '0.5pt',
@@ -2167,10 +2364,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 >
                   <span>{masthead.title || doc?.metadata?.title || 'E-Paper'}</span>
                   <span>
-                    {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
+                    {doc?.metadata?.language === 'hi' ||
+                    /[\u0900-\u097F]/.test(masthead.title || '')
+                      ? `पृष्ठ ${pageNumber} / ${totalPages}`
+                      : `Page ${pageNumber} of ${totalPages}`}
                   </span>
                   <span>
-                    {masthead.title || doc?.metadata?.title || 'E-Paper'} • {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                    {masthead.title || doc?.metadata?.title || 'E-Paper'} •{' '}
+                    {doc?.metadata?.language === 'hi' ||
+                    /[\u0900-\u097F]/.test(masthead.title || '')
+                      ? 'डिजिटल व प्रिंट संस्करण'
+                      : masthead.edition || 'Digital & Print Edition'}
                   </span>
                 </div>
               </>
@@ -2186,10 +2390,15 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               >
                 <span>{masthead.title || doc?.metadata?.title || 'E-Paper'}</span>
                 <span style={{ fontWeight: 600 }}>
-                  {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
+                  {doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')
+                    ? `पृष्ठ ${pageNumber} / ${totalPages}`
+                    : `Page ${pageNumber} of ${totalPages}`}
                 </span>
                 <span>
-                  {masthead.title || doc?.metadata?.title || 'E-Paper'} • {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                  {masthead.title || doc?.metadata?.title || 'E-Paper'} •{' '}
+                  {doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')
+                    ? 'डिजिटल व प्रिंट संस्करण'
+                    : masthead.edition || 'Digital & Print Edition'}
                 </span>
               </div>
             )}

@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(__dirname, '..');
-const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+const artifactDir =
+  'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
 const port = 4199;
 
 async function run() {
@@ -67,7 +68,7 @@ async function run() {
         await page.goto(`http://localhost:${port}/?view=dashboard`, { waitUntil: 'networkidle' });
         await page.waitForTimeout(600);
         const newEditionBtn = page.locator('button:has-text("नया संस्करण बनाएं")');
-        if (await newEditionBtn.count() > 0) {
+        if ((await newEditionBtn.count()) > 0) {
           await newEditionBtn.first().click();
           await page.waitForTimeout(600);
           await page.screenshot({
@@ -80,7 +81,7 @@ async function run() {
         await page.goto(`http://localhost:${port}/?view=split`, { waitUntil: 'networkidle' });
         await page.waitForTimeout(1200);
         const firstArticle = page.locator('.newspaper-article').first();
-        if (await firstArticle.count() > 0) {
+        if ((await firstArticle.count()) > 0) {
           await firstArticle.click();
           await page.waitForTimeout(600);
           await page.screenshot({

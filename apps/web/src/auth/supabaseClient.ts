@@ -23,7 +23,8 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
   const isPlaceholderKey = key.includes('placeholder') || key.includes('your-supabase');
   const isHttpsOrHttp = url.startsWith('http://') || url.startsWith('https://');
 
-  const isConfigured = hasUrl && hasAnonKey && !isPlaceholderUrl && !isPlaceholderKey && isHttpsOrHttp;
+  const isConfigured =
+    hasUrl && hasAnonKey && !isPlaceholderUrl && !isPlaceholderKey && isHttpsOrHttp;
 
   let errorMessage: string | null = null;
   if (!isConfigured) {
@@ -34,7 +35,8 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
     } else if (!hasAnonKey) {
       errorMessage = 'Missing VITE_SUPABASE_ANON_KEY environment variable.';
     } else if (isPlaceholderUrl || isPlaceholderKey) {
-      errorMessage = 'VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY contains template placeholder values.';
+      errorMessage =
+        'VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY contains template placeholder values.';
     } else if (!isHttpsOrHttp) {
       errorMessage = 'VITE_SUPABASE_URL must be a valid http:// or https:// URL.';
     }

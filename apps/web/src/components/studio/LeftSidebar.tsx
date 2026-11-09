@@ -108,7 +108,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontSize: '11px',
               fontWeight: 700,
               border: 'none',
-              borderBottom: activeTab === 'pages' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              borderBottom:
+                activeTab === 'pages' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
               background: activeTab === 'pages' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'pages' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
@@ -130,7 +131,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontSize: '11px',
               fontWeight: 700,
               border: 'none',
-              borderBottom: activeTab === 'blocks' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              borderBottom:
+                activeTab === 'blocks' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
               background: activeTab === 'blocks' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'blocks' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
@@ -153,7 +155,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               fontWeight: 700,
               border: 'none',
               borderBottom:
-                activeTab === 'templates' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+                activeTab === 'templates'
+                  ? `2px solid ${colors.pressRed}`
+                  : '2px solid transparent',
               background: activeTab === 'templates' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'templates' ? colors.pressRed : colors.textMuted,
               cursor: 'pointer',
@@ -573,7 +577,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       </div>
 
       {onExportPdf && (
-        <div style={{ padding: '10px 12px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', flexShrink: 0 }}>
+        <div
+          style={{
+            padding: '10px 12px',
+            borderTop: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc',
+            flexShrink: 0,
+          }}
+        >
           <button
             onClick={onExportPdf}
             disabled={isExportingPdf}
@@ -596,7 +607,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             }}
           >
             <span>{isExportingPdf ? '⏳' : '📥'}</span>
-            <span>{isExportingPdf ? (locale === 'en' ? 'Generating PDF...' : 'PDF बन रहा है...') : (locale === 'en' ? 'Download Print PDF' : 'प्रिंट PDF डाउनलोड करें')}</span>
+            <span>
+              {isExportingPdf
+                ? locale === 'en'
+                  ? 'Generating PDF...'
+                  : 'PDF बन रहा है...'
+                : locale === 'en'
+                  ? 'Download Print PDF'
+                  : 'प्रिंट PDF डाउनलोड करें'}
+            </span>
           </button>
         </div>
       )}

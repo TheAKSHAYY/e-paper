@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import type { Locale, TranslationDictionary } from './types';
 import { en } from './en';
 import { hi } from './hi';

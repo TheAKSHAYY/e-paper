@@ -66,7 +66,10 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
 
   const handleDuplicateEdition = async (id: string, name: string) => {
     try {
-      await editionStorage.duplicateEdition(id, `${name} (${locale === 'en' ? 'Copy' : 'प्रतिलिपि'})`);
+      await editionStorage.duplicateEdition(
+        id,
+        `${name} (${locale === 'en' ? 'Copy' : 'प्रतिलिपि'})`
+      );
       await loadEditions();
     } catch (e) {
       console.error('[PublisherDashboard] Failed to duplicate edition:', e);
@@ -78,15 +81,12 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
     return ed.saveStatus === selectedStatusFilter;
   });
 
-  const currentDateFormatted = new Date().toLocaleDateString(
-    locale === 'hi' ? 'hi-IN' : 'en-US',
-    {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }
-  );
+  const currentDateFormatted = new Date().toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
     <div
@@ -143,10 +143,27 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px', fontWeight: 900, color: colors.inkBlack, fontFamily: fonts.display }}>
-                  {profile.newspaperTitle || (locale === 'en' ? 'The Morning Chronicle' : 'दैनिक नवप्रभात')}
+                <span
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 900,
+                    color: colors.inkBlack,
+                    fontFamily: fonts.display,
+                  }}
+                >
+                  {profile.newspaperTitle ||
+                    (locale === 'en' ? 'The Morning Chronicle' : 'दैनिक नवप्रभात')}
                 </span>
-                <span style={{ fontSize: '11px', fontWeight: 700, backgroundColor: colors.mutedPaper, color: colors.textSecondary, padding: '2px 6px', borderRadius: '3px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backgroundColor: colors.mutedPaper,
+                    color: colors.textSecondary,
+                    padding: '2px 6px',
+                    borderRadius: '3px',
+                  }}
+                >
                   {locale === 'hi' ? 'हिंदी संस्करण' : 'English Edition'}
                 </span>
               </div>
@@ -251,7 +268,15 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
       {/* ====================================================================
        * 2. MAIN DASHBOARD CONTENT AREA
        * ==================================================================== */}
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '0 auto', padding: '32px 24px' }}>
+      <main
+        style={{
+          flex: 1,
+          maxWidth: '1280px',
+          width: '100%',
+          margin: '0 auto',
+          padding: '32px 24px',
+        }}
+      >
         {/* Welcome Banner */}
         <div
           style={{
@@ -269,7 +294,14 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
           }}
         >
           <div>
-            <span style={{ fontSize: '11.5px', fontWeight: 800, color: colors.pressRed, textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 800,
+                color: colors.pressRed,
+                textTransform: 'uppercase',
+              }}
+            >
               {locale === 'en' ? 'Publisher Control Center' : 'प्रकाशक नियंत्रण केंद्र'}
             </span>
             <h1
@@ -282,7 +314,9 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
                 lineHeight: locale === 'hi' ? 1.35 : 1.2,
               }}
             >
-              {locale === 'en' ? `Welcome, ${profile.publisherName}` : `नमस्ते, ${profile.publisherName}`}
+              {locale === 'en'
+                ? `Welcome, ${profile.publisherName}`
+                : `नमस्ते, ${profile.publisherName}`}
             </h1>
             <p style={{ fontSize: '13.5px', color: colors.textSecondary, margin: 0 }}>
               {locale === 'en'
@@ -355,43 +389,127 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
             marginBottom: '32px',
           }}
         >
-          <div style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '16px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>{t.dashboard.statTotalEditions}</div>
-            <div style={{ fontSize: '26px', fontWeight: 900, color: colors.inkBlack, margin: '4px 0 2px 0' }}>
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: `1px solid ${colors.borderMuted}`,
+              borderRadius: '6px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
+              {t.dashboard.statTotalEditions}
+            </div>
+            <div
+              style={{
+                fontSize: '26px',
+                fontWeight: 900,
+                color: colors.inkBlack,
+                margin: '4px 0 2px 0',
+              }}
+            >
               {editions.length}
             </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>Local Edition Archive</div>
+            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+              Local Edition Archive
+            </div>
           </div>
 
-          <div style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '16px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>{locale === 'en' ? 'Primary Geometry' : 'प्राथमिक मुद्रण आकार'}</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: colors.inkBlack, margin: '6px 0 4px 0', textTransform: 'capitalize' }}>
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: `1px solid ${colors.borderMuted}`,
+              borderRadius: '6px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
+              {locale === 'en' ? 'Primary Geometry' : 'प्राथमिक मुद्रण आकार'}
+            </div>
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '6px 0 4px 0',
+                textTransform: 'capitalize',
+              }}
+            >
               {profile.preferredPageSize || 'Broadsheet'}
             </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>Vector PDF Print Standard</div>
+            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+              Vector PDF Print Standard
+            </div>
           </div>
 
-          <div style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '16px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>{locale === 'en' ? 'Primary Language' : 'प्रकाशन भाषा'}</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: colors.inkBlack, margin: '6px 0 4px 0' }}>
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: `1px solid ${colors.borderMuted}`,
+              borderRadius: '6px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
+              {locale === 'en' ? 'Primary Language' : 'प्रकाशन भाषा'}
+            </div>
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '6px 0 4px 0',
+              }}
+            >
               {locale === 'hi' ? 'हिंदी (Devanagari)' : 'English (Latin)'}
             </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>41 Self-Hosted Typefaces</div>
+            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+              41 Self-Hosted Typefaces
+            </div>
           </div>
 
-          <div style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '16px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>{t.dashboard.statReadyForPrint}</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: '#047857', margin: '6px 0 4px 0' }}>
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: `1px solid ${colors.borderMuted}`,
+              borderRadius: '6px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
+              {t.dashboard.statReadyForPrint}
+            </div>
+            <div
+              style={{ fontSize: '20px', fontWeight: 800, color: '#047857', margin: '6px 0 4px 0' }}
+            >
               ✓ {locale === 'en' ? 'Active' : 'सक्रिय'}
             </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>Zero Silent Overflow</div>
+            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+              Zero Silent Overflow
+            </div>
           </div>
         </div>
 
         {/* Editions Header & Filter */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            marginBottom: '16px',
+          }}
+        >
           <div>
-            <h2 style={{ fontSize: '19px', fontWeight: 800, color: colors.inkBlack, margin: '0 0 2px 0' }}>
+            <h2
+              style={{
+                fontSize: '19px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '0 0 2px 0',
+              }}
+            >
               {t.dashboard.editionsTableTitle}
             </h2>
             <p style={{ fontSize: '12.5px', color: colors.textMuted, margin: 0 }}>
@@ -417,12 +535,20 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
                 }}
               >
                 {st === 'all'
-                  ? (locale === 'en' ? 'All' : 'सभी')
+                  ? locale === 'en'
+                    ? 'All'
+                    : 'सभी'
                   : st === 'saved'
-                    ? (locale === 'en' ? 'Saved' : 'सहेजे गए')
+                    ? locale === 'en'
+                      ? 'Saved'
+                      : 'सहेजे गए'
                     : st === 'draft'
-                      ? (locale === 'en' ? 'Draft' : 'ड्राफ्ट')
-                      : (locale === 'en' ? 'Modified' : 'संशोधित')}
+                      ? locale === 'en'
+                        ? 'Draft'
+                        : 'ड्राफ्ट'
+                      : locale === 'en'
+                        ? 'Modified'
+                        : 'संशोधित'}
               </button>
             ))}
           </div>
@@ -430,7 +556,16 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
 
         {/* Editions List or Empty State */}
         {isLoading ? (
-          <div style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '48px', textAlign: 'center', color: colors.textMuted }}>
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: `1px solid ${colors.borderMuted}`,
+              borderRadius: '6px',
+              padding: '48px',
+              textAlign: 'center',
+              color: colors.textMuted,
+            }}
+          >
             {t.common.loading}
           </div>
         ) : filteredEditions.length === 0 ? (
@@ -447,10 +582,25 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
             }}
           >
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📰</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: colors.inkBlack, margin: '0 0 8px 0' }}>
+            <h3
+              style={{
+                fontSize: '18px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '0 0 8px 0',
+              }}
+            >
               {t.dashboard.emptyTitle}
             </h3>
-            <p style={{ fontSize: '13.5px', color: colors.textSecondary, maxWidth: '480px', margin: '0 auto 24px auto', lineHeight: 1.5 }}>
+            <p
+              style={{
+                fontSize: '13.5px',
+                color: colors.textSecondary,
+                maxWidth: '480px',
+                margin: '0 auto 24px auto',
+                lineHeight: 1.5,
+              }}
+            >
               {t.dashboard.emptySubtitle}
             </p>
             <button
@@ -481,15 +631,37 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
             }}
           >
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  textAlign: 'left',
+                  fontSize: '13px',
+                }}
+              >
                 <thead>
-                  <tr style={{ backgroundColor: '#FAF9F6', borderBottom: `1px solid ${colors.borderMuted}`, color: colors.textMuted, fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <tr
+                    style={{
+                      backgroundColor: '#FAF9F6',
+                      borderBottom: `1px solid ${colors.borderMuted}`,
+                      color: colors.textMuted,
+                      fontSize: '11.5px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
                     <th style={{ padding: '12px 16px' }}>{t.dashboard.colTitle}</th>
-                    <th style={{ padding: '12px 16px' }}>{locale === 'en' ? 'Publication' : 'प्रकाशन'}</th>
+                    <th style={{ padding: '12px 16px' }}>
+                      {locale === 'en' ? 'Publication' : 'प्रकाशन'}
+                    </th>
                     <th style={{ padding: '12px 16px' }}>{t.dashboard.colSize}</th>
-                    <th style={{ padding: '12px 16px' }}>{locale === 'en' ? 'Last Modified' : 'अंतिम संशोधन'}</th>
+                    <th style={{ padding: '12px 16px' }}>
+                      {locale === 'en' ? 'Last Modified' : 'अंतिम संशोधन'}
+                    </th>
                     <th style={{ padding: '12px 16px' }}>{t.dashboard.colStatus}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>{t.dashboard.colActions}</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      {t.dashboard.colActions}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -504,20 +676,46 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
                     return (
                       <tr key={ed.id} style={{ borderBottom: `1px solid #F3F4F6` }}>
                         <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 700, color: colors.inkBlack }}>{ed.editionName}</div>
-                          <div style={{ fontSize: '11.5px', color: colors.textMuted }}>{ed.editionDate}</div>
+                          <div style={{ fontWeight: 700, color: colors.inkBlack }}>
+                            {ed.editionName}
+                          </div>
+                          <div style={{ fontSize: '11.5px', color: colors.textMuted }}>
+                            {ed.editionDate}
+                          </div>
                         </td>
                         <td style={{ padding: '14px 16px', color: colors.textSecondary }}>
                           {ed.publicationName}
                         </td>
-                        <td style={{ padding: '14px 16px', color: colors.textSecondary, textTransform: 'capitalize' }}>
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            color: colors.textSecondary,
+                            textTransform: 'capitalize',
+                          }}
+                        >
                           {ed.pageSize} • {ed.articleCount} समाचार
                         </td>
-                        <td style={{ padding: '14px 16px', color: colors.textMuted, fontSize: '12px' }}>
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            color: colors.textMuted,
+                            fontSize: '12px',
+                          }}
+                        >
                           {new Date(ed.updatedAt).toLocaleDateString()}
                         </td>
                         <td style={{ padding: '14px 16px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '3px', backgroundColor: badge.bg, color: badge.text, textTransform: 'uppercase' }}>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '3px 8px',
+                              borderRadius: '3px',
+                              backgroundColor: badge.bg,
+                              color: badge.text,
+                              textTransform: 'uppercase',
+                            }}
+                          >
                             {ed.saveStatus}
                           </span>
                         </td>
@@ -550,7 +748,9 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
                                 fontWeight: 600,
                                 cursor: 'pointer',
                               }}
-                              title={locale === 'en' ? 'Duplicate edition' : 'संस्करण की प्रति बनाएं'}
+                              title={
+                                locale === 'en' ? 'Duplicate edition' : 'संस्करण की प्रति बनाएं'
+                              }
                             >
                               {locale === 'en' ? 'Copy' : 'प्रतिलिपि'}
                             </button>
@@ -584,24 +784,76 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
 
       {/* Delete Confirmation Modal */}
       {editionToDelete && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '16px' }}>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '6px', maxWidth: '420px', width: '100%', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 800, color: colors.pressRed }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '6px',
+              maxWidth: '420px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: '16px',
+                fontWeight: 800,
+                color: colors.pressRed,
+              }}
+            >
               संस्करण हटाएं (Delete Edition)
             </h3>
-            <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, margin: '0 0 20px 0' }}>
-              क्या आप सुनिश्चित हैं कि आप इस संस्करण को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।
+            <p
+              style={{
+                fontSize: '13px',
+                color: colors.textSecondary,
+                lineHeight: 1.5,
+                margin: '0 0 20px 0',
+              }}
+            >
+              क्या आप सुनिश्चित हैं कि आप इस संस्करण को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की
+              जा सकती।
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
                 onClick={() => setEditionToDelete(null)}
-                style={{ backgroundColor: '#FFFFFF', border: `1px solid ${colors.borderMuted}`, borderRadius: '4px', padding: '8px 14px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: `1px solid ${colors.borderMuted}`,
+                  borderRadius: '4px',
+                  padding: '8px 14px',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
                 रद्द करें
               </button>
               <button
                 onClick={() => handleDeleteEdition(editionToDelete)}
-                style={{ backgroundColor: colors.pressRed, color: '#FFFFFF', border: 'none', borderRadius: '4px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' }}
+                style={{
+                  backgroundColor: colors.pressRed,
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
               >
                 हाँ, हटाएं
               </button>

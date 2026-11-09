@@ -21,7 +21,9 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
   // Contact Form State
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [contactCategory, setContactCategory] = useState<'feedback' | 'bug' | 'inquiry'>('feedback');
+  const [contactCategory, setContactCategory] = useState<'feedback' | 'bug' | 'inquiry'>(
+    'feedback'
+  );
   const [contactMessage, setContactMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -155,16 +157,24 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
               style={{
                 fontSize: '17px',
                 fontWeight: 700,
-                fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                fontFamily:
+                  locale === 'hi'
+                    ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                    : APP_UI_TYPOGRAPHY.fonts.display,
                 lineHeight: locale === 'hi' ? 1.35 : 1.25,
                 letterSpacing: locale === 'hi' ? '0em' : '-0.01em',
                 margin: 0,
                 color: '#1C1917',
               }}
             >
-              {activeTab === 'about' && (locale === 'hi' ? 'ई-पेपर स्टूडियो के बारे में' : 'About E-Paper Studio')}
-              {activeTab === 'faq' && (locale === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न (FAQ)' : 'Frequently Asked Questions')}
-              {activeTab === 'contact' && (locale === 'hi' ? 'संपर्क एवं प्रतिक्रिया' : 'Contact & Feedback')}
+              {activeTab === 'about' &&
+                (locale === 'hi' ? 'ई-पेपर स्टूडियो के बारे में' : 'About E-Paper Studio')}
+              {activeTab === 'faq' &&
+                (locale === 'hi'
+                  ? 'अक्सर पूछे जाने वाले प्रश्न (FAQ)'
+                  : 'Frequently Asked Questions')}
+              {activeTab === 'contact' &&
+                (locale === 'hi' ? 'संपर्क एवं प्रतिक्रिया' : 'Contact & Feedback')}
               {activeTab === 'privacy' && (locale === 'hi' ? 'गोपनीयता नीति' : 'Privacy Policy')}
               {activeTab === 'terms' && (locale === 'hi' ? 'सेवा की शर्तें' : 'Terms of Service')}
             </h2>
@@ -256,7 +266,10 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   style={{
                     fontSize: '16px',
                     fontWeight: 700,
-                    fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                    fontFamily:
+                      locale === 'hi'
+                        ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                        : APP_UI_TYPOGRAPHY.fonts.display,
                     lineHeight: locale === 'hi' ? 1.35 : 1.25,
                     margin: '0 0 8px 0',
                     color: '#1C1917',
@@ -338,7 +351,14 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   border: '1px solid #E7E2DA',
                 }}
               >
-                <div style={{ fontWeight: 700, color: '#1C1917', fontSize: '14px', marginBottom: '4px' }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: '#1C1917',
+                    fontSize: '14px',
+                    marginBottom: '4px',
+                  }}
+                >
                   {locale === 'hi'
                     ? '1. मल्टी-पेज आर्टिकल ओवरफ्लो कैसे काम करता है?'
                     : '1. How does multi-page story continuation work?'}
@@ -358,7 +378,14 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   border: '1px solid #E7E2DA',
                 }}
               >
-                <div style={{ fontWeight: 700, color: '#1C1917', fontSize: '14px', marginBottom: '4px' }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: '#1C1917',
+                    fontSize: '14px',
+                    marginBottom: '4px',
+                  }}
+                >
                   {locale === 'hi'
                     ? '2. क्या एक्सपोर्ट किया गया PDF सीधे प्रिंटिंग प्रेस के लिए तैयार है?'
                     : '2. Are exported PDFs print-ready for web offset presses?'}
@@ -378,7 +405,14 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   border: '1px solid #E7E2DA',
                 }}
               >
-                <div style={{ fontWeight: 700, color: '#1C1917', fontSize: '14px', marginBottom: '4px' }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: '#1C1917',
+                    fontSize: '14px',
+                    marginBottom: '4px',
+                  }}
+                >
                   {locale === 'hi'
                     ? '3. क्या इसे बिना इंटरनेट कनेक्शन के इस्तेमाल किया जा सकता है?'
                     : '3. Can I use E-Paper Studio completely offline?'}
@@ -420,8 +454,17 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   >
                     ✓
                   </div>
-                  <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1917', margin: '0 0 8px 0' }}>
-                    {locale === 'hi' ? 'धन्यवाद! आपकी प्रतिक्रिया प्राप्त हो गई है।' : 'Thank You! Feedback Received.'}
+                  <h4
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: '#1C1917',
+                      margin: '0 0 8px 0',
+                    }}
+                  >
+                    {locale === 'hi'
+                      ? 'धन्यवाद! आपकी प्रतिक्रिया प्राप्त हो गई है।'
+                      : 'Thank You! Feedback Received.'}
                   </h4>
                   <p style={{ fontSize: '13px', color: '#57534E', margin: '0 0 20px 0' }}>
                     {locale === 'hi'
@@ -445,9 +488,20 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <form
+                  onSubmit={handleContactSubmit}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                >
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#44403C', marginBottom: '6px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#44403C',
+                        marginBottom: '6px',
+                      }}
+                    >
                       {locale === 'hi' ? 'आपका नाम' : 'Your Name'}
                     </label>
                     <input
@@ -467,11 +521,23 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                         color: '#1C1917',
                       }}
                     />
-                    {errors.name && <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>{errors.name}</div>}
+                    {errors.name && (
+                      <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>
+                        {errors.name}
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#44403C', marginBottom: '6px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#44403C',
+                        marginBottom: '6px',
+                      }}
+                    >
                       {locale === 'hi' ? 'ईमेल पता' : 'Email Address'}
                     </label>
                     <input
@@ -491,16 +557,30 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                         color: '#1C1917',
                       }}
                     />
-                    {errors.email && <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>{errors.email}</div>}
+                    {errors.email && (
+                      <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>
+                        {errors.email}
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#44403C', marginBottom: '6px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#44403C',
+                        marginBottom: '6px',
+                      }}
+                    >
                       {locale === 'hi' ? 'श्रेणी' : 'Category'}
                     </label>
                     <select
                       value={contactCategory}
-                      onChange={(e) => setContactCategory(e.target.value as 'feedback' | 'bug' | 'inquiry')}
+                      onChange={(e) =>
+                        setContactCategory(e.target.value as 'feedback' | 'bug' | 'inquiry')
+                      }
                       style={{
                         width: '100%',
                         padding: '10px 14px',
@@ -513,14 +593,28 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                         color: '#1C1917',
                       }}
                     >
-                      <option value="feedback">{locale === 'hi' ? 'सामान्य प्रतिक्रिया' : 'General Feedback'}</option>
-                      <option value="bug">{locale === 'hi' ? 'बग या तकनीकी समस्या' : 'Bug Report'}</option>
-                      <option value="inquiry">{locale === 'hi' ? 'प्रकाशन साझेदारी' : 'Publication Inquiry'}</option>
+                      <option value="feedback">
+                        {locale === 'hi' ? 'सामान्य प्रतिक्रिया' : 'General Feedback'}
+                      </option>
+                      <option value="bug">
+                        {locale === 'hi' ? 'बग या तकनीकी समस्या' : 'Bug Report'}
+                      </option>
+                      <option value="inquiry">
+                        {locale === 'hi' ? 'प्रकाशन साझेदारी' : 'Publication Inquiry'}
+                      </option>
                     </select>
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#44403C', marginBottom: '6px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#44403C',
+                        marginBottom: '6px',
+                      }}
+                    >
                       {locale === 'hi' ? 'संदेश' : 'Message'}
                     </label>
                     <textarea
@@ -545,7 +639,11 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                         resize: 'vertical',
                       }}
                     />
-                    {errors.message && <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>{errors.message}</div>}
+                    {errors.message && (
+                      <div style={{ fontSize: '11px', color: '#DC2626', marginTop: '4px' }}>
+                        {errors.message}
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -569,8 +667,8 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                         ? 'भेजा जा रहा है...'
                         : 'Submitting...'
                       : locale === 'hi'
-                      ? 'संदेश भेजें'
-                      : 'Send Message'}
+                        ? 'संदेश भेजें'
+                        : 'Send Message'}
                   </button>
                 </form>
               )}
@@ -593,7 +691,10 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                 style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                  fontFamily:
+                    locale === 'hi'
+                      ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                      : APP_UI_TYPOGRAPHY.fonts.display,
                   lineHeight: locale === 'hi' ? 1.35 : 1.25,
                   margin: 0,
                   color: '#1C1917',
@@ -606,10 +707,32 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                   ? 'ई-पेपर स्टूडियो पूर्णतः क्लाइंट-साइड गोपनीयता सिद्धांत पर संचालित होता है। हम आपका व्यक्तिगत डेटा, संपादकीय आलेख, समाचार चित्र या ग्राहक जानकारी किसी भी केंद्रीय सर्वर पर ट्रैक, संग्रहित या बिक्री नहीं करते हैं।'
                   : 'E-Paper Studio is engineered around client-side privacy. We do not track, profile, monetize, or transmit your editorial copies, drafts, or newspaper layouts to any central cloud server.'}
               </p>
-              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#57534E', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <li>{locale === 'hi' ? 'शून्य तृतीय-पक्ष ट्रैकिंग कुकीज़ या विज्ञापन पिक्सेल।' : 'Zero third-party analytics trackers, advertising cookies, or behavioral beacons.'}</li>
-                <li>{locale === 'hi' ? 'सभी संपादकीय ड्राफ्ट केवल आपके ब्राउज़र के स्थानीय स्टोरेज में रहते हैं।' : 'All publication editions are preserved exclusively in your browser IndexedDB.'}</li>
-                <li>{locale === 'hi' ? '300 DPI PDF एक्सपोर्ट आपके स्थानीय सीपीयू पर सीधे संकलित होता है।' : 'High-resolution PDF generation executes locally in browser Web Workers.'}</li>
+              <ul
+                style={{
+                  margin: 0,
+                  paddingLeft: '20px',
+                  fontSize: '12px',
+                  color: '#57534E',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                }}
+              >
+                <li>
+                  {locale === 'hi'
+                    ? 'शून्य तृतीय-पक्ष ट्रैकिंग कुकीज़ या विज्ञापन पिक्सेल।'
+                    : 'Zero third-party analytics trackers, advertising cookies, or behavioral beacons.'}
+                </li>
+                <li>
+                  {locale === 'hi'
+                    ? 'सभी संपादकीय ड्राफ्ट केवल आपके ब्राउज़र के स्थानीय स्टोरेज में रहते हैं।'
+                    : 'All publication editions are preserved exclusively in your browser IndexedDB.'}
+                </li>
+                <li>
+                  {locale === 'hi'
+                    ? '300 DPI PDF एक्सपोर्ट आपके स्थानीय सीपीयू पर सीधे संकलित होता है।'
+                    : 'High-resolution PDF generation executes locally in browser Web Workers.'}
+                </li>
               </ul>
             </div>
           )}
@@ -630,13 +753,18 @@ export const LegalAndSupportModal: React.FC<LegalAndSupportModalProps> = ({
                 style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                  fontFamily:
+                    locale === 'hi'
+                      ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                      : APP_UI_TYPOGRAPHY.fonts.display,
                   lineHeight: locale === 'hi' ? 1.35 : 1.25,
                   margin: 0,
                   color: '#1C1917',
                 }}
               >
-                {locale === 'hi' ? 'सेवा की शर्तें एवं लाइसेंस (Terms)' : 'Terms of Service & Licensing'}
+                {locale === 'hi'
+                  ? 'सेवा की शर्तें एवं लाइसेंस (Terms)'
+                  : 'Terms of Service & Licensing'}
               </h3>
               <p style={{ margin: 0, fontSize: '13px', color: '#57534E' }}>
                 {locale === 'hi'

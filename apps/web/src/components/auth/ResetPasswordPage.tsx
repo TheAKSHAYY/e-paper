@@ -146,7 +146,13 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
           <div style={{ marginBottom: '14px' }}>
             <label
               htmlFor="new-password"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'नया पासवर्ड' : 'New Password'}
             </label>
@@ -197,7 +203,14 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
             {/* Strength meter */}
             {password.length > 0 && (
               <div style={{ marginTop: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '4px',
+                  }}
+                >
                   <span style={{ fontSize: '11px', color: '#6B7280' }}>
                     {locale === 'hi' ? 'पासवर्ड मजबूती:' : 'Strength:'}
                   </span>
@@ -226,7 +239,13 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
           <div style={{ marginBottom: '24px' }}>
             <label
               htmlFor="confirm-new-password"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '6px',
+              }}
             >
               {locale === 'hi' ? 'नए पासवर्ड की पुष्टि करें' : 'Confirm New Password'}
             </label>
@@ -306,4 +325,3 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
     </AuthLayout>
   );
 };
-

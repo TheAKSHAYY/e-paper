@@ -48,7 +48,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         zIndex: 100,
         userSelect: 'none',
         boxShadow: '0 -4px 16px rgba(0,0,0,0.25)',
-        fontFamily: locale === 'hi' ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
+        fontFamily:
+          locale === 'hi'
+            ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi
+            : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
       }}
     >
       {/* 1. Pages Button */}
@@ -80,7 +83,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
         <span style={{ whiteSpace: 'nowrap' }}>
-          {locale === 'hi' ? `पेज ${currentPageNumber}/${totalPages}` : `P. ${currentPageNumber}/${totalPages}`}
+          {locale === 'hi'
+            ? `पेज ${currentPageNumber}/${totalPages}`
+            : `P. ${currentPageNumber}/${totalPages}`}
         </span>
       </button>
 
@@ -112,9 +117,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
-        <span style={{ whiteSpace: 'nowrap' }}>
-          {locale === 'hi' ? '+ ब्लॉक' : '+ Block'}
-        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>{locale === 'hi' ? '+ ब्लॉक' : '+ Block'}</span>
       </button>
 
       {/* 3. Editor / Inspector Button */}
@@ -122,7 +125,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         type="button"
         data-testid="mobile-nav-inspector"
         onClick={() => onSelectDrawer(activeDrawer === 'inspector' ? 'none' : 'inspector')}
-        aria-label={hasSelectedArticle ? (locale === 'hi' ? 'लेख संपादक' : 'Story Inspector') : (locale === 'hi' ? 'पृष्ठ गुण' : 'Page Inspector')}
+        aria-label={
+          hasSelectedArticle
+            ? locale === 'hi'
+              ? 'लेख संपादक'
+              : 'Story Inspector'
+            : locale === 'hi'
+              ? 'पृष्ठ गुण'
+              : 'Page Inspector'
+        }
         aria-expanded={activeDrawer === 'inspector'}
         style={{
           display: 'flex',
@@ -146,9 +157,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>✎</span>
-        <span style={{ whiteSpace: 'nowrap' }}>
-          {locale === 'hi' ? 'संपादक' : 'Inspector'}
-        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>{locale === 'hi' ? 'संपादक' : 'Inspector'}</span>
         {hasSelectedArticle && (
           <span
             data-testid="inspector-selection-dot"
@@ -193,9 +202,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
       >
         <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
-        <span style={{ whiteSpace: 'nowrap' }}>
-          {locale === 'hi' ? 'प्रारूप' : 'Layout'}
-        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>{locale === 'hi' ? 'प्रारूप' : 'Layout'}</span>
       </button>
 
       {/* 5. Direct PDF Export Button */}

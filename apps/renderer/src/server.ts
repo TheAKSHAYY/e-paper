@@ -328,7 +328,7 @@ export function createRendererServer(
         }
 
         const doc: NewspaperDocument = parseResult.data;
-        const result: RenderPdfResult = await worker.renderToPdf(doc);
+        const result: RenderPdfResult = await worker.renderToPdf(doc, { strictPages: true });
 
         if (req.socket.destroyed) {
           return;

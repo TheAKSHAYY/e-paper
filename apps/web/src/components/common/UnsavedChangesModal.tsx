@@ -23,9 +23,14 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
 
   if (!isOpen) return null;
 
-  const destLabel = destinationName === 'dashboard'
-    ? (locale === 'hi' ? 'डैशबोर्ड' : 'Dashboard')
-    : (locale === 'hi' ? 'मुख्य पृष्ठ (होम)' : 'Home');
+  const destLabel =
+    destinationName === 'dashboard'
+      ? locale === 'hi'
+        ? 'डैशबोर्ड'
+        : 'Dashboard'
+      : locale === 'hi'
+        ? 'मुख्य पृष्ठ (होम)'
+        : 'Home';
 
   return (
     <div
@@ -58,7 +63,8 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
+          fontFamily:
+            locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -96,7 +102,10 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
               style={{
                 fontSize: '16px',
                 fontWeight: 700,
-                fontFamily: locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display,
+                fontFamily:
+                  locale === 'hi'
+                    ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay
+                    : APP_UI_TYPOGRAPHY.fonts.display,
                 lineHeight: locale === 'hi' ? 1.35 : 1.25,
                 margin: 0,
                 color: '#1C1917',
@@ -167,7 +176,9 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
             }}
           >
             <span>💾</span>
-            <span>{locale === 'hi' ? `सहेजें और ${destLabel} पर जाएँ` : `Save & Exit to ${destLabel}`}</span>
+            <span>
+              {locale === 'hi' ? `सहेजें और ${destLabel} पर जाएँ` : `Save & Exit to ${destLabel}`}
+            </span>
           </button>
 
           {/* Secondary & Tertiary in a row */}
@@ -212,4 +223,3 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
     </div>
   );
 };
-

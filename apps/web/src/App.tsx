@@ -55,6 +55,7 @@ import { ProjectSetupModal } from './components/studio/ProjectSetupModal';
 import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { PageSetupModal } from './components/studio/PageSetupModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
+import { MastheadDesignerModal } from './components/studio/MastheadDesignerModal';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
 import { PreflightReportModal } from './components/studio/PreflightReportModal';
@@ -381,9 +382,7 @@ export const App: React.FC = () => {
     setIsAccountSettingsOpen(false);
     await signOut();
     showNotification(
-      locale === 'hi'
-        ? 'आप सफलतापूर्वक साइन आउट हो गए हैं।'
-        : 'Signed out successfully.'
+      locale === 'hi' ? 'आप सफलतापूर्वक साइन आउट हो गए हैं।' : 'Signed out successfully.'
     );
     navigateToView('landing');
   }, [signOut, showNotification, locale, navigateToView]);
@@ -394,6 +393,7 @@ export const App: React.FC = () => {
   const [isPageSetupOpen, setIsPageSetupOpen] = useState<boolean>(false);
   const [isDraftsOpen, setIsDraftsOpen] = useState<boolean>(false);
   const [isMastheadGalleryOpen, setIsMastheadGalleryOpen] = useState<boolean>(false);
+  const [isMastheadDesignerOpen, setIsMastheadDesignerOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
 
   // New Edition and Dashboard opening handlers
@@ -1605,7 +1605,9 @@ export const App: React.FC = () => {
 
       const paragraphs = art.body.split(/\n\n+/).filter((p) => p.trim().length > 0);
       if (paragraphs.length < 2) {
-        showNotification('कथा को जारी रखने के लिए कम से कम 2 पैराग्राफ होने चाहिए। (At least 2 paragraphs required)');
+        showNotification(
+          'कथा को जारी रखने के लिए कम से कम 2 पैराग्राफ होने चाहिए। (At least 2 paragraphs required)'
+        );
         return;
       }
 
@@ -1813,14 +1815,7 @@ export const App: React.FC = () => {
       setHasUnsavedChanges(true);
       showNotification(`खबर की प्रति बनाई गई`);
     },
-    [
-      currentPage,
-      document,
-      domMeasurements,
-      isPageDomOverflown,
-      safePageIndex,
-      showNotification,
-    ]
+    [currentPage, document, domMeasurements, isPageDomOverflown, safePageIndex, showNotification]
   );
 
   const handleConfirmAddPageWithPendingBlock = useCallback(() => {
@@ -2085,7 +2080,9 @@ export const App: React.FC = () => {
 
   // Unsaved changes confirmation dialog state
   const [isUnsavedConfirmOpen, setIsUnsavedConfirmOpen] = useState<boolean>(false);
-  const [pendingExitDestination, setPendingExitDestination] = useState<'dashboard' | 'landing'>('dashboard');
+  const [pendingExitDestination, setPendingExitDestination] = useState<'dashboard' | 'landing'>(
+    'dashboard'
+  );
 
   const handleRequestExit = useCallback(
     (destination: 'dashboard' | 'landing' = 'dashboard') => {
@@ -2244,10 +2241,7 @@ export const App: React.FC = () => {
         }
 
         let nextDomMeasurements = domMeasurements;
-        if (
-          issue.autoFixType === 'switch_to_auto_height' &&
-          issue.articleId
-        ) {
+        if (issue.autoFixType === 'switch_to_auto_height' && issue.articleId) {
           nextDomMeasurements = domMeasurements.filter((m) => m.articleId !== issue.articleId);
           setDomMeasurements(nextDomMeasurements);
           for (const p of pubPages) {
@@ -2331,10 +2325,7 @@ export const App: React.FC = () => {
               cloned.articles = page.articles;
             }
           }
-        } else if (
-          issue.autoFixType === 'switch_to_auto_height' &&
-          issue.articleId
-        ) {
+        } else if (issue.autoFixType === 'switch_to_auto_height' && issue.articleId) {
           nextDomMeasurements = nextDomMeasurements.filter((m) => m.articleId !== issue.articleId);
           for (const p of pubPages) {
             const art = p.articles.find((a) => a.id === issue.articleId);
@@ -2768,6 +2759,7 @@ export const App: React.FC = () => {
               onNewPublication={() => setIsSetupOpen(true)}
               onOpenTemplates={() => setIsPresetsOpen(true)}
               onOpenPageSetup={() => setIsPageSetupOpen(true)}
+              onOpenMastheadDesigner={() => setIsMastheadDesignerOpen(true)}
               onOpenMastheadGallery={() => setIsMastheadGalleryOpen(true)}
               onOpenDrafts={() => setIsDraftsOpen(true)}
               onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
@@ -2978,7 +2970,9 @@ export const App: React.FC = () => {
                     boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>{isExportingPdf ? '⏳' : '📥'}</span>
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>
+                    {isExportingPdf ? '⏳' : '📥'}
+                  </span>
                   <span style={{ fontSize: '8.5px', fontWeight: 800 }}>PDF</span>
                 </button>
               </div>
@@ -3217,6 +3211,7 @@ export const App: React.FC = () => {
                 orientation={document.metadata.orientation}
                 onOrientationChange={handleOrientationChange}
                 onOpenPageSetup={() => setIsPageSetupOpen(true)}
+                onOpenMastheadDesigner={() => setIsMastheadDesignerOpen(true)}
                 selectedElementPart={selectedElementPart}
                 selectedParagraphIndex={selectedParaIndex}
                 onSelectParagraph={setSelectedParaIndex}
@@ -3360,6 +3355,16 @@ export const App: React.FC = () => {
         currentConfig={document.masthead}
         onClose={() => setIsMastheadGalleryOpen(false)}
         onApplyPreset={handleSelectMastheadPreset}
+      />
+
+      <MastheadDesignerModal
+        isOpen={isMastheadDesignerOpen}
+        initialMasthead={document.masthead}
+        onSave={(updated) => {
+          handleUpdateMasthead(updated);
+          showNotification('✓ मास्टहेड सफलतापूर्वक अपडेट किया गया (Masthead updated)');
+        }}
+        onClose={() => setIsMastheadDesignerOpen(false)}
       />
 
       <DraftsManagerModal
@@ -3545,7 +3550,8 @@ export const App: React.FC = () => {
             <p
               style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.6 }}
             >
-              इस पृष्ठ पर और सामग्री जोड़ने के लिए स्थान उपलब्ध नहीं है। सामग्री जोड़ने से खबर प्रिंट सीमा से बाहर कट जाएगी।
+              इस पृष्ठ पर और सामग्री जोड़ने के लिए स्थान उपलब्ध नहीं है। सामग्री जोड़ने से खबर
+              प्रिंट सीमा से बाहर कट जाएगी।
               <br />
               <strong>क्या आप नया पृष्ठ जोड़कर उस पर यह सामग्री रखना चाहते हैं?</strong>
             </p>

@@ -81,10 +81,27 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
         >
           {/* User Info Header */}
           <div style={{ padding: '10px 16px', borderBottom: '1px solid #F3F4F6' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#111827',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {displayName}
             </div>
-            <div style={{ fontSize: '11px', color: '#6B7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: '#6B7280',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {user.email}
             </div>
             <div style={{ marginTop: '6px' }}>
@@ -193,4 +210,3 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
     </div>
   );
 };
-

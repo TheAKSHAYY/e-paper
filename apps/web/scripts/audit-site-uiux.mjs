@@ -7,7 +7,8 @@ import * as fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(__dirname, '..');
-const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+const artifactDir =
+  'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
 const port = 4196;
 
 async function runAudit() {
@@ -61,27 +62,33 @@ async function runAudit() {
 
     // Inspect heading hierarchy
     const desktopHeadings = await desktopPage.evaluate(() => {
-      const h1s = Array.from(document.querySelectorAll('h1')).map(h => h.innerText.trim());
-      const h2s = Array.from(document.querySelectorAll('h2')).map(h => h.innerText.trim());
-      const h3s = Array.from(document.querySelectorAll('h3')).map(h => h.innerText.trim());
+      const h1s = Array.from(document.querySelectorAll('h1')).map((h) => h.innerText.trim());
+      const h2s = Array.from(document.querySelectorAll('h2')).map((h) => h.innerText.trim());
+      const h3s = Array.from(document.querySelectorAll('h3')).map((h) => h.innerText.trim());
       return { h1Count: h1s.length, h1s, h2Count: h2s.length, h2s, h3Count: h3s.length };
     });
 
     // Check touch targets & contrast on Desktop
     const buttonMetrics = await desktopPage.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button, a'));
-      return buttons.map(b => {
-        const rect = b.getBoundingClientRect();
-        const style = window.getComputedStyle(b);
-        return {
-          text: (b.innerText || b.getAttribute('aria-label') || '').slice(0, 30).trim(),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-          visible: rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden',
-          color: style.color,
-          bgColor: style.backgroundColor,
-        };
-      }).filter(b => b.visible);
+      return buttons
+        .map((b) => {
+          const rect = b.getBoundingClientRect();
+          const style = window.getComputedStyle(b);
+          return {
+            text: (b.innerText || b.getAttribute('aria-label') || '').slice(0, 30).trim(),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            visible:
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.display !== 'none' &&
+              style.visibility !== 'hidden',
+            color: style.color,
+            bgColor: style.backgroundColor,
+          };
+        })
+        .filter((b) => b.visible);
     });
 
     await desktopPage.screenshot({
@@ -130,10 +137,15 @@ async function runAudit() {
     const mobileSmallTargets = await mobilePage.evaluate(() => {
       const clickables = Array.from(document.querySelectorAll('button, a, input, select'));
       const small = [];
-      clickables.forEach(c => {
+      clickables.forEach((c) => {
         const rect = c.getBoundingClientRect();
         const style = window.getComputedStyle(c);
-        if (rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden') {
+        if (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden'
+        ) {
           if (rect.width < 44 || rect.height < 44) {
             small.push({
               text: (c.innerText || c.getAttribute('aria-label') || c.tagName).slice(0, 30).trim(),
@@ -163,7 +175,9 @@ async function runAudit() {
     // 3. AUDIT DASHBOARD (Desktop & Mobile)
     // -------------------------------------------------------------
     console.log('[Audit] Inspecting Publisher Dashboard...');
-    await desktopPage.goto(`http://localhost:${port}/?view=dashboard`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`http://localhost:${port}/?view=dashboard`, {
+      waitUntil: 'networkidle',
+    });
     await desktopPage.waitForTimeout(800);
     await desktopPage.screenshot({
       path: path.join(artifactDir, 'audit-dashboard-desktop.png'),
@@ -195,8 +209,10 @@ async function runAudit() {
     // 5. AUDIT PAGE SETUP & PRESETS MODALS
     // -------------------------------------------------------------
     console.log('[Audit] Inspecting Modals & Drawers...');
-    const pageSetupBtn = desktopPage.locator('button:has-text("Page Setup"), button:has-text("पेज सेटअप")');
-    if (await pageSetupBtn.count() > 0) {
+    const pageSetupBtn = desktopPage.locator(
+      'button:has-text("Page Setup"), button:has-text("पेज सेटअप")'
+    );
+    if ((await pageSetupBtn.count()) > 0) {
       await pageSetupBtn.first().click();
       await desktopPage.waitForTimeout(600);
       await desktopPage.screenshot({
@@ -217,8 +233,10 @@ async function runAudit() {
       auditResults.modalAccessibility = modalAttrs;
 
       // Close modal
-      const closeBtn = desktopPage.locator('button[aria-label*="Close"], button[aria-label*="बंद"]');
-      if (await closeBtn.count() > 0) {
+      const closeBtn = desktopPage.locator(
+        'button[aria-label*="Close"], button[aria-label*="बंद"]'
+      );
+      if ((await closeBtn.count()) > 0) {
         await closeBtn.first().click();
         await desktopPage.waitForTimeout(400);
       }
@@ -233,7 +251,7 @@ async function runAudit() {
 
     // Switch to Hindi
     const langBtn = desktopPage.locator('button:has-text("हिंदी"), button:has-text("हि")');
-    if (await langBtn.count() > 0) {
+    if ((await langBtn.count()) > 0) {
       await langBtn.first().click();
       await desktopPage.waitForTimeout(600);
       await desktopPage.screenshot({
@@ -255,8 +273,7 @@ async function runAudit() {
   }
 }
 
-runAudit().catch(err => {
+runAudit().catch((err) => {
   console.error('[Audit Error]', err);
   process.exit(1);
 });
-

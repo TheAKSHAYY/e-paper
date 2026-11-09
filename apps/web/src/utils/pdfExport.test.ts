@@ -184,7 +184,9 @@ describe('Client-Side PDF Export Engine (pdfExport.ts)', () => {
       doc.pages[0].articles = [overflowingArticle];
     }
 
-    await expect(exportDocumentToPdf(doc)).rejects.toThrow(/PDF export blocked: Unresolved critical issues exist/);
+    await expect(exportDocumentToPdf(doc)).rejects.toThrow(
+      /PDF export blocked: Unresolved critical issues exist/
+    );
   });
 
   it('succeeds after switching the overflowing fixed-height article to auto-height', async () => {

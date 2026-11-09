@@ -91,8 +91,12 @@ describe('Authentication Phase 2: Security & Cloud Integration Audit', () => {
 
     it('verifies User Isolation on profiles table (User A cannot read User B profile)', () => {
       // Must enforce (SELECT auth.uid()) = id for SELECT and UPDATE with TO authenticated
-      expect(sql).toMatch(/CREATE POLICY "Users can view own profile"[\s\S]*?FOR SELECT[\s\S]*?TO authenticated[\s\S]*?USING \(\(SELECT auth\.uid\(\)\) = id\);/);
-      expect(sql).toMatch(/CREATE POLICY "Users can update own profile"[\s\S]*?FOR UPDATE[\s\S]*?TO authenticated[\s\S]*?USING \(\(SELECT auth\.uid\(\)\) = id\)/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Users can view own profile"[\s\S]*?FOR SELECT[\s\S]*?TO authenticated[\s\S]*?USING \(\(SELECT auth\.uid\(\)\) = id\);/
+      );
+      expect(sql).toMatch(
+        /CREATE POLICY "Users can update own profile"[\s\S]*?FOR UPDATE[\s\S]*?TO authenticated[\s\S]*?USING \(\(SELECT auth\.uid\(\)\) = id\)/
+      );
       // Confirms WITH CHECK matches (SELECT auth.uid()) = id on UPDATE
       expect(sql).toContain('WITH CHECK ((SELECT auth.uid()) = id);');
       // Confirms NO direct client INSERT policy exists on public.profiles (trigger-only)
@@ -131,16 +135,24 @@ describe('Authentication Phase 2: Security & Cloud Integration Audit', () => {
       const handlePubBlock = sql.slice(sql.indexOf('FUNCTION public.handle_new_publication()'));
       expect(handlePubBlock).toContain('SECURITY DEFINER');
       expect(handlePubBlock).toContain('SET search_path = public');
-      expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.handle_new_publication() FROM PUBLIC;');
+      expect(sql).toContain(
+        'REVOKE EXECUTE ON FUNCTION public.handle_new_publication() FROM PUBLIC;'
+      );
 
       // Helper functions must also have search_path = public and revoked public execute
       expect(sql).toContain('FUNCTION public.is_publication_member');
-      expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.is_publication_member(UUID) FROM PUBLIC;');
-      expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.is_publication_member(UUID) TO authenticated;');
+      expect(sql).toContain(
+        'REVOKE EXECUTE ON FUNCTION public.is_publication_member(UUID) FROM PUBLIC;'
+      );
+      expect(sql).toContain(
+        'GRANT EXECUTE ON FUNCTION public.is_publication_member(UUID) TO authenticated;'
+      );
     });
 
     it('verifies composite index on (user_id, role) for high performance RBAC lookups', () => {
-      expect(sql).toContain('CREATE INDEX IF NOT EXISTS idx_pub_members_user_role ON public.publication_members(user_id, role);');
+      expect(sql).toContain(
+        'CREATE INDEX IF NOT EXISTS idx_pub_members_user_role ON public.publication_members(user_id, role);'
+      );
     });
   });
 

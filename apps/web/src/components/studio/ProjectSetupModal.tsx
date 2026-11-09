@@ -91,7 +91,11 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
       const selected = presets.find((p) => p.id === pId);
       const isEnglish = selected ? !/[\u0900-\u097F]/.test(selected.defaultMasthead.title) : false;
       onCreate({
-        title: selected ? selected.defaultMasthead.title : (isEnglish ? 'The Daily Chronicle' : 'जनवाणी समाचार'),
+        title: selected
+          ? selected.defaultMasthead.title
+          : isEnglish
+            ? 'The Daily Chronicle'
+            : 'जनवाणी समाचार',
         subtitle: selected ? selected.defaultMasthead.subtitle : '',
         edition: isEnglish ? 'Main Edition' : 'मुख्य संस्करण',
         date: isEnglish ? 'Wednesday, October 28, 2026' : 'मंगलवार, 27 अक्टूबर 2026',

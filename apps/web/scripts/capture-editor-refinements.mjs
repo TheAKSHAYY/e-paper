@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(__dirname, '..');
-const artifactDir = 'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
+const artifactDir =
+  'C:\\Users\\Pc\\.gemini\\antigravity\\brain\\708fb6a9-d309-4b3e-81e3-f0d9355fdf2b';
 const port = 4198;
 
 async function run() {
@@ -39,11 +40,13 @@ async function run() {
     console.log('[Capture] 2. Mobile Page Setup Drawer...');
     // Click Page Setup in bottom nav or More menu
     const moreBtn = mobilePage.locator('button:has-text("More"), button:has-text("अधिक")');
-    if (await moreBtn.count() > 0) {
+    if ((await moreBtn.count()) > 0) {
       await moreBtn.first().click();
       await mobilePage.waitForTimeout(400);
-      const pageSetupOpt = mobilePage.locator('button:has-text("Page Setup"), button:has-text("पेज सेटअप")');
-      if (await pageSetupOpt.count() > 0) {
+      const pageSetupOpt = mobilePage.locator(
+        'button:has-text("Page Setup"), button:has-text("पेज सेटअप")'
+      );
+      if ((await pageSetupOpt.count()) > 0) {
         await pageSetupOpt.first().click();
         await mobilePage.waitForTimeout(600);
         await mobilePage.screenshot({
@@ -55,7 +58,7 @@ async function run() {
     // 3. Mobile Layout Presets Drawer
     console.log('[Capture] 3. Mobile Layout Presets Drawer...');
     const layoutTab = mobilePage.locator('button:has-text("Layout"), button:has-text("लेआउट")');
-    if (await layoutTab.count() > 0) {
+    if ((await layoutTab.count()) > 0) {
       await layoutTab.first().click();
       await mobilePage.waitForTimeout(600);
       await mobilePage.screenshot({
@@ -80,8 +83,10 @@ async function run() {
 
     // 5. Desktop Page Setup Modal
     console.log('[Capture] 5. Desktop Page Setup Modal...');
-    const pageSetupBtn = desktopPage.locator('button:has-text("Page Setup"), button:has-text("पेज सेटअप")');
-    if (await pageSetupBtn.count() > 0) {
+    const pageSetupBtn = desktopPage.locator(
+      'button:has-text("Page Setup"), button:has-text("पेज सेटअप")'
+    );
+    if ((await pageSetupBtn.count()) > 0) {
       await pageSetupBtn.first().click();
       await desktopPage.waitForTimeout(600);
       await desktopPage.screenshot({
@@ -92,12 +97,14 @@ async function run() {
     // 6. Desktop Presets Modal
     console.log('[Capture] 6. Desktop Presets Modal...');
     const closeBtn = desktopPage.locator('button:has-text("✕"), button:has-text("Cancel")');
-    if (await closeBtn.count() > 0) {
+    if ((await closeBtn.count()) > 0) {
       await closeBtn.first().click();
       await desktopPage.waitForTimeout(400);
     }
-    const presetsBtn = desktopPage.locator('button:has-text("Presets"), button:has-text("प्रीसेट")');
-    if (await presetsBtn.count() > 0) {
+    const presetsBtn = desktopPage.locator(
+      'button:has-text("Presets"), button:has-text("प्रीसेट")'
+    );
+    if ((await presetsBtn.count()) > 0) {
       await presetsBtn.first().click();
       await desktopPage.waitForTimeout(600);
       await desktopPage.screenshot({
@@ -117,4 +124,3 @@ run().catch((err) => {
   console.error('[Capture Error]', err);
   process.exit(1);
 });
-

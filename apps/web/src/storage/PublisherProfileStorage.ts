@@ -26,7 +26,9 @@ const STORAGE_KEY = 'epaper_studio_publisher_profile';
 export class LocalStoragePublisherProfileAdapter {
   private storage: Storage;
 
-  constructor(storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)) {
+  constructor(
+    storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  ) {
     this.storage = storage;
   }
 
@@ -69,7 +71,11 @@ export class LocalStoragePublisherProfileAdapter {
   }): PublisherProfile {
     return this.saveProfile({
       ...profileData,
-      tagline: profileData.tagline || (profileData.primaryLanguage === 'hi' ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'The Voice of Public Discourse'),
+      tagline:
+        profileData.tagline ||
+        (profileData.primaryLanguage === 'hi'
+          ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक'
+          : 'The Voice of Public Discourse'),
       preferredPageSize: profileData.preferredPageSize || 'broadsheet',
       isOnboarded: true,
     });
@@ -85,4 +91,3 @@ export class LocalStoragePublisherProfileAdapter {
 }
 
 export const publisherProfileStorage = new LocalStoragePublisherProfileAdapter();
-

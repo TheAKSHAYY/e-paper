@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import type { PageSizePreset, PageOrientation, NewspaperPresetId, NewspaperDocument } from '@epaper-studio/document-schema';
+import type {
+  PageSizePreset,
+  PageOrientation,
+  NewspaperPresetId,
+  NewspaperDocument,
+} from '@epaper-studio/document-schema';
 import { PAGE_SIZE_DEFINITIONS, getPageDimensions } from '@epaper-studio/document-schema';
 import { createNewspaperDocument, NEWSPAPER_PRESETS } from '@epaper-studio/template-engine';
 import { publisherProfileStorage } from '../../storage/PublisherProfileStorage';
@@ -28,8 +33,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
       ? `${profile.newspaperTitle || 'The Daily Chronicle'} — Issue ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
       : `${profile.newspaperTitle || 'दैनिक नवप्रभात'} — ${new Date().toLocaleDateString('hi-IN', { month: 'short', day: 'numeric' })} अंक`
   );
-  const [mastheadTitle, setMastheadTitle] = useState(profile.newspaperTitle || (locale === 'en' ? 'The Daily Chronicle' : 'दैनिक नवप्रभात'));
-  const [tagline, setTagline] = useState(profile.tagline || (locale === 'en' ? 'The Voice of Truth, Integrity and Public Trust' : 'सत्य, निष्पक्षता और जनसेवा का प्रतीक'));
+  const [mastheadTitle, setMastheadTitle] = useState(
+    profile.newspaperTitle || (locale === 'en' ? 'The Daily Chronicle' : 'दैनिक नवप्रभात')
+  );
+  const [tagline, setTagline] = useState(
+    profile.tagline ||
+      (locale === 'en'
+        ? 'The Voice of Truth, Integrity and Public Trust'
+        : 'सत्य, निष्पक्षता और जनसेवा का प्रतीक')
+  );
   const [language, setLanguage] = useState<'hi' | 'en'>(locale === 'en' ? 'en' : 'hi');
   const [editionDate, setEditionDate] = useState(
     new Date().toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-US', {
@@ -40,11 +52,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
   );
 
   // Step 2: Geometry
-  const [pageSize, setPageSize] = useState<PageSizePreset>(profile.preferredPageSize || 'broadsheet');
+  const [pageSize, setPageSize] = useState<PageSizePreset>(
+    profile.preferredPageSize || 'broadsheet'
+  );
   const [orientation, setOrientation] = useState<PageOrientation>('portrait');
 
   // Step 3: Template
-  const [selectedPresetId, setSelectedPresetId] = useState<NewspaperPresetId>('classic-hindi-broadsheet');
+  const [selectedPresetId, setSelectedPresetId] = useState<NewspaperPresetId>(
+    'classic-hindi-broadsheet'
+  );
   const [startBlank, setStartBlank] = useState<boolean>(false);
 
   if (!isOpen) return null;
@@ -114,10 +130,25 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           }}
         >
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: colors.pressRed, textTransform: 'uppercase' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                color: colors.pressRed,
+                textTransform: 'uppercase',
+              }}
+            >
               {t.wizard.modalTitle} • {locale === 'en' ? `Step ${step} of 4` : `चरण ${step} / 4`}
             </div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: colors.inkBlack, margin: '2px 0 0 0', fontFamily: fonts.display }}>
+            <h2
+              style={{
+                fontSize: '18px',
+                fontWeight: 800,
+                color: colors.inkBlack,
+                margin: '2px 0 0 0',
+                fontFamily: fonts.display,
+              }}
+            >
               {step === 1 && t.wizard.step1Title}
               {step === 2 && t.wizard.step2Title}
               {step === 3 && t.wizard.step3Title}
@@ -126,7 +157,13 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.textMuted }}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '20px',
+              cursor: 'pointer',
+              color: colors.textMuted,
+            }}
           >
             ✕
           </button>
@@ -138,7 +175,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '4px',
+                  }}
+                >
                   {locale === 'en' ? 'Edition / Issue Name *' : 'संस्करण का नाम *'}
                 </label>
                 <input
@@ -159,7 +204,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '4px',
+                  }}
+                >
                   {t.wizard.newspaperName} *
                 </label>
                 <input
@@ -181,7 +234,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '4px',
+                  }}
+                >
                   {t.wizard.tagline}
                 </label>
                 <input
@@ -203,7 +264,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: colors.inkBlack,
+                      marginBottom: '4px',
+                    }}
+                  >
                     {t.wizard.primaryLanguage}
                   </label>
                   <select
@@ -224,7 +293,15 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: colors.inkBlack,
+                      marginBottom: '4px',
+                    }}
+                  >
                     {t.wizard.publicationDate}
                   </label>
                   <input
@@ -249,39 +326,73 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: colors.inkBlack, marginBottom: '8px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '8px',
+                  }}
+                >
                   {t.wizard.pageFormatTitle}
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                  {(['broadsheet', 'berliner', 'tabloid', 'a3', 'a4'] as PageSizePreset[]).map((preset) => {
-                    const def = PAGE_SIZE_DEFINITIONS[preset];
-                    const isSelected = pageSize === preset;
-                    return (
-                      <div
-                        key={preset}
-                        onClick={() => setPageSize(preset)}
-                        style={{
-                          border: isSelected ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
-                          backgroundColor: isSelected ? '#FDF2F1' : colors.warmPaper,
-                          borderRadius: '6px',
-                          padding: '12px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: isSelected ? colors.pressRed : colors.inkBlack }}>
-                          {def.name}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '10px',
+                  }}
+                >
+                  {(['broadsheet', 'berliner', 'tabloid', 'a3', 'a4'] as PageSizePreset[]).map(
+                    (preset) => {
+                      const def = PAGE_SIZE_DEFINITIONS[preset];
+                      const isSelected = pageSize === preset;
+                      return (
+                        <div
+                          key={preset}
+                          onClick={() => setPageSize(preset)}
+                          style={{
+                            border: isSelected
+                              ? `2px solid ${colors.pressRed}`
+                              : `1px solid ${colors.borderMuted}`,
+                            backgroundColor: isSelected ? '#FDF2F1' : colors.warmPaper,
+                            borderRadius: '6px',
+                            padding: '12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              color: isSelected ? colors.pressRed : colors.inkBlack,
+                            }}
+                          >
+                            {def.name}
+                          </div>
+                          <div
+                            style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}
+                          >
+                            {def.widthMm}mm × {def.heightMm}mm
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}>
-                          {def.widthMm}mm × {def.heightMm}mm
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    }
+                  )}
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: colors.inkBlack, marginBottom: '8px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '8px',
+                  }}
+                >
                   {locale === 'en' ? 'Page Orientation' : 'अभिविन्यास'}
                 </label>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -292,7 +403,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                       flex: 1,
                       padding: '10px',
                       borderRadius: '4px',
-                      border: orientation === 'portrait' ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
+                      border:
+                        orientation === 'portrait'
+                          ? `2px solid ${colors.pressRed}`
+                          : `1px solid ${colors.borderMuted}`,
                       backgroundColor: orientation === 'portrait' ? '#FDF2F1' : '#FFFFFF',
                       fontSize: '13px',
                       fontWeight: 700,
@@ -308,7 +422,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                       flex: 1,
                       padding: '10px',
                       borderRadius: '4px',
-                      border: orientation === 'landscape' ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
+                      border:
+                        orientation === 'landscape'
+                          ? `2px solid ${colors.pressRed}`
+                          : `1px solid ${colors.borderMuted}`,
                       backgroundColor: orientation === 'landscape' ? '#FDF2F1' : '#FFFFFF',
                       fontSize: '13px',
                       fontWeight: 700,
@@ -321,14 +438,35 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
               </div>
 
               {/* Geometry Preview Callout */}
-              <div style={{ backgroundColor: '#FAF9F6', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '14px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: colors.inkBlack, marginBottom: '4px' }}>
+              <div
+                style={{
+                  backgroundColor: '#FAF9F6',
+                  border: `1px solid ${colors.borderMuted}`,
+                  borderRadius: '6px',
+                  padding: '14px',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: colors.inkBlack,
+                    marginBottom: '4px',
+                  }}
+                >
                   {locale === 'en' ? 'Physical Geometry Summary:' : 'भौतिक ज्यामिति सारांश:'}
                 </div>
                 <div style={{ fontSize: '12px', color: colors.textSecondary }}>
-                  • {locale === 'en' ? 'Overall Dimensions:' : 'कुल आकार:'} {dimensions.widthMm}mm × {dimensions.heightMm}mm ({dimensions.widthIn}" × {dimensions.heightIn}")<br />
-                  • {locale === 'en' ? 'Print Quality: Pure vector output at plate dimensions' : 'मुद्रण गुणवत्ता: शुद्ध वेक्टर मानक'}<br />
-                  • {locale === 'en' ? 'Grid Layout: 12-column physical modular grid' : 'डिफ़ॉल्ट ग्रिड: 12-कॉलम मॉड्यूलर विभाजन'}
+                  • {locale === 'en' ? 'Overall Dimensions:' : 'कुल आकार:'} {dimensions.widthMm}mm ×{' '}
+                  {dimensions.heightMm}mm ({dimensions.widthIn}" × {dimensions.heightIn}")
+                  <br />•{' '}
+                  {locale === 'en'
+                    ? 'Print Quality: Pure vector output at plate dimensions'
+                    : 'मुद्रण गुणवत्ता: शुद्ध वेक्टर मानक'}
+                  <br />•{' '}
+                  {locale === 'en'
+                    ? 'Grid Layout: 12-column physical modular grid'
+                    : 'डिफ़ॉल्ट ग्रिड: 12-कॉलम मॉड्यूलर विभाजन'}
                 </div>
               </div>
             </div>
@@ -345,7 +483,9 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     flex: 1,
                     padding: '10px',
                     borderRadius: '4px',
-                    border: !startBlank ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
+                    border: !startBlank
+                      ? `2px solid ${colors.pressRed}`
+                      : `1px solid ${colors.borderMuted}`,
                     backgroundColor: !startBlank ? '#FDF2F1' : '#FFFFFF',
                     fontSize: '13px',
                     fontWeight: 700,
@@ -361,7 +501,9 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     flex: 1,
                     padding: '10px',
                     borderRadius: '4px',
-                    border: startBlank ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
+                    border: startBlank
+                      ? `2px solid ${colors.pressRed}`
+                      : `1px solid ${colors.borderMuted}`,
                     backgroundColor: startBlank ? '#FDF2F1' : '#FFFFFF',
                     fontSize: '13px',
                     fontWeight: 700,
@@ -374,40 +516,72 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
 
               {!startBlank && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {Object.values(NEWSPAPER_PRESETS).slice(0, 3).map((preset) => {
-                    const isSelected = selectedPresetId === preset.id;
-                    return (
-                      <div
-                        key={preset.id}
-                        onClick={() => setSelectedPresetId(preset.id)}
-                        style={{
-                          border: isSelected ? `2px solid ${colors.pressRed}` : `1px solid ${colors.borderMuted}`,
-                          backgroundColor: isSelected ? '#FDF2F1' : '#FFFFFF',
-                          borderRadius: '6px',
-                          padding: '14px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', fontWeight: 800, color: colors.inkBlack }}>{preset.name}</span>
-                          <span style={{ fontSize: '11px', color: colors.textMuted }}>{preset.defaultColumns} Columns</span>
+                  {Object.values(NEWSPAPER_PRESETS)
+                    .slice(0, 3)
+                    .map((preset) => {
+                      const isSelected = selectedPresetId === preset.id;
+                      return (
+                        <div
+                          key={preset.id}
+                          onClick={() => setSelectedPresetId(preset.id)}
+                          style={{
+                            border: isSelected
+                              ? `2px solid ${colors.pressRed}`
+                              : `1px solid ${colors.borderMuted}`,
+                            backgroundColor: isSelected ? '#FDF2F1' : '#FFFFFF',
+                            borderRadius: '6px',
+                            padding: '14px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span
+                              style={{ fontSize: '14px', fontWeight: 800, color: colors.inkBlack }}
+                            >
+                              {preset.name}
+                            </span>
+                            <span style={{ fontSize: '11px', color: colors.textMuted }}>
+                              {preset.defaultColumns} Columns
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              color: colors.textSecondary,
+                              marginTop: '4px',
+                            }}
+                          >
+                            {preset.description}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px' }}>
-                          {preset.description}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               )}
 
               {startBlank && (
-                <div style={{ padding: '24px', backgroundColor: '#FAF9F6', border: `1px dashed ${colors.borderMuted}`, borderRadius: '6px', textAlign: 'center' }}>
+                <div
+                  style={{
+                    padding: '24px',
+                    backgroundColor: '#FAF9F6',
+                    border: `1px dashed ${colors.borderMuted}`,
+                    borderRadius: '6px',
+                    textAlign: 'center',
+                  }}
+                >
                   <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄</div>
                   <div style={{ fontSize: '14px', fontWeight: 700, color: colors.inkBlack }}>
                     {locale === 'en' ? 'Clean Blank 12-Column Canvas' : 'स्वच्छ कोरा पृष्ठ'}
                   </div>
-                  <p style={{ fontSize: '12.5px', color: colors.textSecondary, margin: '4px 0 0 0' }}>
+                  <p
+                    style={{ fontSize: '12.5px', color: colors.textSecondary, margin: '4px 0 0 0' }}
+                  >
                     {locale === 'en'
                       ? 'Begin with masthead and empty 12-column grid. You can place news stories, images, and ads directly in the studio.'
                       : 'मास्टहेड हेडर और कोरे 12-कॉलम ग्रिड के साथ शुरुआत करें। आप संपादक में मनचाहे समाचार, कॉलम और विज्ञापन सीधे जोड़ सकेंगे।'}
@@ -420,21 +594,81 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           {/* STEP 4: SUMMARY */}
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ backgroundColor: '#FAF9F6', border: `1px solid ${colors.borderMuted}`, borderRadius: '6px', padding: '16px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, color: colors.inkBlack, margin: '0 0 12px 0' }}>
+              <div
+                style={{
+                  backgroundColor: '#FAF9F6',
+                  border: `1px solid ${colors.borderMuted}`,
+                  borderRadius: '6px',
+                  padding: '16px',
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    color: colors.inkBlack,
+                    margin: '0 0 12px 0',
+                  }}
+                >
                   {t.wizard.summaryTitle}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12.5px' }}>
-                  <div><span style={{ color: colors.textMuted }}>{t.wizard.summaryName}:</span> <strong>{editionName}</strong></div>
-                  <div><span style={{ color: colors.textMuted }}>{locale === 'en' ? 'Masthead:' : 'मास्टहेड:'}</span> <strong>{mastheadTitle}</strong></div>
-                  <div><span style={{ color: colors.textMuted }}>{t.wizard.summaryFormat}:</span> <strong>{pageDef.name} ({orientation})</strong></div>
-                  <div><span style={{ color: colors.textMuted }}>{locale === 'en' ? 'Language:' : 'भाषा:'}</span> <strong>{language === 'hi' ? 'हिंदी' : 'English'}</strong></div>
-                  <div><span style={{ color: colors.textMuted }}>{t.wizard.publicationDate}:</span> <strong>{editionDate}</strong></div>
-                  <div><span style={{ color: colors.textMuted }}>{t.wizard.summaryTemplate}:</span> <strong>{startBlank ? (locale === 'en' ? 'Blank Canvas' : 'कोरा पृष्ठ') : (locale === 'en' ? 'Preset Template' : 'तैयार टेम्पलेट')}</strong></div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  <div>
+                    <span style={{ color: colors.textMuted }}>{t.wizard.summaryName}:</span>{' '}
+                    <strong>{editionName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: colors.textMuted }}>
+                      {locale === 'en' ? 'Masthead:' : 'मास्टहेड:'}
+                    </span>{' '}
+                    <strong>{mastheadTitle}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: colors.textMuted }}>{t.wizard.summaryFormat}:</span>{' '}
+                    <strong>
+                      {pageDef.name} ({orientation})
+                    </strong>
+                  </div>
+                  <div>
+                    <span style={{ color: colors.textMuted }}>
+                      {locale === 'en' ? 'Language:' : 'भाषा:'}
+                    </span>{' '}
+                    <strong>{language === 'hi' ? 'हिंदी' : 'English'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: colors.textMuted }}>{t.wizard.publicationDate}:</span>{' '}
+                    <strong>{editionDate}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: colors.textMuted }}>{t.wizard.summaryTemplate}:</span>{' '}
+                    <strong>
+                      {startBlank
+                        ? locale === 'en'
+                          ? 'Blank Canvas'
+                          : 'कोरा पृष्ठ'
+                        : locale === 'en'
+                          ? 'Preset Template'
+                          : 'तैयार टेम्पलेट'}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              <p style={{ fontSize: '12.5px', color: colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
+              <p
+                style={{
+                  fontSize: '12.5px',
+                  color: colors.textSecondary,
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
                 {locale === 'en'
                   ? 'Clicking "Create Edition" initializes the newspaper edition and launches the studio editor.'
                   : '"संस्करण बनाएं" पर क्लिक करते ही नया समाचार पत्र सुरक्षित रूप से सृजित हो जाएगा और स्टूडियो संपादक खुल जाएगा।'}

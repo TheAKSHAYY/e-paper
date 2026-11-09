@@ -181,7 +181,9 @@ describe('PDF Preflight Validation Engine (12-Point Audit)', () => {
     it('should BLOCK export (RED blocker) when a 280px fixed-height article contains ~350 words overflowing the container', () => {
       const doc = createNewspaperDocument({ presetId: 'classic-hindi-broadsheet' });
       const hindi350Words = new Array(350)
-        .fill('डिजिटल युग में भारतीय पत्रकारिता और समाचार पत्रों का अभिनव स्वरूप निरंतर विकसित हो रहा है।')
+        .fill(
+          'डिजिटल युग में भारतीय पत्रकारिता और समाचार पत्रों का अभिनव स्वरूप निरंतर विकसित हो रहा है।'
+        )
         .join(' ');
 
       doc.pages = [

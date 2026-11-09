@@ -89,11 +89,13 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
         <p style={{ fontSize: '14px', color: '#374151', lineHeight: 1.6, marginBottom: '20px' }}>
           {locale === 'hi' ? (
             <>
-              कृपया <strong>{masked}</strong> पर भेजे गए लिंक पर क्लिक करके अपना संपादकीय खाता सक्रिय करें।
+              कृपया <strong>{masked}</strong> पर भेजे गए लिंक पर क्लिक करके अपना संपादकीय खाता
+              सक्रिय करें।
             </>
           ) : (
             <>
-              Please click the link sent to <strong>{masked}</strong> to activate your publishing account.
+              Please click the link sent to <strong>{masked}</strong> to activate your publishing
+              account.
             </>
           )}
         </p>
@@ -140,10 +142,14 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
               <span>{locale === 'hi' ? 'भेजा जा रहा है...' : 'Sending...'}</span>
             ) : cooldown > 0 ? (
               <span>
-                {locale === 'hi' ? `पुनः भेजें (${cooldown}s)` : `Resend verification (${cooldown}s)`}
+                {locale === 'hi'
+                  ? `पुनः भेजें (${cooldown}s)`
+                  : `Resend verification (${cooldown}s)`}
               </span>
             ) : (
-              <span>{locale === 'hi' ? 'सत्यापन लिंक पुनः भेजें' : 'Resend verification email'}</span>
+              <span>
+                {locale === 'hi' ? 'सत्यापन लिंक पुनः भेजें' : 'Resend verification email'}
+              </span>
             )}
           </button>
         </div>

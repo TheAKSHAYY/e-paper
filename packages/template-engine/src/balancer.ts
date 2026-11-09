@@ -369,11 +369,7 @@ export function balanceNewspaperPage(
   for (const art of page.articles) {
     const isAd = art.elementType === 'advertisement';
     const isReserved = Boolean(art.isReserved);
-    const isLocked =
-      Boolean(art.locked) ||
-      Boolean(art.lockPosition) ||
-      isAd ||
-      isReserved;
+    const isLocked = Boolean(art.locked) || Boolean(art.lockPosition) || isAd || isReserved;
 
     if (isLocked) {
       lockedArticles.push(art);
@@ -420,7 +416,10 @@ export function balanceNewspaperPage(
     if (!frame) {
       if (isAd) {
         // Safe default: Anchor ad at bottom of printable area across all or assigned columns
-        const span = Math.max(1, Math.min(totalPageColumns, lockedArt.columnSpan || totalPageColumns));
+        const span = Math.max(
+          1,
+          Math.min(totalPageColumns, lockedArt.columnSpan || totalPageColumns)
+        );
         const wMm = span * singleColWidthMm + (span - 1) * gapMm;
         const hMm = lockedArt.customHeight ? (lockedArt.customHeight * 25.4) / 96 : 45;
         const colStart = totalPageColumns - span;
@@ -469,10 +468,7 @@ export function balanceNewspaperPage(
       lockedArt.columnSpan ??
       Math.max(
         1,
-        Math.min(
-          totalPageColumns,
-          Math.round((clamped.w + gapMm) / (singleColWidthMm + gapMm))
-        )
+        Math.min(totalPageColumns, Math.round((clamped.w + gapMm) / (singleColWidthMm + gapMm)))
       );
 
     const approxColStart = Math.max(
@@ -612,12 +608,8 @@ export function balanceNewspaperPage(
     const newlyPlacedIds = new Set<string>();
 
     for (const item of bandItemsWithHeight) {
-      const xMm = Number(
-        (bounds.minX + currentColStart * (singleColWidthMm + gapMm)).toFixed(2)
-      );
-      const wMm = Number(
-        (item.span * singleColWidthMm + (item.span - 1) * gapMm).toFixed(2)
-      );
+      const xMm = Number((bounds.minX + currentColStart * (singleColWidthMm + gapMm)).toFixed(2));
+      const wMm = Number((item.span * singleColWidthMm + (item.span - 1) * gapMm).toFixed(2));
 
       const hasHeadroom = item.heightMm < effectiveBandHeightMm - 28;
       const primaryHeightMm = hasHeadroom
@@ -815,17 +807,13 @@ export function balanceNewspaperPage(
       yMm: Number(currentYMm.toFixed(2)),
       widthMm: Number(bounds.contentWidth.toFixed(2)),
       heightMm: Number(remainingBottomHeightMm.toFixed(2)),
-      classification:
-        remainingBottomHeightMm <= 35 ? 'intentional_whitespace' : 'accidental_gap',
+      classification: remainingBottomHeightMm <= 35 ? 'intentional_whitespace' : 'accidental_gap',
     });
   }
 
   // 6. Compute Objective Layout Quality Score
   const totalPrintableAreaMm2 = bounds.contentWidth * bounds.contentHeight;
-  const placedAreaMm2 = placedGeometries.reduce(
-    (sum, p) => sum + p.frameMm.w * p.frameMm.h,
-    0
-  );
+  const placedAreaMm2 = placedGeometries.reduce((sum, p) => sum + p.frameMm.w * p.frameMm.h, 0);
   const actualDensity = totalPrintableAreaMm2 > 0 ? placedAreaMm2 / totalPrintableAreaMm2 : 0;
 
   let totalCost = 0;

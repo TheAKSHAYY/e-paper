@@ -120,7 +120,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Branch A: Real Supabase Cloud Auth
       if (authMode === 'cloud' && supabase) {
         try {
-          const { data: { session: sbSession }, error: sessionError } = await supabase.auth.getSession();
+          const {
+            data: { session: sbSession },
+            error: sessionError,
+          } = await supabase.auth.getSession();
           if (sessionError) throw sessionError;
 
           if (sbSession?.user) {
@@ -348,7 +351,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Guard: Unconfigured Production
       if (authMode === 'unconfigured') {
-        const msg = configurationError || 'Cloud authentication is not configured in this production environment.';
+        const msg =
+          configurationError ||
+          'Cloud authentication is not configured in this production environment.';
         setError(msg);
         return { success: false, error: msg };
       }
@@ -394,7 +399,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           return { success: false, error: 'Authentication service did not return user data.' };
         } catch (e: unknown) {
-          const err = e instanceof Error ? e.message : 'Network error communicating with authentication service.';
+          const err =
+            e instanceof Error
+              ? e.message
+              : 'Network error communicating with authentication service.';
           setError(err);
           return { success: false, error: err };
         }
@@ -473,13 +481,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fullName,
       email,
       password,
-    }: SignUpParams): Promise<{ success: boolean; requiresVerification: boolean; error?: string }> => {
+    }: SignUpParams): Promise<{
+      success: boolean;
+      requiresVerification: boolean;
+      error?: string;
+    }> => {
       setError(null);
       const cleanEmail = email.trim().toLowerCase();
 
       // Guard: Unconfigured Production
       if (authMode === 'unconfigured') {
-        const msg = configurationError || 'Cloud registration is not configured in this production environment.';
+        const msg =
+          configurationError ||
+          'Cloud registration is not configured in this production environment.';
         setError(msg);
         return { success: false, requiresVerification: false, error: msg };
       }
@@ -507,7 +521,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return { success: false, requiresVerification: false, error: msg };
           }
 
-          const requiresVerification = !data.session && Boolean(data.user && !data.user.email_confirmed_at);
+          const requiresVerification =
+            !data.session && Boolean(data.user && !data.user.email_confirmed_at);
           localStorage.setItem(PENDING_VERIFICATION_KEY, cleanEmail);
 
           if (data.session && data.user) {
@@ -528,7 +543,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           return { success: true, requiresVerification };
         } catch (e: unknown) {
-          const err = e instanceof Error ? e.message : 'Network error communicating with authentication service.';
+          const err =
+            e instanceof Error
+              ? e.message
+              : 'Network error communicating with authentication service.';
           setError(err);
           return { success: false, requiresVerification: false, error: err };
         }
@@ -597,7 +615,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: true, requiresVerification: false };
       }
 
-      return { success: false, requiresVerification: false, error: 'Authentication service unavailable.' };
+      return {
+        success: false,
+        requiresVerification: false,
+        error: 'Authentication service unavailable.',
+      };
     },
     [authMode, configurationError, getLocalUsers, saveLocalUsers]
   );
@@ -624,7 +646,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cleanEmail = email.trim().toLowerCase();
 
       if (authMode === 'unconfigured') {
-        const msg = configurationError || 'Cloud password reset is not configured in this production environment.';
+        const msg =
+          configurationError ||
+          'Cloud password reset is not configured in this production environment.';
         setError(msg);
         return { success: false, error: msg };
       }
@@ -821,20 +845,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (authMode === 'cloud' && supabase) {
         try {
-          await supabase.from('profiles').update({
-            full_name: merged.fullName,
-            avatar_url: merged.avatarUrl,
-            primary_language: merged.primaryLanguage,
-            preferred_page_size: merged.preferredPageSize,
-            updated_at: new Date().toISOString(),
-          }).eq('id', user.id);
+          await supabase
+            .from('profiles')
+            .update({
+              full_name: merged.fullName,
+              avatar_url: merged.avatarUrl,
+              primary_language: merged.primaryLanguage,
+              preferred_page_size: merged.preferredPageSize,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
         } catch (e) {
           console.warn('[Auth] Remote profile update notice:', e);
         }
       } else if (authMode === 'mock') {
         const users = getLocalUsers();
         saveLocalUsers(
-          users.map((u) => (u.id === user.id ? { ...u, ...updates, updatedAt: new Date().toISOString() } : u))
+          users.map((u) =>
+            u.id === user.id ? { ...u, ...updates, updatedAt: new Date().toISOString() } : u
+          )
         );
       }
 

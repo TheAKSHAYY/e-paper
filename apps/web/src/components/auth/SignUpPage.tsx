@@ -26,7 +26,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   onOpenLegalModal,
 }) => {
   const { locale } = useI18n();
-  const { signUp, isLoading: isAuthLoading, error: authError, clearError, authMode, configurationError } = useAuth();
+  const {
+    signUp,
+    isLoading: isAuthLoading,
+    error: authError,
+    clearError,
+    authMode,
+    configurationError,
+  } = useAuth();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
 
   const [fullName, setFullName] = useState('');
@@ -48,7 +55,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
     setValidationError(null);
 
     if (!fullName.trim()) {
-      setValidationError(locale === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.');
+      setValidationError(
+        locale === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.'
+      );
       return;
     }
 
@@ -132,7 +141,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
             <div>
               <div style={{ fontWeight: 700, marginBottom: '2px' }}>
-                {locale === 'hi' ? 'क्लाउड ऑथेंटिकेशन कॉन्फ़िगर नहीं है' : 'Cloud Auth Not Configured'}
+                {locale === 'hi'
+                  ? 'क्लाउड ऑथेंटिकेशन कॉन्फ़िगर नहीं है'
+                  : 'Cloud Auth Not Configured'}
               </div>
               <div>
                 {configurationError ||
@@ -161,8 +172,18 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               justifyContent: 'space-between',
             }}
           >
-            <span>🛠️ {locale === 'hi' ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}</span>
-            <span style={{ fontSize: '10px', backgroundColor: '#DBEAFE', padding: '1px 5px', borderRadius: '3px' }}>
+            <span>
+              🛠️{' '}
+              {locale === 'hi' ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}
+            </span>
+            <span
+              style={{
+                fontSize: '10px',
+                backgroundColor: '#DBEAFE',
+                padding: '1px 5px',
+                borderRadius: '3px',
+              }}
+            >
               {locale === 'hi' ? 'क्लाउड डिस्कनेक्टेड' : 'No Cloud'}
             </span>
           </div>
@@ -195,7 +216,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div style={{ marginBottom: '16px' }}>
           <label
             htmlFor="signup-name"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }}
           >
             {locale === 'hi' ? 'पूरा नाम' : 'Full Name'}
           </label>
@@ -227,7 +254,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div style={{ marginBottom: '16px' }}>
           <label
             htmlFor="signup-email"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }}
           >
             {locale === 'hi' ? 'ईमेल पता' : 'Email Address'}
           </label>
@@ -259,7 +292,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div style={{ marginBottom: '12px' }}>
           <label
             htmlFor="signup-password"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }}
           >
             {locale === 'hi' ? 'पासवर्ड' : 'Password'}
           </label>
@@ -310,7 +349,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
           {/* Password Strength Indicator */}
           {password.length > 0 && (
             <div style={{ marginTop: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '4px',
+                }}
+              >
                 <span style={{ fontSize: '11px', color: '#6B7280' }}>
                   {locale === 'hi' ? 'पासवर्ड मजबूती:' : 'Strength:'}
                 </span>
@@ -339,7 +385,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div style={{ marginBottom: '20px' }}>
           <label
             htmlFor="signup-confirm-password"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }}
           >
             {locale === 'hi' ? 'पासवर्ड की पुष्टि करें' : 'Confirm Password'}
           </label>
@@ -389,22 +441,41 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         </div>
 
         {/* Terms & Privacy Agreement */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '24px' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '24px' }}
+        >
           <input
             id="accept-terms"
             type="checkbox"
             checked={acceptTerms}
             onChange={(e) => setAcceptTerms(e.target.checked)}
-            style={{ width: '16px', height: '16px', accentColor: '#1C1917', cursor: 'pointer', marginTop: '2px' }}
+            style={{
+              width: '16px',
+              height: '16px',
+              accentColor: '#1C1917',
+              cursor: 'pointer',
+              marginTop: '2px',
+            }}
           />
-          <label htmlFor="accept-terms" style={{ fontSize: '12px', color: '#4B5563', lineHeight: 1.5, cursor: 'pointer' }}>
+          <label
+            htmlFor="accept-terms"
+            style={{ fontSize: '12px', color: '#4B5563', lineHeight: 1.5, cursor: 'pointer' }}
+          >
             {locale === 'hi' ? (
               <>
                 मैं ई-पेपर स्टूडियो की{' '}
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal?.('terms')}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#1C1917', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: '#1C1917',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
                 >
                   सेवा की शर्तों
                 </button>{' '}
@@ -412,7 +483,15 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal?.('privacy')}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#1C1917', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: '#1C1917',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
                 >
                   गोपनीयता नीति
                 </button>{' '}
@@ -424,7 +503,15 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal?.('terms')}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#1C1917', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: '#1C1917',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
                 >
                   Terms of Service
                 </button>{' '}
@@ -432,7 +519,15 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal?.('privacy')}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#1C1917', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: '#1C1917',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
                 >
                   Privacy Policy
                 </button>
@@ -508,4 +603,3 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
     </AuthLayout>
   );
 };
-

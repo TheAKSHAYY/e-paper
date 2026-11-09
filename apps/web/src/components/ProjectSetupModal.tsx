@@ -97,7 +97,15 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
             backgroundColor: '#fbfaf6',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '18px', fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay, color: '#111', lineHeight: 1.35 }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: '18px',
+              fontFamily: APP_UI_TYPOGRAPHY.fonts.hindiDisplay,
+              color: '#111',
+              lineHeight: 1.35,
+            }}
+          >
             🗞️ नया समाचार पत्र बनाएँ (Create Newspaper)
           </h3>
           <button

@@ -117,8 +117,18 @@ export const APP_UI_TYPOGRAPHY = {
   },
   roles: {
     display: {
-      en: { fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 800, lineHeight: 1.12, letterSpacing: '-0.03em' },
-      hi: { fontSize: 'clamp(32px, 4.5vw, 56px)', fontWeight: 800, lineHeight: 1.3, letterSpacing: '0em' },
+      en: {
+        fontSize: 'clamp(36px, 5vw, 64px)',
+        fontWeight: 800,
+        lineHeight: 1.12,
+        letterSpacing: '-0.03em',
+      },
+      hi: {
+        fontSize: 'clamp(32px, 4.5vw, 56px)',
+        fontWeight: 800,
+        lineHeight: 1.3,
+        letterSpacing: '0em',
+      },
     },
     pageTitle: {
       en: { fontSize: '28px', fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em' },
@@ -175,12 +185,17 @@ export const APP_UI_TYPOGRAPHY = {
   },
 } as const;
 
-export function getUiTypographyStyle(role: TypographyRole, locale: 'en' | 'hi' = 'en', isEditorialHeading = false) {
+export function getUiTypographyStyle(
+  role: TypographyRole,
+  locale: 'en' | 'hi' = 'en',
+  isEditorialHeading = false
+) {
   const roleMetrics = APP_UI_TYPOGRAPHY.roles[role][locale];
   let fontFamily: string;
 
   if (isEditorialHeading) {
-    fontFamily = locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display;
+    fontFamily =
+      locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiDisplay : APP_UI_TYPOGRAPHY.fonts.display;
   } else {
     fontFamily = locale === 'hi' ? APP_UI_TYPOGRAPHY.fonts.hindiUi : APP_UI_TYPOGRAPHY.fonts.sans;
   }

@@ -49,7 +49,9 @@ describe('Phase 3: Database & Storage Infrastructure Security Audit', () => {
     });
 
     it('binds all client-facing RLS policies to authenticated role (TO authenticated)', () => {
-      const policyMatches = sql.match(/CREATE POLICY "[^"]+"\s+ON public\.\w+\s+FOR (SELECT|INSERT|UPDATE|DELETE)\s+TO authenticated/g);
+      const policyMatches = sql.match(
+        /CREATE POLICY "[^"]+"\s+ON public\.\w+\s+FOR (SELECT|INSERT|UPDATE|DELETE)\s+TO authenticated/g
+      );
       expect(policyMatches).not.toBeNull();
       // Should have at least 20 authenticated policies across the 6 tables
       expect(policyMatches!.length).toBeGreaterThanOrEqual(20);
@@ -66,15 +68,25 @@ describe('Phase 3: Database & Storage Infrastructure Security Audit', () => {
       // Issues update has WITH CHECK
       expect(sql).toMatch(/CREATE POLICY "Editors and above can update issues"[\s\S]*?WITH CHECK/);
       // Documents update has WITH CHECK
-      expect(sql).toMatch(/CREATE POLICY "Editors and Designers can update documents"[\s\S]*?WITH CHECK/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Editors and Designers can update documents"[\s\S]*?WITH CHECK/
+      );
       // Pages update has WITH CHECK
-      expect(sql).toMatch(/CREATE POLICY "Editors and Designers can update pages"[\s\S]*?WITH CHECK/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Editors and Designers can update pages"[\s\S]*?WITH CHECK/
+      );
       // Articles update has WITH CHECK
-      expect(sql).toMatch(/CREATE POLICY "Authors or Editors can update articles"[\s\S]*?WITH CHECK/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Authors or Editors can update articles"[\s\S]*?WITH CHECK/
+      );
       // Media assets update has WITH CHECK
-      expect(sql).toMatch(/CREATE POLICY "Uploaders or Editors can update media assets"[\s\S]*?WITH CHECK/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Uploaders or Editors can update media assets"[\s\S]*?WITH CHECK/
+      );
       // Render jobs update has WITH CHECK
-      expect(sql).toMatch(/CREATE POLICY "Editors and above can update render jobs"[\s\S]*?WITH CHECK/);
+      expect(sql).toMatch(
+        /CREATE POLICY "Editors and above can update render jobs"[\s\S]*?WITH CHECK/
+      );
     });
   });
 
@@ -83,16 +95,26 @@ describe('Phase 3: Database & Storage Infrastructure Security Audit', () => {
       const editorBlock = sql.slice(sql.indexOf('FUNCTION public.is_publication_editor_or_above'));
       expect(editorBlock).toContain('SECURITY DEFINER');
       expect(editorBlock).toContain('SET search_path = public');
-      expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.is_publication_editor_or_above(UUID) FROM PUBLIC;');
-      expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.is_publication_editor_or_above(UUID) TO authenticated;');
+      expect(sql).toContain(
+        'REVOKE EXECUTE ON FUNCTION public.is_publication_editor_or_above(UUID) FROM PUBLIC;'
+      );
+      expect(sql).toContain(
+        'GRANT EXECUTE ON FUNCTION public.is_publication_editor_or_above(UUID) TO authenticated;'
+      );
     });
 
     it('defines is_publication_reporter_or_above with SECURITY DEFINER and search_path = public', () => {
-      const reporterBlock = sql.slice(sql.indexOf('FUNCTION public.is_publication_reporter_or_above'));
+      const reporterBlock = sql.slice(
+        sql.indexOf('FUNCTION public.is_publication_reporter_or_above')
+      );
       expect(reporterBlock).toContain('SECURITY DEFINER');
       expect(reporterBlock).toContain('SET search_path = public');
-      expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.is_publication_reporter_or_above(UUID) FROM PUBLIC;');
-      expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.is_publication_reporter_or_above(UUID) TO authenticated;');
+      expect(sql).toContain(
+        'REVOKE EXECUTE ON FUNCTION public.is_publication_reporter_or_above(UUID) FROM PUBLIC;'
+      );
+      expect(sql).toContain(
+        'GRANT EXECUTE ON FUNCTION public.is_publication_reporter_or_above(UUID) TO authenticated;'
+      );
     });
 
     it('defines storage_path_publication_id safe UUID extractor', () => {
@@ -121,9 +143,12 @@ describe('Phase 3: Database & Storage Infrastructure Security Audit', () => {
     });
 
     it('enforces both INSERT and UPDATE policies for Storage upsert compatibility', () => {
-      expect(sql).toContain('CREATE POLICY "Editors can upload publication assets"\n    ON storage.objects\n    FOR INSERT');
-      expect(sql).toContain('CREATE POLICY "Editors can update publication assets"\n    ON storage.objects\n    FOR UPDATE');
+      expect(sql).toContain(
+        'CREATE POLICY "Editors can upload publication assets"\n    ON storage.objects\n    FOR INSERT'
+      );
+      expect(sql).toContain(
+        'CREATE POLICY "Editors can update publication assets"\n    ON storage.objects\n    FOR UPDATE'
+      );
     });
   });
 });
-

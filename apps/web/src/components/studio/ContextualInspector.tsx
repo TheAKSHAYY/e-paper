@@ -56,6 +56,7 @@ export interface ContextualInspectorProps {
   orientation: PageOrientation;
   onOrientationChange: (orientation: PageOrientation) => void;
   onOpenPageSetup?: () => void;
+  onOpenMastheadDesigner?: () => void;
   onDeselect: () => void;
   onCloseInspector?: () => void;
   isMastheadSelected?: boolean;
@@ -96,6 +97,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   orientation,
   onOrientationChange,
   onOpenPageSetup,
+  onOpenMastheadDesigner,
   onDeselect,
   onCloseInspector,
   isMastheadSelected = false,
@@ -167,7 +169,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         overflow: 'hidden',
         userSelect: 'none',
         flexShrink: 0,
-        fontFamily: locale === 'hi' ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
+        fontFamily:
+          locale === 'hi'
+            ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi
+            : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
       }}
     >
       {/* Inspector Header (Hidden on Mobile Drawer where Drawer Header is already present) */}
@@ -188,10 +193,16 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             </span>
             <span style={{ fontSize: '12px', fontWeight: 700, color: colors.inkBlack }}>
               {selectedArticle
-                ? (locale === 'en' ? 'Story Editor' : 'खबर संपादक')
+                ? locale === 'en'
+                  ? 'Story Editor'
+                  : 'खबर संपादक'
                 : isPage1
-                  ? (locale === 'en' ? 'Masthead & Page Settings' : 'मास्टहेड व पेज सेटिंग्स')
-                  : (locale === 'en' ? `Page ${currentPageIndex + 1} Settings` : `पेज ${currentPageIndex + 1} सेटिंग्स`)}
+                  ? locale === 'en'
+                    ? 'Masthead & Page Settings'
+                    : 'मास्टहेड व पेज सेटिंग्स'
+                  : locale === 'en'
+                    ? `Page ${currentPageIndex + 1} Settings`
+                    : `पेज ${currentPageIndex + 1} सेटिंग्स`}
             </span>
           </div>
 
@@ -254,15 +265,21 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'content' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              activeInspectorTab === 'content'
+                ? `2px solid ${colors.pressRed}`
+                : '2px solid transparent',
             background: 'transparent',
             color: activeInspectorTab === 'content' ? colors.pressRed : colors.textMuted,
             cursor: 'pointer',
           }}
         >
           {selectedArticle
-            ? (locale === 'en' ? 'Content' : 'सामग्री')
-            : (locale === 'en' ? 'Layout' : 'पेज विन्यास')}
+            ? locale === 'en'
+              ? 'Content'
+              : 'सामग्री'
+            : locale === 'en'
+              ? 'Layout'
+              : 'पेज विन्यास'}
         </button>
 
         <button
@@ -276,7 +293,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'typography' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
+              activeInspectorTab === 'typography'
+                ? `2px solid ${colors.pressRed}`
+                : '2px solid transparent',
             background: 'transparent',
             color: activeInspectorTab === 'typography' ? colors.pressRed : colors.textMuted,
             cursor: 'pointer',
@@ -304,6 +323,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             onUpdateMasthead={onUpdateMasthead}
             presetId={layout.presetId}
             onClose={onCloseMasthead}
+            onOpenDesigner={onOpenMastheadDesigner}
           />
         ) : activeInspectorTab === 'content' ? (
           selectedArticle ? (
@@ -783,7 +803,13 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     gap: '6px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <span style={{ fontSize: '11px', fontWeight: 700, color: colors.pressRed }}>
                       {locale === 'en' ? 'Story Continuation' : 'कथा सातत्य'}
                     </span>
@@ -800,8 +826,12 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         }}
                       >
                         {selectedArticle.continuation.role === 'origin'
-                          ? (locale === 'en' ? 'Origin' : 'मूल कथा')
-                          : (locale === 'en' ? 'Continuation' : 'सातत्य खंड')}
+                          ? locale === 'en'
+                            ? 'Origin'
+                            : 'मूल कथा'
+                          : locale === 'en'
+                            ? 'Continuation'
+                            : 'सातत्य खंड'}
                       </span>
                     )}
                   </div>
@@ -809,7 +839,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   {selectedArticle.continuation?.role === 'origin' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ fontSize: '11px', color: '#171717' }}>
-                        {locale === 'en' ? 'Continued on page' : 'शेष पृष्ठ'} <strong>{selectedArticle.continuation.targetPageNumber}</strong>
+                        {locale === 'en' ? 'Continued on page' : 'शेष पृष्ठ'}{' '}
+                        <strong>{selectedArticle.continuation.targetPageNumber}</strong>
                       </div>
                       <div style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>
                         {selectedArticle.continuation.jumpToLabel}
@@ -837,7 +868,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   ) : selectedArticle.continuation?.role === 'continuation' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ fontSize: '11px', color: '#171717' }}>
-                        {locale === 'en' ? 'Continuation fragment from origin story' : 'मूल कथा से आगे जारी खंड'}
+                        {locale === 'en'
+                          ? 'Continuation fragment from origin story'
+                          : 'मूल कथा से आगे जारी खंड'}
                       </div>
                       <div style={{ fontSize: '10px', color: '#666', fontStyle: 'italic' }}>
                         {selectedArticle.continuation.jumpFromLabel}
@@ -865,12 +898,16 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   ) : totalPages > 1 && onSplitArticleToContinuation ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <div style={{ fontSize: '10px', color: '#555' }}>
-                        {locale === 'en' ? 'Continue story to inside page:' : 'कथा को अंदर के पृष्ठ पर जारी रखें:'}
+                        {locale === 'en'
+                          ? 'Continue story to inside page:'
+                          : 'कथा को अंदर के पृष्ठ पर जारी रखें:'}
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <select
                           id="continuation-target-select"
-                          defaultValue={currentPageIndex < totalPages - 1 ? currentPageIndex + 1 : 0}
+                          defaultValue={
+                            currentPageIndex < totalPages - 1 ? currentPageIndex + 1 : 0
+                          }
                           style={{
                             flex: 1,
                             backgroundColor: '#FFFFFF',
@@ -889,8 +926,10 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const sel = document.getElementById('continuation-target-select') as HTMLSelectElement | null;
-                            const targetIdx = sel ? parseInt(sel.value, 10) : (currentPageIndex + 1);
+                            const sel = document.getElementById(
+                              'continuation-target-select'
+                            ) as HTMLSelectElement | null;
+                            const targetIdx = sel ? parseInt(sel.value, 10) : currentPageIndex + 1;
                             if (!isNaN(targetIdx) && targetIdx !== currentPageIndex) {
                               onSplitArticleToContinuation(selectedArticle.id, targetIdx);
                             }
@@ -934,7 +973,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       }}
                     >
                       <span>⚡</span>
-                      <span>{locale === 'en' ? 'Auto-Allocate Multi-Page Overflow' : 'स्वचालित बहु-पृष्ठीय प्रवाह'}</span>
+                      <span>
+                        {locale === 'en'
+                          ? 'Auto-Allocate Multi-Page Overflow'
+                          : 'स्वचालित बहु-पृष्ठीय प्रवाह'}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -3079,7 +3122,13 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     gap: '8px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <span style={{ fontSize: '12px', fontWeight: 700, color: '#991B1B' }}>
                       📰 {locale === 'en' ? 'Publish & Export' : 'प्रकाशन एवं एक्सपोर्ट'}
                     </span>
@@ -3109,7 +3158,15 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     }}
                   >
                     <span>{isExportingPdf ? '⏳' : '📥'}</span>
-                    <span>{isExportingPdf ? (locale === 'en' ? 'Generating PDF...' : 'PDF बन रहा है...') : (locale === 'en' ? 'Download Print PDF' : 'प्रिंट PDF डाउनलोड करें')}</span>
+                    <span>
+                      {isExportingPdf
+                        ? locale === 'en'
+                          ? 'Generating PDF...'
+                          : 'PDF बन रहा है...'
+                        : locale === 'en'
+                          ? 'Download Print PDF'
+                          : 'प्रिंट PDF डाउनलोड करें'}
+                    </span>
                   </button>
                 </div>
               )}
@@ -3169,7 +3226,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   className="hover:bg-stone-200 transition-colors"
                 >
                   <span>📐</span>
-                  <span>{locale === 'hi' ? 'विस्तृत पेज सेटअप खोलें...' : 'Open Advanced Page Setup...'}</span>
+                  <span>
+                    {locale === 'hi' ? 'विस्तृत पेज सेटअप खोलें...' : 'Open Advanced Page Setup...'}
+                  </span>
                 </button>
               )}
 
@@ -3313,6 +3372,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   masthead={masthead}
                   onUpdateMasthead={onUpdateMasthead}
                   presetId={layout.presetId}
+                  onOpenDesigner={onOpenMastheadDesigner}
                 />
               ) : (
                 /* Interior Page Folio Info */

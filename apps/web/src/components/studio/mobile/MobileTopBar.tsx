@@ -111,7 +111,10 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
           width: '100%',
           borderBottom: '1px solid #2B2825',
           boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          fontFamily: locale === 'hi' ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
+          fontFamily:
+            locale === 'hi'
+              ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi
+              : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
         }}
       >
         {/* ====================================================================
@@ -202,11 +205,7 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  backgroundColor: isSaving
-                    ? '#38BDF8'
-                    : hasUnsavedChanges
-                    ? '#F59E0B'
-                    : '#10B981',
+                  backgroundColor: isSaving ? '#38BDF8' : hasUnsavedChanges ? '#F59E0B' : '#10B981',
                   flexShrink: 0,
                 }}
               />
@@ -220,10 +219,16 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                 }}
               >
                 {isSaving
-                  ? (locale === 'hi' ? 'सहेज रहा है...' : 'Saving...')
+                  ? locale === 'hi'
+                    ? 'सहेज रहा है...'
+                    : 'Saving...'
                   : hasUnsavedChanges
-                  ? (locale === 'hi' ? 'असुरक्षित (टैप करें)' : 'Unsaved (Tap)')
-                  : (locale === 'hi' ? 'सहेजा गया ✓' : 'Saved ✓')}
+                    ? locale === 'hi'
+                      ? 'असुरक्षित (टैप करें)'
+                      : 'Unsaved (Tap)'
+                    : locale === 'hi'
+                      ? 'सहेजा गया ✓'
+                      : 'Saved ✓'}
               </span>
             </div>
           </div>
@@ -715,8 +720,12 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                   <span>{isFullscreen ? '⤢' : '⛶'}</span>
                   <span>
                     {isFullscreen
-                      ? (locale === 'hi' ? 'फुलस्क्रीन बंद करें' : 'Exit Fullscreen')
-                      : (locale === 'hi' ? 'फुलस्क्रीन मोड' : 'Fullscreen')}
+                      ? locale === 'hi'
+                        ? 'फुलस्क्रीन बंद करें'
+                        : 'Exit Fullscreen'
+                      : locale === 'hi'
+                        ? 'फुलस्क्रीन मोड'
+                        : 'Fullscreen'}
                   </span>
                 </button>
 
