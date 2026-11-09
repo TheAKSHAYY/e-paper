@@ -15,6 +15,7 @@ import {
 } from '@epaper-studio/document-schema';
 import { balanceNewspaperPage } from './balancer.js';
 import { findNearestFreeSlot } from './freeLayout.js';
+import { getPhysicalPageMetrics } from './index.js';
 
 export interface PreflightOptions {
   /** Optional reference date (default: today's ISO string / current date) */
@@ -172,10 +173,13 @@ export function estimateArticleRequiredHeightPx(
 
   // Image height
   let imageHeightPx = 0;
-  if (art.imageUrl && art.imagePlacement !== 'none' && art.imagePlacement !== 'side') {
-    imageHeightPx = art.customImageHeight || 160;
-    if (art.imageCaption) {
-      imageHeightPx += 18;
+  if (art.imageUrl && art.imagePlacement !== 'none') {
+    const rawImgH = art.customImageHeight || 160;
+    const captionH = art.imageCaption ? 18 : 0;
+    if (art.imagePlacement === 'side') {
+      imageHeightPx = Math.max(0, rawImgH + captionH - bodyHeightPx);
+    } else {
+      imageHeightPx = rawImgH + captionH;
     }
   }
 
@@ -809,22 +813,44 @@ export function isPageCapacityFull(
 
   // 6. Grid Area Volumetric Check (Auto Layout)
   if (page.layoutMode !== 'free') {
-    const pageCols = page.columnCount || doc.layout.columnCount || 4;
+    const pageCols = page.columnCount || doc.layout?.columnCount || 4;
     const isFirstPage = (page.pageNumber ?? 1) === 1;
-    const dims = getPageDimensions(pageSize, orientation, doc.metadata.dimensions);
-    const usableHeightPx = (dims.heightPt * 96) / 72;
+    const metrics = getPhysicalPageMetrics(
+      pageSize,
+      orientation,
+      doc.layout?.spacingDensity,
+      doc.layout?.bodyFontSizePt,
+      undefined,
+      doc.metadata.dimensions,
+      doc.layout?.margins
+    );
+    const usableWidthPx = metrics.widthPx - metrics.paddingPx * 2;
+    const usableHeightPx = metrics.heightPx - metrics.paddingPx * 2;
     const headerHeightPx = isFirstPage ? 160 : 40;
     const footerHeightPx = 35;
     const availableColumnHeightPx = Math.max(100, usableHeightPx - headerHeightPx - footerHeightPx);
-    const totalGridCapacityPx = pageCols * availableColumnHeightPx;
 
-    const totalOccupiedPx = articlesToEvaluate.reduce((sum, art) => {
+    // Calculate realistic 2D CSS grid row packing height
+    let currentRowCols = 0;
+    let currentRowMaxH = 0;
+    let totalGridHeightPx = 0;
+
+    for (const art of articlesToEvaluate) {
       const span = Math.min(pageCols, Math.max(1, art.columnSpan || 1));
-      const estHeight = estimateArticleRequiredHeightPx(art, pageCols);
-      return sum + span * estHeight;
-    }, 0);
+      const estHeight = estimateArticleRequiredHeightPx(art, pageCols, usableWidthPx);
 
-    if (totalOccupiedPx > totalGridCapacityPx * 1.08) {
+      if (currentRowCols + span > pageCols) {
+        totalGridHeightPx += currentRowMaxH;
+        currentRowCols = span;
+        currentRowMaxH = estHeight;
+      } else {
+        currentRowCols += span;
+        currentRowMaxH = Math.max(currentRowMaxH, estHeight);
+      }
+    }
+    totalGridHeightPx += currentRowMaxH;
+
+    if (totalGridHeightPx > availableColumnHeightPx * 1.05) {
       return {
         isFull: true,
         reason: 'grid_area_exhausted',

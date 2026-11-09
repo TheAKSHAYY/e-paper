@@ -1828,48 +1828,45 @@ export const App: React.FC = () => {
     const blockToAdd = pendingBlock;
     setPendingBlock(null);
 
-    const currentTotalPages = getPublicationPages(document).length;
-    const targetPageIndex = currentTotalPages;
+    let createdArticleId: string | null = null;
+    let targetIndex = 0;
 
-    // 1. Create a new page
-    handleAddPage();
+    setDocument((prev) => {
+      const currentPages = getPublicationPages(prev);
+      const newPageNumber = currentPages.length + 1;
+      targetIndex = currentPages.length;
+      const newPage = createNewBlankPage(newPageNumber, { language: prev.metadata.language });
 
-    // 2. If there was a pending block, add it to the newly created page
-    if (blockToAdd) {
-      setTimeout(() => {
-        setDocument((prev) => {
-          const currentPages = getPublicationPages(prev);
-          const targetPage = currentPages[targetPageIndex] || currentPages[currentPages.length - 1];
-          if (!targetPage) return prev;
-
-          const resolvedColumnCount = resolvePageColumnCount(prev, targetPage);
-          const newId =
-            blockToAdd.id || `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const newArticle = createArticleFromPreset(blockToAdd, {
-            newId,
-            defaultColumnCount: resolvedColumnCount,
-            orderIndex: targetPage.articles.length,
-          });
-
-          const updatedPageArticles = [...targetPage.articles, newArticle];
-          const updatedPages = currentPages.map((p, idx) =>
-            idx === (targetPageIndex < currentPages.length ? targetPageIndex : currentPages.length - 1)
-              ? { ...p, articles: updatedPageArticles }
-              : p
-          );
-
-          return {
-            ...prev,
-            pages: updatedPages,
-            articles: prev.articles,
-            metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
-          };
+      if (blockToAdd) {
+        const resolvedColumnCount = resolvePageColumnCount(prev, newPage);
+        const newId =
+          blockToAdd.id || `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        createdArticleId = newId;
+        const newArticle = createArticleFromPreset(blockToAdd, {
+          newId,
+          defaultColumnCount: resolvedColumnCount,
+          orderIndex: 0,
         });
+        newPage.articles = [newArticle];
+      }
 
-        showNotification(`नया पृष्ठ जोड़कर उस पर सामग्री जोड़ दी गई!`);
-      }, 50);
+      const updatedPages = [...currentPages, newPage];
+      return {
+        ...prev,
+        pages: updatedPages,
+        metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+      };
+    });
+
+    setCurrentPageIndex(targetIndex);
+    if (createdArticleId) {
+      setSelectedArticleId(createdArticleId);
+    } else {
+      setSelectedArticleId(null);
     }
-  }, [document, handleAddPage, pendingBlock, showNotification]);
+    setHasUnsavedChanges(true);
+    showNotification(`नया पृष्ठ ${targetIndex + 1} जोड़कर उस पर सामग्री जोड़ दी गई!`);
+  }, [pendingBlock, showNotification]);
 
   // Apply typography to all articles on current page
   const handleApplyTypographyToPage = useCallback(
