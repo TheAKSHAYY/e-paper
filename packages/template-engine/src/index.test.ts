@@ -182,6 +182,12 @@ describe('TemplateEngine', () => {
     expect(html).toContain('वर्ष 78 • अंक 142');
     expect(html).toContain('बुधवार, 28 अक्टूबर 2026');
     expect(html).toContain('प्रातःकालीन मुख्य संस्करण');
+
+    // Dynamic folio footer binding (never hardcoded)
+    doc.masthead.title = 'दैनिक भास्कर';
+    const updatedHtml = renderNewspaperDocumentToHtml(doc);
+    expect(updatedHtml).toContain('दैनिक भास्कर • डिजिटल व प्रिंट संस्करण');
+    expect(updatedHtml).not.toContain('जनवाणी समाचार • डिजिटल व प्रिंट संस्करण');
   });
 
   describe('Devanagari Typography Rules', () => {

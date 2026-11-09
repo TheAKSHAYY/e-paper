@@ -2147,17 +2147,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     fontSize: '7pt',
-                    fontFamily: "'Hind', 'Noto Serif Devanagari', sans-serif",
+                    fontFamily: isHindi ? "'Hind', 'Noto Serif Devanagari', sans-serif" : 'var(--editorial-font-sans)',
                     textTransform: 'uppercase',
                     color: '#666',
                     letterSpacing: '0.5pt',
                   }}
                 >
-                  <span>{masthead.title}</span>
+                  <span>{masthead.title || document.metadata.title}</span>
                   <span>
-                    पृष्ठ {pageNumber} / {totalPages}
+                    {isHindi ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
                   </span>
-                  <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+                  <span>
+                    {masthead.title || document.metadata.title} • {isHindi ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                  </span>
                 </div>
               </>
             ) : (
@@ -2170,11 +2172,13 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   color: '#444',
                 }}
               >
-                <span>{masthead.title}</span>
+                <span>{masthead.title || document.metadata.title}</span>
                 <span style={{ fontWeight: 600 }}>
-                  पृष्ठ {pageNumber} / {totalPages}
+                  {isHindi ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
                 </span>
-                <span>जनवाणी समाचार • डिजिटल व प्रिंट संस्करण</span>
+                <span>
+                  {masthead.title || document.metadata.title} • {isHindi ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                </span>
               </div>
             )}
           </footer>

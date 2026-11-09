@@ -2344,17 +2344,18 @@ export function renderNewspaperDocumentToHtml(
       const footerPageInfo = isHindiDoc
         ? `पृष्ठ ${pageNumber} / ${totalPages}`
         : `Page ${pageNumber} of ${totalPages}`;
+      const newspaperTitle = doc.masthead.title || doc.metadata.title || (isHindiDoc ? 'ई-पेपर' : 'E-Paper');
       const footerEditionText = isHindiDoc
-        ? 'जनवाणी समाचार • डिजिटल व प्रिंट संस्करण'
-        : 'E-Paper Studio Professional Edition';
+        ? `${newspaperTitle} • डिजिटल व प्रिंट संस्करण`
+        : `${newspaperTitle} • ${doc.masthead.edition || 'Digital & Print Edition'}`;
 
       const footerHtml = `
         <footer class="newspaper-folio-footer">
           <div class="footer-rule"></div>
           <div class="footer-text">
-            <span>${escapeHtml(doc.metadata.title)}</span>
+            <span>${escapeHtml(newspaperTitle)}</span>
             <span>${footerPageInfo}</span>
-            <span>${footerEditionText}</span>
+            <span>${escapeHtml(footerEditionText)}</span>
           </div>
         </footer>
       `;

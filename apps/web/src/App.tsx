@@ -2499,7 +2499,14 @@ export const App: React.FC = () => {
         />
       ) : viewMode === 'verify-email' ? (
         <VerifyEmailPage
-          email={pendingVerificationEmail || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('email') || '' : '')}
+          email={
+            pendingVerificationEmail ||
+            (typeof window !== 'undefined'
+              ? new URLSearchParams(window.location.search).get('email') ||
+                localStorage.getItem('epaper_pending_verification_email') ||
+                ''
+              : '')
+          }
           onNavigateToLogin={() => navigateToView('login')}
           onBackToLanding={() => navigateToView('landing')}
         />
