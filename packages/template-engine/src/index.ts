@@ -1653,7 +1653,8 @@ export function renderNewspaperDocumentToHtml(
   );
   const headlineWeight = Math.max(300, Math.min(900, Number(doc.layout.headlineWeight) || 700));
 
-  // Support explicit multi-page documents or fallback to automatic article partitioning
+  // Support explicit pages (single or multi-page) defined in the publication,
+  // or fallback to automatic article partitioning for legacy documents without pages
   interface PageRenderUnit {
     pageNumber: number;
     sectionTitle?: string;
@@ -1664,9 +1665,15 @@ export function renderNewspaperDocumentToHtml(
 
   let pagesToRender: PageRenderUnit[];
 
-  if (doc.pages && doc.pages.length > 1) {
-    // Explicit multi-page publication
-    pagesToRender = doc.pages.map((p, idx) => ({
+  const explicitPages = doc.pages;
+  const hasExplicitPages =
+    explicitPages &&
+    explicitPages.length > 0 &&
+    (explicitPages.length > 1 || (explicitPages[0]?.articles?.length ?? 0) >= (doc.articles?.length ?? 0));
+
+  if (explicitPages && hasExplicitPages) {
+    // Explicit multi-page or single-page publication (honors user's exact page count)
+    pagesToRender = explicitPages.map((p, idx) => ({
       pageNumber: p.pageNumber ?? idx + 1,
       sectionTitle: p.sectionTitle,
       layoutMode: p.layoutMode ?? 'auto',
@@ -1674,7 +1681,8 @@ export function renderNewspaperDocumentToHtml(
       columnCount: resolvePageColumnCount(doc, p),
     }));
   } else {
-    // Single page or legacy document: use partitionArticlesForPages to partition overflow
+    // Single page or legacy document where articles were pushed to doc.articles without pages:
+    // use partitionArticlesForPages to partition overflow
     const firstPage = doc.pages?.[0];
     const singlePageColumnCount = resolvePageColumnCount(doc, firstPage);
 

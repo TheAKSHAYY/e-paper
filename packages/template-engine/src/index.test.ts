@@ -527,5 +527,39 @@ describe('TemplateEngine', () => {
       expect(html).toContain('column-rule: 1px solid #cbd5e1;');
       expect(html).toContain('column-fill: balance;');
     });
+
+    it('should strictly render 1 page when document has 1 explicit page even if article weight exceeds partition budget', () => {
+      const doc = createNewspaperDocument({
+        presetId: 'compact-local',
+        pageSize: 'a4',
+        language: 'hi',
+      });
+
+      // Add 4 long articles to page 1 that would exceed a4 page1Budget (900)
+      const fourArticles = Array.from({ length: 4 }).map((_, i) => ({
+        id: `story-${i + 1}`,
+        headline: `शीर्षक समाचार संख्या ${i + 1}: राष्ट्रीय एवं प्रादेशिक विकास रिपोर्ट`,
+        subheadline: `उप-शीर्षक विवरण तथा विस्तृत समीक्षा ${i + 1}`,
+        body: longHindiBody,
+        byline: `विशेष संवाददाता ${i + 1}`,
+        dateline: 'नई दिल्ली —',
+        columnSpan: 2,
+        priority: (i === 0 ? 'lead' : 'minor') as 'lead' | 'minor',
+        orderIndex: i,
+      }));
+
+      doc.articles = fourArticles;
+      if (doc.pages && doc.pages[0]) {
+        doc.pages[0].articles = fourArticles;
+      }
+
+      const html = renderNewspaperDocumentToHtml(doc);
+
+      // Verify that there is strictly 1 .newspaper-page rendered
+      const pageOccurrences = (html.match(/class="newspaper-page"/g) || []).length;
+      expect(pageOccurrences).toBe(1);
+      expect(html).toContain('पृष्ठ 1 / 1');
+      expect(html).not.toContain('पृष्ठ 2 / 2');
+    });
   });
 });
