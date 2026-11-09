@@ -89,12 +89,13 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
       onClose();
     } else {
       const selected = presets.find((p) => p.id === pId);
+      const isEnglish = selected ? !/[\u0900-\u097F]/.test(selected.defaultMasthead.title) : false;
       onCreate({
-        title: selected ? selected.defaultMasthead.title : 'जनवाणी समाचार',
+        title: selected ? selected.defaultMasthead.title : (isEnglish ? 'The Daily Chronicle' : 'जनवाणी समाचार'),
         subtitle: selected ? selected.defaultMasthead.subtitle : '',
-        edition: 'मुख्य संस्करण',
-        date: 'मंगलवार, 27 अक्टूबर 2026',
-        language: 'hi',
+        edition: isEnglish ? 'Main Edition' : 'मुख्य संस्करण',
+        date: isEnglish ? 'Wednesday, October 28, 2026' : 'मंगलवार, 27 अक्टूबर 2026',
+        language: isEnglish ? 'en' : 'hi',
         direction: 'ltr',
         pageSize: selected?.recommendedPageSize || 'broadsheet',
         orientation: 'portrait',
@@ -533,7 +534,21 @@ export const ProjectSetupModal: React.FC<ProjectSetupModalProps> = ({
                     </label>
                     <select
                       value={language}
-                      onChange={(e) => setLanguage(e.target.value as 'hi' | 'en' | 'bilingual')}
+                      onChange={(e) => {
+                        const newLang = e.target.value as 'hi' | 'en' | 'bilingual';
+                        setLanguage(newLang);
+                        if (newLang === 'en' && title === 'जनवाणी समाचार') {
+                          setTitle('The Daily Chronicle');
+                          setSubtitle('The Voice of Independent Journalism • Est. 1947');
+                          setEdition('Morning Main Edition');
+                          setDate('Wednesday, October 28, 2026');
+                        } else if (newLang === 'hi' && title === 'The Daily Chronicle') {
+                          setTitle('जनवाणी समाचार');
+                          setSubtitle('सत्य, निष्पक्षता और जनसेवा का प्रतीक • स्थापना 1947');
+                          setEdition('प्रातःकालीन मुख्य संस्करण');
+                          setDate('मंगलवार, 27 अक्टूबर 2026');
+                        }
+                      }}
                       style={{
                         width: '100%',
                         padding: '8px 10px',

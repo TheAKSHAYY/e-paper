@@ -2147,18 +2147,18 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     fontSize: '7pt',
-                    fontFamily: isHindi ? "'Hind', 'Noto Serif Devanagari', sans-serif" : 'var(--editorial-font-sans)',
+                    fontFamily: (doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? "'Hind', 'Noto Serif Devanagari', sans-serif" : 'var(--editorial-font-sans)',
                     textTransform: 'uppercase',
                     color: '#666',
                     letterSpacing: '0.5pt',
                   }}
                 >
-                  <span>{masthead.title || document.metadata.title}</span>
+                  <span>{masthead.title || doc?.metadata?.title || 'E-Paper'}</span>
                   <span>
-                    {isHindi ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
+                    {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
                   </span>
                   <span>
-                    {masthead.title || document.metadata.title} • {isHindi ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                    {masthead.title || doc?.metadata?.title || 'E-Paper'} • {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
                   </span>
                 </div>
               </>
@@ -2172,12 +2172,12 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   color: '#444',
                 }}
               >
-                <span>{masthead.title || document.metadata.title}</span>
+                <span>{masthead.title || doc?.metadata?.title || 'E-Paper'}</span>
                 <span style={{ fontWeight: 600 }}>
-                  {isHindi ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
+                  {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? `पृष्ठ ${pageNumber} / ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
                 </span>
                 <span>
-                  {masthead.title || document.metadata.title} • {isHindi ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
+                  {masthead.title || doc?.metadata?.title || 'E-Paper'} • {(doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')) ? 'डिजिटल व प्रिंट संस्करण' : (masthead.edition || 'Digital & Print Edition')}
                 </span>
               </div>
             )}

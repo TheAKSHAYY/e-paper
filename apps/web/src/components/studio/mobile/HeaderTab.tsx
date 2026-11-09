@@ -202,7 +202,7 @@ export const HeaderTab: React.FC<HeaderTabProps> = ({
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  {preset.config.title || 'जनवाणी समाचार'}
+                  {currentConfig.title || preset.config.title || 'शीर्षक'}
                 </div>
 
                 {preset.config.showSecondaryHeader && (
