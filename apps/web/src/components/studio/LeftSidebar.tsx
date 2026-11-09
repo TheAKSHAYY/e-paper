@@ -33,6 +33,8 @@ export interface LeftSidebarProps {
   isMobile?: boolean;
   hideTabs?: boolean;
   width?: string | number;
+  onExportPdf?: () => void;
+  isExportingPdf?: boolean;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -60,6 +62,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   isMobile = false,
   hideTabs = false,
   width,
+  onExportPdf,
+  isExportingPdf = false,
 }) => {
   const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
   const { locale } = useI18n();
@@ -564,6 +568,35 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         )}
       </div>
+
+      {onExportPdf && (
+        <div style={{ padding: '10px 12px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', flexShrink: 0 }}>
+          <button
+            onClick={onExportPdf}
+            disabled={isExportingPdf}
+            data-testid="sidebar-btn-export-pdf"
+            style={{
+              width: '100%',
+              backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '9px 12px',
+              fontSize: '12.5px',
+              fontWeight: 700,
+              cursor: isExportingPdf ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)',
+            }}
+          >
+            <span>{isExportingPdf ? '⏳' : '📥'}</span>
+            <span>{isExportingPdf ? (locale === 'en' ? 'Generating PDF...' : 'PDF बन रहा है...') : (locale === 'en' ? 'Download Print PDF' : 'प्रिंट PDF डाउनलोड करें')}</span>
+          </button>
+        </div>
+      )}
     </aside>
   );
 };

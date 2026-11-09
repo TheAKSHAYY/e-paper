@@ -67,6 +67,8 @@ export interface ContextualInspectorProps {
   selectedElementPart?: SelectedElementPart;
   selectedParagraphIndex?: number | null;
   onSelectParagraph?: (index: number | null) => void;
+  onExportPdf?: () => void;
+  isExportingPdf?: boolean;
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -104,6 +106,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   selectedElementPart,
   selectedParagraphIndex,
   onSelectParagraph,
+  onExportPdf,
+  isExportingPdf = false,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -3060,6 +3064,54 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
              * 2. PAGE GEOMETRY & MASTHEAD INSPECTOR (NO ARTICLE SELECTED)
              * ========================================================== */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Quick Export PDF Action Card */}
+              {onExportPdf && (
+                <div
+                  style={{
+                    backgroundColor: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#991B1B' }}>
+                      📰 {locale === 'en' ? 'Publish & Export' : 'प्रकाशन एवं एक्सपोर्ट'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 600 }}>
+                      {pageSize.toUpperCase()}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onExportPdf}
+                    disabled={isExportingPdf}
+                    data-testid="inspector-btn-export-pdf"
+                    style={{
+                      backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: isExportingPdf ? 'wait' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
+                    }}
+                  >
+                    <span>{isExportingPdf ? '⏳' : '📥'}</span>
+                    <span>{isExportingPdf ? (locale === 'en' ? 'Generating PDF...' : 'PDF बन रहा है...') : (locale === 'en' ? 'Download Print PDF' : 'प्रिंट PDF डाउनलोड करें')}</span>
+                  </button>
+                </div>
+              )}
+
               {/* Paper Format & Orientation */}
               <div>
                 <label

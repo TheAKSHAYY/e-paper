@@ -2732,6 +2732,8 @@ export const App: React.FC = () => {
                 onMoveArticleUp={handleMoveArticleUp}
                 onMoveArticleDown={handleMoveArticleDown}
                 onApplyLayoutRow={handleApplyLayoutRow}
+                onExportPdf={() => handleExportPdf(false)}
+                isExportingPdf={isExportingPdf}
               />
             )}
 
@@ -2816,6 +2818,33 @@ export const App: React.FC = () => {
                 >
                   <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
                   <span style={{ fontSize: '9px', fontWeight: 600 }}>प्रारूप</span>
+                </button>
+
+                <div style={{ flex: 1 }} />
+
+                <button
+                  onClick={() => handleExportPdf(false)}
+                  disabled={isExportingPdf}
+                  title="प्रिंट PDF डाउनलोड करें (Download PDF)"
+                  style={{
+                    backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '38px',
+                    height: '42px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '2px',
+                    cursor: isExportingPdf ? 'wait' : 'pointer',
+                    marginBottom: '10px',
+                    boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
+                  }}
+                >
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>{isExportingPdf ? '⏳' : '📥'}</span>
+                  <span style={{ fontSize: '8.5px', fontWeight: 800 }}>PDF</span>
                 </button>
               </div>
             )}
@@ -3070,6 +3099,8 @@ export const App: React.FC = () => {
                   setSelectedParaIndex(null);
                 }}
                 onCloseMasthead={() => setIsMastheadSelected(false)}
+                onExportPdf={() => handleExportPdf(false)}
+                isExportingPdf={isExportingPdf}
               />
             )}
           </div>

@@ -439,10 +439,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <span
           style={{
-            fontSize: '10.5px',
+            fontSize: '10px',
             color: '#A8A29E',
             textTransform: 'uppercase',
             fontWeight: 700,
+            backgroundColor: '#1C1917',
+            padding: '2px 5px',
+            borderRadius: '2px',
           }}
         >
           {pageSize}
@@ -532,76 +535,103 @@ export const TopBar: React.FC<TopBarProps> = ({
               {locale === 'en' ? 'Fit' : 'पेज'}
             </button>
           )}
-
-          {onFitWidth && (
-            <button
-              onClick={onFitWidth}
-              title={locale === 'en' ? 'Fit page width' : 'पेज की चौड़ाई स्क्रीन पर फ़िट करें'}
-              style={{
-                backgroundColor: 'transparent',
-                border: '1px solid #3D3835',
-                color: '#A8A29E',
-                borderRadius: '2px',
-                fontSize: '10.5px',
-                fontWeight: 600,
-                padding: '2px 5px',
-                cursor: 'pointer',
-              }}
-            >
-              {locale === 'en' ? 'Width' : 'चौड़ाई'}
-            </button>
-          )}
-
-          {onTogglePhysicalCoordinates && (
-            <button
-              onClick={onTogglePhysicalCoordinates}
-              title={
-                usePhysicalCanvasCoordinates
-                  ? (locale === 'en' ? '1:1 Physical Canvas (WYSIWYG) active. Click to switch to legacy 800px' : 'भौतिक माप सक्रिय (1:1 Physical Canvas Mode). क्लिक करके 800px लेगसी पर स्विच करें')
-                  : (locale === 'en' ? 'Legacy 800px canvas active. Click to switch to 1:1 physical mm' : 'लेगसी 800px कैनवस सक्रिय. क्लिक करके 1:1 भौतिक माप सक्रिय करें')
-              }
-              style={{
-                backgroundColor: usePhysicalCanvasCoordinates ? '#143522' : '#262422',
-                border: usePhysicalCanvasCoordinates ? '1px solid #166534' : '1px solid #3D3835',
-                color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#A8A29E',
-                borderRadius: '2px',
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '2px 6px',
-                cursor: 'pointer',
-                marginLeft: '4px',
-              }}
-            >
-              {usePhysicalCanvasCoordinates ? '📐 1:1 mm' : '800px'}
-            </button>
-          )}
         </div>
       </div>
 
       {/* ========================================================
-       * RIGHT: Primary Actions, Publishing, Preflight & Hero PDF
+       * RIGHT: HERO PDF BUTTON (FIRST!), Tools & Publishing
        * ======================================================== */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-        {/* Language Selector */}
-        <LanguageSelector variant="pill" />
-
-        {/* Create new edition */}
+        {/* PRIMARY HERO PDF EXPORT BUTTON - POSITIONED FIRST SO IT IS NEVER CLIPPED */}
         <button
-          onClick={onNewPublication}
-          title={locale === 'en' ? 'Create new edition' : 'नया अख़बार बनाएं'}
+          data-testid="btn-export-pdf"
+          onClick={onExportPdf}
+          disabled={isExportingPdf}
+          title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
           style={{
-            backgroundColor: '#262422',
-            color: '#E6E0D5',
-            border: '1px solid #3D3835',
+            backgroundColor: isExportingPdf ? '#991B1B' : (colors.pressRed || '#DC2626'),
+            color: '#ffffff',
+            border: 'none',
             borderRadius: '4px',
-            padding: '5px 8px',
-            fontSize: '11.5px',
-            fontWeight: 600,
-            cursor: 'pointer',
+            padding: '6px 14px',
+            fontSize: '12px',
+            fontWeight: 800,
+            cursor: isExportingPdf ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+            flexShrink: 0,
+            letterSpacing: '0.02em',
           }}
         >
-          + {t.common.create}
+          <span style={{ fontSize: '13px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
+          <span>{isExportingPdf ? (locale === 'en' ? 'Exporting...' : 'डाउनलोड...') : (locale === 'en' ? 'Download PDF' : 'PDF डाउनलोड')}</span>
         </button>
+
+        {/* Preflight Validation Status Button */}
+        {onOpenPreflight && (
+          <button
+            data-testid="btn-preflight-status"
+            onClick={onOpenPreflight}
+            title={locale === 'en' ? 'Open preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'}
+            style={{
+              backgroundColor:
+                preflightStatus?.overallStatus === 'green'
+                  ? '#143522'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#3B280A'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#3D1414'
+                      : '#262422',
+              color:
+                preflightStatus?.overallStatus === 'green'
+                  ? '#86EFAC'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#FDE047'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#FCA5A5'
+                      : '#E6E0D5',
+              border: `1px solid ${
+                preflightStatus?.overallStatus === 'green'
+                  ? '#166534'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '#854D0E'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '#991B1B'
+                      : '#3D3835'
+              }`,
+              borderRadius: '4px',
+              padding: '5px 9px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              flexShrink: 0,
+            }}
+          >
+            <span>
+              {preflightStatus?.overallStatus === 'green'
+                ? '🟢'
+                : preflightStatus?.overallStatus === 'yellow'
+                  ? '🟡'
+                  : preflightStatus?.overallStatus === 'red'
+                    ? '🔴'
+                    : '🛡️'}
+            </span>
+            <span>
+              {preflightStatus?.overallStatus === 'green'
+                ? (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')
+                : preflightStatus?.overallStatus === 'yellow'
+                  ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.warningCount})`
+                  : preflightStatus?.overallStatus === 'red'
+                    ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.blockerCount})`
+                    : (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')}
+            </span>
+          </button>
+        )}
 
         {/* Publishing Studio */}
         {onOpenPublishing && (
@@ -628,61 +658,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         )}
 
-        {/* Presets Modal */}
-        <button
-          onClick={onOpenTemplates}
-          data-testid="topbar-btn-presets"
-          title={locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
-          style={{
-            backgroundColor: '#262422',
-            color: '#E6E0D5',
-            border: '1px solid #3D3835',
-            borderRadius: '4px',
-            padding: '5px 9px',
-            fontSize: '11.5px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <span>📑</span>
-          <span>{locale === 'en' ? 'Presets' : 'प्रारूप'}</span>
-        </button>
-
-        {/* Page Setup */}
-        {onOpenPageSetup && (
-          <button
-            onClick={onOpenPageSetup}
-            data-testid="topbar-btn-pagesetup"
-            title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार व विन्यास'}
-            style={{
-              backgroundColor: '#262422',
-              color: '#FAF8F5',
-              border: '1px solid #3D3835',
-              borderRadius: '4px',
-              padding: '5px 9px',
-              fontSize: '11.5px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <span>📐</span>
-            <span>{locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}</span>
-          </button>
-        )}
-
         {/* Tools Dropdown Menu (Secondary & Advanced Controls) */}
         <div style={{ position: 'relative' }} ref={toolsMenuRef}>
           <button
             onClick={() => setIsToolsOpen((prev) => !prev)}
             aria-expanded={isToolsOpen}
             aria-haspopup="true"
-            title={locale === 'en' ? 'Layout balance, theme, backup & print tools' : 'संतुलन, थीम, बैकअप एवं प्रिंट टूल्स'}
+            title={locale === 'en' ? 'Presets, layout, theme, backup & print tools' : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'}
             style={{
               backgroundColor: isToolsOpen ? '#36322E' : '#262422',
               color: isToolsOpen ? '#FAF8F5' : '#E6E0D5',
@@ -722,6 +704,64 @@ export const TopBar: React.FC<TopBarProps> = ({
                 gap: '2px',
               }}
             >
+              <button
+                onClick={() => {
+                  onOpenTemplates();
+                  setIsToolsOpen(false);
+                }}
+                data-testid="topbar-btn-presets"
+                title={locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  fontSize: '11.5px',
+                  color: '#FAF8F5',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <span style={{ fontSize: '13px' }}>📑</span>
+                <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}</span>
+              </button>
+
+              {onOpenPageSetup && (
+                <button
+                  onClick={() => {
+                    onOpenPageSetup();
+                    setIsToolsOpen(false);
+                  }}
+                  data-testid="topbar-btn-pagesetup"
+                  title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार व विन्यास'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    fontSize: '11.5px',
+                    color: '#FAF8F5',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ fontSize: '13px' }}>📐</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>{locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}</span>
+                </button>
+              )}
+
               {onAutoFit && (
                 <button
                   onClick={() => {
@@ -877,6 +917,43 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </button>
               )}
 
+              {onTogglePhysicalCoordinates && (
+                <button
+                  onClick={() => {
+                    onTogglePhysicalCoordinates();
+                    setIsToolsOpen(false);
+                  }}
+                  title={
+                    usePhysicalCanvasCoordinates
+                      ? (locale === 'en' ? 'Switch to legacy 800px' : '800px लेगसी पर स्विच करें')
+                      : (locale === 'en' ? 'Switch to 1:1 physical mm' : '1:1 भौतिक माप सक्रिय करें')
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    fontSize: '11.5px',
+                    color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#FAF8F5',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ fontSize: '13px' }}>📐</span>
+                  <span style={{ flex: 1 }}>
+                    {usePhysicalCanvasCoordinates
+                      ? (locale === 'en' ? 'Canvas: 1:1 mm (WYSIWYG) ✓' : 'कैनवस: 1:1 mm ✓')
+                      : (locale === 'en' ? 'Canvas: 800px Mode' : 'कैनवस: 800px')}
+                  </span>
+                </button>
+              )}
+
               {onPrintPdf && (
                 <button
                   data-testid="btn-print-pdf"
@@ -972,6 +1049,33 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               <button
                 onClick={() => {
+                  onNewPublication();
+                  setIsToolsOpen(false);
+                }}
+                title={locale === 'en' ? 'Create new edition' : 'नया अख़बार बनाएं'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  fontSize: '11.5px',
+                  color: '#FAF8F5',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <span style={{ fontSize: '13px' }}>✚</span>
+                <span style={{ flex: 1 }}>+ {t.common.create}</span>
+              </button>
+
+              <button
+                onClick={() => {
                   onViewModeChange('landing');
                   setIsToolsOpen(false);
                 }}
@@ -1017,99 +1121,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           />
         )}
 
-        <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', margin: '0 2px' }} />
-
-        {/* Preflight Validation Status Button */}
-        {onOpenPreflight && (
-          <button
-            data-testid="btn-preflight-status"
-            onClick={onOpenPreflight}
-            title={locale === 'en' ? 'Open preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'}
-            style={{
-              backgroundColor:
-                preflightStatus?.overallStatus === 'green'
-                  ? '#143522'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#3B280A'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#3D1414'
-                      : '#262422',
-              color:
-                preflightStatus?.overallStatus === 'green'
-                  ? '#86EFAC'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#FDE047'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#FCA5A5'
-                      : '#E6E0D5',
-              border: `1px solid ${
-                preflightStatus?.overallStatus === 'green'
-                  ? '#166534'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#854D0E'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#991B1B'
-                      : '#3D3835'
-              }`,
-              borderRadius: '4px',
-              padding: '5px 9px',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexShrink: 0,
-            }}
-          >
-            <span>
-              {preflightStatus?.overallStatus === 'green'
-                ? '🟢'
-                : preflightStatus?.overallStatus === 'yellow'
-                  ? '🟡'
-                  : preflightStatus?.overallStatus === 'red'
-                    ? '🔴'
-                    : '🛡️'}
-            </span>
-            <span>
-              {preflightStatus?.overallStatus === 'green'
-                ? (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')
-                : preflightStatus?.overallStatus === 'yellow'
-                  ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.warningCount})`
-                  : preflightStatus?.overallStatus === 'red'
-                    ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.blockerCount})`
-                    : (locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट')}
-            </span>
-          </button>
-        )}
-
-        {/* PRIMARY HERO PDF EXPORT BUTTON - ALWAYS HIGH VISIBILITY & NEVER CLIPPED */}
-        <button
-          data-testid="btn-export-pdf"
-          onClick={onExportPdf}
-          disabled={isExportingPdf}
-          title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
-          style={{
-            backgroundColor: isExportingPdf ? '#991B1B' : (colors.pressRed || '#DC2626'),
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '6px 14px',
-            fontSize: '12px',
-            fontWeight: 700,
-            cursor: isExportingPdf ? 'wait' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-            flexShrink: 0,
-            letterSpacing: '0.02em',
-            transition: 'background-color 0.15s ease',
-          }}
-        >
-          <span style={{ fontSize: '13px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
-          <span>{isExportingPdf ? (locale === 'en' ? 'Exporting...' : 'डाउनलोड...') : (locale === 'en' ? 'Export PDF' : 'PDF डाउनलोड')}</span>
-        </button>
+        {/* Language Selector */}
+        <LanguageSelector variant="pill" />
 
         {/* Inspector Panel Toggle Button */}
         {onToggleInspector && (
