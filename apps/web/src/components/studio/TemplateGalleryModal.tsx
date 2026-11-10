@@ -162,6 +162,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
+      data-testid="template-gallery-modal"
       style={{
         position: 'fixed',
         inset: 0,
@@ -234,6 +235,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
 
           <button
             onClick={onClose}
+            data-testid="template-gallery-close"
             style={{
               background: '#1e293b',
               border: '1px solid #334155',
@@ -285,6 +287,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
             ].map((cat) => (
               <button
                 key={cat.id}
+                data-testid={`category-tab-${cat.id}`}
                 onClick={() => setActiveCategory(cat.id as GalleryCategory)}
                 style={{
                   padding: '6px 12px',
@@ -398,6 +401,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   return (
                     <div
                       key={tpl.id}
+                      data-testid={`template-card-${tpl.id}`}
                       style={{
                         backgroundColor: '#ffffff',
                         borderRadius: '10px',
@@ -616,6 +620,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   return (
                     <div
                       key={mstd.id}
+                      data-testid={`template-card-${mstd.id}`}
                       style={{
                         backgroundColor: '#ffffff',
                         borderRadius: '10px',
@@ -758,6 +763,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   return (
                     <div
                       key={art.id}
+                      data-testid={`template-card-${art.id}`}
                       style={{
                         backgroundColor: '#ffffff',
                         borderRadius: '8px',
@@ -874,6 +880,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   return (
                     <div
                       key={brk.id}
+                      data-testid={`template-card-${brk.id}`}
                       style={{
                         backgroundColor: '#ffffff',
                         borderRadius: '8px',
@@ -989,6 +996,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   return (
                     <div
                       key={div.id}
+                      data-testid={`template-card-${div.id}`}
                       style={{
                         backgroundColor: '#ffffff',
                         borderRadius: '8px',
@@ -1073,6 +1081,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
         {/* ================================================================= */}
         {pendingTemplate && (
           <div
+            data-testid="template-apply-confirm-modal"
             style={{
               position: 'fixed',
               inset: 0,
@@ -1143,6 +1152,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   <input
                     type="radio"
                     name="apply_mode"
+                    value="replace"
                     checked={replaceArticlesOption}
                     onChange={() => setReplaceArticlesOption(true)}
                     style={{ marginTop: '2px' }}
@@ -1172,6 +1182,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   <input
                     type="radio"
                     name="apply_mode"
+                    value="preserve"
                     checked={!replaceArticlesOption}
                     onChange={() => setReplaceArticlesOption(false)}
                     style={{ marginTop: '2px' }}
@@ -1204,6 +1215,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   रद्द करें (Cancel)
                 </button>
                 <button
+                  data-testid="template-confirm-apply-btn"
                   onClick={() => {
                     onApplyCompleteTemplate(pendingTemplate, replaceArticlesOption);
                     setPendingTemplate(null);
@@ -1336,6 +1348,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                 </button>
                 {inspectingItem.type === 'page' && (
                   <button
+                    data-testid="template-preview-apply"
                     onClick={() => {
                       const tpl = inspectingItem.data as CompletePageTemplate;
                       setInspectingItem(null);

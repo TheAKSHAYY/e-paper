@@ -1914,6 +1914,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     )}
                     <h1
                       data-testid="masthead-title"
+                      className="masthead-title"
                       style={{
                         fontFamily:
                           masthead.fontFamily || layout.mastheadFont || "'Rozha One', serif",

@@ -393,6 +393,36 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
             <span>{isExportingPdf ? '...' : '↓'}</span>
           </button>
 
+          {/* Fallback Browser Print / Save as PDF Button */}
+          {onPrintPdf && (
+            <button
+              type="button"
+              onClick={onPrintPdf}
+              disabled={isPrintingPdf}
+              aria-label="ब्राउज़र प्रिंट या PDF सहेजें"
+              data-testid="btn-print-pdf"
+              style={{
+                height: '34px',
+                minHeight: '34px',
+                padding: '0 8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '3px',
+                backgroundColor: '#1e293b',
+                border: '1px solid #475569',
+                borderRadius: '6px',
+                color: '#FAF8F5',
+                cursor: isPrintingPdf ? 'wait' : 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              <span>🖨️</span>
+              <span>प्रिंट</span>
+            </button>
+          )}
+
           {/* [⋮ More] Overflow Button */}
           <div style={{ position: 'relative' }} ref={moreMenuRef}>
             <button

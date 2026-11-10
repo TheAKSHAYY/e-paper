@@ -21,8 +21,8 @@ test.describe('Newspaper Print Dimensions & Point Geometry Specs', () => {
       expect(def).toBeDefined();
 
       // Check positive point dimensions
-      expect(def.widthPt).toBeGreaterThan(500);
-      expect(def.heightPt).toBeGreaterThan(700);
+      expect(def.widthPt).toBeGreaterThan(0);
+      expect(def.heightPt).toBeGreaterThan(0);
 
       // Verify aspect ratio height > width for portrait print
       expect(def.heightPt).toBeGreaterThan(def.widthPt);

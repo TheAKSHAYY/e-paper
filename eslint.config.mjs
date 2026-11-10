@@ -19,6 +19,7 @@ export default tseslint.config(
       // Agent skill helper scripts use Node.js CJS conventions — not app source
       '.agents/**',
       '.gemini/**',
+      'scripts/**',
     ],
   },
   {
