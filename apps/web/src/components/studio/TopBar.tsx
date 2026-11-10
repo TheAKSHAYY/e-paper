@@ -500,6 +500,38 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           )}
 
+          {/* Fallback Browser Print / Save as PDF Button */}
+          {onPrintPdf && (
+            <button
+              data-testid="btn-print-pdf"
+              onClick={onPrintPdf}
+              disabled={isPrintingPdf}
+              title={
+                locale === 'en'
+                  ? 'Browser Print / Save as PDF (Fallback without renderer)'
+                  : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें (बिना सर्वर)'
+              }
+              style={{
+                backgroundColor: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #475569',
+                borderRadius: '4px',
+                padding: '5px 10px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: isPrintingPdf ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ fontSize: '12px' }}>🖨️</span>
+              <span>{locale === 'en' ? 'Print / PDF' : 'प्रिंट / PDF'}</span>
+            </button>
+          )}
+
           {/* Primary CTA: PDF Download */}
           <button
             data-testid="btn-export-pdf"
