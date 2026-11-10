@@ -448,11 +448,16 @@ export const MastheadDesignerModal: React.FC<MastheadDesignerModalProps> = ({
             }}
           >
             <div>
-              {targetConfig.showVolumeIssue !== false && (
-                <span>
-                  {targetConfig.issueNumber || `${targetConfig.volumeYear || 'वर्ष 78'} • अंक 142`}
-                </span>
-              )}
+              {targetConfig.showVolumeIssue !== false &&
+                (() => {
+                  const volStr =
+                    targetConfig.issueNumber !== undefined
+                      ? targetConfig.issueNumber.trim()
+                      : [targetConfig.volumeYear, targetConfig.issueCount]
+                          .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+                          .join(' • ');
+                  return volStr.length > 0 ? <span>{volStr}</span> : null;
+                })()}
             </div>
             <div>
               {targetConfig.showDate !== false && (

@@ -15,11 +15,15 @@ export interface TemplateGalleryModalProps {
   onApplyCompleteTemplate: (template: CompletePageTemplate, replaceArticles: boolean) => void;
   onApplyMastheadPreset: (preset: MastheadPresetItem) => void;
   onApplyArticleLayout: (preset: EditorialPreset) => void;
-  onApplyEditorialPreset: (preset: EditorialPreset) => void;
+  onApplyEditorialPreset: (
+    preset: EditorialPreset,
+    placement?: 'masthead' | 'top' | 'bottom'
+  ) => void;
   currentDoc?: NewspaperDocument;
+  initialCategory?: GalleryCategory;
 }
 
-type GalleryCategory =
+export type GalleryCategory =
   'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites';
 
 export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
@@ -29,8 +33,15 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
   onApplyMastheadPreset,
   onApplyArticleLayout,
   onApplyEditorialPreset,
+  initialCategory,
 }) => {
-  const [activeCategory, setActiveCategory] = useState<GalleryCategory>('all');
+  const [activeCategory, setActiveCategory] = useState<GalleryCategory>(initialCategory || 'all');
+
+  useEffect(() => {
+    if (isOpen && initialCategory) {
+      setActiveCategory(initialCategory);
+    }
+  }, [isOpen, initialCategory]);
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSizeFilter, setPageSizeFilter] = useState<'all' | 'broadsheet' | 'tabloid'>('all');
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -935,25 +946,65 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                         {brk.data.headline}
                       </div>
 
-                      <button
-                        onClick={() => {
-                          onApplyEditorialPreset(brk);
-                          onClose();
-                        }}
+                      <div
                         style={{
-                          backgroundColor: '#b91c1c',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '6px 10px',
-                          borderRadius: '5px',
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '6px',
                           marginTop: 'auto',
                         }}
                       >
-                        शीर्ष पर जोड़ें (+ Insert Banner)
-                      </button>
+                        <button
+                          type="button"
+                          data-testid={`btn-apply-masthead-sub-${brk.id}`}
+                          onClick={() => {
+                            onApplyEditorialPreset(brk, 'masthead');
+                            onClose();
+                          }}
+                          style={{
+                            backgroundColor: '#991b1b',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 4px',
+                            borderRadius: '5px',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                          }}
+                          title="मास्टहेड की सब-हेडर घोषणा पट्टी में लगाएँ"
+                        >
+                          📢 मास्टहेड पट्टी
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`btn-apply-top-banner-${brk.id}`}
+                          onClick={() => {
+                            onApplyEditorialPreset(brk, 'top');
+                            onClose();
+                          }}
+                          style={{
+                            backgroundColor: '#0f172a',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 4px',
+                            borderRadius: '5px',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                          }}
+                          title="पेज के शीर्ष पर मुख्य बैनर की तरह जोड़ें"
+                        >
+                          📰 पेज शीर्ष पर
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -1049,25 +1100,65 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                         {div.data.headline}
                       </div>
 
-                      <button
-                        onClick={() => {
-                          onApplyEditorialPreset(div);
-                          onClose();
-                        }}
+                      <div
                         style={{
-                          backgroundColor: '#334155',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '6px 10px',
-                          borderRadius: '5px',
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '6px',
                           marginTop: 'auto',
                         }}
                       >
-                        विभाजक पट्टी जोड़ें (+ Add Divider)
-                      </button>
+                        <button
+                          type="button"
+                          data-testid={`btn-apply-masthead-div-${div.id}`}
+                          onClick={() => {
+                            onApplyEditorialPreset(div, 'masthead');
+                            onClose();
+                          }}
+                          style={{
+                            backgroundColor: '#0369a1',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 4px',
+                            borderRadius: '5px',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                          }}
+                          title="मास्टहेड की सब-हेडर घोषणा पट्टी में लगाएँ"
+                        >
+                          📢 मास्टहेड पट्टी
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`btn-apply-top-divider-${div.id}`}
+                          onClick={() => {
+                            onApplyEditorialPreset(div, 'top');
+                            onClose();
+                          }}
+                          style={{
+                            backgroundColor: '#334155',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 4px',
+                            borderRadius: '5px',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                          }}
+                          title="पेज के शीर्ष पर विभाजक पट्टी जोड़ें"
+                        >
+                          📰 पेज शीर्ष पर
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

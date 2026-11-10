@@ -525,24 +525,51 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
             </div>
 
             <div>
-              <label
-                htmlFor="masthead-issue"
+              <div
                 style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#444',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: '3px',
                 }}
               >
-                अंक व वर्ष (Issue Number)
-              </label>
+                <label
+                  htmlFor="masthead-issue"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#444',
+                  }}
+                >
+                  अंक व वर्ष (Issue Number)
+                </label>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={masthead.showVolumeIssue !== false}
+                    onChange={(e) =>
+                      onUpdateMasthead({ ...masthead, showVolumeIssue: e.target.checked })
+                    }
+                  />
+                  दिखाएँ
+                </label>
+              </div>
               <input
                 id="masthead-issue"
                 type="text"
+                disabled={masthead.showVolumeIssue === false}
                 value={masthead.issueNumber || ''}
                 onChange={(e) => onUpdateMasthead({ ...masthead, issueNumber: e.target.value })}
-                placeholder="वर्ष 78 • अंक 142"
+                placeholder="वर्ष 78 • अंक 142 (या खाली छोड़ें)"
                 style={{
                   width: '100%',
                   padding: '5px 8px',
@@ -550,6 +577,7 @@ export const LayoutOptionsDrawer: React.FC<LayoutOptionsDrawerProps> = ({
                   border: '1px solid #ccc',
                   borderRadius: '4px',
                   boxSizing: 'border-box',
+                  opacity: masthead.showVolumeIssue === false ? 0.5 : 1,
                 }}
               />
             </div>

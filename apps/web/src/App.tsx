@@ -58,6 +58,7 @@ import { PageSetupModal } from './components/studio/PageSetupModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { MastheadDesignerModal } from './components/studio/MastheadDesignerModal';
 import { TemplateGalleryModal } from './components/studio/TemplateGalleryModal';
+import { WhatsAppNewsPasteModal } from './components/studio/WhatsAppNewsPasteModal';
 import type { CompletePageTemplate, MastheadPresetItem } from '@epaper-studio/template-engine';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
@@ -199,6 +200,8 @@ export const App: React.FC = () => {
     }
     return 0.7;
   });
+  const scaleRef = useRef<number>(scale);
+  scaleRef.current = scale;
   // Feature flag for physical canvas coordinates (default ON now that parity tests pass)
   const [usePhysicalCanvasCoordinates, setUsePhysicalCanvasCoordinates] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -398,8 +401,44 @@ export const App: React.FC = () => {
   const [isMastheadGalleryOpen, setIsMastheadGalleryOpen] = useState<boolean>(false);
   const [isMastheadDesignerOpen, setIsMastheadDesignerOpen] = useState<boolean>(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
-  const [editorMode, setEditorMode] = useState<'simple' | 'pro'>('simple');
+  const [editorMode, setEditorMode] = useState<'simple' | 'pro'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('epaper_editor_mode');
+      if (saved === 'simple' || saved === 'pro') return saved;
+    }
+    return 'simple';
+  });
+  const [isWhatsAppPasteOpen, setIsWhatsAppPasteOpen] = useState<boolean>(false);
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState<boolean>(false);
+  const [templateGalleryCategory, setTemplateGalleryCategory] = useState<
+    'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
+  >('all');
+
+  const handleOpenTemplateGallery = useCallback(
+    (
+      category:
+        'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites' = 'all'
+    ) => {
+      setTemplateGalleryCategory(category);
+      setIsTemplateGalleryOpen(true);
+    },
+    []
+  );
+
+  const handleToggleEditorMode = useCallback(() => {
+    setEditorMode((prev) => {
+      const next = prev === 'simple' ? 'pro' : 'simple';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('epaper_editor_mode', next);
+      }
+      showNotification(
+        next === 'simple'
+          ? '✨ सरल मोड (Simple Mode) सक्रिय'
+          : '⚙️ व्यावसायिक मोड (Pro Mode) सक्रिय'
+      );
+      return next;
+    });
+  }, [showNotification]);
 
   // Complete Page Template Application Handler
   const handleApplyCompleteTemplate = useCallback(
@@ -681,6 +720,36 @@ export const App: React.FC = () => {
     }
   }, [calculateFitWidthScale, isMobile, scale, showNotification]);
 
+  const handleZoomBy = useCallback((delta: number) => {
+    const viewport = canvasViewportRef.current;
+    const prevScale = scaleRef.current;
+    const newScale = Math.max(0.2, Math.min(3.0, Math.round((prevScale + delta) * 100) / 100));
+    if (newScale === prevScale) return;
+
+    if (viewport) {
+      const clientW = viewport.clientWidth;
+      const clientH = viewport.clientHeight;
+      const focalX = clientW / 2;
+      const focalY = clientH / 2;
+      const scrollLeft = viewport.scrollLeft;
+      const scrollTop = viewport.scrollTop;
+
+      const scaleRatio = newScale / prevScale;
+      const targetScrollLeft = (scrollLeft + focalX) * scaleRatio - focalX;
+      const targetScrollTop = (scrollTop + focalY) * scaleRatio - focalY;
+
+      setScale(newScale);
+      requestAnimationFrame(() => {
+        if (canvasViewportRef.current) {
+          canvasViewportRef.current.scrollLeft = targetScrollLeft;
+          canvasViewportRef.current.scrollTop = targetScrollTop;
+        }
+      });
+    } else {
+      setScale(newScale);
+    }
+  }, []);
+
   // Automatically fit on initial mount or when view transitions to studio
   useEffect(() => {
     if (!hasInitializedFit.current && canvasViewportRef.current && viewMode !== 'landing') {
@@ -707,6 +776,10 @@ export const App: React.FC = () => {
 
     let touchStartDist = 0;
     let touchStartScale = 1;
+    let touchStartFocalX = 0;
+    let touchStartFocalY = 0;
+    let touchStartScrollLeft = 0;
+    let touchStartScrollTop = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
@@ -714,7 +787,12 @@ export const App: React.FC = () => {
         const t1 = e.touches[1];
         if (t0 && t1) {
           touchStartDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
-          touchStartScale = scale;
+          touchStartScale = scaleRef.current;
+          const rect = viewport.getBoundingClientRect();
+          touchStartFocalX = (t0.clientX + t1.clientX) / 2 - rect.left;
+          touchStartFocalY = (t0.clientY + t1.clientY) / 2 - rect.top;
+          touchStartScrollLeft = viewport.scrollLeft;
+          touchStartScrollTop = viewport.scrollTop;
         }
       }
     };
@@ -728,10 +806,23 @@ export const App: React.FC = () => {
           const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
           const factor = dist / touchStartDist;
           const newScale = Math.max(
-            0.1,
+            0.2,
             Math.min(3.0, Math.round(touchStartScale * factor * 100) / 100)
           );
+
+          const rect = viewport.getBoundingClientRect();
+          const currentFocalX = (t0.clientX + t1.clientX) / 2 - rect.left;
+          const currentFocalY = (t0.clientY + t1.clientY) / 2 - rect.top;
+
+          const scaleRatio = newScale / touchStartScale;
+          const targetScrollLeft =
+            (touchStartScrollLeft + touchStartFocalX) * scaleRatio - currentFocalX;
+          const targetScrollTop =
+            (touchStartScrollTop + touchStartFocalY) * scaleRatio - currentFocalY;
+
           setScale(newScale);
+          viewport.scrollLeft = targetScrollLeft;
+          viewport.scrollTop = targetScrollTop;
         }
       }
     };
@@ -753,7 +844,7 @@ export const App: React.FC = () => {
       viewport.removeEventListener('touchmove', handleTouchMove);
       viewport.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [scale]);
+  }, []);
 
   // Compute pages list from publication
   const pages: NewspaperPage[] = useMemo(() => {
@@ -1103,7 +1194,7 @@ export const App: React.FC = () => {
 
   // Add block to current page
   const handleAddBlock = useCallback(
-    (blockTemplate: Partial<Article> = {}) => {
+    (blockTemplate: Partial<Article> = {}, position: 'top' | 'bottom' = 'bottom') => {
       // Guard: Check if current page is full or adding this block would exceed page capacity
       const capacityStatus = isPageCapacityFull(currentPage, document, {
         domMeasurements,
@@ -1137,18 +1228,41 @@ export const App: React.FC = () => {
 
       const newId = `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const resolvedColumnCount = resolvePageColumnCount(document, currentPage);
+
+      const isTopPosition =
+        position === 'top' ||
+        blockTemplate.elementType === 'top-headline' ||
+        (blockTemplate as { category?: string }).category === 'breaking-banner' ||
+        (blockTemplate as { category?: string }).category === 'section-divider';
+
       const newArticle = createArticleFromPreset(blockTemplate, {
         newId,
         defaultColumnCount: resolvedColumnCount,
-        orderIndex: currentPage.articles.length,
+        orderIndex: isTopPosition ? 0 : currentPage.articles.length,
       });
+
+      // Banners placed at the top span across the entire page column count
+      if (
+        isTopPosition &&
+        (!blockTemplate.columnSpan || blockTemplate.columnSpan > resolvedColumnCount)
+      ) {
+        newArticle.columnSpan = resolvedColumnCount;
+      }
 
       setDocument((prev) => {
         const currentPages = getPublicationPages(prev);
         const targetPage = currentPages[safePageIndex];
         if (!targetPage) return prev;
 
-        const updatedPageArticles = [...targetPage.articles, newArticle];
+        const combined = isTopPosition
+          ? [newArticle, ...targetPage.articles]
+          : [...targetPage.articles, newArticle];
+
+        const updatedPageArticles = combined.map((art, idx) => ({
+          ...art,
+          orderIndex: idx,
+        }));
+
         const updatedPages = currentPages.map((p, idx) =>
           idx === safePageIndex ? { ...p, articles: updatedPageArticles } : p
         );
@@ -2029,11 +2143,31 @@ export const App: React.FC = () => {
   );
 
   const handleApplyEditorialPresetFromGallery = useCallback(
-    (preset: EditorialPreset) => {
-      handleAddBlock(preset.data);
-      showNotification(`✓ '${preset.name}' जोड़ा गया`);
+    (preset: EditorialPreset, placement: 'masthead' | 'top' | 'bottom' = 'top') => {
+      if (placement === 'masthead') {
+        const text =
+          preset.data.headline || preset.data.subheadline || preset.data.kickerText || preset.name;
+        handleUpdateMasthead({
+          ...document.masthead,
+          showAnnouncementStrip: true,
+          announcementStripText: text,
+        });
+        showNotification(`✓ '${preset.name}' मास्टहेड सब-हेडर में सेट किया गया`);
+      } else {
+        handleAddBlock(
+          {
+            ...preset.data,
+            columnSpan:
+              preset.category === 'breaking-banner' || preset.category === 'section-divider'
+                ? undefined
+                : preset.data.columnSpan,
+          },
+          'top'
+        );
+        showNotification(`✓ '${preset.name}' पेज शीर्ष पर जोड़ा गया`);
+      }
     },
-    [handleAddBlock, showNotification]
+    [document.masthead, handleAddBlock, handleUpdateMasthead, showNotification]
   );
 
   const handlePageSizeChange = useCallback((pageSize: PageSizePreset) => {
@@ -2773,6 +2907,9 @@ export const App: React.FC = () => {
               onOpenTheme={() => setIsThemeModalOpen(true)}
               onOpenPageSetup={() => setMobileDrawer('page-setup')}
               onOpenPresets={() => setMobileDrawer('presets')}
+              onOpenTemplateGallery={handleOpenTemplateGallery}
+              editorMode={editorMode}
+              onToggleEditorMode={handleToggleEditorMode}
             />
           ) : (
             <TopBar
@@ -2812,7 +2949,7 @@ export const App: React.FC = () => {
               onToggleFreeLayout={() => setUseFreeLayout((prev) => !prev)}
               onNewPublication={() => setIsSetupOpen(true)}
               editorMode={editorMode}
-              onToggleEditorMode={() => setEditorMode((m) => (m === 'simple' ? 'pro' : 'simple'))}
+              onToggleEditorMode={handleToggleEditorMode}
               onOpenTemplateGallery={() => setIsTemplateGalleryOpen(true)}
               onOpenTemplates={() => setIsTemplateGalleryOpen(true)}
               onOpenPageSetup={() => setIsPageSetupOpen(true)}
@@ -3038,12 +3175,13 @@ export const App: React.FC = () => {
             {/* Center Canvas Area with Ref for Smart Auto-Fit */}
             <div
               ref={canvasViewportRef}
+              data-testid="canvas-viewport"
               style={{
                 flex: 1,
                 overflowY: 'auto',
                 overflowX: 'auto',
                 display: 'flex',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 alignItems: 'flex-start',
                 backgroundColor: '#cbd5e1',
                 paddingTop: isMobile ? '12px' : '24px',
@@ -3055,7 +3193,7 @@ export const App: React.FC = () => {
                     : 'calc(68px + env(safe-area-inset-bottom, 0px))'
                   : '76px',
                 position: 'relative',
-                touchAction: 'pan-x pan-y pinch-zoom',
+                touchAction: 'pan-x pan-y',
                 WebkitOverflowScrolling: 'touch',
               }}
               onClick={(e) => {
@@ -3089,9 +3227,7 @@ export const App: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() =>
-                      setScale((s) => Math.min(3.0, Math.round((s + 0.15) * 100) / 100))
-                    }
+                    onClick={() => handleZoomBy(0.15)}
                     aria-label="ज़ूम इन करें"
                     title="Zoom In"
                     style={{
@@ -3124,9 +3260,7 @@ export const App: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      setScale((s) => Math.max(0.2, Math.round((s - 0.15) * 100) / 100))
-                    }
+                    onClick={() => handleZoomBy(-0.15)}
                     aria-label="ज़ूम आउट करें"
                     title="Zoom Out"
                     style={{
@@ -3180,6 +3314,7 @@ export const App: React.FC = () => {
                 pageSize={document.metadata.pageSize}
                 orientation={document.metadata.orientation}
                 scale={scale}
+                isMobile={isMobile}
                 usePhysicalCanvasCoordinates={usePhysicalCanvasCoordinates}
                 useFreeLayout={useFreeLayout}
                 doc={document}
@@ -3343,6 +3478,7 @@ export const App: React.FC = () => {
                 onApplyLayoutRow={handleApplyLayoutRow}
                 onOpenTheme={() => setIsThemeModalOpen(true)}
                 onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
+                onOpenTemplateGallery={handleOpenTemplateGallery}
                 onDeselectArticle={() => {
                   setSelectedArticleId(null);
                   setSelectedElementPart(null);
@@ -3365,6 +3501,9 @@ export const App: React.FC = () => {
                 selectedElementPart={selectedElementPart}
                 selectedParagraphIndex={selectedParaIndex}
                 onSelectParagraph={setSelectedParaIndex}
+                editorMode={editorMode}
+                onToggleEditorMode={handleToggleEditorMode}
+                onOpenWhatsAppPaste={() => setIsWhatsAppPasteOpen(true)}
               />
             </>
           )}
@@ -3433,6 +3572,21 @@ export const App: React.FC = () => {
         onApplyArticleLayout={handleApplyArticleLayoutFromGallery}
         onApplyEditorialPreset={handleApplyEditorialPresetFromGallery}
         currentDoc={document}
+        initialCategory={templateGalleryCategory}
+      />
+
+      <WhatsAppNewsPasteModal
+        isOpen={isWhatsAppPasteOpen}
+        onClose={() => setIsWhatsAppPasteOpen(false)}
+        isMobile={isMobile}
+        onInsertStories={(stories) => {
+          stories.forEach((story, idx) => {
+            handleAddBlock(story, idx === 0 ? 'top' : 'bottom');
+          });
+          showNotification(
+            `✓ ${stories.length} ${stories.length > 1 ? 'खबरें' : 'खबर'} पेज पर जोड़ी गई`
+          );
+        }}
       />
 
       <DraftsManagerModal

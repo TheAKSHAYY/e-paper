@@ -5,9 +5,49 @@ import { ColorStrip } from './ColorStrip';
 export interface SubHeaderTabProps {
   currentConfig: MastheadConfig;
   onUpdateMasthead: (config: Partial<MastheadConfig>) => void;
+  onOpenTemplateGallery?: (
+    category?: 'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
+  ) => void;
 }
 
-export const SubHeaderTab: React.FC<SubHeaderTabProps> = ({ currentConfig, onUpdateMasthead }) => {
+const PRESET_SUBHEADERS = [
+  {
+    icon: '📢',
+    title: 'विशेष बुलेटिन',
+    text: 'विशेष बुलेटिन : आज की सबसे बड़ी हलचल और विशेष ग्राउंड रिपोर्ट',
+  },
+  {
+    icon: '🚨',
+    title: 'रेड अलर्ट ब्रेकिंग',
+    text: 'संसद में ऐतिहासिक नीति पर मुहर: ग्रामीण विकास व किसान कल्याण पैकेज स्वीकृत',
+  },
+  {
+    icon: '🗳️',
+    title: 'चुनावी हलचल',
+    text: 'मतगणना रुझान: 240 सीटों पर मतगणना प्रारंभ, शुरुआती राउंड में कड़ा मुकाबला',
+  },
+  {
+    icon: '⚠️',
+    title: 'आपदा व मौसम',
+    text: 'अतिवृष्टि चेतावनी: नदी का जलस्तर खतरे के निशान के करीब, तटीय बस्तियां सतर्क',
+  },
+  {
+    icon: '🏛️',
+    title: 'शासकीय विज्ञप्ति',
+    text: 'शासकीय विज्ञप्ति: राज्य भर में सार्वजनिक अवकाश एवं विशेष सुरक्षा व्यवस्था के आदेश',
+  },
+  {
+    icon: '📈',
+    title: 'व्यापार व बाज़ार',
+    text: 'व्यापार संदेश : सेंसेक्स 850 अंक उछला, अंतरराष्ट्रीय व्यापार समझौते पर मुहर',
+  },
+];
+
+export const SubHeaderTab: React.FC<SubHeaderTabProps> = ({
+  currentConfig,
+  onUpdateMasthead,
+  onOpenTemplateGallery,
+}) => {
   const isEnabled = currentConfig.showAnnouncementStrip ?? false;
 
   const handleToggle = (enabled: boolean) => {
@@ -22,6 +62,13 @@ export const SubHeaderTab: React.FC<SubHeaderTabProps> = ({ currentConfig, onUpd
   const handleRemove = () => {
     onUpdateMasthead({
       showAnnouncementStrip: false,
+    });
+  };
+
+  const handleSelectPreset = (text: string) => {
+    onUpdateMasthead({
+      showAnnouncementStrip: true,
+      announcementStripText: text,
     });
   };
 
@@ -133,6 +180,86 @@ export const SubHeaderTab: React.FC<SubHeaderTabProps> = ({ currentConfig, onUpd
                 fontFamily: "'Noto Serif Devanagari', serif",
               }}
             />
+          </div>
+
+          {/* Quick preset chips */}
+          <div>
+            <div
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#0f172a',
+                marginBottom: '6px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>त्वरित सब-हेडर चुनें:</span>
+              {onOpenTemplateGallery && (
+                <button
+                  type="button"
+                  onClick={() => onOpenTemplateGallery('breaking')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#b91c1c',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  गैलरी से 25+ शैलियाँ देखें ➔
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '6px',
+              }}
+            >
+              {PRESET_SUBHEADERS.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSelectPreset(item.text)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    padding: '8px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span style={{ fontSize: '14px', lineHeight: 1 }}>{item.icon}</span>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b' }}>
+                      {item.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '9.5px',
+                        color: '#64748b',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '120px',
+                      }}
+                    >
+                      {item.text}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           <ColorStrip

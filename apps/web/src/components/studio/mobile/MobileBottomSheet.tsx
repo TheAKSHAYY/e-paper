@@ -68,6 +68,12 @@ export interface MobileBottomSheetProps {
   selectedElementPart?: SelectedElementPart;
   isMastheadSelected?: boolean;
   mastheadTab?: 'title' | 'meta' | 'rules';
+  onOpenTemplateGallery?: (
+    category?: 'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
+  ) => void;
+  editorMode?: 'simple' | 'pro';
+  onToggleEditorMode?: () => void;
+  onOpenWhatsAppPaste?: () => void;
 }
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
@@ -109,6 +115,10 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   selectedElementPart,
   isMastheadSelected = false,
   mastheadTab,
+  onOpenTemplateGallery,
+  editorMode = 'simple',
+  onToggleEditorMode,
+  onOpenWhatsAppPaste,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [presetTab, setPresetTab] = useState<'presets' | 'pagesetup' | 'theme'>(
@@ -276,6 +286,32 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Mode Switcher Pill */}
+          {onToggleEditorMode && (
+            <button
+              type="button"
+              data-testid="sheet-toggle-editor-mode"
+              onClick={onToggleEditorMode}
+              title={editorMode === 'simple' ? 'प्रो मोड में स्विच करें' : 'सरल मोड में स्विच करें'}
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '4px 8px',
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: editorMode === 'simple' ? '#86efac' : '#93c5fd',
+                backgroundColor: editorMode === 'simple' ? '#f0fdf4' : '#eff6ff',
+                color: editorMode === 'simple' ? '#166534' : '#1e40af',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              <span>{editorMode === 'simple' ? '✨ सरल' : '⚙️ प्रो'}</span>
+            </button>
+          )}
+
           {/* Expand / Collapse Button */}
           <button
             type="button"
@@ -562,6 +598,151 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
          * ========================================================== */}
         {mode === 'blocks' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Quick WhatsApp News Paste Card */}
+            {onOpenWhatsAppPaste && (
+              <div
+                data-testid="btn-open-whatsapp-paste"
+                onClick={() => {
+                  onClose();
+                  onOpenWhatsAppPaste();
+                }}
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: '#166534',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 3px 8px rgba(22, 101, 52, 0.3)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '24px' }}>📲</span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 800 }}>
+                      त्वरित व्हाट्सएप समाचार पेस्ट (WhatsApp Paste)
+                    </div>
+                    <div style={{ fontSize: '10.5px', opacity: 0.9, marginTop: '2px' }}>
+                      कच्चा टेक्स्ट पेस्ट करें — ऑटोमैटिक शीर्षक व खबर अलग करें
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '18px', fontWeight: 700 }}>➔</span>
+              </div>
+            )}
+
+            {/* Quick Header Templates Picker */}
+            {onOpenTemplateGallery && (
+              <div
+                data-testid="add-block-masthead-template"
+                onClick={() => {
+                  onClose();
+                  onOpenTemplateGallery('mastheads');
+                }}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #bfdbfe',
+                  backgroundColor: '#eff6ff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 5px rgba(30, 58, 138, 0.08)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '22px' }}>📰</span>
+                  <div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#1e40af' }}>
+                      मास्टहेड / हेडर टेम्पलेट्स (10+ Header Designs)
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#3b82f6', marginTop: '1px' }}>
+                      पारंपरिक, आधुनिक व राष्ट्रीय अखबार शीर्ष सज्जा तुरंत लागू करें
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#1e40af' }}>➔</span>
+              </div>
+            )}
+
+            {/* Quick Header Strips */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
+                हेडर व सब-हेडर पट्टियाँ (Header & Strips):
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                <div
+                  data-testid="add-block-breaking-strip"
+                  onClick={() => {
+                    onUpdateMasthead({
+                      ...doc.masthead,
+                      showAnnouncementStrip: true,
+                      announcementStripText:
+                        doc.masthead.announcementStripText ||
+                        '🔴 ब्रेकिंग न्यूज़ : आज की सबसे बड़ी हलचल और विशेष ग्राउंड रिपोर्ट',
+                    });
+                    onClose();
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #fecaca',
+                    backgroundColor: '#fff5f5',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>📢</span>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#991b1b' }}>
+                      + ब्रेकिंग पट्टी
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: '#b91c1c' }}>शीर्ष घोषणा स्ट्रिप</div>
+                  </div>
+                </div>
+
+                <div
+                  data-testid="add-block-second-header"
+                  onClick={() => {
+                    onUpdateMasthead({
+                      ...doc.masthead,
+                      showSecondaryHeader: true,
+                      secondaryHeaderTitle:
+                        doc.masthead.secondaryHeaderTitle ||
+                        'प्रादेशिक एवं राष्ट्रीय राजधानी संस्करण',
+                      secondaryHeaderSubtitle:
+                        doc.masthead.secondaryHeaderSubtitle ||
+                        'दिल्ली • लखनऊ • पटना • भोपाल • जयपुर',
+                    });
+                    onClose();
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>🏛️</span>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
+                      + 2nd हेडर पट्टी
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>शहर व संस्करण सूची</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748b' }}>
               पेज पर जोड़ने के लिए किसी भी समाचार या विज्ञापन ब्लॉक पर टैप करें:
             </div>
@@ -675,6 +856,34 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                   </button>
                 </div>
 
+                {/* ── Quick Masthead Template Picker Button on Mobile ── */}
+                {onOpenTemplateGallery && (
+                  <button
+                    type="button"
+                    data-testid="btn-mobile-choose-masthead-template"
+                    onClick={() => onOpenTemplateGallery('mastheads')}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      backgroundColor: '#1e3a8a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '7px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 4px rgba(30, 58, 138, 0.2)',
+                    }}
+                  >
+                    <span>📰</span>
+                    <span>रेडीमेड हेडर डिज़ाइन बदलें (10+ Templates)</span>
+                  </button>
+                )}
+
                 {/* Render complete Masthead Inspector Panel */}
                 <MastheadInspectorPanel
                   masthead={doc.masthead}
@@ -682,6 +891,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                   presetId={doc.layout?.presetId}
                   initialTab={mastheadTab}
                   onClose={onDeselectArticle}
+                  compactMode={true}
+                  onOpenTemplateGallery={onOpenTemplateGallery}
+                  onOpenDesigner={() => onOpenTemplateGallery?.('mastheads')}
                 />
               </div>
             ) : selectedArticle ? (
@@ -2231,6 +2443,39 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                       </div>
                     </div>
                     <span style={{ fontSize: '16px', color: '#38BDF8' }}>➔</span>
+                  </div>
+                )}
+
+                {/* Direct Header Gallery Access */}
+                {onOpenTemplateGallery && (
+                  <div
+                    data-testid="mobile-btn-template-gallery"
+                    onClick={() => {
+                      onClose();
+                      onOpenTemplateGallery('all');
+                    }}
+                    style={{
+                      padding: '11px 13px',
+                      borderRadius: '8px',
+                      backgroundColor: '#eff6ff',
+                      border: '1.5px solid #bfdbfe',
+                      color: '#1e40af',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 1px 3px rgba(30, 58, 138, 0.08)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 800 }}>
+                        📰 सम्पूर्ण टेम्पलेट गैलरी (50+ Templates)
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#3b82f6', marginTop: '1px' }}>
+                        हेडर, पूरे पृष्ठ, आर्टिकल लेआउट व सब-हेडर शैलियाँ
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '15px', fontWeight: 700 }}>➔</span>
                   </div>
                 )}
 

@@ -30,6 +30,11 @@ export interface MobileTopBarProps {
   onOpenTheme?: () => void;
   onOpenPageSetup?: () => void;
   onOpenPresets?: () => void;
+  onOpenTemplateGallery?: (
+    category?: 'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
+  ) => void;
+  editorMode?: 'simple' | 'pro';
+  onToggleEditorMode?: () => void;
 }
 
 export const MobileTopBar: React.FC<MobileTopBarProps> = ({
@@ -60,6 +65,9 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
   onOpenTheme,
   onOpenPageSetup,
   onOpenPresets,
+  onOpenTemplateGallery,
+  editorMode = 'simple',
+  onToggleEditorMode,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -365,6 +373,37 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
             </button>
           )}
 
+          {/* Mode Switcher: Simple / Pro Mode */}
+          {onToggleEditorMode && (
+            <button
+              type="button"
+              data-testid="mobile-mode-switch-btn"
+              onClick={onToggleEditorMode}
+              title={
+                editorMode === 'simple'
+                  ? 'व्यावसायिक (Pro) मोड पर स्विच करें'
+                  : 'सरल (Simple) मोड पर स्विच करें'
+              }
+              style={{
+                height: '32px',
+                padding: '0 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: editorMode === 'simple' ? '#166534' : '#1e293b',
+                border: editorMode === 'simple' ? '1px solid #22c55e' : '1px solid #475569',
+                borderRadius: '16px',
+                color: '#FAF8F5',
+                fontSize: '10.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginRight: '2px',
+              }}
+            >
+              <span>{editorMode === 'simple' ? '✨ सरल' : '⚙️ प्रो'}</span>
+            </button>
+          )}
+
           {/* Quick PDF Export */}
           <button
             type="button"
@@ -470,6 +509,40 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                   gap: '2px',
                 }}
               >
+                {/* Mode toggle in overflow menu */}
+                {onToggleEditorMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreMenuOpen(false);
+                      onToggleEditorMode();
+                    }}
+                    style={{
+                      width: '100%',
+                      minHeight: '42px',
+                      padding: '8px 12px',
+                      background: 'none',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: editorMode === 'simple' ? '#86efac' : '#38bdf8',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <span>{editorMode === 'simple' ? '⚙️' : '✨'}</span>
+                    <span>
+                      {editorMode === 'simple'
+                        ? 'प्रो मोड (DTP टूल्स) चालू करें'
+                        : 'सरल मोड (Easy Mode) पर जाएँ'}
+                    </span>
+                  </button>
+                )}
+
                 {/* 1. Dashboard */}
                 <button
                   type="button"
@@ -532,6 +605,74 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                 )}
 
                 <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
+
+                {/* Template Gallery Direct Access */}
+                {onOpenTemplateGallery && (
+                  <>
+                    <button
+                      type="button"
+                      data-testid="mobile-menu-template-gallery"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        onOpenTemplateGallery('all');
+                      }}
+                      style={{
+                        width: '100%',
+                        minHeight: '42px',
+                        padding: '8px 12px',
+                        background: 'none',
+                        border: 'none',
+                        borderRadius: '6px',
+                        color: '#F87171',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                      className="hover:bg-stone-800"
+                    >
+                      <span>🎨</span>
+                      <span>
+                        {locale === 'hi' ? 'टेम्पलेट गैलरी (50+ Templates)' : 'Template Gallery'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      data-testid="mobile-menu-masthead-presets"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        onOpenTemplateGallery('mastheads');
+                      }}
+                      style={{
+                        width: '100%',
+                        minHeight: '42px',
+                        padding: '8px 12px',
+                        background: 'none',
+                        border: 'none',
+                        borderRadius: '6px',
+                        color: '#38BDF8',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                      className="hover:bg-stone-800"
+                    >
+                      <span>📰</span>
+                      <span>
+                        {locale === 'hi' ? 'हेडर शैलियाँ (Header Presets)' : 'Header Presets'}
+                      </span>
+                    </button>
+                    <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
+                  </>
+                )}
 
                 {/* 3. Auto-Fit Column Balancer */}
                 {onAutoFit && (

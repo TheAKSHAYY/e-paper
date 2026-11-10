@@ -1792,9 +1792,18 @@ export function renderNewspaperDocumentToHtml(
         const pageCountLabel =
           mh.pageCountLabel || (isHindiDoc ? `कुल पृष्ठ ${totalPages}` : `${totalPages} Pages`);
 
-        const volumeYear = mh.volumeYear || (isHindiDoc ? 'वर्ष 78' : 'Vol. 78');
-        const issueCount = mh.issueCount || (isHindiDoc ? 'अंक 142' : 'Issue 142');
-        const volumeIssue = mh.issueNumber || `${volumeYear} • ${issueCount}`;
+        const showVolumeIssue = mh.showVolumeIssue !== false;
+        let volumeIssue = '';
+        if (showVolumeIssue) {
+          if (typeof mh.issueNumber === 'string') {
+            volumeIssue = mh.issueNumber.trim();
+          } else {
+            const volParts = [mh.volumeYear, mh.issueCount].filter(
+              (p): p is string => typeof p === 'string' && p.trim().length > 0
+            );
+            volumeIssue = volParts.length > 0 ? volParts.join(' • ') : '';
+          }
+        }
         const dayOfWeek = mh.dayOfWeek || (isHindiDoc ? 'बुधवार' : 'Wednesday');
         const dateStr = mh.date || (isHindiDoc ? '28 अक्टूबर 2026' : 'October 28, 2026');
         const fullDate = `${dayOfWeek ? dayOfWeek + ', ' : ''}${dateStr}`;
@@ -1949,7 +1958,7 @@ export function renderNewspaperDocumentToHtml(
               <div class="masthead-bottom-strip">
                 <div class="bottom-strip-left">
                   ${
-                    mh.showVolumeIssue !== false
+                    showVolumeIssue && volumeIssue.length > 0
                       ? `
                     <span class="folio-item">${escapeHtml(volumeIssue)}</span>
                   `

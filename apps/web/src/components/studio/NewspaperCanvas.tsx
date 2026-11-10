@@ -97,6 +97,7 @@ export interface NewspaperCanvasProps {
   selectedElementPart?: SelectedElementPart;
   selectedParagraphIndex?: number | null;
   onDeselect?: () => void;
+  isMobile?: boolean;
   isPageFull?: boolean;
   onReportDomMeasurements?: (
     measurements: Array<{
@@ -139,6 +140,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   selectedElementPart,
   selectedParagraphIndex,
   onDeselect,
+  isMobile = false,
   onTogglePageLayoutMode,
   onReportDomMeasurements,
 }) => {
@@ -1539,13 +1541,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
   return (
     <div
       className="newspaper-canvas-wrapper"
+      data-testid="newspaper-canvas-wrapper"
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '24px 16px 48px',
-        width: '100%',
+        padding: isMobile ? '12px 16px 60px' : '24px 16px 48px',
+        width: 'max-content',
+        minWidth: '100%',
+        margin: '0 auto',
         boxSizing: 'border-box',
+        touchAction: 'pan-x pan-y',
       }}
     >
       {/* High Density / Overflow Warning Banner (Requirement 1) */}
@@ -1611,6 +1617,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
           maxHeight: `${exactHeightPx}px`,
           position: 'relative',
           flexShrink: 0,
+          touchAction: 'pan-x pan-y',
           transition: 'width 0.2s ease, height 0.2s ease',
         }}
       >
@@ -1970,12 +1977,18 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   }}
                 >
                   <div>
-                    {masthead.showVolumeIssue !== false && (
-                      <span>
-                        {masthead.issueNumber ||
-                          `${masthead.volumeYear || 'वर्ष 78'} • ${masthead.issueCount || 'अंक 142'}`}
-                      </span>
-                    )}
+                    {masthead.showVolumeIssue !== false &&
+                      (() => {
+                        const volStr =
+                          masthead.issueNumber !== undefined
+                            ? masthead.issueNumber.trim()
+                            : [masthead.volumeYear, masthead.issueCount]
+                                .filter(
+                                  (p): p is string => typeof p === 'string' && p.trim().length > 0
+                                )
+                                .join(' • ');
+                        return volStr.length > 0 ? <span>{volStr}</span> : null;
+                      })()}
                   </div>
                   <div>
                     {masthead.showDate !== false && (

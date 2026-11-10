@@ -63,6 +63,7 @@ ehthumbs.db
 # Temporary directories
 tmp/
 temp/
+epaper_assets/
 
 # Supabase local state
 .supabase/

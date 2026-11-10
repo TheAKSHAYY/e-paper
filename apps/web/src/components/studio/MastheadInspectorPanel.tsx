@@ -16,6 +16,10 @@ export interface MastheadInspectorPanelProps {
   onClose?: () => void;
   initialTab?: 'title' | 'meta' | 'rules';
   onOpenDesigner?: () => void;
+  compactMode?: boolean;
+  onOpenTemplateGallery?: (
+    category?: 'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
+  ) => void;
 }
 
 export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
@@ -25,6 +29,8 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   onClose,
   initialTab,
   onOpenDesigner,
+  compactMode = false,
+  onOpenTemplateGallery,
 }) => {
   const [activeTab, setActiveTab] = useState<'title' | 'meta' | 'rules'>(initialTab || 'title');
 
@@ -35,7 +41,6 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   }, [initialTab]);
 
   const updateField = <K extends keyof MastheadConfig>(key: K, value: MastheadConfig[K]) => {
-    // If string, sanitize digits to ensure strictly English numerals (0-9)
     let finalVal = value;
     if (typeof value === 'string') {
       finalVal = toEnglishDigits(value) as MastheadConfig[K];
@@ -59,84 +64,401 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
     }
   };
 
+  const handleClearVolumeIssue = () => {
+    onUpdateMasthead({
+      ...masthead,
+      showVolumeIssue: false,
+      issueNumber: '',
+      volumeYear: '',
+      issueCount: '',
+    });
+  };
+
+  const handleToggleVolumeIssue = (show: boolean) => {
+    if (show) {
+      const vol =
+        masthead.volumeYear && masthead.volumeYear.trim().length > 0
+          ? masthead.volumeYear
+          : 'वर्ष 78';
+      const issue =
+        masthead.issueCount && masthead.issueCount.trim().length > 0
+          ? masthead.issueCount
+          : 'अंक 142';
+      const combined =
+        masthead.issueNumber && masthead.issueNumber.trim().length > 0
+          ? masthead.issueNumber
+          : `${vol} • ${issue}`;
+      onUpdateMasthead({
+        ...masthead,
+        showVolumeIssue: true,
+        volumeYear: vol,
+        issueCount: issue,
+        issueNumber: combined,
+      });
+    } else {
+      handleClearVolumeIssue();
+    }
+  };
+
+  const renderVolumeIssueSection = () => {
+    const isShown = masthead.showVolumeIssue !== false;
+    return (
+      <div
+        data-testid="volume-issue-control-card"
+        style={{
+          backgroundColor: isShown ? '#f0fdf4' : '#f8fafc',
+          border: isShown ? '1.5px solid #86efac' : '1px solid #cbd5e1',
+          borderRadius: '8px',
+          padding: '10px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '14px' }}>📅</span>
+            <div>
+              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+                वर्ष व अंक (Volume & Issue)
+              </span>
+              <span
+                style={{
+                  marginLeft: '6px',
+                  fontSize: '9.5px',
+                  fontWeight: 600,
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: isShown ? '#dcfce7' : '#fee2e2',
+                  color: isShown ? '#166534' : '#991b1b',
+                }}
+              >
+                {isShown ? 'सक्रिय (Visible)' : 'छुपा हुआ (Hidden)'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 600,
+                color: '#334155',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                data-testid="toggle-show-volume-issue"
+                checked={isShown}
+                onChange={(e) => handleToggleVolumeIssue(e.target.checked)}
+              />
+              दिखाएँ
+            </label>
+
+            {isShown && (
+              <button
+                type="button"
+                data-testid="btn-remove-volume-issue"
+                onClick={handleClearVolumeIssue}
+                title="वर्ष व अंक को हेडर से पूरी तरह हटाएँ"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: '#b91c1c',
+                  backgroundColor: '#fee2e2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '4px',
+                  padding: '3px 8px',
+                  cursor: 'pointer',
+                }}
+              >
+                हटाएँ ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isShown ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  marginBottom: '2px',
+                }}
+              >
+                संपूर्ण पाठ (Full Header Text):
+              </label>
+              <input
+                type="text"
+                data-testid="input-volume-issue-combined"
+                value={masthead.issueNumber ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateField('issueNumber', val);
+                  if (val.includes('•')) {
+                    const parts = val.split('•').map((s) => s.trim());
+                    if (parts[0]) updateField('volumeYear', parts[0]);
+                    if (parts[1]) updateField('issueCount', parts[1]);
+                  }
+                }}
+                placeholder="उदा. वर्ष 78 • अंक 142"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '6px 8px',
+                  borderRadius: '5px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  backgroundColor: '#ffffff',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '9.5px',
+                    color: '#64748b',
+                    marginBottom: '2px',
+                  }}
+                >
+                  वर्ष (Volume):
+                </label>
+                <input
+                  type="text"
+                  data-testid="input-volume-year"
+                  value={masthead.volumeYear ?? ''}
+                  onChange={(e) => {
+                    const newVol = e.target.value;
+                    updateField('volumeYear', newVol);
+                    const currentIssue = masthead.issueCount ?? '';
+                    const combined = [newVol, currentIssue].filter(Boolean).join(' • ');
+                    updateField('issueNumber', combined);
+                  }}
+                  placeholder="उदा. वर्ष 78"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '5px 7px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                    backgroundColor: '#ffffff',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '9.5px',
+                    color: '#64748b',
+                    marginBottom: '2px',
+                  }}
+                >
+                  अंक (Issue No):
+                </label>
+                <input
+                  type="text"
+                  data-testid="input-issue-count"
+                  value={masthead.issueCount ?? ''}
+                  onChange={(e) => {
+                    const newIssue = e.target.value;
+                    updateField('issueCount', newIssue);
+                    const currentVol = masthead.volumeYear ?? '';
+                    const combined = [currentVol, newIssue].filter(Boolean).join(' • ');
+                    updateField('issueNumber', combined);
+                  }}
+                  placeholder="उदा. अंक 142"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '5px 7px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                    backgroundColor: '#ffffff',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              fontSize: '10.5px',
+              color: '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '2px 0',
+            }}
+          >
+            <span>वर्ष व अंक हेडर से हटा दिया गया है।</span>
+            <button
+              type="button"
+              data-testid="btn-restore-volume-issue"
+              onClick={() => handleToggleVolumeIssue(true)}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: 600,
+                backgroundColor: '#eff6ff',
+                color: '#1d4ed8',
+                border: '1px solid #bfdbfe',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              + वापस दिखाएँ
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       data-testid="masthead-inspector-panel"
       style={{
         backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '10px',
-        padding: '14px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        border: compactMode ? 'none' : '1px solid #e2e8f0',
+        borderRadius: compactMode ? '0' : '10px',
+        padding: compactMode ? '4px 0' : '14px',
+        boxShadow: compactMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.04)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '14px',
+        gap: '12px',
       }}
     >
-      {/* Panel Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #f1f5f9',
-          paddingBottom: '10px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>🗞️</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-              मास्टहेड संपादक (Masthead)
-            </h3>
-            <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>
-              पारंपरिक भारतीय समाचार पत्र शीर्ष सज्जा
-            </p>
+      {/* ── Outer Panel Header (Suppressed in compact mobile mode) ── */}
+      {!compactMode && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid #f1f5f9',
+            paddingBottom: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>🗞️</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                मास्टहेड संपादक (Masthead)
+              </h3>
+              <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>
+                पारंपरिक भारतीय समाचार पत्र शीर्ष सज्जा
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={handleResetToTemplate}
+              title="वर्तमान प्रारूप के अनुसार डिफ़ॉल्ट मान पुनर्स्थापित करें"
+              style={{
+                padding: '4px 8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                backgroundColor: '#f8fafc',
+                color: '#475569',
+                border: '1px solid #cbd5e1',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span>↺</span>
+              <span>रीसेट</span>
+            </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  padding: '2px 6px',
+                }}
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
+      )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {/* ── Quick Header & Sub-header Preset Actions (Mobile & Desktop) ── */}
+      {onOpenTemplateGallery && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
           <button
             type="button"
-            onClick={handleResetToTemplate}
-            title="वर्तमान प्रारूप के अनुसार डिफ़ॉल्ट मान पुनर्स्थापित करें"
+            data-testid="btn-open-masthead-presets"
+            onClick={() => onOpenTemplateGallery('mastheads')}
             style={{
-              padding: '4px 8px',
+              padding: '8px 10px',
+              backgroundColor: '#eff6ff',
+              color: '#1d4ed8',
+              border: '1px solid #bfdbfe',
+              borderRadius: '6px',
               fontSize: '11px',
-              fontWeight: 600,
-              backgroundColor: '#f8fafc',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
-              borderRadius: '5px',
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              justifyContent: 'center',
+              gap: '5px',
             }}
           >
-            <span>↺</span>
-            <span>रीसेट</span>
+            <span>📰</span>
+            <span>हेडर टेम्पलेट्स</span>
           </button>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '16px',
-                cursor: 'pointer',
-                color: '#94a3b8',
-                padding: '2px 6px',
-              }}
-            >
-              ✕
-            </button>
-          )}
+          <button
+            type="button"
+            data-testid="btn-open-breaking-presets"
+            onClick={() => onOpenTemplateGallery('breaking')}
+            style={{
+              padding: '8px 10px',
+              backgroundColor: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+            }}
+          >
+            <span>📢</span>
+            <span>सब-हेडर / ब्रेकिंग</span>
+          </button>
         </div>
-      </div>
+      )}
 
-      {onOpenDesigner && (
+      {!compactMode && onOpenDesigner && (
         <button
           type="button"
           onClick={onOpenDesigner}
@@ -158,11 +480,11 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           }}
         >
           <span>🎨</span>
-          <span>उन्नत मास्टहेड स्टूडियो खोलें (Open Full Designer)</span>
+          <span>उन्नत मास्टहेड स्टूडियो खोलें (Full Designer)</span>
         </button>
       )}
 
-      {/* Navigation Sub-Tabs */}
+      {/* ── Navigation Sub-Tabs ── */}
       <div
         style={{
           display: 'grid',
@@ -189,7 +511,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             boxShadow: activeTab === 'title' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
           }}
         >
-          शीर्षक व फॉन्ट
+          शीर्षक व अंक
         </button>
         <button
           type="button"
@@ -225,22 +547,22 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             boxShadow: activeTab === 'rules' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
           }}
         >
-          बॉर्डर व दृश्यता
+          फॉन्ट व बॉर्डर
         </button>
       </div>
 
       {/* ==========================================================
-       * TAB 1: TITLE, TYPOGRAPHY & ALIGNMENT
+       * TAB 1: TITLE, TAGLINE, DATE, EDITION, PRICE & VOLUME
        * ========================================================== */}
       {activeTab === 'title' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Newspaper Name */}
           <div>
             <label
               style={{
                 display: 'block',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: '#334155',
                 marginBottom: '4px',
               }}
@@ -278,7 +600,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   marginBottom: '4px',
                 }}
               >
-                ध्येय वाक्य (Tagline / Motto)
+                ध्येय वाक्य / टैगलाइन (Tagline / Motto)
               </label>
               <label
                 style={{
@@ -287,6 +609,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
+                  cursor: 'pointer',
                 }}
               >
                 <input
@@ -313,12 +636,41 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 border: '1px solid #cbd5e1',
                 fontSize: '11.5px',
                 outline: 'none',
+                opacity: masthead.showTagline === false ? 0.5 : 1,
               }}
             />
           </div>
 
-          {/* Establishment Year */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {/* Date & Day of Week */}
+          <div style={{ display: 'grid', gridTemplateColumns: '0.9fr 1.1fr', gap: '8px' }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  marginBottom: '4px',
+                }}
+              >
+                वार (Day)
+              </label>
+              <input
+                type="text"
+                value={masthead.dayOfWeek ?? 'बुधवार'}
+                onChange={(e) => updateField('dayOfWeek', e.target.value)}
+                placeholder="बुधवार"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  outline: 'none',
+                }}
+              />
+            </div>
             <div>
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -331,7 +683,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     marginBottom: '4px',
                   }}
                 >
-                  स्थापना वर्ष (Est. Year)
+                  दिनांक (Date)
                 </label>
                 <label
                   style={{
@@ -340,21 +692,22 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '3px',
+                    cursor: 'pointer',
                   }}
                 >
                   <input
                     type="checkbox"
-                    checked={masthead.showEstablishment !== false}
-                    onChange={(e) => updateField('showEstablishment', e.target.checked)}
+                    checked={masthead.showDate !== false}
+                    onChange={(e) => updateField('showDate', e.target.checked)}
                   />
                   दिखाएँ
                 </label>
               </div>
               <input
                 type="text"
-                value={masthead.establishmentYear ?? '1947'}
-                onChange={(e) => updateField('establishmentYear', e.target.value)}
-                placeholder="1947"
+                value={masthead.date ?? '28 अक्टूबर 2026'}
+                onChange={(e) => updateField('date', e.target.value)}
+                placeholder="28 अक्टूबर 2026"
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
@@ -363,11 +716,14 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   border: '1px solid #cbd5e1',
                   fontSize: '11.5px',
                   outline: 'none',
+                  opacity: masthead.showDate === false ? 0.5 : 1,
                 }}
               />
             </div>
+          </div>
 
-            {/* Edition Label */}
+          {/* Edition & Price */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
             <div>
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -389,6 +745,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '3px',
+                    cursor: 'pointer',
                   }}
                 >
                   <input
@@ -412,47 +769,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   border: '1px solid #cbd5e1',
                   fontSize: '11.5px',
                   outline: 'none',
+                  opacity: masthead.showEdition === false ? 0.5 : 1,
                 }}
               />
-            </div>
-          </div>
-
-          {/* Font Family & Size */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#334155',
-                  marginBottom: '4px',
-                }}
-              >
-                मास्टहेड फॉन्ट (Font Family)
-              </label>
-              <select
-                value={masthead.fontFamily || "'Rozha One', serif"}
-                onChange={(e) => updateField('fontFamily', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '11.5px',
-                  outline: 'none',
-                }}
-              >
-                <option value="'Rozha One', serif">रोज़ा वन (Rozha One - पारंपरिक)</option>
-                <option value="'Yatra One', serif">यात्रा वन (Yatra One - बोल्ड स्लैब)</option>
-                <option value="'Tiro Devanagari Hindi', serif">
-                  टिरो देवनागरी (Tiro Devanagari)
-                </option>
-                <option value="'Noto Serif Devanagari', serif">नोतो सेरिफ़ (Noto Serif)</option>
-                <option value="'Poppins', sans-serif">पॉपिन्स (Poppins - समकालीन)</option>
-                <option value="'Mukta', sans-serif">मुक्ता (Mukta - आधुनिक)</option>
-                <option value="'Playfair Display', serif">Playfair Display (क्लासिक)</option>
-              </select>
             </div>
 
             <div>
@@ -467,77 +786,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     marginBottom: '4px',
                   }}
                 >
-                  आकार (Size): {masthead.fontSizePt || 52}pt
-                </label>
-              </div>
-              <input
-                type="range"
-                min="36"
-                max="72"
-                step="1"
-                value={masthead.fontSizePt || 52}
-                onChange={(e) => updateField('fontSizePt', parseInt(e.target.value, 10))}
-                style={{ width: '100%', marginTop: '6px' }}
-              />
-            </div>
-          </div>
-
-          {/* Alignment & Emblem */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#334155',
-                  marginBottom: '4px',
-                }}
-              >
-                संरेखण (Alignment)
-              </label>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[
-                  { id: 'left', label: 'बायाँ' },
-                  { id: 'center', label: 'मध्य' },
-                  { id: 'justified', label: 'समान' },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => updateField('alignment', item.id as MastheadAlignment)}
-                    style={{
-                      flex: 1,
-                      padding: '5px 0',
-                      fontSize: '11px',
-                      fontWeight: (masthead.alignment || 'center') === item.id ? 700 : 500,
-                      backgroundColor:
-                        (masthead.alignment || 'center') === item.id ? '#0f172a' : '#f1f5f9',
-                      color: (masthead.alignment || 'center') === item.id ? '#ffffff' : '#475569',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-              >
-                <label
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: '#334155',
-                    marginBottom: '4px',
-                  }}
-                >
-                  प्रतीक चिन्ह (Emblem)
+                  मूल्य (Price)
                 </label>
                 <label
                   style={{
@@ -546,76 +795,429 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '3px',
+                    cursor: 'pointer',
                   }}
                 >
                   <input
                     type="checkbox"
-                    checked={masthead.showEmblem === true}
-                    onChange={(e) => updateField('showEmblem', e.target.checked)}
+                    checked={masthead.showPrice !== false}
+                    onChange={(e) => updateField('showPrice', e.target.checked)}
                   />
                   दिखाएँ
                 </label>
               </div>
-              <select
-                value={masthead.emblem || 'none'}
-                onChange={(e) => updateField('emblem', e.target.value as MastheadEmblem)}
-                style={{
-                  width: '100%',
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '11px',
-                  outline: 'none',
-                }}
-              >
-                <option value="none">कोई नहीं (None)</option>
-                <option value="ashoka-chakra">अशोक चक्र (Ashoka Chakra)</option>
-                <option value="sun">सूर्य (Surya Sun)</option>
-                <option value="quill">कलम (Quill / Pen)</option>
-                <option value="lion-capital">सिंह शीर्ष (Lion Capital)</option>
-                <option value="custom">कस्टम URL (Custom)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Custom Emblem URL if custom selected */}
-          {masthead.emblem === 'custom' && (
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#334155',
-                  marginBottom: '2px',
-                }}
-              >
-                कस्टम प्रतीक URL (Custom Image URL)
-              </label>
               <input
                 type="text"
-                value={masthead.customEmblemUrl ?? ''}
-                onChange={(e) => updateField('customEmblemUrl', e.target.value)}
-                placeholder="https://example.com/logo.png"
+                value={masthead.price ?? 'मूल्य ₹5.00'}
+                onChange={(e) => updateField('price', e.target.value)}
+                placeholder="मूल्य ₹5.00"
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
-                  padding: '5px 8px',
+                  padding: '6px 8px',
                   borderRadius: '6px',
                   border: '1px solid #cbd5e1',
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   outline: 'none',
+                  opacity: masthead.showPrice === false ? 0.5 : 1,
                 }}
               />
             </div>
+          </div>
+
+          {/* ── Dedicated Box: वर्ष व अंक (Volume & Issue) with removal/toggle ── */}
+          {renderVolumeIssueSection()}
+
+          {/* Establishment Year & Registration */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#334155',
+                    marginBottom: '4px',
+                  }}
+                >
+                  स्थापना वर्ष (Est. Year)
+                </label>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={masthead.showEstablishment !== false}
+                    onChange={(e) => updateField('showEstablishment', e.target.checked)}
+                  />
+                  दिखाएँ
+                </label>
+              </div>
+              <input
+                type="text"
+                value={masthead.establishmentYear ?? '1947'}
+                onChange={(e) => updateField('establishmentYear', e.target.value)}
+                placeholder="1947"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  outline: 'none',
+                  opacity: masthead.showEstablishment === false ? 0.5 : 1,
+                }}
+              />
+            </div>
+
+            <div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <label
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#334155',
+                    marginBottom: '4px',
+                  }}
+                >
+                  पंजीयन (Reg. No.)
+                </label>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={masthead.showPostalReg !== false}
+                    onChange={(e) => updateField('showPostalReg', e.target.checked)}
+                  />
+                  दिखाएँ
+                </label>
+              </div>
+              <input
+                type="text"
+                value={masthead.postalRegNumber ?? 'पंजीयन सं. DL-11001/2026'}
+                onChange={(e) => updateField('postalRegNumber', e.target.value)}
+                placeholder="DL-11001/2026"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  outline: 'none',
+                  opacity: masthead.showPostalReg === false ? 0.5 : 1,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================================
+       * TAB 2: SUB-HEADERS, ANNOUNCEMENT STRIP & REGIONAL EDITIONS
+       * ========================================================== */}
+      {activeTab === 'meta' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* 1. Announcement Strip / Breaking Bulletin */}
+          <div
+            style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>🔴</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#991b1b' }}>
+                  घोषणा / ब्रेकिंग न्यूज़ पट्टी (Announcement Strip)
+                </span>
+              </div>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#7f1d1d',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={masthead.showAnnouncementStrip === true}
+                  onChange={(e) => updateField('showAnnouncementStrip', e.target.checked)}
+                />
+                पट्टी दिखाएँ
+              </label>
+            </div>
+
+            {masthead.showAnnouncementStrip && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <textarea
+                  rows={2}
+                  value={masthead.announcementStripText ?? ''}
+                  onChange={(e) => updateField('announcementStripText', e.target.value)}
+                  placeholder="उदा. विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #fca5a5',
+                    fontSize: '11.5px',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#991b1b' }}>
+                      त्वरित संदेश चुनें (Tap to fill):
+                    </span>
+                    {onOpenTemplateGallery && (
+                      <button
+                        type="button"
+                        data-testid="btn-open-subheader-gallery"
+                        onClick={() => onOpenTemplateGallery('breaking')}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          backgroundColor: '#fee2e2',
+                          color: '#991b1b',
+                          border: '1px solid #fca5a5',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🎨 गैलरी से चुनें ➔
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {[
+                      'विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें',
+                      '🔴 ब्रेकिंग न्यूज़ : आज की सबसे बड़ी हलचल और विशेष ग्राउंड रिपोर्ट',
+                      'विशेष संपादकीय परिशिष्ट : देश-दुनिया की 10 बड़ी खबरें',
+                      '🌾 कृषि व ग्रामीण विकास विशेष बुलेटिन',
+                    ].map((sample, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => updateField('announcementStripText', sample)}
+                        style={{
+                          fontSize: '10px',
+                          padding: '3px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid #fecaca',
+                          backgroundColor: '#ffffff',
+                          color: '#7f1d1d',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {sample.slice(0, 36)}...
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── वर्ष व अंक नियंत्रण (Volume & Issue) ── */}
+          {renderVolumeIssueSection()}
+
+          {/* 2. Secondary Header / Sub-Edition Strip */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>🏛️</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                  द्वितीयक हेडर (2nd Header / Sub-Edition)
+                </span>
+              </div>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={masthead.showSecondaryHeader === true}
+                  onChange={(e) => updateField('showSecondaryHeader', e.target.checked)}
+                />
+                दिखाएँ
+              </label>
+            </div>
+
+            {masthead.showSecondaryHeader && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '10px',
+                      color: '#64748b',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    द्वितीयक शीर्षक (Sub-Edition Title)
+                  </label>
+                  <input
+                    type="text"
+                    value={masthead.secondaryHeaderTitle ?? ''}
+                    onChange={(e) => updateField('secondaryHeaderTitle', e.target.value)}
+                    placeholder="उदा. प्रादेशिक एवं राष्ट्रीय राजधानी संस्करण"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '5px 8px',
+                      borderRadius: '5px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11.5px',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '10px',
+                      color: '#64748b',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    नगर सूची व उप-विवरण (Cities / Sub-Details)
+                  </label>
+                  <input
+                    type="text"
+                    value={masthead.secondaryHeaderSubtitle ?? ''}
+                    onChange={(e) => updateField('secondaryHeaderSubtitle', e.target.value)}
+                    placeholder="उदा. दिल्ली • लखनऊ • पटना • भोपाल • जयपुर • मुंबई"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '5px 8px',
+                      borderRadius: '5px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11.5px',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Website / E-Paper URL */}
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#334155',
+                marginBottom: '4px',
+              }}
+            >
+              वेबसाइट / ई-पेपर लिंक (Website URL)
+            </label>
+            <input
+              type="text"
+              value={masthead.websiteUrl ?? ''}
+              onChange={(e) => updateField('websiteUrl', e.target.value)}
+              placeholder="उदा. epaper.dainiksamachar.com"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '6px 8px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '11.5px',
+              }}
+            />
+          </div>
+
+          {/* 4. Browse Ready-made Sub-Headers */}
+          {onOpenTemplateGallery && (
+            <button
+              type="button"
+              onClick={() => onOpenTemplateGallery('dividers')}
+              style={{
+                padding: '10px',
+                backgroundColor: '#f1f5f9',
+                color: '#334155',
+                border: '1px dashed #cbd5e1',
+                borderRadius: '8px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>📑</span>
+              <span>30+ सब-हेडर व विभाजक शैलियाँ ब्राउज़ करें</span>
+            </button>
           )}
         </div>
       )}
 
       {/* ==========================================================
-       * TAB 2: WEATHER, AQI, PRICE & PUBLICATION METADATA
+       * TAB 3: WEATHER, FONTS, ALIGNMENT & BORDER RULES
        * ========================================================== */}
-      {activeTab === 'meta' && (
+      {activeTab === 'rules' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Weather Section Header */}
           <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
@@ -637,6 +1239,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '3px',
+                  cursor: 'pointer',
                 }}
               >
                 <input
@@ -725,6 +1328,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '3px',
+                    cursor: 'pointer',
                   }}
                 >
                   <input
@@ -752,240 +1356,165 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             </div>
           </div>
 
-          {/* Price & Registration Section */}
-          <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
-            <span
-              style={{
-                fontSize: '11.5px',
-                fontWeight: 700,
-                color: '#1e293b',
-                display: 'block',
-                marginBottom: '6px',
-              }}
-            >
-              💰 मूल्य व पंजीयन (Price & Reg.)
-            </span>
+          {/* Font Family & Size */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  marginBottom: '4px',
+                }}
+              >
+                मास्टहेड फॉन्ट (Font Family)
+              </label>
+              <select
+                value={masthead.fontFamily || "'Rozha One', serif"}
+                onChange={(e) => updateField('fontFamily', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  outline: 'none',
+                }}
+              >
+                <option value="'Rozha One', serif">रोज़ा वन (Rozha One - पारंपरिक)</option>
+                <option value="'Yatra One', serif">यात्रा वन (Yatra One - बोल्ड स्लैब)</option>
+                <option value="'Tiro Devanagari Hindi', serif">
+                  टिरो देवनागरी (Tiro Devanagari)
+                </option>
+                <option value="'Noto Serif Devanagari', serif">नोतो सेरिफ़ (Noto Serif)</option>
+                <option value="'Poppins', sans-serif">पॉपिन्स (Poppins - समकालीन)</option>
+                <option value="'Mukta', sans-serif">मुक्ता (Mukta - आधुनिक)</option>
+                <option value="'Playfair Display', serif">Playfair Display (क्लासिक)</option>
+              </select>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-              <div>
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <label style={{ fontSize: '10px', color: '#64748b' }}>मूल्य (Cover Price)</label>
-                  <label
-                    style={{
-                      fontSize: '10px',
-                      color: '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={masthead.showPrice !== false}
-                      onChange={(e) => updateField('showPrice', e.target.checked)}
-                    />
-                    दिखाएँ
-                  </label>
-                </div>
-                <input
-                  type="text"
-                  value={masthead.price ?? 'मूल्य ₹5.00'}
-                  onChange={(e) => updateField('price', e.target.value)}
-                  placeholder="मूल्य ₹5.00"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
-
-              <div>
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <label style={{ fontSize: '10px', color: '#64748b' }}>
-                    पंजीयन संख्या (Reg. No.)
-                  </label>
-                  <label
-                    style={{
-                      fontSize: '10px',
-                      color: '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={masthead.showPostalReg !== false}
-                      onChange={(e) => updateField('showPostalReg', e.target.checked)}
-                    />
-                    दिखाएँ
-                  </label>
-                </div>
-                <input
-                  type="text"
-                  value={masthead.postalRegNumber ?? 'पंजीयन सं. DL-11001/2026'}
-                  onChange={(e) => updateField('postalRegNumber', e.target.value)}
-                  placeholder="पंजीयन सं. DL-11001/2026"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  marginBottom: '4px',
+                }}
+              >
+                आकार (Size): {masthead.fontSizePt || 52}pt
+              </label>
+              <input
+                type="range"
+                min="32"
+                max="72"
+                step="1"
+                value={masthead.fontSizePt || 52}
+                onChange={(e) => updateField('fontSizePt', parseInt(e.target.value, 10))}
+                style={{ width: '100%', marginTop: '6px' }}
+              />
             </div>
           </div>
 
-          {/* Date, Volume & Issue */}
-          <div>
-            <span
-              style={{
-                fontSize: '11.5px',
-                fontWeight: 700,
-                color: '#1e293b',
-                display: 'block',
-                marginBottom: '6px',
-              }}
-            >
-              📅 दिनांक व अंक संख्या (Date & Volume)
-            </span>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '0.8fr 1.2fr',
-                gap: '6px',
-                marginBottom: '6px',
-              }}
-            >
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  वार (Day)
-                </label>
-                <input
-                  type="text"
-                  value={masthead.dayOfWeek ?? 'बुधवार'}
-                  onChange={(e) => updateField('dayOfWeek', e.target.value)}
-                  placeholder="बुधवार"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
-
-              <div>
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <label style={{ fontSize: '10px', color: '#64748b' }}>दिनांक (Date)</label>
-                  <label
+          {/* Alignment & Emblem */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  marginBottom: '4px',
+                }}
+              >
+                संरेखण (Alignment)
+              </label>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[
+                  { id: 'left', label: 'बायाँ' },
+                  { id: 'center', label: 'मध्य' },
+                  { id: 'justified', label: 'समान' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => updateField('alignment', item.id as MastheadAlignment)}
                     style={{
-                      fontSize: '10px',
-                      color: '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
+                      flex: 1,
+                      padding: '5px 0',
+                      fontSize: '11px',
+                      fontWeight: (masthead.alignment || 'center') === item.id ? 700 : 500,
+                      backgroundColor:
+                        (masthead.alignment || 'center') === item.id ? '#0f172a' : '#f1f5f9',
+                      color: (masthead.alignment || 'center') === item.id ? '#ffffff' : '#475569',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={masthead.showDate !== false}
-                      onChange={(e) => updateField('showDate', e.target.checked)}
-                    />
-                    दिखाएँ
-                  </label>
-                </div>
-                <input
-                  type="text"
-                  value={masthead.date ?? '28 अक्टूबर 2026'}
-                  onChange={(e) => updateField('date', e.target.value)}
-                  placeholder="28 अक्टूबर 2026"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  वर्ष (Volume)
-                </label>
-                <input
-                  type="text"
-                  value={masthead.volumeYear ?? 'वर्ष 78'}
-                  onChange={(e) => {
-                    const newVol = e.target.value;
-                    updateField('volumeYear', newVol);
-                    updateField('issueNumber', `${newVol} • ${masthead.issueCount || 'अंक 142'}`);
-                  }}
-                  placeholder="वर्ष 78"
+            <div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <label
                   style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
                     fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#334155',
+                    marginBottom: '4px',
                   }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  अंक (Issue)
+                >
+                  प्रतीक चिन्ह (Emblem)
                 </label>
-                <input
-                  type="text"
-                  value={masthead.issueCount ?? 'अंक 142'}
-                  onChange={(e) => {
-                    const newIssue = e.target.value;
-                    updateField('issueCount', newIssue);
-                    updateField('issueNumber', `${masthead.volumeYear || 'वर्ष 78'} • ${newIssue}`);
-                  }}
-                  placeholder="अंक 142"
+                <label
                   style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    cursor: 'pointer',
                   }}
-                />
+                >
+                  <input
+                    type="checkbox"
+                    checked={masthead.showEmblem === true}
+                    onChange={(e) => updateField('showEmblem', e.target.checked)}
+                  />
+                  दिखाएँ
+                </label>
               </div>
+              <select
+                value={masthead.emblem || 'none'}
+                onChange={(e) => updateField('emblem', e.target.value as MastheadEmblem)}
+                style={{
+                  width: '100%',
+                  padding: '5px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11px',
+                  outline: 'none',
+                }}
+              >
+                <option value="none">कोई नहीं (None)</option>
+                <option value="ashoka-chakra">अशोक चक्र (Ashoka Chakra)</option>
+                <option value="sun">सूर्य (Surya Sun)</option>
+                <option value="quill">कलम (Quill / Pen)</option>
+                <option value="lion-capital">सिंह शीर्ष (Lion Capital)</option>
+                <option value="custom">कस्टम URL (Custom)</option>
+              </select>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* ==========================================================
-       * TAB 3: DIVIDER RULES & VISIBILITY TOGGLES
-       * ========================================================== */}
-      {activeTab === 'rules' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Border Rule Style */}
           <div>
             <label
@@ -1021,98 +1550,68 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           </div>
 
           {/* Section Visibility Controls */}
-          <div>
-            <span
-              style={{
-                display: 'block',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                color: '#1e293b',
-                marginBottom: '8px',
-              }}
-            >
-              शीर्षक पट्टियाँ एवं प्रदर्शन नियंत्रण
-            </span>
-
-            <div
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              backgroundColor: '#f8fafc',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <label
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                backgroundColor: '#f8fafc',
-                padding: '10px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '11.5px',
+                cursor: 'pointer',
               }}
             >
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '11.5px',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>ऊपरी मौसम व ध्येय पट्टी (Top Metadata Strip)</span>
-                <input
-                  type="checkbox"
-                  checked={masthead.showTopStrip !== false}
-                  onChange={(e) => updateField('showTopStrip', e.target.checked)}
-                />
-              </label>
+              <span>ऊपरी मौसम व ध्येय पट्टी (Top Metadata Strip)</span>
+              <input
+                type="checkbox"
+                checked={masthead.showTopStrip !== false}
+                onChange={(e) => updateField('showTopStrip', e.target.checked)}
+              />
+            </label>
 
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '11.5px',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>निचली दिनांक व संस्करण पट्टी (Bottom Info Strip)</span>
-                <input
-                  type="checkbox"
-                  checked={masthead.showBottomStrip !== false}
-                  onChange={(e) => updateField('showBottomStrip', e.target.checked)}
-                />
-              </label>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '11.5px',
+                cursor: 'pointer',
+              }}
+            >
+              <span>निचली दिनांक व संस्करण पट्टी (Bottom Info Strip)</span>
+              <input
+                type="checkbox"
+                checked={masthead.showBottomStrip !== false}
+                onChange={(e) => updateField('showBottomStrip', e.target.checked)}
+              />
+            </label>
 
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '11.5px',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>वर्ष व अंक संख्या (Volume & Issue)</span>
-                <input
-                  type="checkbox"
-                  checked={masthead.showVolumeIssue !== false}
-                  onChange={(e) => updateField('showVolumeIssue', e.target.checked)}
-                />
-              </label>
-
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '11.5px',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>पृष्ठ संख्या लेबल (Page Count Notice)</span>
-                <input
-                  type="checkbox"
-                  checked={masthead.showPostalReg !== false}
-                  onChange={(e) => updateField('showPostalReg', e.target.checked)}
-                />
-              </label>
-            </div>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '11.5px',
+                cursor: 'pointer',
+              }}
+            >
+              <span>वर्ष व अंक संख्या (Volume & Issue)</span>
+              <input
+                type="checkbox"
+                data-testid="rules-tab-volume-issue-checkbox"
+                checked={masthead.showVolumeIssue !== false}
+                onChange={(e) => handleToggleVolumeIssue(e.target.checked)}
+              />
+            </label>
           </div>
         </div>
       )}
