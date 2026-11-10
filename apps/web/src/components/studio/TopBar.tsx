@@ -61,6 +61,7 @@ export interface TopBarProps {
   onToggleEditorMode?: () => void;
   onOpenTemplateGallery?: () => void;
   onOpenDesignLibrary?: () => void;
+  onClearPage?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -111,6 +112,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleEditorMode,
   onOpenTemplateGallery,
   onOpenDesignLibrary,
+  onClearPage,
 }) => {
   const { t, locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -705,6 +707,41 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
+        {onClearPage && (
+          <button
+            type="button"
+            data-testid="topbar-btn-clear-page"
+            onClick={onClearPage}
+            title={locale === 'en' ? 'Clear all stories & blocks from this page' : 'इस पेज के सभी समाचार व ब्लॉक हटाकर खाली करें'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#262422',
+              color: '#f87171',
+              border: '1px solid #7f1d1d',
+              borderRadius: '4px',
+              padding: '2px 8px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#450a0a';
+              e.currentTarget.style.color = '#fca5a5';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#262422';
+              e.currentTarget.style.color = '#f87171';
+            }}
+          >
+            <span style={{ fontSize: '11px' }}>🗑️</span>
+            <span>{locale === 'en' ? 'Clear Page' : 'पेज खाली करें'}</span>
+          </button>
+        )}
+
         <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
 
         {/* ── Zoom Controls ── */}
@@ -1030,6 +1067,21 @@ export const TopBar: React.FC<TopBarProps> = ({
                   <span style={{ fontSize: '13px' }}>📄+</span>
                   <span style={{ flex: 1, fontWeight: 600 }}>
                     {locale === 'en' ? 'Auto-allocate Overflow' : 'ऑटो-फ्लो पृष्ठ'}
+                  </span>
+                </button>
+              )}
+
+              {onClearPage && (
+                <button
+                  data-testid="btn-tools-clear-page"
+                  onClick={() => { onClearPage(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: '#F87171' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#450a0a')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ fontSize: '13px' }}>🗑️</span>
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {locale === 'en' ? 'Clear Page Canvas' : 'पूरा पेज खाली करें'}
                   </span>
                 </button>
               )}

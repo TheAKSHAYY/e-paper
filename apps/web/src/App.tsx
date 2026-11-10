@@ -3070,6 +3070,7 @@ export const App: React.FC = () => {
               onOpenTemplateGallery={handleOpenTemplateGallery}
               editorMode={editorMode}
               onToggleEditorMode={handleToggleEditorMode}
+              onClearPage={handlePromptClearCurrentPage}
             />
           ) : (
             <TopBar
@@ -3128,6 +3129,7 @@ export const App: React.FC = () => {
               onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
               isInspectorOpen={isInspectorOpen}
               onToggleInspector={() => setIsInspectorOpen((prev) => !prev)}
+              onClearPage={handlePromptClearCurrentPage}
             />
           )}
 
@@ -3692,6 +3694,7 @@ export const App: React.FC = () => {
                 onExportPdf={() => handleExportPdf(false)}
                 isExportingPdf={isExportingPdf}
                 isPageFull={currentPageCapacity.isFull}
+                onClearPage={handlePromptClearCurrentPage}
               />
             )}
           </div>

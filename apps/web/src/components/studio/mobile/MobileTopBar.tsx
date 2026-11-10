@@ -35,6 +35,7 @@ export interface MobileTopBarProps {
   ) => void;
   editorMode?: 'simple' | 'pro';
   onToggleEditorMode?: () => void;
+  onClearPage?: () => void;
 }
 
 export const MobileTopBar: React.FC<MobileTopBarProps> = ({
@@ -68,6 +69,7 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
   onOpenTemplateGallery,
   editorMode = 'simple',
   onToggleEditorMode,
+  onClearPage,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -860,6 +862,38 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
                   >
                     <span>🖨️</span>
                     <span>{locale === 'hi' ? 'प्रिंट पूर्वावलोकन' : 'Print Preview'}</span>
+                  </button>
+                )}
+
+                {/* Clear Current Page */}
+                {onClearPage && (
+                  <button
+                    type="button"
+                    data-testid="mobile-btn-clear-page"
+                    onClick={() => {
+                      setIsMoreMenuOpen(false);
+                      onClearPage();
+                    }}
+                    style={{
+                      width: '100%',
+                      minHeight: '42px',
+                      padding: '8px 12px',
+                      background: 'none',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: '#F87171',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                    className="hover:bg-red-950/40"
+                  >
+                    <span>🗑️</span>
+                    <span>{locale === 'hi' ? 'पूरा पेज खाली करें' : 'Clear Current Page'}</span>
                   </button>
                 )}
 

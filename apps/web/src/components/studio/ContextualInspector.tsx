@@ -73,6 +73,7 @@ export interface ContextualInspectorProps {
   isPageFull?: boolean;
   editorMode?: 'simple' | 'pro';
   mastheadInspectorTab?: 'title' | 'subheaders' | 'meta' | 'rules';
+  onClearPage?: () => void;
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -116,6 +117,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   isPageFull: _isPageFull = false,
   editorMode = 'simple',
   mastheadInspectorTab,
+  onClearPage,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -3307,6 +3309,71 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </button>
                 </div>
               )}
+
+              {/* Clear Current Page Action Card */}
+              {onClearPage && (
+                <div
+                  style={{
+                    backgroundColor: '#fff1f2',
+                    border: '1px solid #fecdd3',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginTop: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '15px' }}>🗑️</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#9f1239' }}>
+                        {locale === 'en' ? 'Clear Entire Page' : 'पूरा पृष्ठ खाली करें'}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        backgroundColor: '#ffe4e6',
+                        color: '#9f1239',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      {locale === 'en' ? `Page ${currentPageIndex + 1}` : `पृष्ठ ${currentPageIndex + 1}`}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#881337', lineHeight: 1.4 }}>
+                    {locale === 'en'
+                      ? 'Clear all stories, images, and blocks from this page in 1-click. Masthead stays intact.'
+                      : 'इस पृष्ठ के सभी समाचार ब्लॉक व चित्र 1-क्लिक में हटाएँ। मास्टहेड सुरक्षित रहेगा।'}
+                  </p>
+                  <button
+                    type="button"
+                    data-testid="inspector-btn-clear-page"
+                    onClick={onClearPage}
+                    style={{
+                      backgroundColor: '#e11d48',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 1px 2px rgba(225, 29, 72, 0.2)',
+                    }}
+                  >
+                    <span>🗑️</span>
+                    <span>{locale === 'en' ? 'Clear Page Canvas' : 'पृष्ठ पूर्णतः साफ़ करें'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             /* ==========================================================
@@ -3597,6 +3664,71 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     {masthead.title} • पृष्ठ {currentPageIndex + 1} • {masthead.date}
                   </em>
                   ).
+                </div>
+              )}
+
+              {/* Clear Current Page Action Card */}
+              {onClearPage && (
+                <div
+                  style={{
+                    backgroundColor: '#fff1f2',
+                    border: '1px solid #fecdd3',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginTop: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '15px' }}>🗑️</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#9f1239' }}>
+                        {locale === 'en' ? 'Clear Entire Page' : 'पूरा पृष्ठ खाली करें'}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        backgroundColor: '#ffe4e6',
+                        color: '#9f1239',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      {locale === 'en' ? `Page ${currentPageIndex + 1}` : `पृष्ठ ${currentPageIndex + 1}`}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#881337', lineHeight: 1.4 }}>
+                    {locale === 'en'
+                      ? 'Clear all stories, images, and blocks from this page in 1-click. Masthead stays intact.'
+                      : 'इस पृष्ठ के सभी समाचार ब्लॉक व चित्र 1-क्लिक में हटाएँ। मास्टहेड सुरक्षित रहेगा।'}
+                  </p>
+                  <button
+                    type="button"
+                    data-testid="inspector-btn-clear-page"
+                    onClick={onClearPage}
+                    style={{
+                      backgroundColor: '#e11d48',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 1px 2px rgba(225, 29, 72, 0.2)',
+                    }}
+                  >
+                    <span>🗑️</span>
+                    <span>{locale === 'en' ? 'Clear Page Canvas' : 'पृष्ठ पूर्णतः साफ़ करें'}</span>
+                  </button>
                 </div>
               )}
             </div>
