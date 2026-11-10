@@ -72,6 +72,7 @@ export interface ContextualInspectorProps {
   isExportingPdf?: boolean;
   isPageFull?: boolean;
   editorMode?: 'simple' | 'pro';
+  mastheadInspectorTab?: 'title' | 'subheaders' | 'meta' | 'rules';
 }
 
 export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
@@ -114,6 +115,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   isExportingPdf = false,
   isPageFull: _isPageFull = false,
   editorMode = 'simple',
+  mastheadInspectorTab,
 }) => {
   const { locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -312,7 +314,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '16px',
+          padding: '16px 16px 120px 16px',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -325,6 +327,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             onUpdateMasthead={onUpdateMasthead}
             presetId={layout.presetId}
             onClose={onCloseMasthead}
+            initialTab={mastheadInspectorTab}
             onOpenDesigner={onOpenMastheadDesigner}
           />
         ) : activeInspectorTab === 'content' ? (
@@ -1540,6 +1543,49 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </label>
                 </div>
 
+                {/* Multi-column Text Flow & Dividers (des-041) */}
+                <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                      आंतरिक कॉलम विभाजन (Inner Columns)
+                    </label>
+                    <span style={{ fontSize: '10px', color: '#64748b' }}>
+                      {selectedArticle.bodyColumnCount ?? selectedArticle.columnSpan ?? 1} कॉलम
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                    {[1, 2, 3, 4].map((cols) => {
+                      const isActive = (selectedArticle.bodyColumnCount ?? 1) === cols;
+                      return (
+                        <button
+                          key={cols}
+                          type="button"
+                          data-testid={`btn-inner-cols-${cols}`}
+                          onClick={() =>
+                            onUpdateArticle({
+                              ...selectedArticle,
+                              bodyColumnCount: cols,
+                              bodyColumnRule: cols > 1 ? '1px solid #cbd5e1' : undefined,
+                            })
+                          }
+                          style={{
+                            padding: '4px 2px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            borderRadius: '4px',
+                            border: isActive ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                            backgroundColor: isActive ? '#eff6ff' : '#ffffff',
+                            color: isActive ? '#1d4ed8' : '#334155',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {cols} Col
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div>
                   <label
                     style={{
@@ -2378,6 +2424,141 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* ── 12-ZODIAC RASHIFAL EDITOR (des-132) ── */}
+              {selectedArticle.elementType === 'rashifal' && (
+                <div
+                  data-testid="rashifal-inspector-panel"
+                  style={{
+                    backgroundColor: '#faf5ff',
+                    border: '1.5px solid #d8b4fe',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#581c87' }}>
+                      ✨ 12 राशि भविष्यफल संपादक (Daily Rashifal)
+                    </div>
+                    <span style={{ fontSize: '10px', backgroundColor: '#f3e8ff', color: '#6b21a8', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                      {selectedArticle.rashifalItems?.length || 0} राशियां
+                    </span>
+                  </div>
+
+                  {/* Header Background Color for Rashifal */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#475569' }}>
+                      राशिफल हेडर पृष्ठभूमि रंग (Banner Color)
+                    </label>
+                    <input
+                      type="color"
+                      data-testid="input-rashifal-header-color"
+                      value={selectedArticle.customColors?.borderColor || '#6e3d70'}
+                      onChange={(e) =>
+                        onUpdateArticle({
+                          ...selectedArticle,
+                          customColors: {
+                            ...selectedArticle.customColors,
+                            borderColor: e.target.value,
+                            headlineColor: '#ffffff',
+                          },
+                        })
+                      }
+                      style={{ width: '100%', height: '28px', borderRadius: '4px', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                    />
+                  </div>
+
+                  {/* 12 Zodiac Signs List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '380px', overflowY: 'auto' }}>
+                    {(selectedArticle.rashifalItems || []).map((item, idx) => (
+                      <div
+                        key={idx}
+                        data-testid={`rashifal-item-editor-${idx}`}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e9d5ff',
+                          borderRadius: '6px',
+                          padding: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            data-testid={`input-rashi-sign-${idx}`}
+                            value={item.sign}
+                            onChange={(e) => {
+                              const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
+                                i === idx ? { ...r, sign: e.target.value } : r
+                              );
+                              onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                            }}
+                            title="राशि चिन्ह (Symbol)"
+                            style={{ width: '32px', textAlign: 'center', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                          />
+                          <input
+                            type="text"
+                            data-testid={`input-rashi-name-${idx}`}
+                            value={item.rashi}
+                            onChange={(e) => {
+                              const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
+                                i === idx ? { ...r, rashi: e.target.value } : r
+                              );
+                              onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                            }}
+                            placeholder="राशि नाम (उदा. मेष (अ, ल, इ))"
+                            style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px', fontWeight: 600 }}
+                          />
+                        </div>
+                        <textarea
+                          rows={2}
+                          data-testid={`textarea-rashi-prediction-${idx}`}
+                          value={item.prediction}
+                          onChange={(e) => {
+                            const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
+                              i === idx ? { ...r, prediction: e.target.value } : r
+                            );
+                            onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                          }}
+                          placeholder="दैनिक भविष्यफल एवं शुभ अंक..."
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '10.5px', lineHeight: 1.4 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Zodiac Item button */}
+                  <button
+                    type="button"
+                    data-testid="btn-add-rashi-item"
+                    onClick={() => {
+                      const updated = [
+                        ...(selectedArticle.rashifalItems || []),
+                        { rashi: 'नई राशि', sign: '⭐', prediction: 'दैनिक भविष्यफल यहाँ दर्ज करें...' },
+                      ];
+                      onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                    }}
+                    style={{
+                      padding: '6px',
+                      backgroundColor: '#f3e8ff',
+                      color: '#6b21a8',
+                      border: '1px dashed #c084fc',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    + नई राशि जोड़ें (Add Sign)
+                  </button>
+                </div>
+              )}
 
               {/* Body Text */}
               <div>

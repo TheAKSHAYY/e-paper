@@ -67,13 +67,15 @@ export interface MobileBottomSheetProps {
   initialTargetElement?: 'headline' | 'subheadline' | 'body';
   selectedElementPart?: SelectedElementPart;
   isMastheadSelected?: boolean;
-  mastheadTab?: 'title' | 'meta' | 'rules';
+  mastheadTab?: 'title' | 'subheaders' | 'meta' | 'rules';
   onOpenTemplateGallery?: (
     category?: 'all' | 'pages' | 'mastheads' | 'articles' | 'breaking' | 'dividers' | 'favorites'
   ) => void;
+  onOpenDesignLibrary?: () => void;
   editorMode?: 'simple' | 'pro';
   onToggleEditorMode?: () => void;
   onOpenWhatsAppPaste?: () => void;
+  onClearPage?: () => void;
 }
 
 export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
@@ -116,9 +118,11 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   isMastheadSelected = false,
   mastheadTab,
   onOpenTemplateGallery,
+  onOpenDesignLibrary,
   editorMode = 'simple',
   onToggleEditorMode,
   onOpenWhatsAppPaste,
+  onClearPage,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [presetTab, setPresetTab] = useState<'presets' | 'pagesetup' | 'theme'>(
@@ -490,6 +494,30 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                   🗑️ पेज हटाएँ
                 </button>
               )}
+
+              {onClearPage && (
+                <button
+                  type="button"
+                  data-testid="mobile-clear-page-btn"
+                  onClick={onClearPage}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #fecaca',
+                    backgroundColor: '#fee2e2',
+                    color: '#b91c1c',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    minHeight: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🗑️</span> पृष्ठ खाली करें
+                </button>
+              )}
             </div>
 
             {/* Page List Cards */}
@@ -668,6 +696,42 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               </div>
             )}
 
+            {/* 278 Reference Design Library Access */}
+            {onOpenDesignLibrary && (
+              <div
+                data-testid="mobile-btn-design-library"
+                onClick={() => {
+                  onClose();
+                  onOpenDesignLibrary();
+                }}
+                style={{
+                  padding: '11px 13px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1.5px solid #86efac',
+                  color: '#15803d',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 5px rgba(21, 128, 61, 0.1)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '22px' }}>🎨</span>
+                  <div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#15803d' }}>
+                      278 संदर्भ डिज़ाइन लाइब्रेरी (Design Library)
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#166534', marginTop: '1px' }}>
+                      10 PoC, मास्टहेड, 2-12 कॉलम समाचार, राशिफल व विज्ञापन
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#22c55e' }}>➔</span>
+              </div>
+            )}
+
             {/* Quick Header Strips */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
@@ -819,41 +883,109 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           <div>
             {isMastheadSelected ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* Top Selected Element Banner */}
+                {/* Top Quick Actions Bar for Masthead */}
                 <div
                   data-testid="mobile-active-part-banner"
                   style={{
                     backgroundColor: '#eff6ff',
-                    border: '1px solid #bfdbfe',
+                    border: '1.5px solid #bfdbfe',
                     borderRadius: '8px',
                     padding: '8px 10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    gap: '8px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '14px' }}>🗞️</span>
-                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e40af' }}>
-                      संपादित हो रहा है: मास्टहेड / शीर्ष सज्जा (Editing: Masthead)
+                    <span style={{ fontSize: '15px' }}>🗞️</span>
+                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#1e40af' }}>
+                      मास्टहेड (हेडर)
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={onDeselectArticle}
-                    style={{
-                      fontSize: '10px',
-                      color: '#2563eb',
-                      background: '#dbeafe',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '2px 6px',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    चयन हटाएँ ✕
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {doc.masthead?.showVolumeIssue !== false ? (
+                      <button
+                        type="button"
+                        data-testid="btn-banner-remove-volume-issue"
+                        onClick={() =>
+                          onUpdateMasthead({
+                            ...doc.masthead,
+                            showVolumeIssue: false,
+                            issueNumber: '',
+                            volumeYear: '',
+                            issueCount: '',
+                          })
+                        }
+                        title="वर्ष व अंक तुरंत हटाएँ"
+                        style={{
+                          fontSize: '11px',
+                          color: '#991b1b',
+                          backgroundColor: '#fee2e2',
+                          border: '1.5px solid #fca5a5',
+                          borderRadius: '6px',
+                          padding: '4px 9px',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>✕</span>
+                        <span>वर्ष 78 • अंक 142 हटाएँ</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        data-testid="btn-banner-restore-volume-issue"
+                        onClick={() =>
+                          onUpdateMasthead({
+                            ...doc.masthead,
+                            showVolumeIssue: true,
+                            volumeYear: 'वर्ष 78',
+                            issueCount: 'अंक 142',
+                            issueNumber: 'वर्ष 78 • अंक 142',
+                          })
+                        }
+                        title="वर्ष व अंक जोड़ें"
+                        style={{
+                          fontSize: '11px',
+                          color: '#15803d',
+                          backgroundColor: '#dcfce7',
+                          border: '1.5px solid #86efac',
+                          borderRadius: '6px',
+                          padding: '4px 9px',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>✚</span>
+                        <span>वर्ष व अंक जोड़ें</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={onDeselectArticle}
+                      style={{
+                        fontSize: '10.5px',
+                        color: '#64748b',
+                        background: '#e2e8f0',
+                        border: 'none',
+                        borderRadius: '5px',
+                        padding: '4px 7px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                      }}
+                    >
+                      चयन हटाएँ ✕
+                    </button>
+                  </div>
                 </div>
 
                 {/* ── Quick Masthead Template Picker Button on Mobile ── */}
@@ -1298,6 +1430,58 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                 {/* ── PART 3: BODY ── */}
                 {activePart === 'body' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* 12-Zodiac Editor on Mobile if rashifal */}
+                    {selectedArticle.elementType === 'rashifal' && (
+                      <div
+                        data-testid="mobile-rashifal-editor"
+                        style={{
+                          backgroundColor: '#faf5ff',
+                          border: '1px solid #d8b4fe',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#581c87' }}>
+                          ✨ 12 राशि भविष्यफल संपादक ({selectedArticle.rashifalItems?.length || 0} राशियां)
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
+                          {(selectedArticle.rashifalItems || []).map((item, idx) => (
+                            <div key={idx} style={{ backgroundColor: '#ffffff', padding: '6px', borderRadius: '4px', border: '1px solid #e9d5ff' }}>
+                              <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '12px' }}>{item.sign}</span>
+                                <input
+                                  type="text"
+                                  value={item.rashi}
+                                  onChange={(e) => {
+                                    const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
+                                      i === idx ? { ...r, rashi: e.target.value } : r
+                                    );
+                                    onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                                  }}
+                                  style={{ flex: 1, padding: '2px 4px', fontSize: '11px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px' }}
+                                />
+                              </div>
+                              <textarea
+                                rows={2}
+                                value={item.prediction}
+                                onChange={(e) => {
+                                  const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
+                                    i === idx ? { ...r, prediction: e.target.value } : r
+                                  );
+                                  onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
+                                }}
+                                style={{ width: '100%', boxSizing: 'border-box', padding: '3px 5px', fontSize: '10px', border: '1px solid #cbd5e1', borderRadius: '3px' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <div
                         style={{
@@ -2328,6 +2512,35 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* 🗑️ Clear Current Page Canvas */}
+                {onClearPage && (
+                  <button
+                    type="button"
+                    data-testid="inspector-clear-page-btn"
+                    onClick={onClearPage}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #fecaca',
+                      backgroundColor: '#fef2f2',
+                      color: '#b91c1c',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      minHeight: '44px',
+                      marginTop: '8px',
+                    }}
+                  >
+                    <span>🗑️</span>
+                    <span>इस पृष्ठ को पूर्णतः खाली करें (Clear Page)</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -2476,6 +2689,39 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                       </div>
                     </div>
                     <span style={{ fontSize: '15px', fontWeight: 700 }}>➔</span>
+                  </div>
+                )}
+
+                {/* Direct 278 Reference Design Library Access */}
+                {onOpenDesignLibrary && (
+                  <div
+                    data-testid="mobile-btn-design-library"
+                    onClick={() => {
+                      onClose();
+                      onOpenDesignLibrary();
+                    }}
+                    style={{
+                      padding: '11px 13px',
+                      borderRadius: '8px',
+                      backgroundColor: '#f0fdf4',
+                      border: '1.5px solid #86efac',
+                      color: '#15803d',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 1px 3px rgba(21, 128, 61, 0.08)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 800 }}>
+                        🎨 278 संदर्भ डिज़ाइन लाइब्रेरी (Design Library)
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#166534', marginTop: '1px' }}>
+                        278 संदर्भ छवियाँ, मास्टहेड, 2-12 कॉलम समाचार व विज्ञापन
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '16px', color: '#22c55e' }}>➔</span>
                   </div>
                 )}
 

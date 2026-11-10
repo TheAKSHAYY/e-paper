@@ -8,13 +8,14 @@ import type {
 } from '@epaper-studio/document-schema';
 import { getNewspaperPreset } from '@epaper-studio/template-engine';
 import { toEnglishDigits } from '../../utils/formatters';
+import { ColorStrip } from './mobile/ColorStrip';
 
 export interface MastheadInspectorPanelProps {
   masthead: MastheadConfig;
   onUpdateMasthead: (updated: MastheadConfig) => void;
   presetId?: NewspaperPresetId;
   onClose?: () => void;
-  initialTab?: 'title' | 'meta' | 'rules';
+  initialTab?: 'title' | 'subheaders' | 'meta' | 'rules';
   onOpenDesigner?: () => void;
   compactMode?: boolean;
   onOpenTemplateGallery?: (
@@ -32,7 +33,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   compactMode = false,
   onOpenTemplateGallery,
 }) => {
-  const [activeTab, setActiveTab] = useState<'title' | 'meta' | 'rules'>(initialTab || 'title');
+  const [activeTab, setActiveTab] = useState<'title' | 'subheaders' | 'meta' | 'rules'>(initialTab || 'title');
 
   useEffect(() => {
     if (initialTab) {
@@ -336,7 +337,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
         backgroundColor: '#ffffff',
         border: compactMode ? 'none' : '1px solid #e2e8f0',
         borderRadius: compactMode ? '0' : '10px',
-        padding: compactMode ? '4px 0' : '14px',
+        padding: compactMode ? '4px 0 100px 0' : '14px 14px 100px 14px',
         boxShadow: compactMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.04)',
         display: 'flex',
         flexDirection: 'column',
@@ -367,6 +368,55 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {masthead.showVolumeIssue !== false ? (
+              <button
+                type="button"
+                data-testid="btn-header-quick-clear-volume"
+                onClick={handleClearVolumeIssue}
+                title="कैनवास से वर्ष व अंक तुरंत हटाएँ"
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  backgroundColor: '#fef2f2',
+                  color: '#b91c1c',
+                  border: '1px solid #fecaca',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>✕</span>
+                <span>वर्ष/अंक हटाएँ</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="btn-header-quick-restore-volume"
+                onClick={() => handleToggleVolumeIssue(true)}
+                title="कैनवास पर वर्ष व अंक जोड़ें"
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backgroundColor: '#f0fdf4',
+                  color: '#15803d',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>+</span>
+                <span>वर्ष/अंक जोड़ें</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleResetToTemplate}
@@ -488,7 +538,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '4px',
           backgroundColor: '#f1f5f9',
           padding: '3px',
@@ -500,7 +550,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           data-testid="masthead-tab-title"
           onClick={() => setActiveTab('title')}
           style={{
-            padding: '6px 4px',
+            padding: '6px 2px',
             fontSize: '11px',
             fontWeight: activeTab === 'title' ? 700 : 500,
             color: activeTab === 'title' ? '#0f172a' : '#64748b',
@@ -511,14 +561,32 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             boxShadow: activeTab === 'title' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
           }}
         >
-          शीर्षक व अंक
+          शीर्षक
+        </button>
+        <button
+          type="button"
+          data-testid="masthead-tab-subheaders"
+          onClick={() => setActiveTab('subheaders')}
+          style={{
+            padding: '6px 2px',
+            fontSize: '11px',
+            fontWeight: activeTab === 'subheaders' ? 700 : 500,
+            color: activeTab === 'subheaders' ? '#991b1b' : '#64748b',
+            backgroundColor: activeTab === 'subheaders' ? '#ffffff' : 'transparent',
+            borderRadius: '5px',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: activeTab === 'subheaders' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+          }}
+        >
+          सब-हेडर व अंक
         </button>
         <button
           type="button"
           data-testid="masthead-tab-meta"
           onClick={() => setActiveTab('meta')}
           style={{
-            padding: '6px 4px',
+            padding: '6px 2px',
             fontSize: '11px',
             fontWeight: activeTab === 'meta' ? 700 : 500,
             color: activeTab === 'meta' ? '#0f172a' : '#64748b',
@@ -536,7 +604,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           data-testid="masthead-tab-rules"
           onClick={() => setActiveTab('rules')}
           style={{
-            padding: '6px 4px',
+            padding: '6px 2px',
             fontSize: '11px',
             fontWeight: activeTab === 'rules' ? 700 : 500,
             color: activeTab === 'rules' ? '#0f172a' : '#64748b',
@@ -639,6 +707,790 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 opacity: masthead.showTagline === false ? 0.5 : 1,
               }}
             />
+          </div>
+
+          {/* Logo & Emblem Controls */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+                🏷️ समाचार पत्र लोगो (Newspaper Logo)
+              </label>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  data-testid="toggle-show-center-logo"
+                  checked={Boolean(masthead.showCenterLogo)}
+                  onChange={(e) => updateField('showCenterLogo', e.target.checked)}
+                />
+                लोगो दिखाएँ
+              </label>
+            </div>
+
+            {masthead.showCenterLogo && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {masthead.centerLogoUrl && (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '6px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                    }}
+                  >
+                    <img
+                      src={masthead.centerLogoUrl}
+                      alt="Logo preview"
+                      style={{ maxHeight: '48px', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    data-testid="input-center-logo-url"
+                    value={masthead.centerLogoUrl ?? ''}
+                    onChange={(e) => updateField('centerLogoUrl', e.target.value)}
+                    placeholder="लोगो URL (उदा. /logo.svg या https://...)"
+                    style={{
+                      flex: 1,
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
+                  />
+                  <label
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: '#0284c7',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    अपलोड 📁
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            updateField('centerLogoUrl', ev.target?.result as string);
+                            updateField('showCenterLogo', true);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================================
+       * TAB 2: SUB-HEADERS, VOLUME & ISSUE, AND ANNOUNCEMENT STRIP
+       * ========================================================== */}
+      {activeTab === 'subheaders' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '60px' }}>
+          {/* ── 1. वर्ष व अंक नियंत्रण (Volume & Issue - "वर्ष 78 • अंक 142") ── */}
+          {renderVolumeIssueSection()}
+
+          {/* ── 2. तारीख व अंक पट्टी रंग (Date & Volume Strip Colors) ── */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+              🎨 सब-हेडर / तारीख पट्टी रंग (Date & Volume Strip Colors)
+            </div>
+            <ColorStrip
+              selectedColor={masthead.dateStripBg || 'transparent'}
+              onSelectColor={(col) => updateField('dateStripBg', col)}
+              label="तारीख पट्टी पृष्ठभूमि रंग (Date Strip Background)"
+            />
+            <ColorStrip
+              selectedColor={masthead.dateStripColor || '#222222'}
+              onSelectColor={(col) => updateField('dateStripColor', col)}
+              label="तारीख पट्टी टेक्स्ट रंग (Date Strip Text Color)"
+            />
+          </div>
+
+          {/* ── 3. Announcement Strip / Breaking Bulletin ── */}
+          <div
+            style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>🔴</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#991b1b' }}>
+                  घोषणा / ब्रेकिंग न्यूज़ पट्टी (Announcement Strip)
+                </span>
+              </div>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#7f1d1d',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={masthead.showAnnouncementStrip === true}
+                  onChange={(e) => updateField('showAnnouncementStrip', e.target.checked)}
+                />
+                पट्टी दिखाएँ
+              </label>
+            </div>
+
+            {masthead.showAnnouncementStrip && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <textarea
+                  rows={2}
+                  value={masthead.announcementStripText ?? ''}
+                  onChange={(e) => updateField('announcementStripText', e.target.value)}
+                  placeholder="उदा. विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #fca5a5',
+                    fontSize: '11.5px',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#991b1b' }}>
+                      त्वरित संदेश चुनें (Tap to fill):
+                    </span>
+                    {onOpenTemplateGallery && (
+                      <button
+                        type="button"
+                        data-testid="btn-open-subheader-gallery"
+                        onClick={() => onOpenTemplateGallery('breaking')}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          backgroundColor: '#fee2e2',
+                          color: '#991b1b',
+                          border: '1px solid #fca5a5',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🎨 गैलरी से चुनें ➔
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {[
+                      'विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें',
+                      '🔴 ब्रेकिंग न्यूज़ : आज की सबसे बड़ी हलचल और विशेष ग्राउंड रिपोर्ट',
+                      'विशेष संपादकीय परिशिष्ट : देश-दुनिया की 10 बड़ी खबरें',
+                      '🌾 कृषि व ग्रामीण विकास विशेष बुलेटिन',
+                    ].map((sample, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => updateField('announcementStripText', sample)}
+                        style={{
+                          fontSize: '10px',
+                          padding: '3px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid #fecaca',
+                          backgroundColor: '#ffffff',
+                          color: '#7f1d1d',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {sample.slice(0, 36)}...
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Announcement Strip Color Pickers */}
+                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <ColorStrip
+                    selectedColor={masthead.announcementStripBg || '#b91c1c'}
+                    onSelectColor={(col) => updateField('announcementStripBg', col)}
+                    label="घोषणा पट्टी पृष्ठभूमि रंग (Announcement Background)"
+                  />
+                  <ColorStrip
+                    selectedColor={masthead.announcementStripColor || '#ffffff'}
+                    onSelectColor={(col) => updateField('announcementStripColor', col)}
+                    label="घोषणा पट्टी टेक्स्ट रंग (Announcement Text Color)"
+                    allowTransparent={false}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 4. Secondary Header / Sub-Edition Strip ── */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>🏛️</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                  द्वितीयक हेडर (2nd Header / Sub-Edition)
+                </span>
+              </div>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={masthead.showSecondaryHeader === true}
+                  onChange={(e) => updateField('showSecondaryHeader', e.target.checked)}
+                />
+                दिखाएँ
+              </label>
+            </div>
+
+            {masthead.showSecondaryHeader && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '10px',
+                      color: '#64748b',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    द्वितीयक शीर्षक (Sub-Edition Title)
+                  </label>
+                  <input
+                    type="text"
+                    value={masthead.secondaryHeaderTitle ?? ''}
+                    onChange={(e) => updateField('secondaryHeaderTitle', e.target.value)}
+                    placeholder="उदा. प्रादेशिक एवं राष्ट्रीय राजधानी संस्करण"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '5px 8px',
+                      borderRadius: '5px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11.5px',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '10px',
+                      color: '#64748b',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    नगर सूची व उप-विवरण (Cities / Sub-Details)
+                  </label>
+                  <input
+                    type="text"
+                    value={masthead.secondaryHeaderSubtitle ?? ''}
+                    onChange={(e) => updateField('secondaryHeaderSubtitle', e.target.value)}
+                    placeholder="उदा. दिल्ली • लखनऊ • पटना • भोपाल • जयपुर • मुंबई"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '5px 8px',
+                      borderRadius: '5px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11.5px',
+                    }}
+                  />
+                </div>
+
+                {/* Secondary Header Color Pickers */}
+                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <ColorStrip
+                    selectedColor={masthead.secondaryHeaderBg || '#f8fafc'}
+                    onSelectColor={(col) => updateField('secondaryHeaderBg', col)}
+                    label="द्वितीयक हेडर पट्टी का रंग (Secondary Header Color)"
+                  />
+                  <ColorStrip
+                    selectedColor={masthead.secondaryHeaderColor || '#0f172a'}
+                    onSelectColor={(col) => updateField('secondaryHeaderColor', col)}
+                    label="द्वितीयक हेडर टेक्स्ट रंग (Secondary Header Text Color)"
+                    allowTransparent={false}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 5. Website / E-Paper URL ── */}
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#334155',
+                marginBottom: '4px',
+              }}
+            >
+              वेबसाइट / ई-पेपर लिंक (Website URL)
+            </label>
+            <input
+              type="text"
+              value={masthead.websiteUrl ?? ''}
+              onChange={(e) => updateField('websiteUrl', e.target.value)}
+              placeholder="उदा. epaper.dainiksamachar.com"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '6px 8px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '11.5px',
+              }}
+            />
+          </div>
+
+          {/* ── 6. Browse Ready-made Sub-Headers ── */}
+          {onOpenTemplateGallery && (
+            <button
+              type="button"
+              onClick={() => onOpenTemplateGallery('breaking')}
+              style={{
+                padding: '10px',
+                backgroundColor: '#f1f5f9',
+                color: '#334155',
+                border: '1px dashed #cbd5e1',
+                borderRadius: '8px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>📑</span>
+              <span>30+ सब-हेडर व विभाजक शैलियाँ ब्राउज़ करें</span>
+            </button>
+          )}
+
+          {/* ── 5. Left Ear Advertisement (बायां कान विज्ञापन) ── */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+                📢 बायां कान विज्ञापन (Left Ear Ad / Slot)
+              </div>
+              <label style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="toggle-left-slot"
+                  checked={Boolean(masthead.leftSlot?.enabled)}
+                  onChange={(e) => {
+                    const current = masthead.leftSlot || { enabled: false, type: 'text' };
+                    updateField('leftSlot', { ...current, enabled: e.target.checked, type: current.type === 'none' ? 'text' : current.type });
+                  }}
+                />
+                सक्रिय (Enable)
+              </label>
+            </div>
+
+            {masthead.leftSlot?.enabled && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <input
+                    type="text"
+                    data-testid="input-left-slot-title"
+                    value={masthead.leftSlot.title ?? ''}
+                    onChange={(e) => {
+                      updateField('leftSlot', { ...masthead.leftSlot!, title: e.target.value });
+                    }}
+                    placeholder="शीर्षक (उदा. विशेष रिपोर्ट)"
+                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                  <input
+                    type="text"
+                    data-testid="input-left-slot-subtitle"
+                    value={masthead.leftSlot.subtitle ?? ''}
+                    onChange={(e) => {
+                      updateField('leftSlot', { ...masthead.leftSlot!, subtitle: e.target.value });
+                    }}
+                    placeholder="उप-शीर्षक (उदा. ताज़ा अपडेट)"
+                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  data-testid="input-left-slot-text"
+                  value={masthead.leftSlot.text ?? ''}
+                  onChange={(e) => {
+                    updateField('leftSlot', { ...masthead.leftSlot!, text: e.target.value });
+                  }}
+                  placeholder="विवरण या फ़ोन (उदा. संपर्क: 0751-2456789)"
+                  style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={masthead.leftSlot.imageUrl ?? ''}
+                    onChange={(e) => {
+                      updateField('leftSlot', { ...masthead.leftSlot!, type: 'image', imageUrl: e.target.value });
+                    }}
+                    placeholder="छवि URL या लोगो"
+                    style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                  <label style={{ padding: '5px 10px', backgroundColor: '#0284c7', color: '#fff', borderRadius: '4px', fontSize: '10.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    अपलोड 📁
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            updateField('leftSlot', { ...masthead.leftSlot!, type: 'image', imageUrl: ev.target?.result as string });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 6. Right Ear Advertisement (दायां कान विज्ञापन) ── */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+                📢 दायां कान विज्ञापन (Right Ear Ad / Slot)
+              </div>
+              <label style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="toggle-right-slot"
+                  checked={Boolean(masthead.rightSlot?.enabled)}
+                  onChange={(e) => {
+                    const current = masthead.rightSlot || { enabled: false, type: 'text' };
+                    updateField('rightSlot', { ...current, enabled: e.target.checked, type: current.type === 'none' ? 'text' : current.type });
+                  }}
+                />
+                सक्रिय (Enable)
+              </label>
+            </div>
+
+            {masthead.rightSlot?.enabled && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <input
+                    type="text"
+                    data-testid="input-right-slot-title"
+                    value={masthead.rightSlot.title ?? ''}
+                    onChange={(e) => {
+                      updateField('rightSlot', { ...masthead.rightSlot!, title: e.target.value });
+                    }}
+                    placeholder="शीर्षक (उदा. विज्ञापन संपर्क)"
+                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                  <input
+                    type="text"
+                    data-testid="input-right-slot-subtitle"
+                    value={masthead.rightSlot.subtitle ?? ''}
+                    onChange={(e) => {
+                      updateField('rightSlot', { ...masthead.rightSlot!, subtitle: e.target.value });
+                    }}
+                    placeholder="उप-शीर्षक (उदा. दैनिक सेवा)"
+                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  data-testid="input-right-slot-text"
+                  value={masthead.rightSlot.text ?? ''}
+                  onChange={(e) => {
+                    updateField('rightSlot', { ...masthead.rightSlot!, text: e.target.value });
+                  }}
+                  placeholder="विवरण या फ़ोन (उदा. फोन: 0751-2456789)"
+                  style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={masthead.rightSlot.imageUrl ?? ''}
+                    onChange={(e) => {
+                      updateField('rightSlot', { ...masthead.rightSlot!, type: 'image', imageUrl: e.target.value });
+                    }}
+                    placeholder="छवि URL या लोगो"
+                    style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  />
+                  <label style={{ padding: '5px 10px', backgroundColor: '#0284c7', color: '#fff', borderRadius: '4px', fontSize: '10.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    अपलोड 📁
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            updateField('rightSlot', { ...masthead.rightSlot!, type: 'image', imageUrl: ev.target?.result as string });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================================
+       * TAB 3: WEATHER, DATE, EDITION, PRICE & REGISTRATION DETAILS
+       * ========================================================== */}
+      {activeTab === 'meta' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* ── 1. वर्ष व अंक नियंत्रण (Volume & Issue - "वर्ष 78 • अंक 142") ── */}
+          {renderVolumeIssueSection()}
+
+          {/* Weather Section */}
+          <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '6px',
+              }}
+            >
+              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e293b' }}>
+                🌤️ मौसम व तापमान (Weather Strip)
+              </span>
+              <label
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={masthead.showWeather !== false}
+                  onChange={(e) => updateField('showWeather', e.target.checked)}
+                />
+                मौसम दिखाएँ
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1fr', gap: '6px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  शहर (City)
+                </label>
+                <input
+                  type="text"
+                  value={masthead.weatherCity ?? 'नई दिल्ली'}
+                  onChange={(e) => updateField('weatherCity', e.target.value)}
+                  placeholder="नई दिल्ली"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '5px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  तापमान (Temp)
+                </label>
+                <input
+                  type="text"
+                  value={masthead.temperature ?? '25°C'}
+                  onChange={(e) => updateField('temperature', e.target.value)}
+                  placeholder="25°C"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '5px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
+                  स्थिति (Sky)
+                </label>
+                <input
+                  type="text"
+                  value={masthead.weatherCondition ?? 'साफ़ आसमान'}
+                  onChange={(e) => updateField('weatherCondition', e.target.value)}
+                  placeholder="साफ़ आसमान"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '5px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* AQI */}
+            <div style={{ marginTop: '6px' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <label style={{ fontSize: '10px', color: '#64748b' }}>
+                  वायु गुणवत्ता (Air Quality / AQI)
+                </label>
+                <label
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={masthead.showAirQuality !== false}
+                    onChange={(e) => updateField('showAirQuality', e.target.checked)}
+                  />
+                  AQI दिखाएँ
+                </label>
+              </div>
+              <input
+                type="text"
+                value={masthead.airQuality ?? 'AQI 128 • मध्यम'}
+                onChange={(e) => updateField('airQuality', e.target.value)}
+                placeholder="AQI 128 • मध्यम"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '5px 6px',
+                  borderRadius: '4px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11px',
+                }}
+              />
+            </div>
           </div>
 
           {/* Date & Day of Week */}
@@ -825,9 +1677,6 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             </div>
           </div>
 
-          {/* ── Dedicated Box: वर्ष व अंक (Volume & Issue) with removal/toggle ── */}
-          {renderVolumeIssueSection()}
-
           {/* Establishment Year & Registration */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <div>
@@ -934,427 +1783,10 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
       )}
 
       {/* ==========================================================
-       * TAB 2: SUB-HEADERS, ANNOUNCEMENT STRIP & REGIONAL EDITIONS
-       * ========================================================== */}
-      {activeTab === 'meta' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* 1. Announcement Strip / Breaking Bulletin */}
-          <div
-            style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '8px',
-              padding: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '14px' }}>🔴</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#991b1b' }}>
-                  घोषणा / ब्रेकिंग न्यूज़ पट्टी (Announcement Strip)
-                </span>
-              </div>
-              <label
-                style={{
-                  fontSize: '10.5px',
-                  color: '#7f1d1d',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={masthead.showAnnouncementStrip === true}
-                  onChange={(e) => updateField('showAnnouncementStrip', e.target.checked)}
-                />
-                पट्टी दिखाएँ
-              </label>
-            </div>
-
-            {masthead.showAnnouncementStrip && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <textarea
-                  rows={2}
-                  value={masthead.announcementStripText ?? ''}
-                  onChange={(e) => updateField('announcementStripText', e.target.value)}
-                  placeholder="उदा. विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '6px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid #fca5a5',
-                    fontSize: '11.5px',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    resize: 'vertical',
-                  }}
-                />
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#991b1b' }}>
-                      त्वरित संदेश चुनें (Tap to fill):
-                    </span>
-                    {onOpenTemplateGallery && (
-                      <button
-                        type="button"
-                        data-testid="btn-open-subheader-gallery"
-                        onClick={() => onOpenTemplateGallery('breaking')}
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          backgroundColor: '#fee2e2',
-                          color: '#991b1b',
-                          border: '1px solid #fca5a5',
-                          borderRadius: '4px',
-                          padding: '2px 6px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        🎨 गैलरी से चुनें ➔
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {[
-                      'विशेष दीपावली विशेषांक : आज ही अपने हॉकर से निःशुल्क प्राप्त करें',
-                      '🔴 ब्रेकिंग न्यूज़ : आज की सबसे बड़ी हलचल और विशेष ग्राउंड रिपोर्ट',
-                      'विशेष संपादकीय परिशिष्ट : देश-दुनिया की 10 बड़ी खबरें',
-                      '🌾 कृषि व ग्रामीण विकास विशेष बुलेटिन',
-                    ].map((sample, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => updateField('announcementStripText', sample)}
-                        style={{
-                          fontSize: '10px',
-                          padding: '3px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid #fecaca',
-                          backgroundColor: '#ffffff',
-                          color: '#7f1d1d',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        {sample.slice(0, 36)}...
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── वर्ष व अंक नियंत्रण (Volume & Issue) ── */}
-          {renderVolumeIssueSection()}
-
-          {/* 2. Secondary Header / Sub-Edition Strip */}
-          <div
-            style={{
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '14px' }}>🏛️</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
-                  द्वितीयक हेडर (2nd Header / Sub-Edition)
-                </span>
-              </div>
-              <label
-                style={{
-                  fontSize: '10.5px',
-                  color: '#475569',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={masthead.showSecondaryHeader === true}
-                  onChange={(e) => updateField('showSecondaryHeader', e.target.checked)}
-                />
-                दिखाएँ
-              </label>
-            </div>
-
-            {masthead.showSecondaryHeader && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '10px',
-                      color: '#64748b',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    द्वितीयक शीर्षक (Sub-Edition Title)
-                  </label>
-                  <input
-                    type="text"
-                    value={masthead.secondaryHeaderTitle ?? ''}
-                    onChange={(e) => updateField('secondaryHeaderTitle', e.target.value)}
-                    placeholder="उदा. प्रादेशिक एवं राष्ट्रीय राजधानी संस्करण"
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '5px 8px',
-                      borderRadius: '5px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '11.5px',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '10px',
-                      color: '#64748b',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    नगर सूची व उप-विवरण (Cities / Sub-Details)
-                  </label>
-                  <input
-                    type="text"
-                    value={masthead.secondaryHeaderSubtitle ?? ''}
-                    onChange={(e) => updateField('secondaryHeaderSubtitle', e.target.value)}
-                    placeholder="उदा. दिल्ली • लखनऊ • पटना • भोपाल • जयपुर • मुंबई"
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '5px 8px',
-                      borderRadius: '5px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '11.5px',
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 3. Website / E-Paper URL */}
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#334155',
-                marginBottom: '4px',
-              }}
-            >
-              वेबसाइट / ई-पेपर लिंक (Website URL)
-            </label>
-            <input
-              type="text"
-              value={masthead.websiteUrl ?? ''}
-              onChange={(e) => updateField('websiteUrl', e.target.value)}
-              placeholder="उदा. epaper.dainiksamachar.com"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '6px 8px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                fontSize: '11.5px',
-              }}
-            />
-          </div>
-
-          {/* 4. Browse Ready-made Sub-Headers */}
-          {onOpenTemplateGallery && (
-            <button
-              type="button"
-              onClick={() => onOpenTemplateGallery('dividers')}
-              style={{
-                padding: '10px',
-                backgroundColor: '#f1f5f9',
-                color: '#334155',
-                border: '1px dashed #cbd5e1',
-                borderRadius: '8px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>📑</span>
-              <span>30+ सब-हेडर व विभाजक शैलियाँ ब्राउज़ करें</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ==========================================================
-       * TAB 3: WEATHER, FONTS, ALIGNMENT & BORDER RULES
+       * TAB 4: FONTS, ALIGNMENT & BORDER RULES
        * ========================================================== */}
       {activeTab === 'rules' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* Weather Section Header */}
-          <div style={{ borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '6px',
-              }}
-            >
-              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1e293b' }}>
-                🌤️ मौसम व तापमान (Weather Strip)
-              </span>
-              <label
-                style={{
-                  fontSize: '10px',
-                  color: '#64748b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={masthead.showWeather !== false}
-                  onChange={(e) => updateField('showWeather', e.target.checked)}
-                />
-                मौसम दिखाएँ
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1fr', gap: '6px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  शहर (City)
-                </label>
-                <input
-                  type="text"
-                  value={masthead.weatherCity ?? 'नई दिल्ली'}
-                  onChange={(e) => updateField('weatherCity', e.target.value)}
-                  placeholder="नई दिल्ली"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  तापमान (Temp)
-                </label>
-                <input
-                  type="text"
-                  value={masthead.temperature ?? '25°C'}
-                  onChange={(e) => updateField('temperature', e.target.value)}
-                  placeholder="25°C"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>
-                  स्थिति (Sky)
-                </label>
-                <input
-                  type="text"
-                  value={masthead.weatherCondition ?? 'साफ़ आसमान'}
-                  onChange={(e) => updateField('weatherCondition', e.target.value)}
-                  placeholder="साफ़ आसमान"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '5px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '11px',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* AQI */}
-            <div style={{ marginTop: '6px' }}>
-              <div
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-              >
-                <label style={{ fontSize: '10px', color: '#64748b' }}>
-                  वायु गुणवत्ता (Air Quality / AQI)
-                </label>
-                <label
-                  style={{
-                    fontSize: '10px',
-                    color: '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={masthead.showAirQuality !== false}
-                    onChange={(e) => updateField('showAirQuality', e.target.checked)}
-                  />
-                  AQI दिखाएँ
-                </label>
-              </div>
-              <input
-                type="text"
-                value={masthead.airQuality ?? 'AQI 128 • मध्यम'}
-                onChange={(e) => updateField('airQuality', e.target.value)}
-                placeholder="AQI 128 • मध्यम"
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '5px 6px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '11px',
-                }}
-              />
-            </div>
-          </div>
 
           {/* Font Family & Size */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
@@ -1547,6 +1979,43 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               <option value="single-hairline">महीन हेयरलाइन (Single Hairline)</option>
               <option value="none">कोई विभाजक नहीं (None)</option>
             </select>
+          </div>
+
+          {/* Header & Subheader Colors */}
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
+              🎨 मास्टहेड व सब-हेडर रंग (Header & Sub-header Colors)
+            </div>
+            <ColorStrip
+              selectedColor={masthead.backgroundColor || '#ffffff'}
+              onSelectColor={(col) => updateField('backgroundColor', col)}
+              label="मास्टहेड पृष्ठभूमि रंग (Header Background)"
+            />
+            <ColorStrip
+              selectedColor={masthead.titleColor || '#000000'}
+              onSelectColor={(col) => updateField('titleColor', col)}
+              label="अख़बार नाम का रंग (Title Text Color)"
+            />
+            <ColorStrip
+              selectedColor={masthead.taglineColor || '#111111'}
+              onSelectColor={(col) => updateField('taglineColor', col)}
+              label="टैगलाइन / सब-हेडर रंग (Tagline Color)"
+            />
+            <ColorStrip
+              selectedColor={masthead.borderColor || '#111111'}
+              onSelectColor={(col) => updateField('borderColor', col)}
+              label="विभाजक बॉर्डर का रंग (Border Rule Color)"
+            />
           </div>
 
           {/* Section Visibility Controls */}

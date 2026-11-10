@@ -33,6 +33,11 @@ test.describe('Mobile Masthead Editing, Sub-headers, Presets & Volume/Issue Remo
     });
 
     // 3. Test removing "वर्ष व अंक" (DEF-VARSH-ANKH)
+    // Switch to Sub-headers & Volume tab
+    const subheadersTab = page.locator('[data-testid="masthead-tab-subheaders"]');
+    await expect(subheadersTab).toBeVisible();
+    await subheadersTab.click();
+
     // Click "हटाएँ ✕" button in the Volume & Issue box
     const removeVolBtn = inspector.locator('button:has-text("हटाएँ ✕")');
     await expect(removeVolBtn).toBeVisible();
@@ -47,10 +52,6 @@ test.describe('Mobile Masthead Editing, Sub-headers, Presets & Volume/Issue Remo
     });
 
     // 4. Test Sub-Header & Announcement Strip Editing
-    const subheaderTab = page.locator('[data-testid="masthead-tab-meta"]');
-    await expect(subheaderTab).toBeVisible();
-    await subheaderTab.click();
-
     // Check "पट्टी दिखाएँ" checkbox
     const announcementCheckbox = page.locator(
       'label:has-text("पट्टी दिखाएँ") input[type="checkbox"]'
@@ -193,6 +194,66 @@ test.describe('Mobile Masthead Editing, Sub-headers, Presets & Volume/Issue Remo
     // Take screenshot of page with sub-header at masthead and top banner at page index 0
     await page.screenshot({
       path: 'C:/Users/Pc/.gemini/antigravity/brain/708fb6a9-d309-4b3e-81e3-f0d9355fdf2b/mobile-subheader-positions-verified.png',
+    });
+  });
+
+  test('should clear entire page canvas in 1 click with safety confirmation dialog and add new story from scratch', async ({
+    page,
+  }) => {
+    await page.goto('/#editor');
+    await expect(page.locator('[data-testid="masthead-section"]')).toBeVisible();
+
+    // Verify initial state has multiple articles
+    const initialArticles = page.locator('[data-testid^="article-card-"]');
+    const initialCount = await initialArticles.count();
+    expect(initialCount).toBeGreaterThan(0);
+
+    // 1. Open "पेज" (Pages) drawer on mobile
+    const pagesNavBtn = page.locator('[data-testid="mobile-nav-pages"]');
+    await pagesNavBtn.click();
+
+    // 2. Click "पृष्ठ खाली करें" (Clear Page)
+    const clearPageBtn = page.locator('[data-testid="mobile-clear-page-btn"]');
+    await expect(clearPageBtn).toBeVisible();
+    await clearPageBtn.click();
+
+    // 3. Verify confirmation modal is shown with safety warning
+    const confirmDialog = page.locator('[data-testid="clear-page-confirm-dialog"]');
+    await expect(confirmDialog).toBeVisible();
+    await expect(confirmDialog).toContainText('पूरा पृष्ठ खाली करें');
+
+    // 4. Confirm clearing the page
+    const confirmBtn = page.locator('[data-testid="confirm-clear-page-btn"]');
+    await confirmBtn.click();
+
+    // 5. Verify modal closed and all articles are removed from canvas!
+    await expect(confirmDialog).toBeHidden();
+    await expect(page.locator('[data-testid^="article-card-"]')).toHaveCount(0);
+
+    // Verify empty state is displayed with friendly prompt
+    const emptyState = page.locator('[data-testid="canvas-empty-state"]');
+    await expect(emptyState).toBeVisible();
+    await expect(emptyState).toContainText('यह पृष्ठ पूर्णतः खाली है');
+
+    // Capture screenshot of the cleared canvas
+    await page.screenshot({
+      path: 'C:/Users/Pc/.gemini/antigravity/brain/708fb6a9-d309-4b3e-81e3-f0d9355fdf2b/mobile-canvas-cleared-empty-state.png',
+    });
+
+    // 6. Test adding a fresh article from the clean empty canvas
+    const addBlockBtn = page.locator('[data-testid="empty-canvas-add-block-btn"]');
+    await expect(addBlockBtn).toBeVisible();
+    await addBlockBtn.click();
+
+    // Verify exactly 1 fresh article now exists on the canvas!
+    await expect(page.locator('[data-testid^="article-card-"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid^="article-card-"]')).toContainText(
+      'नई ताज़ा खबर का शीर्षक यहाँ लिखें'
+    );
+
+    // Capture screenshot of fresh article added to previously cleared canvas
+    await page.screenshot({
+      path: 'C:/Users/Pc/.gemini/antigravity/brain/708fb6a9-d309-4b3e-81e3-f0d9355fdf2b/mobile-canvas-cleared-fresh-article-added.png',
     });
   });
 });

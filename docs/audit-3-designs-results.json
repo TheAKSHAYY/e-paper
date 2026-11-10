@@ -1,0 +1,37 @@
+{
+  "des103": {
+    "inserted": true,
+    "textEdited": true,
+    "colorsEdited": true,
+    "slotsEdited": true
+  },
+  "des041": {
+    "inserted": true,
+    "headlineEdited": true,
+    "bylineEdited": true,
+    "imageReplaced": true,
+    "innerColsModified": true
+  },
+  "des132": {
+    "inserted": true,
+    "all12CellsPresent": true,
+    "cellsEdited": true,
+    "bannerColorModified": true
+  },
+  "duplication": {
+    "duplicated": true,
+    "isolated": true
+  },
+  "deletion": {
+    "deleted": true
+  },
+  "persistence": {
+    "reloaded": true,
+    "editsPreserved": true,
+    "stillEditable": true
+  },
+  "pdfExport": {
+    "valid": true,
+    "sizeBytes": 645635
+  }
+}

@@ -186,8 +186,8 @@ describe('TemplateEngine', () => {
     // Dynamic folio footer binding (never hardcoded)
     doc.masthead.title = 'दैनिक भास्कर';
     const updatedHtml = renderNewspaperDocumentToHtml(doc);
-    expect(updatedHtml).toContain('दैनिक भास्कर • डिजिटल व प्रिंट संस्करण');
-    expect(updatedHtml).not.toContain('जनवाणी समाचार • डिजिटल व प्रिंट संस्करण');
+    expect(updatedHtml).toContain('दैनिक भास्कर डिजिटल संस्करण');
+    expect(updatedHtml).not.toContain('जनवाणी समाचार डिजिटल संस्करण');
   });
 
   describe('Devanagari Typography Rules', () => {

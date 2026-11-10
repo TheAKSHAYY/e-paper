@@ -60,6 +60,7 @@ export interface TopBarProps {
   editorMode?: 'simple' | 'pro';
   onToggleEditorMode?: () => void;
   onOpenTemplateGallery?: () => void;
+  onOpenDesignLibrary?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -109,6 +110,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   editorMode = 'simple',
   onToggleEditorMode,
   onOpenTemplateGallery,
+  onOpenDesignLibrary,
 }) => {
   const { t, locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -154,249 +156,431 @@ export const TopBar: React.FC<TopBarProps> = ({
   const roundedScale = Math.round(scale * 100) / 100;
   const standardScales = [0.25, 0.35, 0.5, 0.65, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
 
+  /* ─── shared menu-item style ─────────────────────────────── */
+  const menuItemBase: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 10px',
+    fontSize: '11.5px',
+    color: '#FAF8F5',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    width: '100%',
+  };
+
   return (
     <header
+      data-testid="desktop-top-bar"
       style={{
         backgroundColor: colors.inkBlack,
         color: '#FAF8F5',
-        height: '50px',
         borderBottom: `1px solid #2B2825`,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 12px',
+        flexDirection: 'column',
         boxSizing: 'border-box',
-        gap: '8px',
         userSelect: 'none',
         zIndex: 50,
         position: 'relative',
         overflow: 'visible',
-        whiteSpace: 'nowrap',
+        flexShrink: 0,
       }}
     >
-      {/* ========================================================
-       * LEFT: Brand, Sidebar Toggle, Document Title & Save Status
-       * ======================================================== */}
+      {/* ════════════════════════════════════════════════════════
+       * ROW 1 — Brand | Sidebar | Title | Save Status | Lang | Panel
+       * ════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 12px',
+          height: '44px',
+          borderBottom: '1px solid #2B2825',
           gap: '8px',
-          minWidth: '180px',
+          whiteSpace: 'nowrap',
           flexShrink: 0,
         }}
       >
-        {onToggleSidebar && (
-          <button
-            onClick={onToggleSidebar}
-            title={
-              isSidebarOpen
-                ? locale === 'en'
-                  ? 'Hide sidebar'
-                  : 'साइडबार छिपाएं'
-                : locale === 'en'
-                  ? 'Show sidebar'
-                  : 'साइडबार दिखाएं'
-            }
-            aria-label="Toggle sidebar"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#A8A29E',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-            }}
-          >
-            {isSidebarOpen ? '◀' : '☰'}
-          </button>
-        )}
-
-        {/* Brand Crest */}
+        {/* ── LEFT: Sidebar toggle + Brand + Dashboard + Title + Save ── */}
         <div
-          onClick={() => onViewModeChange('landing')}
-          title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            flexShrink: 0,
+            gap: '8px',
+            minWidth: 0,
+            flex: 1,
+            overflow: 'hidden',
           }}
         >
-          <div
-            style={{
-              width: '22px',
-              height: '22px',
-              backgroundColor: colors.pressRed,
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: '13px',
-              fontFamily: fonts.hindiEditorial,
-              borderRadius: '3px',
-            }}
-          >
-            प
-          </div>
-          <span
-            style={{
-              fontSize: '14px',
-              fontWeight: 800,
-              color: '#ffffff',
-              fontFamily: `${fonts.display}, ${fonts.hindiEditorial}`,
-            }}
-          >
-            E-Paper Studio
-          </span>
-        </div>
-
-        {/* Dashboard Shortcut Button */}
-        <button
-          onClick={() => onViewModeChange('dashboard')}
-          title={locale === 'en' ? 'Go to Publisher Dashboard' : 'प्रकाशक डैशबोर्ड पर जाएं'}
-          style={{
-            background: '#262422',
-            border: '1px solid #3D3835',
-            borderRadius: '3px',
-            color: '#E6E0D5',
-            padding: '3px 8px',
-            fontSize: '11.5px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <span>🏠</span>
-          <span className="hidden sm:inline">{t.common.dashboard}</span>
-        </button>
-
-        <div style={{ height: '14px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
-
-        {/* Editable Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0 }}>
-          {isRenaming ? (
-            <input
-              type="text"
-              value={editedTitle}
-              autoFocus
-              onChange={(e) => setEditedTitle(e.target.value)}
-              onBlur={handleFinishRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleFinishRename();
-                if (e.key === 'Escape') {
-                  setEditedTitle(publicationTitle);
-                  setIsRenaming(false);
-                }
-              }}
-              style={{
-                backgroundColor: '#262422',
-                color: '#ffffff',
-                border: `1px solid ${colors.pressRed}`,
-                borderRadius: '2px',
-                padding: '2px 6px',
-                fontSize: '12px',
-                fontFamily: fonts.hindiEditorial,
-                fontWeight: 700,
-                outline: 'none',
-              }}
-            />
-          ) : (
-            <span
-              onClick={() => setIsRenaming(true)}
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
               title={
-                locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'
+                isSidebarOpen
+                  ? locale === 'en' ? 'Hide sidebar' : 'साइडबार छिपाएं'
+                  : locale === 'en' ? 'Show sidebar' : 'साइडबार दिखाएं'
               }
+              aria-label="Toggle sidebar"
               style={{
-                fontSize: '12.5px',
-                color: '#E6E0D5',
-                fontWeight: 600,
+                background: 'transparent',
+                border: 'none',
+                color: '#A8A29E',
                 cursor: 'pointer',
-                fontFamily: fonts.hindiEditorial,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '180px',
+                padding: '6px',
+                borderRadius: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                flexShrink: 0,
               }}
             >
-              {publicationTitle}
-            </span>
+              {isSidebarOpen ? '◀' : '☰'}
+            </button>
           )}
 
-          {/* Save Status Badge */}
-          {hasUnsavedChanges ? (
-            <button
-              onClick={onSaveDraft}
-              disabled={isSaving}
-              data-testid="autosave-status-badge"
+          {/* Brand Crest */}
+          <div
+            onClick={() => onViewModeChange('landing')}
+            title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <div
               style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '11px',
-                color: '#F59E0B',
-                cursor: 'pointer',
-                padding: '2px 4px',
-                flexShrink: 0,
+                width: '22px',
+                height: '22px',
+                backgroundColor: colors.pressRed,
+                color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3px',
+                justifyContent: 'center',
+                fontWeight: 900,
+                fontSize: '13px',
+                fontFamily: fonts.hindiEditorial,
+                borderRadius: '3px',
               }}
             >
-              <span>●</span>
+              प
+            </div>
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 800,
+                color: '#ffffff',
+                fontFamily: `${fonts.display}, ${fonts.hindiEditorial}`,
+              }}
+            >
+              E-Paper Studio
+            </span>
+          </div>
+
+          {/* Dashboard Shortcut */}
+          <button
+            onClick={() => onViewModeChange('dashboard')}
+            title={locale === 'en' ? 'Go to Publisher Dashboard' : 'प्रकाशक डैशबोर्ड पर जाएं'}
+            style={{
+              background: '#262422',
+              border: '1px solid #3D3835',
+              borderRadius: '3px',
+              color: '#E6E0D5',
+              padding: '3px 8px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              flexShrink: 0,
+            }}
+          >
+            <span>🏠</span>
+            <span>{t.common.dashboard}</span>
+          </button>
+
+          <div style={{ height: '14px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
+
+          {/* Editable Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+            {isRenaming ? (
+              <input
+                type="text"
+                value={editedTitle}
+                autoFocus
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={handleFinishRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleFinishRename();
+                  if (e.key === 'Escape') {
+                    setEditedTitle(publicationTitle);
+                    setIsRenaming(false);
+                  }
+                }}
+                style={{
+                  backgroundColor: '#262422',
+                  color: '#ffffff',
+                  border: `1px solid ${colors.pressRed}`,
+                  borderRadius: '2px',
+                  padding: '2px 6px',
+                  fontSize: '12px',
+                  fontFamily: fonts.hindiEditorial,
+                  fontWeight: 700,
+                  outline: 'none',
+                }}
+              />
+            ) : (
+              <span
+                onClick={() => setIsRenaming(true)}
+                title={locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'}
+                style={{
+                  fontSize: '12.5px',
+                  color: '#E6E0D5',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: fonts.hindiEditorial,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '180px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {publicationTitle}
+              </span>
+            )}
+
+            {/* Save Status Badge */}
+            {hasUnsavedChanges ? (
+              <button
+                onClick={onSaveDraft}
+                disabled={isSaving}
+                data-testid="autosave-status-badge"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '11px',
+                  color: '#F59E0B',
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+              >
+                <span>●</span>
+                <span>
+                  {isSaving
+                    ? locale === 'en' ? 'Saving...' : 'सहेजा जा रहा है...'
+                    : locale === 'en' ? 'Unsaved' : 'अनसेव्ड'}
+                </span>
+              </button>
+            ) : (
+              <span
+                data-testid="autosave-status-badge"
+                title={locale === 'en' ? 'All changes saved locally' : 'सभी बदलाव स्वतः सहेजे गए हैं'}
+                style={{
+                  fontSize: '11px',
+                  color: '#34D399',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+              >
+                <span>✓</span>
+                <span>{locale === 'en' ? 'Saved' : 'स्वतः सहेजा गया'}</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── RIGHT of Row 1: Mode | Preflight | PDF Download | Language | Panel ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {/* Editor Mode Toggle */}
+          {onToggleEditorMode && (
+            <button
+              onClick={onToggleEditorMode}
+              data-testid="topbar-btn-editor-mode"
+              title={
+                editorMode === 'simple'
+                  ? 'पेशेवर संपादक पर जाएं (Switch to Pro Mode)'
+                  : 'सरल मोड पर जाएं (Simple Mode)'
+              }
+              style={{
+                backgroundColor: editorMode === 'simple' ? '#14532D' : '#1e293b',
+                color: '#ffffff',
+                border: editorMode === 'simple' ? '1px solid #22c55e' : '1px solid #475569',
+                borderRadius: '16px',
+                padding: '3px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                flexShrink: 0,
+              }}
+            >
+              <span>{editorMode === 'simple' ? '✨ सरल मोड' : '⚙️ पेशेवर मोड'}</span>
+            </button>
+          )}
+
+          {/* Preflight Status */}
+          {onOpenPreflight && (
+            <button
+              data-testid="btn-preflight-status"
+              onClick={onOpenPreflight}
+              title={locale === 'en' ? 'Preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट'}
+              style={{
+                backgroundColor:
+                  preflightStatus?.overallStatus === 'green'
+                    ? '#143522'
+                    : preflightStatus?.overallStatus === 'yellow'
+                      ? '#3B280A'
+                      : preflightStatus?.overallStatus === 'red'
+                        ? '#3D1414'
+                        : '#262422',
+                color:
+                  preflightStatus?.overallStatus === 'green'
+                    ? '#86EFAC'
+                    : preflightStatus?.overallStatus === 'yellow'
+                      ? '#FDE047'
+                      : preflightStatus?.overallStatus === 'red'
+                        ? '#FCA5A5'
+                        : '#E6E0D5',
+                border: `1px solid ${
+                  preflightStatus?.overallStatus === 'green'
+                    ? '#166534'
+                    : preflightStatus?.overallStatus === 'yellow'
+                      ? '#854D0E'
+                      : preflightStatus?.overallStatus === 'red'
+                        ? '#991B1B'
+                        : '#3D3835'
+                }`,
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                flexShrink: 0,
+              }}
+            >
               <span>
-                {isSaving
-                  ? locale === 'en'
-                    ? 'Saving...'
-                    : 'सहेजा जा रहा है...'
-                  : locale === 'en'
-                    ? 'Unsaved'
-                    : 'अनसेव्ड'}
+                {preflightStatus?.overallStatus === 'green'
+                  ? '🟢'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? '🟡'
+                    : preflightStatus?.overallStatus === 'red'
+                      ? '🔴'
+                      : '🛡️'}
+              </span>
+              <span>
+                {preflightStatus?.overallStatus === 'green'
+                  ? locale === 'en' ? 'Preflight OK' : 'प्रीफ़्लाइट'
+                  : preflightStatus?.overallStatus === 'yellow'
+                    ? `⚠ ${preflightStatus.warningCount}`
+                    : preflightStatus?.overallStatus === 'red'
+                      ? `✖ ${preflightStatus.blockerCount}`
+                      : locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'}
               </span>
             </button>
-          ) : (
-            <span
-              data-testid="autosave-status-badge"
-              title={locale === 'en' ? 'All changes saved locally' : 'सभी बदलाव स्वतः सहेजे गए हैं'}
+          )}
+
+          {/* Primary CTA: PDF Download */}
+          <button
+            data-testid="btn-export-pdf"
+            onClick={onExportPdf}
+            disabled={isExportingPdf}
+            title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
+            style={{
+              backgroundColor: isExportingPdf ? '#991B1B' : colors.pressRed || '#DC2626',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '5px 12px',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              cursor: isExportingPdf ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+            }}
+          >
+            <span style={{ fontSize: '12px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
+            <span>
+              {isExportingPdf
+                ? locale === 'en' ? 'Exporting...' : 'डाउनलोड...'
+                : locale === 'en' ? 'PDF Download' : 'PDF डाउनलोड'}
+            </span>
+          </button>
+
+          <LanguageSelector variant="pill" />
+
+          {onToggleInspector && (
+            <button
+              onClick={onToggleInspector}
+              title={
+                isInspectorOpen
+                  ? locale === 'en' ? 'Hide inspector panel' : 'पैनल छिपाएं'
+                  : locale === 'en' ? 'Show inspector panel' : 'पैनल दिखाएं'
+              }
               style={{
+                backgroundColor: isInspectorOpen ? '#36322E' : 'transparent',
+                border: '1px solid',
+                borderColor: isInspectorOpen ? colors.pressRed || '#DC2626' : '#3D3835',
+                color: isInspectorOpen ? '#FAF8F5' : '#A8A29E',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                padding: '4px 8px',
                 fontSize: '11px',
-                color: '#34D399',
-                flexShrink: 0,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3px',
+                gap: '4px',
+                flexShrink: 0,
               }}
             >
-              <span>✓</span>
-              <span>{locale === 'en' ? 'Saved' : 'स्वतः सहेजा गया'}</span>
-            </span>
+              <span>⚙</span>
+              <span>{locale === 'en' ? 'Panel' : 'पैनल'}</span>
+            </button>
           )}
         </div>
       </div>
 
-      {/* ========================================================
-       * CENTER: Page Switcher, Paper Standard & Zoom
-       * ======================================================== */}
+      {/* ════════════════════════════════════════════════════════
+       * ROW 2 — Undo/Redo | Pages | Zoom | Mode | Masthead | PageSetup | Templates | 278 | Preflight | PDF | Tools▼
+       * ════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
+          padding: '0 12px',
+          height: '40px',
           gap: '6px',
-          backgroundColor: '#262422',
-          border: '1px solid #3D3835',
-          padding: '2px 8px',
-          borderRadius: '3px',
+          whiteSpace: 'nowrap',
+          overflowX: 'visible',
+          overflowY: 'visible',
           flexShrink: 0,
+          position: 'relative',
         }}
       >
-        {/* Undo / Redo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {/* ── Undo / Redo ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
           <button
             onClick={onUndo}
             disabled={!canUndo}
@@ -406,9 +590,10 @@ export const TopBar: React.FC<TopBarProps> = ({
               border: 'none',
               color: canUndo ? '#FAF8F5' : '#57534E',
               cursor: canUndo ? 'pointer' : 'not-allowed',
-              padding: '2px 4px',
-              fontSize: '13px',
+              padding: '4px 6px',
+              fontSize: '15px',
               fontWeight: 700,
+              borderRadius: '4px',
             }}
           >
             ↶
@@ -422,105 +607,108 @@ export const TopBar: React.FC<TopBarProps> = ({
               border: 'none',
               color: canRedo ? '#FAF8F5' : '#57534E',
               cursor: canRedo ? 'pointer' : 'not-allowed',
-              padding: '2px 4px',
-              fontSize: '13px',
+              padding: '4px 6px',
+              fontSize: '15px',
               fontWeight: 700,
+              borderRadius: '4px',
             }}
           >
             ↷
           </button>
         </div>
 
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
+        <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
 
-        <button
-          disabled={currentPageNumber <= 1}
-          onClick={() => onSelectPage(currentPageNumber - 1)}
-          title={locale === 'en' ? 'Previous page' : 'पिछला पेज'}
+        {/* ── Page Navigation ── */}
+        <div
           style={{
-            background: 'transparent',
-            border: 'none',
-            color: currentPageNumber <= 1 ? '#57534E' : '#E6E0D5',
-            cursor: currentPageNumber <= 1 ? 'not-allowed' : 'pointer',
-            padding: '2px 4px',
-            fontSize: '11px',
-          }}
-        >
-          ◀
-        </button>
-
-        <span
-          style={{
-            fontSize: '11.5px',
-            color: '#FAF8F5',
-            fontWeight: 600,
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            backgroundColor: '#262422',
+            border: '1px solid #3D3835',
+            borderRadius: '4px',
+            padding: '2px 6px',
+            flexShrink: 0,
           }}
         >
-          <span>
-            {currentPageNumber} / {totalPages}
+          <button
+            disabled={currentPageNumber <= 1}
+            onClick={() => onSelectPage(currentPageNumber - 1)}
+            title={locale === 'en' ? 'Previous page' : 'पिछला पेज'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: currentPageNumber <= 1 ? '#57534E' : '#E6E0D5',
+              cursor: currentPageNumber <= 1 ? 'not-allowed' : 'pointer',
+              padding: '2px 4px',
+              fontSize: '12px',
+            }}
+          >
+            ◀
+          </button>
+          <span
+            style={{
+              fontSize: '11.5px',
+              color: '#FAF8F5',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>{currentPageNumber} / {totalPages}</span>
+            {isPageFull && (
+              <span
+                title={locale === 'en' ? 'Page is full!' : 'पेज भर चुका है!'}
+                style={{
+                  fontSize: '9px',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  backgroundColor: '#dc2626',
+                  color: '#fff',
+                  fontWeight: 700,
+                }}
+              >
+                FULL
+              </span>
+            )}
           </span>
-          {isPageFull && (
-            <span
-              title={
-                locale === 'en'
-                  ? 'Page is full! Add a new page for additional content.'
-                  : 'पेज भर चुका है! नई सामग्री के लिए नया पेज जोड़ें।'
-              }
-              style={{
-                fontSize: '9.5px',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                backgroundColor: '#dc2626',
-                color: '#ffffff',
-                fontWeight: 700,
-                letterSpacing: '0.4px',
-                lineHeight: 1.2,
-              }}
-            >
-              FULL
-            </span>
-          )}
-        </span>
+          <button
+            disabled={currentPageNumber >= totalPages}
+            onClick={() => onSelectPage(currentPageNumber + 1)}
+            title={locale === 'en' ? 'Next page' : 'अगला पेज'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: currentPageNumber >= totalPages ? '#57534E' : '#E6E0D5',
+              cursor: currentPageNumber >= totalPages ? 'not-allowed' : 'pointer',
+              padding: '2px 4px',
+              fontSize: '12px',
+            }}
+          >
+            ▶
+          </button>
+          <span
+            style={{
+              fontSize: '10px',
+              color: '#A8A29E',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+              backgroundColor: '#1C1917',
+              padding: '2px 5px',
+              borderRadius: '2px',
+              marginLeft: '4px',
+            }}
+          >
+            {pageSize}
+          </span>
+        </div>
 
-        <button
-          disabled={currentPageNumber >= totalPages}
-          onClick={() => onSelectPage(currentPageNumber + 1)}
-          title={locale === 'en' ? 'Next page' : 'अगला पेज'}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: currentPageNumber >= totalPages ? '#57534E' : '#E6E0D5',
-            cursor: currentPageNumber >= totalPages ? 'not-allowed' : 'pointer',
-            padding: '2px 4px',
-            fontSize: '11px',
-          }}
-        >
-          ▶
-        </button>
+        <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
 
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
-
-        <span
-          style={{
-            fontSize: '10px',
-            color: '#A8A29E',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            backgroundColor: '#1C1917',
-            padding: '2px 5px',
-            borderRadius: '2px',
-          }}
-        >
-          {pageSize}
-        </span>
-
-        <div style={{ height: '12px', width: '1px', backgroundColor: '#3D3835' }} />
-
-        {/* Inline Zoom Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+        {/* ── Zoom Controls ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
           <button
             onClick={() => onScaleChange(Math.max(0.25, Math.round((scale - 0.1) * 100) / 100))}
             title={t.common.zoomOut}
@@ -528,17 +716,15 @@ export const TopBar: React.FC<TopBarProps> = ({
               backgroundColor: '#1C1917',
               border: '1px solid #3D3835',
               color: '#E6E0D5',
-              borderRadius: '2px',
-              fontSize: '12px',
+              borderRadius: '4px',
+              fontSize: '13px',
               fontWeight: 700,
-              padding: '1px 6px',
+              padding: '2px 8px',
               cursor: 'pointer',
-              lineHeight: 1.2,
             }}
           >
             −
           </button>
-
           <select
             value={roundedScale}
             onChange={(e) => onScaleChange(parseFloat(e.target.value))}
@@ -546,12 +732,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               backgroundColor: '#1C1917',
               color: '#FAF8F5',
               border: '1px solid #3D3835',
-              borderRadius: '2px',
+              borderRadius: '4px',
               fontSize: '11px',
               fontWeight: 600,
-              padding: '2px 4px',
+              padding: '3px 4px',
               cursor: 'pointer',
               outline: 'none',
+              minWidth: '72px',
             }}
           >
             {!standardScales.includes(roundedScale) && (
@@ -565,7 +752,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               </option>
             ))}
           </select>
-
           <button
             onClick={() => onScaleChange(Math.min(3.0, Math.round((scale + 0.1) * 100) / 100))}
             title={t.common.zoomIn}
@@ -573,17 +759,15 @@ export const TopBar: React.FC<TopBarProps> = ({
               backgroundColor: '#1C1917',
               border: '1px solid #3D3835',
               color: '#E6E0D5',
-              borderRadius: '2px',
-              fontSize: '12px',
+              borderRadius: '4px',
+              fontSize: '13px',
               fontWeight: 700,
-              padding: '1px 6px',
+              padding: '2px 8px',
               cursor: 'pointer',
-              lineHeight: 1.2,
             }}
           >
             +
           </button>
-
           {onFitPage && (
             <button
               onClick={onFitPage}
@@ -592,263 +776,150 @@ export const TopBar: React.FC<TopBarProps> = ({
                 backgroundColor: 'transparent',
                 border: '1px solid #3D3835',
                 color: '#A8A29E',
-                borderRadius: '2px',
+                borderRadius: '4px',
                 fontSize: '10.5px',
                 fontWeight: 600,
-                padding: '2px 5px',
+                padding: '3px 7px',
                 cursor: 'pointer',
-                marginLeft: '2px',
               }}
             >
-              {locale === 'en' ? 'Fit' : 'पेज'}
+              {locale === 'en' ? 'Fit' : 'फ़िट'}
+            </button>
+          )}
+          {onFitWidth && (
+            <button
+              onClick={onFitWidth}
+              title={locale === 'en' ? 'Fit width' : 'चौड़ाई फिट'}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #3D3835',
+                color: '#A8A29E',
+                borderRadius: '4px',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                padding: '3px 7px',
+                cursor: 'pointer',
+              }}
+            >
+              ↔
             </button>
           )}
         </div>
-      </div>
 
-      {/* ========================================================
-       * RIGHT: MODE TOGGLE, TEMPLATE GALLERY, HERO PDF BUTTON & Tools
-       * ======================================================== */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-        {/* MODE TOGGLE PILL: SIMPLE MODE vs PRO MODE */}
-        {onToggleEditorMode && (
-          <button
-            onClick={onToggleEditorMode}
-            data-testid="topbar-btn-editor-mode"
-            title={
-              editorMode === 'simple'
-                ? 'पेशेवर संपादक पर जाएं (Switch to Professional Mode)'
-                : 'सरल मोड पर जाएं (Switch to Simple Mode)'
-            }
-            style={{
-              backgroundColor: editorMode === 'simple' ? '#166534' : '#1e293b',
-              color: '#ffffff',
-              border: editorMode === 'simple' ? '1px solid #22c55e' : '1px solid #475569',
-              borderRadius: '20px',
-              padding: '5px 12px',
-              fontSize: '11.5px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              boxShadow: editorMode === 'simple' ? '0 1px 4px rgba(34, 197, 94, 0.3)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span>{editorMode === 'simple' ? '✨ सरल मोड' : '⚙️ पेशेवर मोड'}</span>
-          </button>
-        )}
+        {/* ── RIGHT cluster of Row 2: Design Library | Templates | Masthead | Page Setup | Tools ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
+          {/* ── 278 DESIGN LIBRARY ── */}
+          {onOpenDesignLibrary && (
+            <button
+              onClick={onOpenDesignLibrary}
+              data-testid="topbar-btn-design-library"
+              title="278 संदर्भ डिज़ाइनों का संपादन-योग्य संग्रह"
+              style={{
+                backgroundColor: '#1e3a8a',
+                color: '#ffffff',
+                border: '1px solid #3b82f6',
+                borderRadius: '4px',
+                padding: '4px 10px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                flexShrink: 0,
+                boxShadow: '0 1px 3px rgba(30, 58, 138, 0.4)',
+              }}
+            >
+              <span>🎨</span>
+              <span>278 डिज़ाइन</span>
+            </button>
+          )}
 
-        {/* TEMPLATE GALLERY BUTTON (DESIGN BADLEIN) */}
-        {onOpenTemplateGallery && (
-          <button
-            onClick={onOpenTemplateGallery}
-            data-testid="topbar-btn-template-gallery"
-            title={locale === 'en' ? 'Open Template Library' : 'रेडीमेड अखबार टेम्पलेट चुनें'}
-            style={{
-              backgroundColor: '#b91c1c',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 4px rgba(185, 28, 28, 0.25)',
-              transition: 'background 0.15s ease',
-            }}
-          >
-            <span style={{ fontSize: '13px' }}>📰</span>
-            <span>{locale === 'en' ? 'Templates' : 'डिजाइन बदलें'}</span>
-          </button>
-        )}
+          {/* ── TEMPLATE GALLERY ── */}
+          {onOpenTemplateGallery && (
+            <button
+              onClick={onOpenTemplateGallery}
+              data-testid="topbar-btn-template-gallery"
+              title={locale === 'en' ? 'Open Template Library' : 'रेडीमेड टेम्पलेट चुनें'}
+              style={{
+                backgroundColor: '#262422',
+                color: '#E6E0D5',
+                border: '1px solid #3D3835',
+                borderRadius: '4px',
+                padding: '4px 9px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                flexShrink: 0,
+              }}
+            >
+              <span>📰</span>
+              <span>{locale === 'en' ? 'Templates' : 'टेम्पलेट'}</span>
+            </button>
+          )}
 
-        {/* PRIMARY HERO PDF EXPORT BUTTON - POSITIONED PROMINENTLY */}
-        <button
-          data-testid="btn-export-pdf"
-          onClick={onExportPdf}
-          disabled={isExportingPdf}
-          title={
-            locale === 'en'
-              ? 'Download print-ready vector PDF'
-              : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'
-          }
-          style={{
-            backgroundColor: isExportingPdf ? '#991B1B' : colors.pressRed || '#DC2626',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '6px 14px',
-            fontSize: '12px',
-            fontWeight: 800,
-            cursor: isExportingPdf ? 'wait' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-            flexShrink: 0,
-            letterSpacing: '0.02em',
-          }}
-        >
-          <span style={{ fontSize: '13px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
-          <span>
-            {isExportingPdf
-              ? locale === 'en'
-                ? 'Exporting...'
-                : 'डाउनलोड...'
-              : locale === 'en'
-                ? 'Download PDF'
-                : 'PDF डाउनलोड'}
-          </span>
-        </button>
+          {/* ── MASTHEAD DESIGNER ── */}
+          {onOpenMastheadDesigner && (
+            <button
+              onClick={onOpenMastheadDesigner}
+              data-testid="topbar-btn-masthead-designer"
+              title={locale === 'en' ? 'Masthead & Header Designer' : 'मास्टहेड डिज़ाइनर'}
+              style={{
+                backgroundColor: '#262422',
+                color: '#E6E0D5',
+                border: '1px solid #3D3835',
+                borderRadius: '4px',
+                padding: '4px 9px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                flexShrink: 0,
+              }}
+            >
+              <span>🗞️</span>
+              <span>{locale === 'en' ? 'Masthead' : 'मास्टहेड'}</span>
+            </button>
+          )}
 
-        {/* Fallback Browser Print / Save as PDF Button */}
-        {onPrintPdf && (
-          <button
-            data-testid="btn-print-pdf"
-            onClick={onPrintPdf}
-            disabled={isPrintingPdf}
-            title={
-              locale === 'en'
-                ? 'Browser Print / Save as PDF (Fallback without renderer)'
-                : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें (बिना सर्वर)'
-            }
-            style={{
-              backgroundColor: '#1e293b',
-              color: '#f8fafc',
-              border: '1px solid #475569',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: isPrintingPdf ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontSize: '13px' }}>🖨️</span>
-            <span>{locale === 'en' ? 'Print / PDF' : 'प्रिंट / PDF'}</span>
-          </button>
-        )}
+          {/* ── PAGE SETUP ── */}
+          {onOpenPageSetup && (
+            <button
+              onClick={onOpenPageSetup}
+              data-testid="topbar-btn-pagesetup"
+              title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार'}
+              style={{
+                backgroundColor: '#262422',
+                color: '#E6E0D5',
+                border: '1px solid #3D3835',
+                borderRadius: '4px',
+                padding: '4px 9px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                flexShrink: 0,
+              }}
+            >
+              <span>📐</span>
+              <span>{locale === 'en' ? 'Page Setup' : 'पेज सेटअप'}</span>
+            </button>
+          )}
 
-        {/* Preflight Validation Status Button */}
-        {onOpenPreflight && (
-          <button
-            data-testid="btn-preflight-status"
-            onClick={onOpenPreflight}
-            title={
-              locale === 'en'
-                ? 'Open preflight validation report'
-                : 'प्रीफ़्लाइट जांच रिपोर्ट खोलें'
-            }
-            style={{
-              backgroundColor:
-                preflightStatus?.overallStatus === 'green'
-                  ? '#143522'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#3B280A'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#3D1414'
-                      : '#262422',
-              color:
-                preflightStatus?.overallStatus === 'green'
-                  ? '#86EFAC'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#FDE047'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#FCA5A5'
-                      : '#E6E0D5',
-              border: `1px solid ${
-                preflightStatus?.overallStatus === 'green'
-                  ? '#166534'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? '#854D0E'
-                    : preflightStatus?.overallStatus === 'red'
-                      ? '#991B1B'
-                      : '#3D3835'
-              }`,
-              borderRadius: '4px',
-              padding: '5px 9px',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexShrink: 0,
-            }}
-          >
-            <span>
-              {preflightStatus?.overallStatus === 'green'
-                ? '🟢'
-                : preflightStatus?.overallStatus === 'yellow'
-                  ? '🟡'
-                  : preflightStatus?.overallStatus === 'red'
-                    ? '🔴'
-                    : '🛡️'}
-            </span>
-            <span>
-              {preflightStatus?.overallStatus === 'green'
-                ? locale === 'en'
-                  ? 'Preflight'
-                  : 'प्रीफ़्लाइट'
-                : preflightStatus?.overallStatus === 'yellow'
-                  ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.warningCount})`
-                  : preflightStatus?.overallStatus === 'red'
-                    ? `${locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'} (${preflightStatus.blockerCount})`
-                    : locale === 'en'
-                      ? 'Preflight'
-                      : 'प्रीफ़्लाइट'}
-            </span>
-          </button>
-        )}
-
-        {/* Publishing Studio */}
-        {onOpenPublishing && (
-          <button
-            data-testid="btn-publishing-studio"
-            onClick={onOpenPublishing}
-            title={
-              locale === 'en'
-                ? 'Master templates and daily editions'
-                : 'मास्टर टेम्पलेट एवं दैनिक संस्करण प्रबंधन'
-            }
-            style={{
-              backgroundColor: '#1E293B',
-              color: '#38BDF8',
-              border: '1px solid #0284C7',
-              borderRadius: '4px',
-              padding: '5px 9px',
-              fontSize: '11.5px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <span>📰</span>
-            <span>{locale === 'en' ? 'Publishing' : 'प्रकाशन'}</span>
-          </button>
-        )}
-
-        {/* Tools Dropdown Menu (Secondary & Advanced Controls) */}
-        <div style={{ position: 'relative' }} ref={toolsMenuRef}>
+          {/* ── TOOLS DROPDOWN ── */}
+          <div style={{ position: 'relative', flexShrink: 0 }} ref={toolsMenuRef}>
           <button
             onClick={() => setIsToolsOpen((prev) => !prev)}
             aria-expanded={isToolsOpen}
             aria-haspopup="true"
-            title={
-              locale === 'en'
-                ? 'Presets, layout, theme, backup & print tools'
-                : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'
-            }
+            title={locale === 'en' ? 'Presets, layout, theme, backup & print tools' : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'}
             style={{
               backgroundColor: isToolsOpen ? '#36322E' : '#262422',
               color: isToolsOpen ? '#FAF8F5' : '#E6E0D5',
@@ -890,27 +961,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                 gap: '2px',
               }}
             >
+              {/* Newspaper Presets */}
               <button
-                onClick={() => {
-                  onOpenTemplates();
-                  setIsToolsOpen(false);
-                }}
+                onClick={() => { onOpenTemplates(); setIsToolsOpen(false); }}
                 data-testid="topbar-btn-presets"
-                title={locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 10px',
-                  fontSize: '11.5px',
-                  color: '#FAF8F5',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                }}
+                style={menuItemBase}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
@@ -922,26 +977,9 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onOpenPageSetup && (
                 <button
-                  onClick={() => {
-                    onOpenPageSetup();
-                    setIsToolsOpen(false);
-                  }}
-                  data-testid="topbar-btn-pagesetup"
-                  title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार व विन्यास'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onOpenPageSetup(); setIsToolsOpen(false); }}
+                  data-testid="topbar-tools-pagesetup"
+                  style={menuItemBase}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -954,28 +992,9 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onOpenMastheadDesigner && (
                 <button
-                  onClick={() => {
-                    onOpenMastheadDesigner();
-                    setIsToolsOpen(false);
-                  }}
-                  data-testid="topbar-btn-masthead-designer"
-                  title={
-                    locale === 'en' ? 'Masthead & Header Designer' : 'मास्टहेड डिज़ाइनर एवं प्रीसेट'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onOpenMastheadDesigner(); setIsToolsOpen(false); }}
+                  data-testid="topbar-tools-masthead"
+                  style={menuItemBase}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -988,27 +1007,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onAutoFit && (
                 <button
-                  onClick={() => {
-                    onAutoFit();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    locale === 'en' ? 'Balance columns on this page' : 'पेज के कॉलम संतुलित करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#38BDF8',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onAutoFit(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: '#38BDF8' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1022,29 +1022,8 @@ export const TopBar: React.FC<TopBarProps> = ({
               {onAutoAllocateOverflow && (
                 <button
                   data-testid="btn-auto-overflow"
-                  onClick={() => {
-                    onAutoAllocateOverflow();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    locale === 'en'
-                      ? 'Auto-allocate story overflow across multiple pages'
-                      : 'अतिप्रवाहित खबरों को स्वतः अगले पृष्ठों पर प्रवाहित करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FCA5A5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onAutoAllocateOverflow(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: '#FCA5A5' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1057,27 +1036,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onOpenTheme && (
                 <button
-                  onClick={() => {
-                    onOpenTheme();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    locale === 'en' ? 'Customize theme and colors' : 'अख़बार का रंग व थीम बदलें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#D8B4FE',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onOpenTheme(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: '#D8B4FE' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1091,70 +1051,24 @@ export const TopBar: React.FC<TopBarProps> = ({
               {onToggleFreeLayout && (
                 <button
                   data-testid="toggle-free-layout-button"
-                  onClick={() => {
-                    onToggleFreeLayout();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    useFreeLayout
-                      ? locale === 'en'
-                        ? 'Switch to auto-flow mode'
-                        : 'ऑटो-फ्लो मोड पर स्विच करें'
-                      : locale === 'en'
-                        ? 'Switch to free placement mode'
-                        : 'मुक्त लेआउट मोड सक्षम करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: useFreeLayout ? '#D8B4FE' : '#A8A29E',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onToggleFreeLayout(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: useFreeLayout ? '#D8B4FE' : '#A8A29E' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>🔲</span>
                   <span style={{ flex: 1 }}>
                     {useFreeLayout
-                      ? locale === 'en'
-                        ? 'Layout: Free Mode ✓'
-                        : 'लेआउट: मुक्त विन्यास ✓'
-                      : locale === 'en'
-                        ? 'Layout: Auto Grid'
-                        : 'लेआउट: ऑटो ग्रिड'}
+                      ? locale === 'en' ? 'Layout: Free Mode ✓' : 'लेआउट: मुक्त विन्यास ✓'
+                      : locale === 'en' ? 'Layout: Auto Grid' : 'लेआउट: ऑटो ग्रिड'}
                   </span>
                 </button>
               )}
 
               {onFitWidth && (
                 <button
-                  onClick={() => {
-                    onFitWidth();
-                    setIsToolsOpen(false);
-                  }}
-                  title={locale === 'en' ? 'Fit page width' : 'पेज की चौड़ाई स्क्रीन पर फ़िट करें'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onFitWidth(); setIsToolsOpen(false); }}
+                  style={menuItemBase}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1167,45 +1081,16 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onTogglePhysicalCoordinates && (
                 <button
-                  onClick={() => {
-                    onTogglePhysicalCoordinates();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    usePhysicalCanvasCoordinates
-                      ? locale === 'en'
-                        ? 'Switch to legacy 800px'
-                        : '800px लेगसी पर स्विच करें'
-                      : locale === 'en'
-                        ? 'Switch to 1:1 physical mm'
-                        : '1:1 भौतिक माप सक्रिय करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onTogglePhysicalCoordinates(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#FAF8F5' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <span style={{ fontSize: '13px' }}>📐</span>
                   <span style={{ flex: 1 }}>
                     {usePhysicalCanvasCoordinates
-                      ? locale === 'en'
-                        ? 'Canvas: 1:1 mm (WYSIWYG) ✓'
-                        : 'कैनवस: 1:1 mm ✓'
-                      : locale === 'en'
-                        ? 'Canvas: 800px Mode'
-                        : 'कैनवस: 800px'}
+                      ? locale === 'en' ? 'Canvas: 1:1 mm (WYSIWYG) ✓' : 'कैनवस: 1:1 mm ✓'
+                      : locale === 'en' ? 'Canvas: 800px Mode' : 'कैनवस: 800px'}
                   </span>
                 </button>
               )}
@@ -1213,30 +1098,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               {onPrintPdf && (
                 <button
                   data-testid="btn-print-pdf"
-                  onClick={() => {
-                    onPrintPdf();
-                    setIsToolsOpen(false);
-                  }}
+                  onClick={() => { onPrintPdf(); setIsToolsOpen(false); }}
                   disabled={isPrintingPdf}
-                  title={
-                    locale === 'en'
-                      ? 'Browser print / Save as PDF'
-                      : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isPrintingPdf ? 'wait' : 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  style={{ ...menuItemBase, cursor: isPrintingPdf ? 'wait' : 'pointer' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1247,33 +1111,27 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </button>
               )}
 
+              {onOpenPublishing && (
+                <button
+                  data-testid="btn-publishing-studio"
+                  onClick={() => { onOpenPublishing(); setIsToolsOpen(false); }}
+                  style={{ ...menuItemBase, color: '#38BDF8' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ fontSize: '13px' }}>📰</span>
+                  <span style={{ flex: 1 }}>
+                    {locale === 'en' ? 'Publishing Studio' : 'प्रकाशन स्टूडियो'}
+                  </span>
+                </button>
+              )}
+
               <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
 
               {onExportProjectJson && (
                 <button
-                  onClick={() => {
-                    onExportProjectJson();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    locale === 'en'
-                      ? 'Export project backup JSON'
-                      : 'प्रोजेक्ट का बैकअप JSON डाउनलोड करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { onExportProjectJson(); setIsToolsOpen(false); }}
+                  style={menuItemBase}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1286,29 +1144,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {onImportProjectJson && (
                 <button
-                  onClick={() => {
-                    jsonInputRef.current?.click();
-                    setIsToolsOpen(false);
-                  }}
-                  title={
-                    locale === 'en'
-                      ? 'Import project from JSON backup'
-                      : 'बैकअप JSON से प्रोजेक्ट लोड करें'
-                  }
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    color: '#FAF8F5',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
+                  onClick={() => { jsonInputRef.current?.click(); setIsToolsOpen(false); }}
+                  style={menuItemBase}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -1322,25 +1159,8 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
 
               <button
-                onClick={() => {
-                  onNewPublication();
-                  setIsToolsOpen(false);
-                }}
-                title={locale === 'en' ? 'Create new edition' : 'नया अख़बार बनाएं'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 10px',
-                  fontSize: '11.5px',
-                  color: '#FAF8F5',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                }}
+                onClick={() => { onNewPublication(); setIsToolsOpen(false); }}
+                style={menuItemBase}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
@@ -1349,25 +1169,8 @@ export const TopBar: React.FC<TopBarProps> = ({
               </button>
 
               <button
-                onClick={() => {
-                  onViewModeChange('landing');
-                  setIsToolsOpen(false);
-                }}
-                title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 10px',
-                  fontSize: '11.5px',
-                  color: '#A8A29E',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                }}
+                onClick={() => { onViewModeChange('landing'); setIsToolsOpen(false); }}
+                style={{ ...menuItemBase, color: '#A8A29E' }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
@@ -1379,6 +1182,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             </div>
           )}
         </div>
+      </div>
 
         {/* Hidden File Input for JSON Backup Import */}
         {onImportProjectJson && (
@@ -1395,43 +1199,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               }
             }}
           />
-        )}
-
-        {/* Language Selector */}
-        <LanguageSelector variant="pill" />
-
-        {/* Inspector Panel Toggle Button */}
-        {onToggleInspector && (
-          <button
-            onClick={onToggleInspector}
-            title={
-              isInspectorOpen
-                ? locale === 'en'
-                  ? 'Hide inspector panel'
-                  : 'पैनल छिपाएं'
-                : locale === 'en'
-                  ? 'Show inspector panel'
-                  : 'पैनल दिखाएं'
-            }
-            style={{
-              backgroundColor: isInspectorOpen ? '#36322E' : 'transparent',
-              border: '1px solid',
-              borderColor: isInspectorOpen ? colors.pressRed || '#DC2626' : '#3D3835',
-              color: isInspectorOpen ? '#FAF8F5' : '#A8A29E',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              padding: '5px 8px',
-              fontSize: '11.5px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexShrink: 0,
-            }}
-          >
-            <span>⚙</span>
-            <span className="hidden sm:inline">{locale === 'en' ? 'Panel' : 'पैनल'}</span>
-          </button>
         )}
       </div>
     </header>

@@ -84,7 +84,7 @@ export interface NewspaperCanvasProps {
   onAddBlock?: (blockTemplate: Partial<Article>) => void;
   onAddPage?: () => void;
   isMastheadSelected?: boolean;
-  onSelectMasthead?: (tab?: 'title' | 'meta' | 'rules') => void;
+  onSelectMasthead?: (tab?: 'title' | 'subheaders' | 'meta' | 'rules') => void;
   onUpdateArticleFrame?: (articleId: string, frame: FrameMm) => void;
   onSwapArticles?: (idA: string, idB: string) => void;
   onMoveArticleToPage?: (articleId: string, targetPageIndex: number) => void;
@@ -897,7 +897,59 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
               <span>↳ {article.continuation.jumpFromLabel || 'अग्र पृष्ठ से आगे'}</span>
             </div>
           )}
-          {usePhysicalCanvasCoordinates ? (
+          {article.backgroundColor === '#0284c7' && article.subheadline ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '4px 10px',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            >
+              <h2
+                onClick={(e) => {
+                  if (onSelectElementPart) {
+                    e.stopPropagation();
+                    onSelectArticle(article.id);
+                    onSelectElementPart(article.id, 'headline');
+                  }
+                }}
+                style={{
+                  margin: 0,
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: article.typography?.headlineFontSizePt ? `${article.typography.headlineFontSizePt}pt` : '13pt',
+                  fontFamily: article.typography?.headlineFontFamily || "'Mukta', sans-serif",
+                  cursor: onSelectElementPart ? 'pointer' : undefined,
+                  outline: isSelected && selectedElementPart === 'headline' ? '2px solid #ffffff' : undefined,
+                }}
+              >
+                {article.headline}
+              </h2>
+              <p
+                onClick={(e) => {
+                  if (onSelectElementPart) {
+                    e.stopPropagation();
+                    onSelectArticle(article.id);
+                    onSelectElementPart(article.id, 'subheadline');
+                  }
+                }}
+                style={{
+                  margin: 0,
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: article.typography?.subheadlineFontSizePt ? `${article.typography.subheadlineFontSizePt}pt` : '12pt',
+                  fontFamily: article.typography?.subheadlineFontFamily || "'Noto Serif Devanagari', serif",
+                  cursor: onSelectElementPart ? 'pointer' : undefined,
+                  outline: isSelected && selectedElementPart === 'subheadline' ? '2px solid #ffffff' : undefined,
+                }}
+              >
+                {article.subheadline}
+              </p>
+            </div>
+          ) : usePhysicalCanvasCoordinates ? (
             <>
               {article.subheadline && (
                 <p
@@ -1225,111 +1277,176 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             ))}
           </div>
         ) : article.elementType === 'advertisement' ? (
-          <div style={{ margin: '4px 0' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: usePhysicalCanvasCoordinates ? '6.5pt' : '9px',
-                textTransform: 'uppercase',
-                color: '#666',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                borderBottom: '1px solid #ccc',
-                paddingBottom: '2px',
-                marginBottom: '4px',
-              }}
-            >
-              <span>विज्ञापन / Advertisement</span>
-              {article.advertisementData?.sponsor && (
-                <span>{article.advertisementData.sponsor}</span>
+          <div style={{ margin: '4px 0', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <div>
+              {/* Optional Red Underline Accent Bar */}
+              {(article.advertisementData?.styleVariant === 'bordered-gold' ||
+                article.advertisementData?.styleVariant === 'minimal-grey' ||
+                article.borders?.top?.color === '#f59e0b' ||
+                article.borders?.top?.color === '#cbd5e1') && (
+                <div
+                  style={{
+                    width: '60px',
+                    height: '3.5px',
+                    backgroundColor: '#dc2626',
+                    margin: '2px auto 8px auto',
+                    borderRadius: '1px',
+                  }}
+                />
+              )}
+              {article.body && (
+                <p
+                  style={{
+                    margin: '4px 0',
+                    fontSize: usePhysicalCanvasCoordinates
+                      ? `${physicalMetrics.bodyFontSizePt}pt`
+                      : article.typography?.bodyFontSizePt
+                        ? `${article.typography.bodyFontSizePt}pt`
+                        : '12px',
+                    lineHeight: 1.45,
+                    color: article.customColors?.bodyColor || '#334155',
+                    textAlign: (article.typography?.bodyTextAlign || article.typography?.textAlign || 'center') as React.CSSProperties['textAlign'],
+                    fontFamily: article.typography?.bodyFontFamily || "'Hind', sans-serif",
+                  }}
+                >
+                  {article.body}
+                </p>
               )}
             </div>
-            {article.body && (
-              <p
-                style={{
-                  margin: '4px 0',
-                  fontSize: usePhysicalCanvasCoordinates
-                    ? `${physicalMetrics.bodyFontSizePt}pt`
-                    : '12px',
-                  lineHeight: 1.4,
-                  color: '#222',
-                }}
-              >
-                {article.body}
-              </p>
-            )}
-            {(article.advertisementData?.phone || article.advertisementData?.callToAction) && (
-              <div
-                style={{
-                  marginTop: '6px',
-                  padding: '4px 8px',
-                  backgroundColor: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '3px',
-                  fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
-                  fontWeight: 700,
-                  color: '#0f172a',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <span>{article.advertisementData.callToAction || 'संपर्क करें:'}</span>
-                <span>{article.advertisementData.phone}</span>
-              </div>
+            {(article.advertisementData?.phone || article.advertisementData?.callToAction || article.advertisementData?.email) && (
+              article.advertisementData?.styleVariant === 'bordered-gold' ? (
+                <div
+                  style={{
+                    marginTop: '8px',
+                    padding: '8px 10px',
+                    backgroundColor: '#f59e0b',
+                    color: '#ffffff',
+                    borderRadius: '3px',
+                    textAlign: 'center',
+                    boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {article.advertisementData.callToAction || 'संपर्क करें'}
+                  </div>
+                  {article.advertisementData.phone && (
+                    <div style={{ fontSize: '15px', fontWeight: 900, marginTop: '2px', letterSpacing: '0.02em' }}>
+                      {article.advertisementData.phone}
+                    </div>
+                  )}
+                  {article.advertisementData.email && (
+                    <div style={{ fontSize: '10.5px', opacity: 0.95, marginTop: '2px' }}>
+                      {article.advertisementData.email}
+                    </div>
+                  )}
+                </div>
+              ) : article.advertisementData?.styleVariant === 'minimal-grey' ? (
+                <div
+                  style={{
+                    marginTop: '8px',
+                    paddingTop: '6px',
+                    borderTop: '1px solid #cbd5e1',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
+                    {article.advertisementData.callToAction || 'संपर्क करें'}
+                  </div>
+                  {article.advertisementData.phone && (
+                    <div style={{ fontSize: '14.5px', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+                      {article.advertisementData.phone}
+                    </div>
+                  )}
+                  {article.advertisementData.email && (
+                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
+                      {article.advertisementData.email}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    marginTop: '6px',
+                    padding: '4px 8px',
+                    backgroundColor: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '3px',
+                    fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>{article.advertisementData.callToAction || 'संपर्क करें:'}</span>
+                  <span>{article.advertisementData.phone}</span>
+                </div>
+              )
             )}
           </div>
         ) : article.elementType === 'rashifal' &&
           article.rashifalItems &&
           article.rashifalItems.length > 0 ? (
           <div
+            data-testid="rashifal-card-container"
             style={{
-              display: 'grid',
-              gridTemplateColumns: span >= 6 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+              display: span <= 2 ? 'flex' : 'grid',
+              flexDirection: span <= 2 ? 'column' : undefined,
+              gridTemplateColumns: span >= 6 ? 'repeat(3, 1fr)' : span >= 3 ? 'repeat(2, 1fr)' : undefined,
               gap: '6px',
               margin: '4px 0',
             }}
           >
-            {article.rashifalItems.map((rashi) => (
+            {article.rashifalItems.map((rashi, idx) => (
               <div
-                key={rashi.sign}
+                key={rashi.sign || idx}
+                data-testid={`rashifal-card-${idx}`}
                 style={{
                   border: '1px solid #e2e8f0',
                   borderRadius: '4px',
-                  padding: '5px',
-                  backgroundColor: '#fffdfa',
+                  padding: '6px 8px',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '6px',
                     borderBottom: '1px solid #f1f5f9',
-                    paddingBottom: '2px',
-                    marginBottom: '3px',
-                    fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '11px',
+                    paddingBottom: '3px',
+                    marginBottom: '4px',
+                    fontSize: usePhysicalCanvasCoordinates ? '8pt' : '11.5px',
                     fontWeight: 700,
-                    color: '#b45309',
+                    color: '#1e293b',
                   }}
                 >
-                  <span>{rashi.rashi}</span>
                   <span
                     style={{
-                      fontSize: usePhysicalCanvasCoordinates ? '7pt' : '10px',
-                      color: '#64748b',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      backgroundColor: '#fef3c7',
+                      color: '#b45309',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      flexShrink: 0,
                     }}
                   >
-                    ({rashi.sign})
+                    {rashi.sign}
                   </span>
+                  <span style={{ color: '#1e293b' }}>{rashi.rashi}</span>
                 </div>
                 <p
                   style={{
                     margin: 0,
-                    fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9.5px',
-                    lineHeight: 1.3,
+                    fontSize: usePhysicalCanvasCoordinates ? '7.5pt' : '10px',
+                    lineHeight: 1.45,
                     color: '#334155',
                   }}
                 >
@@ -1337,6 +1454,197 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                 </p>
               </div>
             ))}
+          </div>
+        ) : (article.elementType === 'calendar' || article.calendarData) ? (
+          <div
+            data-testid="calendar-container"
+            style={{
+              margin: '4px 0',
+              border: '1.5px solid #800020',
+              borderRadius: '3px',
+              overflow: 'hidden',
+              backgroundColor: '#fdfbf7',
+            }}
+          >
+            {/* Ornate Maroon Header */}
+            <div
+              style={{
+                backgroundColor: '#800020',
+                color: '#ffffff',
+                padding: '5px 8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: '9.5px', color: '#fef08a' }}>
+                {article.calendarData?.lunarInfo || 'पौष - माघ २०८२'}
+              </span>
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  fontFamily: "'Rozha One', serif",
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {article.calendarData?.monthName || 'जनवरी'} {article.calendarData?.year || 2026}
+              </span>
+              <span
+                style={{
+                  backgroundColor: '#b45309',
+                  color: '#ffffff',
+                  padding: '2px 5px',
+                  borderRadius: '2px',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                }}
+              >
+                {article.calendarData?.year || 2026}
+              </span>
+            </div>
+            {/* Weekday Row */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                backgroundColor: '#700018',
+                padding: '3px 0',
+                textAlign: 'center',
+                fontSize: '9.5px',
+                fontWeight: 700,
+                color: '#ffffff',
+              }}
+            >
+              <div style={{ color: '#fca5a5' }}>रवि</div>
+              <div>सोम</div>
+              <div>मंगल</div>
+              <div>बुध</div>
+              <div>गुरु</div>
+              <div>शुक्र</div>
+              <div>शनि</div>
+            </div>
+            {/* Days Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: '1px',
+                backgroundColor: '#e2e8f0',
+                padding: '1px',
+              }}
+            >
+              {(() => {
+                const startDay = article.calendarData?.startDayOfWeek ?? 4;
+                const total = article.calendarData?.totalDays ?? 31;
+                const festivals = article.calendarData?.festivals || [
+                  { day: 1, name: 'नव वर्ष' },
+                  { day: 14, name: 'मकर संक्रांति' },
+                  { day: 26, name: 'गणतंत्र दिवस' },
+                ];
+                const cells = [];
+                for (let i = 0; i < startDay; i++) {
+                  cells.push(<div key={`empty-${i}`} style={{ backgroundColor: '#f8fafc', minHeight: '28px' }} />);
+                }
+                for (let d = 1; d <= total; d++) {
+                  const col = (startDay + d - 1) % 7;
+                  const isSun = col === 0;
+                  const fest = festivals.find((f) => f.day === d);
+                  cells.push(
+                    <div
+                      key={`day-${d}`}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        minHeight: '28px',
+                        padding: '2px 3px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: 800,
+                          fontSize: '10px',
+                          color: isSun || fest ? '#dc2626' : '#1e293b',
+                        }}
+                      >
+                        {d}
+                      </span>
+                      {fest && (
+                        <span style={{ fontSize: '7px', color: '#b91c1c', fontWeight: 700, lineHeight: 1 }}>
+                          {fest.name}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+                return cells;
+              })()}
+            </div>
+          </div>
+        ) : article.elementType === 'footer-rule' ? (
+          <div
+            data-testid="cmyk-footer-rule"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '4px 8px',
+              margin: '4px 0',
+              borderTop: '2px double #94a3b8',
+              borderBottom: '2px double #94a3b8',
+              backgroundColor: '#ffffff',
+            }}
+          >
+            {/* Left CMYK registration dots */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00a8e8', display: 'inline-block' }} title="Cyan" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e01a4f', display: 'inline-block' }} title="Magenta" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'inline-block' }} title="Yellow" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#000000', display: 'inline-block' }} title="Black" />
+            </div>
+
+            {/* Center Folio text */}
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#334155', letterSpacing: '0.04em', textAlign: 'center', fontFamily: "'Noto Serif Devanagari', serif" }}>
+              {article.headline || 'जनवाणी समाचार डिजिटल संस्करण • पृष्ठ संख्या ०१ • बुधवार, 28 अक्टूबर 2026'}
+            </div>
+
+            {/* Right CMYK registration dots */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00a8e8', display: 'inline-block' }} title="Cyan" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e01a4f', display: 'inline-block' }} title="Magenta" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'inline-block' }} title="Yellow" />
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#000000', display: 'inline-block' }} title="Black" />
+            </div>
+          </div>
+        ) : article.elementType === 'section-pill' ? (
+          <div style={{ margin: '6px 0', textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <div style={{ flex: 1, height: '1.5px', backgroundColor: '#10b981' }} />
+              <div
+                data-testid="3d-section-pill"
+                style={{
+                  background: 'linear-gradient(180deg, #10b981 0%, #059669 60%, #047857 100%)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '13pt',
+                  fontFamily: "'Mukta', sans-serif",
+                  padding: '4px 20px',
+                  borderRadius: '9999px',
+                  boxShadow: '0 2px 4px rgba(5, 150, 105, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {article.headline || 'न्यूज़ ब्रीफ'}
+              </div>
+              <div style={{ flex: 1, height: '1.5px', backgroundColor: '#10b981' }} />
+            </div>
+            {article.subheadline && (
+              <div style={{ fontSize: '9.5pt', color: '#065f46', fontWeight: 600, marginTop: '4px' }}>
+                {article.subheadline}
+              </div>
+            )}
           </div>
         ) : (
           /* Standard Body Paragraphs (with Side Photo if placement === 'side') */
@@ -1546,10 +1854,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: isMobile ? '12px 16px 60px' : '24px 16px 48px',
+        padding: isMobile ? '12px 16px 60px' : '24px 32px 64px',
         width: 'max-content',
         minWidth: '100%',
-        margin: '0 auto',
+        margin: 0,
         boxSizing: 'border-box',
         touchAction: 'pan-x pan-y',
       }}
@@ -1935,7 +2243,14 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                         letterSpacing: '-0.02em',
                       }}
                     >
-                      {masthead.title}
+                      {masthead.title === 'Channel Name' ? (
+                        <>
+                          <span style={{ color: '#dc2626' }}>Channel</span>{' '}
+                          <span style={{ color: masthead.titleColor || '#000000' }}>Name</span>
+                        </>
+                      ) : (
+                        masthead.title
+                      )}
                     </h1>
                   </div>
                 </div>
@@ -1950,16 +2265,23 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                   data-testid="masthead-bottom-strip"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelectMasthead?.('meta');
+                    onSelectMasthead?.('subheaders');
                   }}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid #111111',
+                    borderBottom: masthead.dateStripBg ? '1px solid #111111' : undefined,
+                    backgroundColor: masthead.dateStripBg || 'transparent',
+                    color: masthead.dateStripColor || '#222222',
                     paddingTop: usePhysicalCanvasCoordinates
                       ? `${physicalMetrics.spacingPt.bottomStripPaddingTopPt}pt`
-                      : '4px',
+                      : (masthead.dateStripBg ? '4px' : '4px'),
+                    paddingBottom: masthead.dateStripBg ? '4px' : undefined,
+                    paddingLeft: masthead.dateStripBg ? '6px' : undefined,
+                    paddingRight: masthead.dateStripBg ? '6px' : undefined,
+                    borderRadius: masthead.dateStripBg ? '3px' : undefined,
                     marginTop: usePhysicalCanvasCoordinates
                       ? `${physicalMetrics.spacingPt.bottomStripMarginTopPt}pt`
                       : undefined,
@@ -1971,12 +2293,19 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       : undefined,
                     lineHeight: usePhysicalCanvasCoordinates ? 1.5 : undefined,
                     fontWeight: 600,
-                    color: '#222222',
                     letterSpacing: usePhysicalCanvasCoordinates ? '0.3pt' : '0.03em',
                     cursor: 'pointer',
                   }}
                 >
-                  <div>
+                  <div
+                    data-testid="masthead-volume-issue-container"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectMasthead?.('subheaders');
+                    }}
+                    title="वर्ष व अंक (क्लिक करके संपादित करें या हटाएँ)"
+                    style={{ cursor: 'pointer' }}
+                  >
                     {masthead.showVolumeIssue !== false &&
                       (() => {
                         const volStr =
@@ -1987,7 +2316,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                                   (p): p is string => typeof p === 'string' && p.trim().length > 0
                                 )
                                 .join(' • ');
-                        return volStr.length > 0 ? <span>{volStr}</span> : null;
+                        return volStr.length > 0 ? (
+                          <span data-testid="masthead-volume-issue-text">{volStr}</span>
+                        ) : null;
                       })()}
                   </div>
                   <div>
@@ -2026,7 +2357,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
                       : '5px',
                     padding: usePhysicalCanvasCoordinates ? '2pt 4pt' : '3px 6px',
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: masthead.secondaryHeaderBg || '#f8fafc',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -2034,7 +2365,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       ? `${physicalMetrics.typographyPt.bottomStripFontSizePt}pt`
                       : '11px',
                     fontWeight: 700,
-                    color: '#0f172a',
+                    color: masthead.secondaryHeaderColor || '#0f172a',
                     letterSpacing: '0.02em',
                   }}
                 >
@@ -2046,7 +2377,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                           ? `${physicalMetrics.typographyPt.bylineFontSizePt}pt`
                           : '10px',
                         fontWeight: 500,
-                        color: '#475569',
+                        color: masthead.secondaryHeaderColor ? `${masthead.secondaryHeaderColor}cc` : '#475569',
                       }}
                     >
                       {masthead.secondaryHeaderSubtitle}
@@ -2062,8 +2393,8 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     marginTop: usePhysicalCanvasCoordinates
                       ? `${physicalMetrics.spacingPt.topStripMarginBottomPt}pt`
                       : '5px',
-                    backgroundColor: '#b91c1c',
-                    color: '#ffffff',
+                    backgroundColor: masthead.announcementStripBg || '#b91c1c',
+                    color: masthead.announcementStripColor || '#ffffff',
                     padding: usePhysicalCanvasCoordinates ? '3pt 8pt' : '3px 10px',
                     borderRadius: '2px',
                     fontSize: usePhysicalCanvasCoordinates
@@ -2073,16 +2404,17 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: '0 1px 2px rgba(185,28,28,0.2)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
                   }}
                 >
                   <span
                     style={{
                       backgroundColor: '#ffffff',
-                      color: '#b91c1c',
+                      color: masthead.announcementStripBg || '#b91c1c',
                       padding: '1px 4px',
                       borderRadius: '2px',
                       fontSize: usePhysicalCanvasCoordinates ? '7pt' : '9px',
+                      fontWeight: 800,
                     }}
                   >
                     विशेष
@@ -2245,6 +2577,7 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
             <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {page.articles.length === 0 ? (
                 <div
+                  data-testid="canvas-empty-state"
                   style={{
                     flex: 1,
                     display: 'flex',
@@ -2253,32 +2586,81 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     alignItems: 'center',
                     padding: '40px 20px',
                     textAlign: 'center',
-                    backgroundColor: isDraggingOver ? '#eff6ff' : 'rgba(0,0,0,0.015)',
+                    backgroundColor: isDraggingOver ? '#eff6ff' : '#fcfbf7',
                     border: isDraggingOver
                       ? `${visualDropBorderWidth}px dashed #2563eb`
-                      : '2px dashed #d5d0c4',
-                    borderRadius: '6px',
+                      : '2px dashed #cbd5e1',
+                    borderRadius: '8px',
                     margin: '20px 0',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>
                     {isDraggingOver ? '📥' : '📰'}
                   </div>
                   <div
                     style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: isDraggingOver ? '#1d4ed8' : '#475569',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: isDraggingOver ? '#1d4ed8' : '#0f172a',
                       fontFamily: "'Noto Serif Devanagari', serif",
                     }}
                   >
                     {isDraggingOver
                       ? 'इस पृष्ठ पर ब्लॉक छोड़ने के लिए तैयार'
-                      : 'इस पृष्ठ पर अभी कोई समाचार नहीं है'}
+                      : 'यह पृष्ठ पूर्णतः खाली है (Canvas is Empty)'}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                    Drag and drop a block from the left Blocks library, or click "+ Add to Page".
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      marginTop: '6px',
+                      maxWidth: '340px',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    अपनी पसंद के अनुसार नए सिरे से समाचार तैयार करें। नीचे दिए गए बटन से तुरंत ब्लॉक जोड़ें:
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      marginTop: '16px',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {onAddBlock && (
+                      <button
+                        type="button"
+                        data-testid="empty-canvas-add-block-btn"
+                        onClick={() =>
+                          onAddBlock({
+                            headline: 'नई ताज़ा खबर का शीर्षक यहाँ लिखें',
+                            subheadline: 'मुख्य उप-शीर्षक व आवश्यक विवरण यहाँ दर्ज करें',
+                            body: 'समाचार का विस्तृत विवरण यहाँ लिखें...',
+                            priority: 'major',
+                            columnSpan: 6,
+                          })
+                        }
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#b91c1c',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>✚</span> नया समाचार ब्लॉक जोड़ें
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -2384,11 +2766,10 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                       : `Page ${pageNumber} of ${totalPages}`}
                   </span>
                   <span>
-                    {masthead.title || doc?.metadata?.title || 'E-Paper'} •{' '}
                     {doc?.metadata?.language === 'hi' ||
                     /[\u0900-\u097F]/.test(masthead.title || '')
-                      ? 'डिजिटल व प्रिंट संस्करण'
-                      : masthead.edition || 'Digital & Print Edition'}
+                      ? `${masthead.title || doc?.metadata?.title || 'जनवाणी समाचार'} डिजिटल संस्करण`
+                      : `${masthead.title || doc?.metadata?.title || 'E-Paper'} • ${masthead.edition || 'Digital Edition'}`}
                   </span>
                 </div>
               </>
@@ -2409,10 +2790,9 @@ export const NewspaperCanvas: React.FC<NewspaperCanvasProps> = ({
                     : `Page ${pageNumber} of ${totalPages}`}
                 </span>
                 <span>
-                  {masthead.title || doc?.metadata?.title || 'E-Paper'} •{' '}
                   {doc?.metadata?.language === 'hi' || /[\u0900-\u097F]/.test(masthead.title || '')
-                    ? 'डिजिटल व प्रिंट संस्करण'
-                    : masthead.edition || 'Digital & Print Edition'}
+                    ? `${masthead.title || doc?.metadata?.title || 'जनवाणी समाचार'} डिजिटल संस्करण`
+                    : `${masthead.title || doc?.metadata?.title || 'E-Paper'} • ${masthead.edition || 'Digital Edition'}`}
                 </span>
               </div>
             )}

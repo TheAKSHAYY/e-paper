@@ -58,8 +58,14 @@ import { PageSetupModal } from './components/studio/PageSetupModal';
 import { MastheadGalleryModal } from './components/studio/MastheadGalleryModal';
 import { MastheadDesignerModal } from './components/studio/MastheadDesignerModal';
 import { TemplateGalleryModal } from './components/studio/TemplateGalleryModal';
+import { DesignLibraryModal } from './components/studio/DesignLibraryModal';
 import { WhatsAppNewsPasteModal } from './components/studio/WhatsAppNewsPasteModal';
-import type { CompletePageTemplate, MastheadPresetItem } from '@epaper-studio/template-engine';
+import {
+  type CompletePageTemplate,
+  type MastheadPresetItem,
+  insertDesignIntoDocument,
+  type DesignLibraryItem,
+} from '@epaper-studio/template-engine';
 import { DraftsManagerModal } from './components/DraftsManagerModal';
 import { ThemeModal } from './components/studio/ThemeModal';
 import { PreflightReportModal } from './components/studio/PreflightReportModal';
@@ -176,7 +182,7 @@ export const App: React.FC = () => {
   const [selectedElementPart, setSelectedElementPart] = useState<SelectedElementPart>(null);
   const [selectedParaIndex, setSelectedParaIndex] = useState<number | null>(null);
   const [isMastheadSelected, setIsMastheadSelected] = useState<boolean>(false);
-  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'meta' | 'rules'>(
+  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'subheaders' | 'meta' | 'rules'>(
     'title'
   );
 
@@ -283,6 +289,7 @@ export const App: React.FC = () => {
     action?: { label: string; onClick: () => void };
   } | null>(null);
   const [pageToDelete, setPageToDelete] = useState<number | null>(null);
+  const [isClearPageModalOpen, setIsClearPageModalOpen] = useState<boolean>(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showNotification = useCallback(
@@ -424,6 +431,8 @@ export const App: React.FC = () => {
     },
     []
   );
+
+  const [isDesignLibraryOpen, setIsDesignLibraryOpen] = useState<boolean>(false);
 
   const handleToggleEditorMode = useCallback(() => {
     setEditorMode((prev) => {
@@ -846,6 +855,103 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // ── Canvas Mouse Drag Panning & Spacebar Hand Tool ──
+  const [isPanning, setIsPanning] = useState(false);
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
+
+  // ── Horizontal Overflow & Nav State ──
+  const [hasHorizontalOverflow, setHasHorizontalOverflow] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollIndicators = useCallback(() => {
+    const el = canvasViewportRef.current;
+    if (!el) return;
+    const overflow = el.scrollWidth > el.clientWidth + 6;
+    setHasHorizontalOverflow(overflow);
+    setCanScrollLeft(el.scrollLeft > 12);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 12);
+  }, []);
+
+  const handlePanHorizontally = useCallback((direction: 'left' | 'right') => {
+    const el = canvasViewportRef.current;
+    if (!el) return;
+    const amount = Math.min(360, Math.round(el.clientWidth * 0.45));
+    el.scrollBy({
+      left: direction === 'left' ? -amount : amount,
+      behavior: 'smooth',
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = canvasViewportRef.current;
+    if (!el) return;
+    updateScrollIndicators();
+    el.addEventListener('scroll', updateScrollIndicators, { passive: true });
+    window.addEventListener('resize', updateScrollIndicators);
+    return () => {
+      el.removeEventListener('scroll', updateScrollIndicators);
+      window.removeEventListener('resize', updateScrollIndicators);
+    };
+  }, [scale, updateScrollIndicators]);
+
+  // Spacebar Hand Tool Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.code === 'Space' && !e.repeat) {
+        setIsSpacePressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
+        setIsPanning(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const isBackground =
+      target === e.currentTarget ||
+      target.classList.contains('newspaper-canvas-wrapper') ||
+      target.getAttribute('data-testid') === 'canvas-viewport' ||
+      target.getAttribute('data-testid') === 'newspaper-canvas-wrapper';
+
+    if (e.button === 1 || isSpacePressed || isBackground) {
+      setIsPanning(true);
+      panStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        scrollLeft: canvasViewportRef.current?.scrollLeft || 0,
+        scrollTop: canvasViewportRef.current?.scrollTop || 0,
+      };
+      e.preventDefault();
+    }
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanning || !panStartRef.current || !canvasViewportRef.current) return;
+    const dx = e.clientX - panStartRef.current.x;
+    const dy = e.clientY - panStartRef.current.y;
+    canvasViewportRef.current.scrollLeft = panStartRef.current.scrollLeft - dx;
+    canvasViewportRef.current.scrollTop = panStartRef.current.scrollTop - dy;
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsPanning(false);
+    panStartRef.current = null;
+  };
+
   // Compute pages list from publication
   const pages: NewspaperPage[] = useMemo(() => {
     return getPublicationPages(document);
@@ -1107,6 +1213,44 @@ export const App: React.FC = () => {
     [pages.length, showNotification, handleUndo]
   );
 
+  // Clear Current Page Canvas (with safety confirmation dialog & undo support)
+  const handlePromptClearCurrentPage = useCallback(() => {
+    setIsClearPageModalOpen(true);
+  }, []);
+
+  const handleExecuteClearCurrentPage = useCallback(() => {
+    setIsClearPageModalOpen(false);
+    setDocument((prev) => {
+      const currentPages = getPublicationPages(prev);
+      const updatedPages = currentPages.map((p, idx) => {
+        if (idx === safePageIndex) {
+          return {
+            ...p,
+            articles: [],
+            freeLayoutItems: [],
+          };
+        }
+        return p;
+      });
+
+      return {
+        ...prev,
+        pages: updatedPages,
+        articles: safePageIndex === 0 ? [] : (updatedPages[0]?.articles ?? prev.articles),
+        metadata: { ...prev.metadata, updatedAt: new Date().toISOString() },
+      };
+    });
+
+    setSelectedArticleId(null);
+    setSelectedElementPart(null);
+    setSelectedParaIndex(null);
+    setHasUnsavedChanges(true);
+    showNotification(`पृष्ठ ${safePageIndex + 1} को पूर्णतः खाली कर दिया गया है।`, {
+      label: 'पूर्ववत करें (Undo)',
+      onClick: () => handleUndo(),
+    });
+  }, [safePageIndex, showNotification, handleUndo]);
+
   // Export project as JSON backup
   const handleExportProjectJson = useCallback(() => {
     const dataStr =
@@ -1290,6 +1434,22 @@ export const App: React.FC = () => {
       safePageIndex,
       showNotification,
     ]
+  );
+
+  const handleInsertDesign = useCallback(
+    (design: DesignLibraryItem, targetPageIndex?: number) => {
+      const targetIdx = targetPageIndex !== undefined ? targetPageIndex : safePageIndex;
+      setDocument((prevDoc) => {
+        const updated = insertDesignIntoDocument(prevDoc, design, { pageIndex: targetIdx });
+        return {
+          ...updated,
+          metadata: { ...updated.metadata, updatedAt: new Date().toISOString() },
+        };
+      });
+      setHasUnsavedChanges(true);
+      showNotification(`✓ ${design.name} कैनवास में जोड़ा गया`);
+    },
+    [safePageIndex, showNotification]
   );
 
   // Update article frame (free placement)
@@ -2951,6 +3111,7 @@ export const App: React.FC = () => {
               editorMode={editorMode}
               onToggleEditorMode={handleToggleEditorMode}
               onOpenTemplateGallery={() => setIsTemplateGalleryOpen(true)}
+              onOpenDesignLibrary={() => setIsDesignLibraryOpen(true)}
               onOpenTemplates={() => setIsTemplateGalleryOpen(true)}
               onOpenPageSetup={() => setIsPageSetupOpen(true)}
               onOpenMastheadDesigner={() => setIsMastheadDesignerOpen(true)}
@@ -3172,7 +3333,7 @@ export const App: React.FC = () => {
               </div>
             )}
 
-            {/* Center Canvas Area with Ref for Smart Auto-Fit */}
+            {/* Center Canvas Area with Ref for Smart Auto-Fit & Drag-to-Pan */}
             <div
               ref={canvasViewportRef}
               data-testid="canvas-viewport"
@@ -3180,9 +3341,7 @@ export const App: React.FC = () => {
                 flex: 1,
                 overflowY: 'auto',
                 overflowX: 'auto',
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'flex-start',
+                display: 'block',
                 backgroundColor: '#cbd5e1',
                 paddingTop: isMobile ? '12px' : '24px',
                 paddingLeft: isMobile ? '8px' : '16px',
@@ -3195,7 +3354,13 @@ export const App: React.FC = () => {
                 position: 'relative',
                 touchAction: 'pan-x pan-y',
                 WebkitOverflowScrolling: 'touch',
+                cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default',
+                userSelect: isPanning ? 'none' : 'auto',
               }}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
               onClick={(e) => {
                 // Deselect article if clicking directly on background
                 if (e.target === e.currentTarget) {
@@ -3350,7 +3515,7 @@ export const App: React.FC = () => {
                   }
                 }}
                 isMastheadSelected={isMastheadSelected && safePageIndex === 0}
-                onSelectMasthead={(tab?: 'title' | 'meta' | 'rules') => {
+                onSelectMasthead={(tab?: 'title' | 'subheaders' | 'meta' | 'rules') => {
                   setIsMastheadSelected(true);
                   setSelectedArticleId(null);
                   setSelectedElementPart(null);
@@ -3376,6 +3541,106 @@ export const App: React.FC = () => {
                 onReportDomMeasurements={handleReportDomMeasurements}
                 isPageFull={currentPageCapacity.isFull}
               />
+
+              {/* Floating Horizontal Navigation Bar (Visible whenever page width overflows viewport) */}
+              {hasHorizontalOverflow && (
+                <div
+                  data-testid="horizontal-pan-navigator"
+                  style={{
+                    position: 'sticky',
+                    bottom: isMobile ? '80px' : '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '6px 12px',
+                    borderRadius: '24px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                    width: 'max-content',
+                    userSelect: 'none',
+                    margin: '0 auto',
+                  }}
+                >
+                  <button
+                    type="button"
+                    data-testid="btn-pan-left"
+                    onClick={() => handlePanHorizontally('left')}
+                    disabled={!canScrollLeft}
+                    title="बायाँ हिस्सा देखें (Pan Left)"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '5px 10px',
+                      borderRadius: '16px',
+                      backgroundColor: canScrollLeft ? '#334155' : 'transparent',
+                      color: canScrollLeft ? '#ffffff' : '#64748b',
+                      border: 'none',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: canScrollLeft ? 'pointer' : 'default',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>◀</span>
+                    <span>बायाँ (Left)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="btn-pan-fit-width"
+                    onClick={handleFitWidth}
+                    title="अख़बार की पूरी चौड़ाई स्क्रीन पर फ़िट करें (Fit Width)"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '5px 12px',
+                      borderRadius: '16px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(37, 99, 235, 0.4)',
+                    }}
+                  >
+                    <span>↔</span>
+                    <span>चौड़ाई फ़िट (Fit Width)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="btn-pan-right"
+                    onClick={() => handlePanHorizontally('right')}
+                    disabled={!canScrollRight}
+                    title="दायाँ हिस्सा देखें (Pan Right)"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '5px 10px',
+                      borderRadius: '16px',
+                      backgroundColor: canScrollRight ? '#334155' : 'transparent',
+                      color: canScrollRight ? '#ffffff' : '#64748b',
+                      border: 'none',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: canScrollRight ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>दायाँ (Right)</span>
+                    <span>▶</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Right Contextual Inspector (Desktop) */}
@@ -3422,6 +3687,7 @@ export const App: React.FC = () => {
                   setSelectedParaIndex(null);
                 }}
                 onCloseMasthead={() => setIsMastheadSelected(false)}
+                mastheadInspectorTab={mastheadInspectorTab}
                 editorMode={editorMode}
                 onExportPdf={() => handleExportPdf(false)}
                 isExportingPdf={isExportingPdf}
@@ -3479,6 +3745,7 @@ export const App: React.FC = () => {
                 onOpenTheme={() => setIsThemeModalOpen(true)}
                 onOpenPublishing={() => setIsTemplateEditionModalOpen(true)}
                 onOpenTemplateGallery={handleOpenTemplateGallery}
+                onOpenDesignLibrary={() => setIsDesignLibraryOpen(true)}
                 onDeselectArticle={() => {
                   setSelectedArticleId(null);
                   setSelectedElementPart(null);
@@ -3504,6 +3771,7 @@ export const App: React.FC = () => {
                 editorMode={editorMode}
                 onToggleEditorMode={handleToggleEditorMode}
                 onOpenWhatsAppPaste={() => setIsWhatsAppPasteOpen(true)}
+                onClearPage={handlePromptClearCurrentPage}
               />
             </>
           )}
@@ -3573,6 +3841,14 @@ export const App: React.FC = () => {
         onApplyEditorialPreset={handleApplyEditorialPresetFromGallery}
         currentDoc={document}
         initialCategory={templateGalleryCategory}
+      />
+
+      <DesignLibraryModal
+        isOpen={isDesignLibraryOpen}
+        onClose={() => setIsDesignLibraryOpen(false)}
+        onInsertDesign={handleInsertDesign}
+        totalPages={pages.length}
+        currentPageIndex={safePageIndex}
       />
 
       <WhatsAppNewsPasteModal
@@ -3731,6 +4007,93 @@ export const App: React.FC = () => {
                 }}
               >
                 पेज हटाएं (Delete)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Page Canvas Confirmation Dialog */}
+      {isClearPageModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="clear-page-confirm-dialog"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '16px',
+          }}
+          onClick={() => setIsClearPageModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#991b1b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              🗑️ पूरा पृष्ठ खाली करें (Clear Page Canvas)
+            </h3>
+            <p
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}
+            >
+              क्या आप वाकई पृष्ठ {safePageIndex + 1} की संपूर्ण सामग्री खाली करना चाहते हैं? वर्तमान पृष्ठ के सभी {currentPage?.articles?.length ?? 0} समाचार ब्लॉक व चित्र हटा दिए जाएंगे। अख़बार का नाम (मास्टहेड) सुरक्षित रहेगा ताकि आप शुरुआत से नए ब्लॉक जोड़ सकें।
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                data-testid="cancel-clear-page-btn"
+                onClick={() => setIsClearPageModalOpen(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  color: '#475569',
+                }}
+              >
+                रद्द करें (Cancel)
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-clear-page-btn"
+                onClick={handleExecuteClearCurrentPage}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#dc2626',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  color: '#ffffff',
+                }}
+              >
+                🗑️ हाँ, पृष्ठ खाली करें
               </button>
             </div>
           </div>

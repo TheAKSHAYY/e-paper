@@ -193,6 +193,9 @@ export const ElementTypeSchema = z.enum([
   'short-news',
   'advertisement',
   'rashifal',
+  'calendar',
+  'footer-rule',
+  'section-pill',
 ]);
 export type ElementType = z.infer<typeof ElementTypeSchema>;
 
@@ -276,8 +279,30 @@ export const AdvertisementDataSchema = z.object({
   callToAction: z.string().optional(),
   phone: z.string().optional(),
   website: z.string().optional(),
+  email: z.string().optional(),
+  address: z.string().optional(),
+  tagline: z.string().optional(),
+  accentColor: z.string().optional(),
+  styleVariant: z.enum(['classic', 'bordered-gold', 'minimal-grey', 'modern-box']).optional(),
 });
 export type AdvertisementData = z.infer<typeof AdvertisementDataSchema>;
+
+export const CalendarFestivalSchema = z.object({
+  day: z.number().int().min(1).max(31),
+  name: z.string(),
+});
+export type CalendarFestival = z.infer<typeof CalendarFestivalSchema>;
+
+export const CalendarDataSchema = z.object({
+  monthName: z.string().default('जनवरी'),
+  monthEn: z.string().optional().default('JANUARY'),
+  year: z.number().int().default(2026),
+  lunarInfo: z.string().optional().default('पौष - माघ २०८२'),
+  startDayOfWeek: z.number().int().min(0).max(6).default(4),
+  totalDays: z.number().int().min(28).max(31).default(31),
+  festivals: z.array(CalendarFestivalSchema).optional(),
+});
+export type CalendarData = z.infer<typeof CalendarDataSchema>;
 
 export const FrameMmSchema = z.object({
   /** Horizontal offset in mm from page top-left */
@@ -454,6 +479,7 @@ export const ArticleSchema = z.object({
   rashifalItems: z.array(RashifalItemSchema).optional(),
   shortNewsItems: z.array(ShortNewsItemSchema).optional(),
   advertisementData: AdvertisementDataSchema.optional(),
+  calendarData: CalendarDataSchema.optional(),
 
   // Granular typography and mobile-first element control
   typography: ElementTypographySchema.optional(),
@@ -703,10 +729,16 @@ export const MastheadConfigSchema = z.object({
   presetStyleId: z.string().optional(),
   announcementStripText: z.string().optional(),
   showAnnouncementStrip: z.boolean().optional(),
+  announcementStripBg: z.string().optional(),
+  announcementStripColor: z.string().optional(),
   websiteUrl: z.string().optional(),
   secondaryHeaderTitle: z.string().optional(),
   secondaryHeaderSubtitle: z.string().optional(),
   showSecondaryHeader: z.boolean().optional(),
+  secondaryHeaderBg: z.string().optional(),
+  secondaryHeaderColor: z.string().optional(),
+  dateStripBg: z.string().optional(),
+  dateStripColor: z.string().optional(),
 
   // Visibility toggles
   showTopStrip: z.boolean().default(true),

@@ -1651,6 +1651,29 @@ export function renderMastheadSlotHtml(slot?: MastheadSlot): string {
   `;
 }
 
+export const ZODIAC_SVG_PATHS: Record<string, string> = {
+  '♈': 'M7 17a5 5 0 0 1 5-5V7m0 5a5 5 0 0 1 5 5',
+  '♉': 'M6 6a6 6 0 0 0 12 0 M6 15a6 6 0 1 0 12 0 6 6 0 1 0-12 0',
+  '♊': 'M6 4h12 M6 20h12 M9 4v16 M15 4v16',
+  '♋': 'M6 10a3 3 0 1 0 6 0 3 3 0 0 0-6 0c0 3 4 5 7 5 M18 14a3 3 0 1 0-6 0 3 3 0 0 0 6 0c0-3-4-5-7-5',
+  '♌': 'M7 16a3 3 0 1 0 3-3c0-3 3-5 5-5a3 3 0 0 1 3 3c0 3-2 5-4 5',
+  '♍': 'M5 7v10 M9 7v10 M13 7v10c0 3 3 3 5 0 M17 12l3 5',
+  '♎': 'M4 19h16 M4 15h4a4 4 0 0 1 8 0h4',
+  '♏': 'M4 7v10 M8 7v10 M12 7v10c0 2 2 3 4 0l2 2m-2-2l2-2',
+  '♐': 'M6 18L18 6 M12 6h6v6 M8 16l4-4',
+  '♑': 'M4 7v10l4-3 4 3V7c0-2 2-3 4-1a3 3 0 0 1-1 4',
+  '♒': 'M4 10l3-2 3 2 3-2 3 2 4-2 M4 16l3-2 3 2 3-2 3 2 4-2',
+  '♓': 'M6 4c3 4 3 12 0 16 M18 4c-3 4-3 12 0 16 M4 12h16',
+};
+
+export function renderZodiacBadgeSvg(sign: string): string {
+  const pathD = ZODIAC_SVG_PATHS[sign.trim()];
+  if (pathD) {
+    return `<svg width="12" height="12" viewBox="0 0 24 24" style="display:inline-block;vertical-align:-1px;margin-right:3px;flex-shrink:0;"><circle cx="12" cy="12" r="11" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/><path d="${pathD}" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  return `<svg width="12" height="12" viewBox="0 0 24 24" style="display:inline-block;vertical-align:-1px;margin-right:3px;flex-shrink:0;"><circle cx="12" cy="12" r="11" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/></svg>`;
+}
+
 /**
  * Compiles a structured NewspaperDocument into a self-contained, print-ready HTML
  * document complete with embedded web typography, exact physical @page sizing,
@@ -1824,7 +1847,7 @@ export function renderNewspaperDocumentToHtml(
         const announcementHtml =
           mh.showAnnouncementStrip && mh.announcementStripText
             ? `
-          <div class="masthead-announcement-strip" style="background-color: #b91c1c; color: #ffffff; text-align: center; font-size: 8pt; font-weight: 700; padding: 3px 8px; margin-bottom: 4px; border-radius: 2px;">
+          <div class="masthead-announcement-strip" style="background-color: ${escapeHtml(mh.announcementStripBg || '#b91c1c')}; color: ${escapeHtml(mh.announcementStripColor || '#ffffff')}; text-align: center; font-size: 8pt; font-weight: 700; padding: 3px 8px; margin-bottom: 4px; border-radius: 2px;">
             ${escapeHtml(mh.announcementStripText)}
           </div>
         `
@@ -1833,9 +1856,9 @@ export function renderNewspaperDocumentToHtml(
         const secondaryHeaderHtml =
           mh.showSecondaryHeader && mh.secondaryHeaderTitle
             ? `
-          <div class="masthead-secondary-header" style="text-align: center; font-size: 8.5pt; font-weight: 600; color: #2563eb; border-top: 1px solid #111; padding-top: 2px; margin-top: 4px;">
+          <div class="masthead-secondary-header" style="background-color: ${escapeHtml(mh.secondaryHeaderBg || '#f8fafc')}; color: ${escapeHtml(mh.secondaryHeaderColor || '#0f172a')}; text-align: center; font-size: 8.5pt; font-weight: 600; border-top: 1px solid #111; border-bottom: 1px solid #111; padding: 2px 4px; margin-top: 4px;">
             <span>${escapeHtml(mh.secondaryHeaderTitle)}</span>
-            ${mh.secondaryHeaderSubtitle ? ` <span style="color: #666; font-size: 7.5pt;">• ${escapeHtml(mh.secondaryHeaderSubtitle)}</span>` : ''}
+            ${mh.secondaryHeaderSubtitle ? ` <span style="color: ${escapeHtml(mh.secondaryHeaderColor ? mh.secondaryHeaderColor + 'cc' : '#666')}; font-size: 7.5pt;">• ${escapeHtml(mh.secondaryHeaderSubtitle)}</span>` : ''}
           </div>
         `
             : '';
@@ -1945,7 +1968,7 @@ export function renderNewspaperDocumentToHtml(
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                   ${emblemHtml}
                   <h1 class="masthead-title" style="font-family: ${effectiveFont}; font-size: ${effectiveFontSize}pt; ${mh.titleColor ? `color: ${mh.titleColor};` : ''} margin: 0; line-height: 1.05;">
-                    ${escapeHtml(mh.title)}
+                    ${mh.title === 'Channel Name' ? `<span style="color: #dc2626;">Channel</span> <span style="color: ${mh.titleColor || '#000000'};">Name</span>` : escapeHtml(mh.title)}
                   </h1>
                 </div>
               </div>
@@ -1955,7 +1978,7 @@ export function renderNewspaperDocumentToHtml(
             ${
               showBottomStrip
                 ? `
-              <div class="masthead-bottom-strip">
+              <div class="masthead-bottom-strip" style="${mh.dateStripBg ? `background-color: ${escapeHtml(mh.dateStripBg)}; padding: 2px 6px; border-radius: 2px;` : ''}${mh.dateStripColor ? `color: ${escapeHtml(mh.dateStripColor)};` : ''}">
                 <div class="bottom-strip-left">
                   ${
                     showVolumeIssue && volumeIssue.length > 0
@@ -2232,19 +2255,45 @@ export function renderNewspaperDocumentToHtml(
           // 3. Advertisement Data
           if (art.elementType === 'advertisement') {
             const ad = art.advertisementData;
+            const isGold = ad?.styleVariant === 'bordered-gold' || art.borders?.top?.color === '#f59e0b';
+            const isGrey = ad?.styleVariant === 'minimal-grey' || art.borders?.top?.color === '#cbd5e1';
+
             specializedExtraHtml += `
               <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.05em; color: #888; text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 2px; margin-bottom: 4px;">
                 विज्ञापन / ADVERTISEMENT
               </div>
             `;
-            if (ad) {
+            if (isGold || isGrey) {
               specializedExtraHtml += `
-                <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed #aaa; display: flex; justify-content: space-between; font-size: 7.5pt; color: #444;">
-                  ${ad.sponsor ? `<span><strong>प्रायोजक:</strong> ${escapeHtml(ad.sponsor)}</span>` : ''}
-                  ${ad.callToAction ? `<span><strong>${escapeHtml(ad.callToAction)}</strong></span>` : ''}
-                  ${ad.phone ? `<span><strong>फोन:</strong> ${escapeHtml(ad.phone)}</span>` : ''}
-                </div>
+                <div style="width: 45px; height: 3px; background: #dc2626; margin: 2px auto 6px auto; border-radius: 1px;"></div>
               `;
+            }
+            if (ad) {
+              if (isGold) {
+                specializedExtraHtml += `
+                  <div style="margin-top: 8px; padding: 6px 8px; background: #f59e0b; color: #ffffff; border-radius: 2px; text-align: center;">
+                    <div style="font-size: 7.5pt; font-weight: 700; text-transform: uppercase;">${escapeHtml(ad.callToAction || 'संपर्क करें')}</div>
+                    ${ad.phone ? `<div style="font-size: 11pt; font-weight: 900; margin-top: 2px;">${escapeHtml(ad.phone)}</div>` : ''}
+                    ${ad.email ? `<div style="font-size: 7pt; opacity: 0.95; margin-top: 1px;">${escapeHtml(ad.email)}</div>` : ''}
+                  </div>
+                `;
+              } else if (isGrey) {
+                specializedExtraHtml += `
+                  <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid #cbd5e1; text-align: center;">
+                    <div style="font-size: 7.5pt; font-weight: 700; color: #0f172a;">${escapeHtml(ad.callToAction || 'संपर्क करें')}</div>
+                    ${ad.phone ? `<div style="font-size: 10.5pt; font-weight: 900; color: #0f172a; margin-top: 2px;">${escapeHtml(ad.phone)}</div>` : ''}
+                    ${ad.email ? `<div style="font-size: 7pt; color: #64748b; margin-top: 1px;">${escapeHtml(ad.email)}</div>` : ''}
+                  </div>
+                `;
+              } else {
+                specializedExtraHtml += `
+                  <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed #aaa; display: flex; justify-content: space-between; font-size: 7.5pt; color: #444;">
+                    ${ad.sponsor ? `<span><strong>प्रायोजक:</strong> ${escapeHtml(ad.sponsor)}</span>` : ''}
+                    ${ad.callToAction ? `<span><strong>${escapeHtml(ad.callToAction)}</strong></span>` : ''}
+                    ${ad.phone ? `<span><strong>फोन:</strong> ${escapeHtml(ad.phone)}</span>` : ''}
+                  </div>
+                `;
+              }
             }
           }
 
@@ -2256,12 +2305,93 @@ export function renderNewspaperDocumentToHtml(
                   .map(
                     (r) => `
                   <div style="background: #fffdf5; border: 1px solid #fde68a; border-radius: 3px; padding: 4px 5px;">
-                    <div style="font-weight: 700; font-size: 7.5pt; color: #b45309;">${escapeHtml(r.sign)} ${escapeHtml(r.rashi)}</div>
-                    <div style="font-size: 7pt; color: #333; line-height: 1.25;">${escapeHtml(r.prediction)}</div>
+                    <div style="font-weight: 700; font-size: 7.5pt; color: #b45309; display: flex; align-items: center;">${renderZodiacBadgeSvg(r.sign)} <span>${escapeHtml(r.rashi)}</span></div>
+                    <div style="font-size: 7pt; color: #333; line-height: 1.25; margin-top: 2px;">${escapeHtml(r.prediction)}</div>
                   </div>
                 `
                   )
                   .join('')}
+              </div>
+            `;
+          }
+
+          // 5. Calendar Grid
+          if (art.elementType === 'calendar' || art.calendarData) {
+            const cal = art.calendarData;
+            const startDay = cal?.startDayOfWeek ?? 4;
+            const total = cal?.totalDays ?? 31;
+            const festivals = cal?.festivals || [
+              { day: 1, name: 'नव वर्ष' },
+              { day: 14, name: 'मकर संक्रांति' },
+              { day: 26, name: 'गणतंत्र दिवस' },
+            ];
+            let cellsHtml = '';
+            for (let i = 0; i < startDay; i++) {
+              cellsHtml += `<div style="background: #f8fafc; min-height: 16pt;"></div>`;
+            }
+            for (let d = 1; d <= total; d++) {
+              const col = (startDay + d - 1) % 7;
+              const isSun = col === 0;
+              const fest = festivals.find((f) => f.day === d);
+              cellsHtml += `
+                <div style="background: #ffffff; min-height: 16pt; padding: 1pt 2pt; display: flex; flex-direction: column; justify-content: space-between;">
+                  <span style="font-weight: 800; font-size: 6.5pt; color: ${isSun || fest ? '#dc2626' : '#1e293b'};">${d}</span>
+                  ${fest ? `<span style="font-size: 4.5pt; color: #b91c1c; font-weight: 700; line-height: 1;">${escapeHtml(fest.name)}</span>` : ''}
+                </div>
+              `;
+            }
+            specializedExtraHtml += `
+              <div style="border: 1.5px solid #800020; border-radius: 2px; overflow: hidden; background: #fdfbf7; margin-top: 4px;">
+                <div style="background: #800020; color: #ffffff; padding: 2pt 4pt; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 6pt; color: #fef08a;">${escapeHtml(cal?.lunarInfo || 'पौष - माघ २०८२')}</span>
+                  <span style="font-size: 9pt; font-weight: 800; font-family: 'Rozha One', serif;">${escapeHtml(cal?.monthName || 'जनवरी')} ${cal?.year || 2026}</span>
+                  <span style="background: #b45309; color: #ffffff; padding: 1pt 3pt; border-radius: 2px; font-size: 6pt; font-weight: 700;">${cal?.year || 2026}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); background: #700018; padding: 1.5pt 0; text-align: center; font-size: 6pt; font-weight: 700; color: #ffffff;">
+                  <div style="color: #fca5a5;">रवि</div><div>सोम</div><div>मंगल</div><div>बुध</div><div>गुरु</div><div>शुक्र</div><div>शनि</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; padding: 1px;">
+                  ${cellsHtml}
+                </div>
+              </div>
+            `;
+          }
+
+          // 6. CMYK Footer Rule
+          if (art.elementType === 'footer-rule') {
+            specializedExtraHtml += `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 3pt 6pt; margin: 3pt 0; border-top: 1.5pt double #94a3b8; border-bottom: 1.5pt double #94a3b8; background: #ffffff;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #00a8e8; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #e01a4f; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #ffc107; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #000000; display: inline-block;"></span>
+                </div>
+                <div style="font-size: 7pt; font-weight: 700; color: #334155; letter-spacing: 0.04em; text-align: center; font-family: 'Noto Serif Devanagari', serif;">
+                  ${escapeHtml(art.headline || 'जनवाणी समाचार डिजिटल संस्करण • पृष्ठ संख्या ०१ • बुधवार, 28 अक्टूबर 2026')}
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #00a8e8; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #e01a4f; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #ffc107; display: inline-block;"></span>
+                  <span style="width: 5px; height: 5px; border-radius: 50%; background: #000000; display: inline-block;"></span>
+                </div>
+              </div>
+            `;
+          }
+
+          // 7. 3D Section Pill Badge
+          if (art.elementType === 'section-pill') {
+            specializedExtraHtml += `
+              <div style="margin: 4pt 0; text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <div style="flex: 1; height: 1.5px; background: #10b981;"></div>
+                  <div style="background: linear-gradient(180deg, #10b981 0%, #059669 60%, #047857 100%); color: #ffffff; font-weight: 800; font-size: 9.5pt; font-family: 'Mukta', sans-serif; padding: 2.5pt 12pt; border-radius: 9999px;">
+                    ${escapeHtml(art.headline || 'न्यूज़ ब्रीफ')}
+                  </div>
+                  <div style="flex: 1; height: 1.5px; background: #10b981;"></div>
+                </div>
+                ${art.subheadline ? `<div style="font-size: 7pt; color: #065f46; font-weight: 600; margin-top: 2pt;">${escapeHtml(art.subheadline)}</div>` : ''}
               </div>
             `;
           }
@@ -2442,8 +2572,8 @@ export function renderNewspaperDocumentToHtml(
       const newspaperTitle =
         doc.masthead.title || doc.metadata.title || (isHindiDoc ? 'ई-पेपर' : 'E-Paper');
       const footerEditionText = isHindiDoc
-        ? `${newspaperTitle} • डिजिटल व प्रिंट संस्करण`
-        : `${newspaperTitle} • ${doc.masthead.edition || 'Digital & Print Edition'}`;
+        ? `${newspaperTitle} डिजिटल संस्करण`
+        : `${newspaperTitle} • ${doc.masthead.edition || 'Digital Edition'}`;
 
       const footerHtml = `
         <footer class="newspaper-folio-footer">
@@ -2965,3 +3095,4 @@ export * from './editorialPresets.js';
 export * from './completePageTemplates.js';
 export * from './articleLayoutPresets.js';
 export * from './templateAssets.js';
+export * from './designLibrary/index.js';

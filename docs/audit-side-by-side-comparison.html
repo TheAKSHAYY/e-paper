@@ -1,0 +1,91 @@
+
+    <!DOCTYPE html>
+    <html lang="hi">
+    <head>
+      <meta charset="UTF-8">
+      <title>3-Design Audit Side-by-Side Comparison</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 8px; }
+        p.subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+        .grid { display: flex; flex-direction: column; gap: 32px; max-width: 1300px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px; }
+        .badge { background: #10b981; color: #064e3b; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .comparison-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+        .col-box { background: #0f172a; border-radius: 8px; border: 1px solid #334155; padding: 12px; }
+        .col-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+        img { width: 100%; height: auto; border-radius: 4px; display: block; background: #ffffff; }
+      </style>
+    </head>
+    <body>
+      <h1>3 PoC Reconstructed Designs vs. Original Reference Assets</h1>
+      <p class="subtitle">100% Native Newspaper Document Model • Zero Flattened Screenshots • Deep Editable Elements</p>
+      
+      <div class="grid">
+        <!-- des-103 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 style="margin:0; font-size:18px; color:#f1f5f9;">1. des-103: Traditional Newspaper Masthead</h2>
+              <span style="font-size:12px; color:#64748b;">Original: 7aac82_t_header_10n.png (1317×271 px)</span>
+            </div>
+            <span class="badge">PASS • 100% NATIVE RECONSTRUCTION</span>
+          </div>
+          <div class="comparison-row">
+            <div class="col-box">
+              <div class="col-title">Original Reference Image</div>
+              <img src="data:image/png;base64," alt="Original des-103" />
+            </div>
+            <div class="col-box">
+              <div class="col-title">Reconstructed Editable Canvas (des-103)</div>
+              <img src="01-des103-inserted.png" alt="Reconstructed des-103" />
+            </div>
+          </div>
+        </div>
+
+        <!-- des-041 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 style="margin:0; font-size:18px; color:#f1f5f9;">2. des-041: 4-Column Article Layout</h2>
+              <span style="font-size:12px; color:#64748b;">Original: 01c50b_col_4_1.PNG (307×260 px)</span>
+            </div>
+            <span class="badge">PASS • 100% NATIVE RECONSTRUCTION</span>
+          </div>
+          <div class="comparison-row">
+            <div class="col-box">
+              <div class="col-title">Original Reference Image</div>
+              <img src="data:image/png;base64," alt="Original des-041" style="max-height: 400px; object-fit: contain;" />
+            </div>
+            <div class="col-box">
+              <div class="col-title">Reconstructed Editable Canvas (des-041)</div>
+              <img src="03-des041-inserted.png" alt="Reconstructed des-041" />
+            </div>
+          </div>
+        </div>
+
+        <!-- des-132 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 style="margin:0; font-size:18px; color:#f1f5f9;">3. des-132: Daily 12-Zodiac Rashifal Layout</h2>
+              <span style="font-size:12px; color:#64748b;">Original: a7daf2_rashifal_1.PNG (243×504 px)</span>
+            </div>
+            <span class="badge">PASS • 100% NATIVE RECONSTRUCTION</span>
+          </div>
+          <div class="comparison-row">
+            <div class="col-box">
+              <div class="col-title">Original Reference Image</div>
+              <img src="data:image/png;base64," alt="Original des-132" style="max-height: 400px; object-fit: contain;" />
+            </div>
+            <div class="col-box">
+              <div class="col-title">Reconstructed Editable Canvas (des-132)</div>
+              <img src="05-des132-inserted.png" alt="Reconstructed des-132" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    

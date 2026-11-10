@@ -64,6 +64,7 @@ ehthumbs.db
 tmp/
 temp/
 epaper_assets/
+epaper_assets_sorted*/
 
 # Supabase local state
 .supabase/
