@@ -45,6 +45,17 @@ import {
   isPageCapacityFull,
 } from '@epaper-studio/template-engine';
 
+import './components/studio/studio.css';
+import {
+  LayersIcon,
+  PlusSquareIcon,
+  LayoutGridIcon,
+  DownloadIcon,
+  TrashIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ArrowLeftRightIcon,
+} from './components/studio/StudioIcons';
 import { TopBar } from './components/studio/TopBar';
 import { MobileTopBar } from './components/studio/mobile/MobileTopBar';
 import { LeftSidebar, type SidebarTab } from './components/studio/LeftSidebar';
@@ -182,9 +193,9 @@ export const App: React.FC = () => {
   const [selectedElementPart, setSelectedElementPart] = useState<SelectedElementPart>(null);
   const [selectedParaIndex, setSelectedParaIndex] = useState<number | null>(null);
   const [isMastheadSelected, setIsMastheadSelected] = useState<boolean>(false);
-  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<'title' | 'subheaders' | 'meta' | 'rules'>(
-    'title'
-  );
+  const [mastheadInspectorTab, setMastheadInspectorTab] = useState<
+    'title' | 'subheaders' | 'meta' | 'rules'
+  >('title');
 
   // UI state
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('pages');
@@ -858,7 +869,12 @@ export const App: React.FC = () => {
   // ── Canvas Mouse Drag Panning & Spacebar Hand Tool ──
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
-  const panStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
+  const panStartRef = useRef<{
+    x: number;
+    y: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
 
   // ── Horizontal Overflow & Nav State ──
   const [hasHorizontalOverflow, setHasHorizontalOverflow] = useState(false);
@@ -900,7 +916,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable)
+        return;
       if (e.code === 'Space' && !e.repeat) {
         setIsSpacePressed(true);
       }
@@ -2420,7 +2437,13 @@ export const App: React.FC = () => {
       showNotification(`"${document.metadata.title}" सहेजा गया।`);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : 'सहेजा नहीं जा सका।');
+      showNotification(
+        err instanceof Error
+          ? err.message
+          : locale === 'hi'
+            ? 'अंक सेव नहीं हो सका।'
+            : 'Failed to save edition.'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -2888,10 +2911,12 @@ export const App: React.FC = () => {
         }
       } catch (err) {
         console.error(err);
-        alert('Failed to load selected draft.');
+        showNotification(
+          locale === 'hi' ? 'चुना गया ड्राफ्ट लोड नहीं हो सका।' : 'Failed to load selected draft.'
+        );
       }
     },
-    [showNotification]
+    [locale, showNotification]
   );
 
   // Delete draft
@@ -2917,14 +2942,15 @@ export const App: React.FC = () => {
 
   return (
     <div
+      className={viewMode === 'split' || viewMode === 'preview' ? 'studio-workspace' : undefined}
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        backgroundColor: '#0f172a',
-        color: '#0f172a',
+        backgroundColor: viewMode === 'split' || viewMode === 'preview' ? '#141210' : '#FAF8F5',
+        color: '#1C1917',
         overflow: viewMode === 'landing' ? 'auto' : 'hidden',
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
       {/* VIEWPORT ROUTING: LANDING PAGE vs AUTH vs PUBLISHER DASHBOARD vs STUDIO WORKSPACE */}
@@ -2942,70 +2968,90 @@ export const App: React.FC = () => {
           />
         </div>
       ) : viewMode === 'login' ? (
-        <LoginPage
-          onNavigateToSignUp={() => navigateToView('signup')}
-          onNavigateToForgotPassword={() => navigateToView('forgot-password')}
-          onSuccess={() => {
-            const params = new URLSearchParams(window.location.search);
-            const returnUrl = params.get('returnUrl');
-            if (returnUrl === '/editor') {
-              navigateToView('split');
-            } else if (returnUrl === '/onboarding') {
-              navigateToView('onboarding');
-            } else {
-              navigateToView('dashboard');
-            }
-          }}
-          onBackToLanding={() => navigateToView('landing')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <LoginPage
+            onNavigateToSignUp={() => navigateToView('signup')}
+            onNavigateToForgotPassword={() => navigateToView('forgot-password')}
+            onSuccess={() => {
+              const params = new URLSearchParams(window.location.search);
+              const returnUrl = params.get('returnUrl');
+              if (returnUrl === '/editor') {
+                navigateToView('split');
+              } else if (returnUrl === '/onboarding') {
+                navigateToView('onboarding');
+              } else {
+                navigateToView('dashboard');
+              }
+            }}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'signup' ? (
-        <SignUpPage
-          onNavigateToLogin={() => navigateToView('login')}
-          onNavigateToVerifyEmail={(email) => {
-            setPendingVerificationEmail(email);
-            navigateToView('verify-email');
-          }}
-          onSuccessDirect={() => navigateToView('onboarding')}
-          onBackToLanding={() => navigateToView('landing')}
-          onOpenLegalModal={(tab) => setLegalModalTab(tab)}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <SignUpPage
+            onNavigateToLogin={() => navigateToView('login')}
+            onNavigateToVerifyEmail={(email) => {
+              setPendingVerificationEmail(email);
+              navigateToView('verify-email');
+            }}
+            onSuccessDirect={() => navigateToView('onboarding')}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'verify-email' ? (
-        <VerifyEmailPage
-          email={
-            pendingVerificationEmail ||
-            (typeof window !== 'undefined'
-              ? new URLSearchParams(window.location.search).get('email') ||
-                localStorage.getItem('epaper_pending_verification_email') ||
-                ''
-              : '')
-          }
-          onNavigateToLogin={() => navigateToView('login')}
-          onBackToLanding={() => navigateToView('landing')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <VerifyEmailPage
+            email={
+              pendingVerificationEmail ||
+              (typeof window !== 'undefined'
+                ? new URLSearchParams(window.location.search).get('email') ||
+                  localStorage.getItem('epaper_pending_verification_email') ||
+                  ''
+                : '')
+            }
+            onNavigateToLogin={() => navigateToView('login')}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'forgot-password' ? (
-        <ForgotPasswordPage
-          onNavigateToLogin={() => navigateToView('login')}
-          onBackToLanding={() => navigateToView('landing')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <ForgotPasswordPage
+            onNavigateToLogin={() => navigateToView('login')}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'reset-password' ? (
-        <ResetPasswordPage
-          onNavigateToLogin={() => navigateToView('login')}
-          onBackToLanding={() => navigateToView('landing')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <ResetPasswordPage
+            onNavigateToLogin={() => navigateToView('login')}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'auth-callback' ? (
-        <AuthCallbackPage
-          onSuccess={(destination) => {
-            if (destination === '/onboarding') navigateToView('onboarding');
-            else if (destination === '/editor') navigateToView('split');
-            else navigateToView('dashboard');
-          }}
-          onNavigateToLogin={() => navigateToView('login')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <AuthCallbackPage
+            onSuccess={(destination) => {
+              if (destination === '/onboarding') navigateToView('onboarding');
+              else if (destination === '/editor') navigateToView('split');
+              else navigateToView('dashboard');
+            }}
+            onNavigateToLogin={() => navigateToView('login')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'onboarding' ? (
-        <OnboardingPage
-          onComplete={() => navigateToView('dashboard')}
-          onBackToLanding={() => navigateToView('landing')}
-        />
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <OnboardingPage
+            onComplete={() => navigateToView('dashboard')}
+            onBackToLanding={() => navigateToView('landing')}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab)}
+          />
+        </div>
       ) : viewMode === 'dashboard' ? (
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <PublisherDashboard
@@ -3140,23 +3186,33 @@ export const App: React.FC = () => {
               data-testid="status-notification-toast"
               style={{
                 position: 'fixed',
-                bottom: isMobile ? '70px' : '24px',
-                right: '24px',
-                backgroundColor: '#0f172a',
-                color: '#f8fafc',
-                border: '1px solid #334155',
-                padding: '10px 18px',
-                borderRadius: '8px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.35)',
-                fontSize: '13px',
+                bottom: isMobile ? '74px' : '24px',
+                right: isMobile ? '12px' : '24px',
+                backgroundColor: '#141210',
+                color: '#FAF8F5',
+                border: '1px solid #302B27',
+                padding: '10px 16px',
+                borderRadius: '10px',
+                boxShadow: '0 12px 28px rgba(20, 18, 16, 0.38)',
+                fontSize: '12.5px',
                 fontWeight: 500,
                 zIndex: 1000,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
+                maxWidth: isMobile ? 'calc(100vw - 24px)' : '460px',
               }}
             >
-              <span>ℹ️</span> <span>{statusToast.message}</span>
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#B91C1C',
+                  flexShrink: 0,
+                }}
+              />
+              <span>{statusToast.message}</span>
               {statusToast.action && (
                 <button
                   onClick={() => {
@@ -3165,14 +3221,15 @@ export const App: React.FC = () => {
                   }}
                   data-testid="toast-undo-btn"
                   style={{
-                    backgroundColor: '#2563eb',
-                    color: '#ffffff',
+                    backgroundColor: '#B91C1C',
+                    color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     padding: '4px 10px',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                 >
                   {statusToast.action.label}
@@ -3188,7 +3245,7 @@ export const App: React.FC = () => {
               flex: 1,
               overflow: 'hidden',
               position: 'relative',
-              backgroundColor: '#e2e8f0',
+              backgroundColor: '#E7E2D9',
             }}
           >
             {/* Left Activity Sidebar (Desktop & Tablet) */}
@@ -3225,19 +3282,21 @@ export const App: React.FC = () => {
             {!isMobile && !isSidebarOpen && viewMode !== 'preview' && (
               <div
                 style={{
-                  width: '48px',
-                  backgroundColor: '#ffffff',
-                  borderRight: '1px solid #e2e8f0',
+                  width: '50px',
+                  backgroundColor: '#FAF8F5',
+                  borderRight: '1px solid #E3DCD0',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   paddingTop: '10px',
-                  gap: '8px',
+                  gap: '6px',
                   flexShrink: 0,
                   zIndex: 30,
                 }}
               >
                 <button
+                  type="button"
+                  className="studio-rail-btn"
                   onClick={() => {
                     setActiveSidebarTab('pages');
                     setIsSidebarOpen(true);
@@ -3246,20 +3305,26 @@ export const App: React.FC = () => {
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#475569',
+                    color: '#44403C',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '2px',
+                    gap: '3px',
                     cursor: 'pointer',
-                    padding: '6px 4px',
-                    borderRadius: '4px',
+                    padding: '8px 6px',
+                    borderRadius: '8px',
+                    width: '40px',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>▤</span>
-                  <span style={{ fontSize: '9px', fontWeight: 600 }}>पेज</span>
+                  <span className="studio-sr-only">▤</span>
+                  <LayersIcon size={16} />
+                  <span style={{ fontSize: '9.5px', fontWeight: 700 }}>
+                    {locale === 'hi' ? 'पेज' : 'Pages'}
+                  </span>
                 </button>
                 <button
+                  type="button"
+                  className="studio-rail-btn"
                   onClick={() => {
                     setActiveSidebarTab('blocks');
                     setIsSidebarOpen(true);
@@ -3268,20 +3333,25 @@ export const App: React.FC = () => {
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#475569',
+                    color: '#44403C',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '2px',
+                    gap: '3px',
                     cursor: 'pointer',
-                    padding: '6px 4px',
-                    borderRadius: '4px',
+                    padding: '8px 6px',
+                    borderRadius: '8px',
+                    width: '40px',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>✚</span>
-                  <span style={{ fontSize: '9px', fontWeight: 600 }}>तत्व</span>
+                  <PlusSquareIcon size={16} />
+                  <span style={{ fontSize: '9.5px', fontWeight: 700 }}>
+                    {locale === 'hi' ? 'तत्व' : 'Blocks'}
+                  </span>
                 </button>
                 <button
+                  type="button"
+                  className="studio-rail-btn"
                   onClick={() => {
                     setActiveSidebarTab('templates');
                     setIsSidebarOpen(true);
@@ -3290,47 +3360,51 @@ export const App: React.FC = () => {
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#475569',
+                    color: '#44403C',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '2px',
+                    gap: '3px',
                     cursor: 'pointer',
-                    padding: '6px 4px',
-                    borderRadius: '4px',
+                    padding: '8px 6px',
+                    borderRadius: '8px',
+                    width: '40px',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>❖</span>
-                  <span style={{ fontSize: '9px', fontWeight: 600 }}>प्रारूप</span>
+                  <LayoutGridIcon size={16} />
+                  <span style={{ fontSize: '9.5px', fontWeight: 700 }}>
+                    {locale === 'hi' ? 'प्रारूप' : 'Layout'}
+                  </span>
                 </button>
 
                 <div style={{ flex: 1 }} />
 
                 <button
+                  type="button"
                   onClick={() => handleExportPdf(false)}
                   disabled={isExportingPdf}
                   title="प्रिंट PDF डाउनलोड करें (Download PDF)"
                   style={{
-                    backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
-                    color: '#ffffff',
+                    backgroundColor: isExportingPdf ? '#7F1D1D' : '#B91C1C',
+                    color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     width: '38px',
-                    height: '42px',
+                    height: '44px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '2px',
+                    gap: '3px',
                     cursor: isExportingPdf ? 'wait' : 'pointer',
-                    marginBottom: '10px',
-                    boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
+                    marginBottom: '12px',
+                    boxShadow: '0 2px 6px rgba(185, 28, 28, 0.35)',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>
-                    {isExportingPdf ? '⏳' : '📥'}
+                  <DownloadIcon size={15} />
+                  <span style={{ fontSize: '8.5px', fontWeight: 800, letterSpacing: '0.03em' }}>
+                    {isExportingPdf ? '...' : 'PDF'}
                   </span>
-                  <span style={{ fontSize: '8.5px', fontWeight: 800 }}>PDF</span>
                 </button>
               </div>
             )}
@@ -3339,12 +3413,13 @@ export const App: React.FC = () => {
             <div
               ref={canvasViewportRef}
               data-testid="canvas-viewport"
+              className="studio-drafting-canvas studio-scroll"
               style={{
                 flex: 1,
                 overflowY: 'auto',
                 overflowX: 'auto',
                 display: 'block',
-                backgroundColor: '#cbd5e1',
+                backgroundColor: '#E7E2D9',
                 paddingTop: isMobile ? '12px' : '24px',
                 paddingLeft: isMobile ? '8px' : '16px',
                 paddingRight: isMobile ? '8px' : '16px',
@@ -3379,17 +3454,18 @@ export const App: React.FC = () => {
                   data-testid="mobile-canvas-zoom-controls"
                   style={{
                     position: 'fixed',
-                    right: '12px',
-                    top: '64px',
+                    right: '10px',
+                    top: '94px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
                     zIndex: 40,
-                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                    backdropFilter: 'blur(8px)',
+                    backgroundColor: 'rgba(20, 18, 16, 0.9)',
+                    backdropFilter: 'blur(10px)',
                     padding: '4px',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 6px 18px rgba(20, 18, 16, 0.28)',
                   }}
                 >
                   <button
@@ -3398,12 +3474,12 @@ export const App: React.FC = () => {
                     aria-label="ज़ूम इन करें"
                     title="Zoom In"
                     style={{
-                      width: '36px',
-                      height: '36px',
+                      width: '34px',
+                      height: '34px',
                       border: 'none',
-                      borderRadius: '6px',
-                      backgroundColor: '#1e293b',
-                      color: '#ffffff',
+                      borderRadius: '7px',
+                      backgroundColor: '#24211D',
+                      color: '#FAF8F5',
                       fontSize: '18px',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -3418,9 +3494,10 @@ export const App: React.FC = () => {
                     style={{
                       fontSize: '10px',
                       fontWeight: 700,
-                      color: '#cbd5e1',
+                      color: '#D6D0C4',
                       textAlign: 'center',
                       padding: '2px 0',
+                      fontVariantNumeric: 'tabular-nums',
                     }}
                   >
                     {Math.round(scale * 100)}%
@@ -3431,12 +3508,12 @@ export const App: React.FC = () => {
                     aria-label="ज़ूम आउट करें"
                     title="Zoom Out"
                     style={{
-                      width: '36px',
-                      height: '36px',
+                      width: '34px',
+                      height: '34px',
                       border: 'none',
-                      borderRadius: '6px',
-                      backgroundColor: '#1e293b',
-                      color: '#ffffff',
+                      borderRadius: '7px',
+                      backgroundColor: '#24211D',
+                      color: '#FAF8F5',
                       fontSize: '18px',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -3453,12 +3530,12 @@ export const App: React.FC = () => {
                     aria-label="स्क्रीन पर फिट करें"
                     title="Fit Width"
                     style={{
-                      width: '36px',
-                      height: '36px',
+                      width: '34px',
+                      height: '34px',
                       border: 'none',
-                      borderRadius: '6px',
-                      backgroundColor: '#1e293b',
-                      color: '#38bdf8',
+                      borderRadius: '7px',
+                      backgroundColor: '#24211D',
+                      color: '#FCA5A5',
                       fontSize: '14px',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -3547,100 +3624,112 @@ export const App: React.FC = () => {
               {/* Floating Horizontal Navigation Bar (Visible whenever page width overflows viewport) */}
               {hasHorizontalOverflow && (
                 <div
-                  data-testid="horizontal-pan-navigator"
                   style={{
                     position: 'sticky',
-                    bottom: isMobile ? '80px' : '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
+                    bottom: isMobile ? '74px' : '20px',
+                    left: 0,
+                    right: 0,
                     zIndex: 48,
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '6px 12px',
-                    borderRadius: '24px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                    width: 'max-content',
-                    userSelect: 'none',
-                    margin: '0 auto',
+                    justifyContent: 'center',
+                    padding: '0 10px',
+                    pointerEvents: 'none',
                   }}
                 >
-                  <button
-                    type="button"
-                    data-testid="btn-pan-left"
-                    onClick={() => handlePanHorizontally('left')}
-                    disabled={!canScrollLeft}
-                    title="बायाँ हिस्सा देखें (Pan Left)"
+                  <div
+                    data-testid="horizontal-pan-navigator"
                     style={{
+                      pointerEvents: 'auto',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      padding: '5px 10px',
-                      borderRadius: '16px',
-                      backgroundColor: canScrollLeft ? '#334155' : 'transparent',
-                      color: canScrollLeft ? '#ffffff' : '#64748b',
-                      border: 'none',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      cursor: canScrollLeft ? 'pointer' : 'default',
-                      transition: 'all 0.15s ease',
+                      backgroundColor: 'rgba(20, 18, 16, 0.92)',
+                      backdropFilter: 'blur(12px)',
+                      padding: '5px 8px',
+                      borderRadius: '9999px',
+                      boxShadow:
+                        '0 10px 26px rgba(20, 18, 16, 0.36), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                      maxWidth: 'calc(100vw - 20px)',
+                      userSelect: 'none',
                     }}
                   >
-                    <span>◀</span>
-                    <span>बायाँ (Left)</span>
-                  </button>
+                    <button
+                      type="button"
+                      data-testid="btn-pan-left"
+                      onClick={() => handlePanHorizontally('left')}
+                      disabled={!canScrollLeft}
+                      title="बायाँ हिस्सा देखें (Pan Left)"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: isMobile ? '5px 9px' : '5px 11px',
+                        borderRadius: '9999px',
+                        backgroundColor: canScrollLeft ? '#292524' : 'transparent',
+                        color: canScrollLeft ? '#FAF8F5' : '#78716C',
+                        border: 'none',
+                        fontSize: isMobile ? '11px' : '11.5px',
+                        fontWeight: 600,
+                        cursor: canScrollLeft ? 'pointer' : 'default',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <ChevronLeftIcon size={13} />
+                      <span>{locale === 'hi' ? 'बायाँ' : 'Left'}</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    data-testid="btn-pan-fit-width"
-                    onClick={handleFitWidth}
-                    title="अख़बार की पूरी चौड़ाई स्क्रीन पर फ़िट करें (Fit Width)"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 12px',
-                      borderRadius: '16px',
-                      backgroundColor: '#2563eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(37, 99, 235, 0.4)',
-                    }}
-                  >
-                    <span>↔</span>
-                    <span>चौड़ाई फ़िट (Fit Width)</span>
-                  </button>
+                    <button
+                      type="button"
+                      data-testid="btn-pan-fit-width"
+                      onClick={handleFitWidth}
+                      title="अख़बार की पूरी चौड़ाई स्क्रीन पर फ़िट करें (Fit Width)"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: isMobile ? '5px 10px' : '5px 12px',
+                        borderRadius: '9999px',
+                        backgroundColor: '#B91C1C',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        fontSize: isMobile ? '11px' : '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 8px rgba(185, 28, 28, 0.45)',
+                      }}
+                    >
+                      <ArrowLeftRightIcon size={13} />
+                      <span>{locale === 'hi' ? 'चौड़ाई फ़िट' : 'Fit Width'}</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    data-testid="btn-pan-right"
-                    onClick={() => handlePanHorizontally('right')}
-                    disabled={!canScrollRight}
-                    title="दायाँ हिस्सा देखें (Pan Right)"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 10px',
-                      borderRadius: '16px',
-                      backgroundColor: canScrollRight ? '#334155' : 'transparent',
-                      color: canScrollRight ? '#ffffff' : '#64748b',
-                      border: 'none',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      boxShadow: canScrollRight ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span>दायाँ (Right)</span>
-                    <span>▶</span>
-                  </button>
+                    <button
+                      type="button"
+                      data-testid="btn-pan-right"
+                      onClick={() => handlePanHorizontally('right')}
+                      disabled={!canScrollRight}
+                      title="दायाँ हिस्सा देखें (Pan Right)"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: isMobile ? '5px 9px' : '5px 11px',
+                        borderRadius: '9999px',
+                        backgroundColor: canScrollRight ? '#292524' : 'transparent',
+                        color: canScrollRight ? '#FAF8F5' : '#78716C',
+                        border: 'none',
+                        fontSize: isMobile ? '11px' : '11.5px',
+                        fontWeight: 600,
+                        cursor: canScrollRight ? 'pointer' : 'default',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span>{locale === 'hi' ? 'दायाँ' : 'Right'}</span>
+                      <ChevronRightIcon size={13} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -3937,7 +4026,8 @@ export const App: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.65)',
+            backgroundColor: 'rgba(20, 18, 16, 0.68)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -3948,12 +4038,14 @@ export const App: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '12px',
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #E3DCD0',
+              borderRadius: '14px',
               padding: '24px',
               maxWidth: '440px',
               width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+              boxShadow: '0 24px 48px -12px rgba(20, 18, 16, 0.35)',
+              fontFamily: "'Poppins', 'Hind', sans-serif",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -3962,19 +4054,21 @@ export const App: React.FC = () => {
                 margin: '0 0 10px 0',
                 fontSize: '16px',
                 fontWeight: 700,
-                color: '#991b1b',
+                color: '#991B1B',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}
             >
-              ⚠️ पेज हटाएं (Confirm Page Deletion)
+              <TrashIcon size={17} />
+              <span>{locale === 'hi' ? 'पेज हटाएँ' : 'Confirm Page Deletion'}</span>
             </h3>
             <p
-              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#44403C', lineHeight: 1.6 }}
             >
-              क्या आप वाकई पृष्ठ {pageToDelete + 1} हटाना चाहते हैं? इस पृष्ठ की सभी सामग्री व लेआउट
-              हटा दिए जाएंगे।
+              {locale === 'hi'
+                ? `क्या आप वाकई पृष्ठ ${pageToDelete + 1} हटाना चाहते हैं? इस पृष्ठ की सारी सामग्री और लेआउट हट जाएगा।`
+                : `Are you sure you want to delete Page ${pageToDelete + 1}? All stories and layout on this page will be removed.`}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
@@ -3983,16 +4077,16 @@ export const App: React.FC = () => {
                 onClick={() => setPageToDelete(null)}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
+                  borderRadius: '8px',
+                  border: '1px solid #E3DCD0',
+                  backgroundColor: '#FFFFFF',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  color: '#475569',
+                  color: '#44403C',
                 }}
               >
-                रद्द करें (Cancel)
+                {locale === 'hi' ? 'रद्द करें' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -4000,16 +4094,16 @@ export const App: React.FC = () => {
                 onClick={() => handleExecuteDeletePage(pageToDelete)}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   border: 'none',
-                  backgroundColor: '#dc2626',
+                  backgroundColor: '#B91C1C',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  color: '#ffffff',
+                  color: '#FFFFFF',
                 }}
               >
-                पेज हटाएं (Delete)
+                {locale === 'hi' ? 'पेज हटाएँ' : 'Delete Page'}
               </button>
             </div>
           </div>
@@ -4025,7 +4119,8 @@ export const App: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.65)',
+            backgroundColor: 'rgba(20, 18, 16, 0.68)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -4036,12 +4131,14 @@ export const App: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '12px',
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #E3DCD0',
+              borderRadius: '14px',
               padding: '24px',
               maxWidth: '440px',
               width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+              boxShadow: '0 24px 48px -12px rgba(20, 18, 16, 0.35)',
+              fontFamily: "'Poppins', 'Hind', sans-serif",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -4050,18 +4147,21 @@ export const App: React.FC = () => {
                 margin: '0 0 10px 0',
                 fontSize: '16px',
                 fontWeight: 700,
-                color: '#991b1b',
+                color: '#991B1B',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}
             >
-              🗑️ पूरा पृष्ठ खाली करें (Clear Page Canvas)
+              <TrashIcon size={17} />
+              <span>{locale === 'hi' ? 'पूरा पृष्ठ खाली करें' : 'Clear Page Canvas'}</span>
             </h3>
             <p
-              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#475569', lineHeight: 1.5 }}
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#44403C', lineHeight: 1.6 }}
             >
-              क्या आप वाकई पृष्ठ {safePageIndex + 1} की संपूर्ण सामग्री खाली करना चाहते हैं? वर्तमान पृष्ठ के सभी {currentPage?.articles?.length ?? 0} समाचार ब्लॉक व चित्र हटा दिए जाएंगे। अख़बार का नाम (मास्टहेड) सुरक्षित रहेगा ताकि आप शुरुआत से नए ब्लॉक जोड़ सकें।
+              {locale === 'hi'
+                ? `क्या आप वाकई पृष्ठ ${safePageIndex + 1} की पूरी सामग्री साफ़ करना चाहते हैं? इस पृष्ठ के सभी ${currentPage?.articles?.length ?? 0} ब्लॉक व फ़ोटो हट जाएँगे। अख़बार का मास्टहेड सुरक्षित रहेगा ताकि आप नई शुरुआत कर सकें।`
+                : `Clear all ${currentPage?.articles?.length ?? 0} stories and photos from Page ${safePageIndex + 1}? Your masthead remains untouched so you can build fresh.`}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
@@ -4070,16 +4170,16 @@ export const App: React.FC = () => {
                 onClick={() => setIsClearPageModalOpen(false)}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
+                  borderRadius: '8px',
+                  border: '1px solid #E3DCD0',
+                  backgroundColor: '#FFFFFF',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  color: '#475569',
+                  color: '#44403C',
                 }}
               >
-                रद्द करें (Cancel)
+                {locale === 'hi' ? 'रद्द करें' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -4087,16 +4187,20 @@ export const App: React.FC = () => {
                 onClick={handleExecuteClearCurrentPage}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   border: 'none',
-                  backgroundColor: '#dc2626',
+                  backgroundColor: '#B91C1C',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  color: '#ffffff',
+                  color: '#FFFFFF',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                🗑️ हाँ, पृष्ठ खाली करें
+                <TrashIcon size={13} />
+                <span>{locale === 'hi' ? 'हाँ, पृष्ठ खाली करें' : 'Clear Page'}</span>
               </button>
             </div>
           </div>
@@ -4110,7 +4214,8 @@ export const App: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.65)',
+            backgroundColor: 'rgba(20, 18, 16, 0.68)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -4120,28 +4225,52 @@ export const App: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #E3DCD0',
+              borderRadius: '14px',
               maxWidth: '420px',
               width: '100%',
               padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              boxShadow: '0 24px 48px -12px rgba(20, 18, 16, 0.35)',
               textAlign: 'center',
+              fontFamily: "'Poppins', 'Hind', sans-serif",
             }}
           >
-            <div style={{ fontSize: '36px', marginBottom: '8px' }}>📄⚠️</div>
-            <h3
-              style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#111827' }}
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FECACA',
+                color: '#B91C1C',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '12px',
+              }}
             >
-              पृष्ठ {safePageIndex + 1} भर चुका है! (Page Full)
+              <LayersIcon size={22} />
+            </div>
+            <h3
+              style={{ margin: '0 0 8px 0', fontSize: '17px', fontWeight: 700, color: '#1C1917' }}
+            >
+              {locale === 'hi'
+                ? `पृष्ठ ${safePageIndex + 1} भर चुका है!`
+                : `Page ${safePageIndex + 1} is Full`}
             </h3>
             <p
-              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#4b5563', lineHeight: 1.6 }}
+              style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#57534E', lineHeight: 1.6 }}
             >
-              इस पृष्ठ पर और सामग्री जोड़ने के लिए स्थान उपलब्ध नहीं है। सामग्री जोड़ने से खबर
-              प्रिंट सीमा से बाहर कट जाएगी।
+              {locale === 'hi'
+                ? 'इस पृष्ठ पर और सामग्री जोड़ने की जगह नहीं बची है — आगे जोड़ने से प्रिंट में कटने का डर है।'
+                : 'No space left on this page without risking print cutoff.'}
               <br />
-              <strong>क्या आप नया पृष्ठ जोड़कर उस पर यह सामग्री रखना चाहते हैं?</strong>
+              <strong>
+                {locale === 'hi'
+                  ? 'क्या आप नया पृष्ठ जोड़कर उस पर यह खबर रखना चाहेंगे?'
+                  : 'Add a new page and place this item there?'}
+              </strong>
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
@@ -4152,26 +4281,26 @@ export const App: React.FC = () => {
                 }}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '4px',
-                  border: '1px solid #d1d5db',
-                  background: '#ffffff',
-                  color: '#374151',
+                  borderRadius: '8px',
+                  border: '1px solid #E3DCD0',
+                  background: '#FFFFFF',
+                  color: '#44403C',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
               >
-                रद्द करें (Cancel)
+                {locale === 'hi' ? 'रद्द करें' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAddPageWithPendingBlock}
                 style={{
                   padding: '8px 18px',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   border: 'none',
-                  background: '#b91c1c',
-                  color: '#ffffff',
+                  background: '#B91C1C',
+                  color: '#FFFFFF',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -4180,7 +4309,7 @@ export const App: React.FC = () => {
                   gap: '6px',
                 }}
               >
-                <span>+</span> हाँ, नया पृष्ठ जोड़ें (+ Page)
+                <span>+</span> {locale === 'hi' ? 'नया पृष्ठ जोड़ें' : 'Add New Page'}
               </button>
             </div>
           </div>
@@ -4194,7 +4323,8 @@ export const App: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.65)',
+            backgroundColor: 'rgba(20, 18, 16, 0.68)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -4204,34 +4334,48 @@ export const App: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #E3DCD0',
+              borderRadius: '14px',
               maxWidth: '520px',
               width: '100%',
               padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              boxShadow: '0 24px 48px -12px rgba(20, 18, 16, 0.35)',
+              fontFamily: "'Poppins', 'Hind', sans-serif",
             }}
           >
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}
             >
-              <span style={{ fontSize: '24px' }}>⚠️</span>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#991b1b' }}>
-                एक्सपोर्ट प्रीफ़्लाइट: टेक्स्ट कटने की चेतावनी (Text Overflow)
+              <span
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#B91C1C',
+                  flexShrink: 0,
+                }}
+              />
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#991B1B' }}>
+                {locale === 'hi'
+                  ? 'प्रिंट जाँच: टेक्स्ट बाहर निकल रहा है'
+                  : 'Print Preflight: Text Overflow Detected'}
               </h3>
             </div>
             <p
               style={{
                 margin: '0 0 14px 0',
                 fontSize: '12.5px',
-                color: '#4b5563',
-                lineHeight: 1.4,
+                color: '#57534E',
+                lineHeight: 1.5,
               }}
             >
-              निम्नलिखित समाचार ब्लॉकों में पाठ्य सामग्री उनके निर्धारित फ़्रेम से अधिक है और प्रिंट
-              में कट सकती है:
+              {locale === 'hi'
+                ? 'नीचे दिए समाचार बॉक्स में टेक्स्ट फ़्रेम से ज़्यादा है और प्रिंट में कट सकता है:'
+                : 'The following story blocks exceed their frame height and may clip in print:'}
             </p>
             <div
+              className="studio-scroll"
               style={{
                 maxHeight: '200px',
                 overflowY: 'auto',
@@ -4245,21 +4389,23 @@ export const App: React.FC = () => {
                 <div
                   key={idx}
                   style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    borderRadius: '4px',
+                    padding: '10px 12px',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #FECACA',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                   }}
                 >
                   <div style={{ marginRight: '10px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#991b1b' }}>
-                      पृष्ठ {item.pageIndex + 1}
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#991B1B' }}>
+                      {locale === 'hi'
+                        ? `पृष्ठ ${item.pageIndex + 1}`
+                        : `Page ${item.pageIndex + 1}`}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#1f2937', fontWeight: 500 }}>
-                      {item.headline || 'समाचार ब्लॉक'}
+                    <div style={{ fontSize: '12.5px', color: '#1C1917', fontWeight: 600 }}>
+                      {item.headline || (locale === 'hi' ? 'समाचार ब्लॉक' : 'Story Block')}
                     </div>
                   </div>
                   <button
@@ -4269,18 +4415,18 @@ export const App: React.FC = () => {
                       setPreflightWarnings(null);
                     }}
                     style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
+                      padding: '5px 10px',
+                      backgroundColor: '#FAF8F5',
+                      border: '1px solid #E3DCD0',
+                      borderRadius: '6px',
                       fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#2563eb',
+                      fontWeight: 700,
+                      color: '#B91C1C',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    ब्लॉक पर जाएं →
+                    {locale === 'hi' ? 'ब्लॉक पर जाएँ →' : 'Go to Block →'}
                   </button>
                 </div>
               ))}
@@ -4290,15 +4436,16 @@ export const App: React.FC = () => {
                 onClick={() => setPreflightWarnings(null)}
                 style={{
                   padding: '8px 14px',
-                  borderRadius: '4px',
-                  border: '1px solid #d1d5db',
-                  background: '#ffffff',
-                  fontSize: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #E3DCD0',
+                  background: '#FFFFFF',
+                  color: '#44403C',
+                  fontSize: '12.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
               >
-                संपादित करने के लिए वापस जाएं
+                {locale === 'hi' ? 'संपादन पर लौटें' : 'Return to Edit'}
               </button>
               <button
                 onClick={() => {
@@ -4306,17 +4453,17 @@ export const App: React.FC = () => {
                   handleExportPdf(true);
                 }}
                 style={{
-                  padding: '8px 14px',
-                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
                   border: 'none',
-                  background: '#b91c1c',
-                  color: '#ffffff',
-                  fontSize: '12px',
+                  background: '#B91C1C',
+                  color: '#FFFFFF',
+                  fontSize: '12.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
-                फिर भी PDF डाउनलोड करें
+                {locale === 'hi' ? 'फिर भी PDF डाउनलोड करें' : 'Export PDF Anyway'}
               </button>
             </div>
           </div>

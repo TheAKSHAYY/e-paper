@@ -31,6 +31,17 @@ import { TypographyControls } from './TypographyControls';
 import type { ElementTypography } from '@epaper-studio/document-schema';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 import { useI18n } from '../../i18n';
+import {
+  ChevronRightIcon,
+  CloseIcon,
+  DownloadIcon,
+  MastheadIcon,
+  NewspaperIcon,
+  PenIcon,
+  RulerIcon,
+  SparkleIcon,
+  TrashIcon,
+} from './StudioIcons';
 
 export interface ContextualInspectorProps {
   selectedArticle: Article | null;
@@ -165,9 +176,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
   return (
     <aside
       style={{
-        width: width ?? (isMobile ? '100%' : '300px'),
+        width: width ?? (isMobile ? '100%' : '316px'),
         backgroundColor: '#FFFFFF',
-        borderLeft: isMobile ? 'none' : `1px solid ${colors.borderMuted}`,
+        borderLeft: isMobile ? 'none' : '1px solid #E3DCD0',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -175,10 +186,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         overflow: 'hidden',
         userSelect: 'none',
         flexShrink: 0,
-        fontFamily:
-          locale === 'hi'
-            ? PUBLISHER_DESIGN_SYSTEM.fonts.hindiUi
-            : PUBLISHER_DESIGN_SYSTEM.fonts.interface,
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
       {/* Inspector Header (Hidden on Mobile Drawer where Drawer Header is already present) */}
@@ -186,25 +194,53 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
         <div
           style={{
             padding: '10px 14px',
-            borderBottom: `1px solid ${colors.borderMuted}`,
-            backgroundColor: colors.warmPaper,
+            borderBottom: '1px solid #E3DCD0',
+            backgroundColor: '#FAF8F5',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '13px' }}>
-              {selectedArticle ? '📝' : isPage1 ? '🗞️' : '📄'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E3DCD0',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1C1917',
+                flexShrink: 0,
+              }}
+            >
+              {selectedArticle ? (
+                <PenIcon size={13} />
+              ) : isPage1 ? (
+                <NewspaperIcon size={13} />
+              ) : (
+                <MastheadIcon size={13} />
+              )}
             </span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: colors.inkBlack }}>
+            <span
+              style={{
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: '#1C1917',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {selectedArticle
                 ? locale === 'en'
                   ? 'Story Editor'
-                  : 'खबर संपादक'
+                  : 'ख़बर संपादक'
                 : isPage1
                   ? locale === 'en'
-                    ? 'Masthead & Page Settings'
+                    ? 'Masthead & Page Setup'
                     : 'मास्टहेड व पेज सेटिंग्स'
                   : locale === 'en'
                     ? `Page ${currentPageIndex + 1} Settings`
@@ -212,42 +248,51 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
             {selectedArticle && (
               <button
+                type="button"
                 onClick={onDeselect}
                 title={locale === 'en' ? 'Deselect article' : 'चयन हटाएँ'}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: colors.textMuted,
+                  background: '#FFFFFF',
+                  border: '1px solid #E3DCD0',
+                  color: '#6B645C',
                   cursor: 'pointer',
                   fontSize: '11px',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
+                  fontWeight: 500,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
-                {locale === 'en' ? 'Deselect ✕' : 'चयन हटाएँ ✕'}
+                <span>{locale === 'en' ? 'Deselect' : 'चयन हटाएँ'}</span>
+                <CloseIcon size={11} />
               </button>
             )}
 
             {onCloseInspector && (
               <button
+                type="button"
                 onClick={onCloseInspector}
-                title={locale === 'en' ? 'Collapse inspector' : 'इंस्पेक्टर छुपाएँ'}
+                className="studio-rail-btn"
+                title={locale === 'en' ? 'Collapse inspector' : 'पैनल बंद करें'}
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: colors.textMuted,
+                  color: '#78716C',
                   cursor: 'pointer',
-                  padding: '4px 6px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                ▶
+                <ChevronRightIcon size={14} />
               </button>
             )}
           </div>
@@ -258,11 +303,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
       <div
         style={{
           display: 'flex',
-          borderBottom: `1px solid ${colors.borderMuted}`,
-          backgroundColor: '#FFFFFF',
+          borderBottom: '1px solid #E3DCD0',
+          backgroundColor: '#FAF8F5',
+          padding: '4px 10px 0',
+          gap: '4px',
         }}
       >
         <button
+          type="button"
           onClick={() => setActiveInspectorTab('content')}
           style={{
             flex: 1,
@@ -271,11 +319,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'content'
-                ? `2px solid ${colors.pressRed}`
-                : '2px solid transparent',
-            background: 'transparent',
-            color: activeInspectorTab === 'content' ? colors.pressRed : colors.textMuted,
+              activeInspectorTab === 'content' ? '2px solid #B91C1C' : '2px solid transparent',
+            borderTopLeftRadius: '6px',
+            borderTopRightRadius: '6px',
+            backgroundColor: activeInspectorTab === 'content' ? '#FFFFFF' : 'transparent',
+            color: activeInspectorTab === 'content' ? '#991B1B' : '#6B645C',
             cursor: 'pointer',
           }}
         >
@@ -299,11 +347,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
             fontWeight: 600,
             border: 'none',
             borderBottom:
-              activeInspectorTab === 'typography'
-                ? `2px solid ${colors.pressRed}`
-                : '2px solid transparent',
-            background: 'transparent',
-            color: activeInspectorTab === 'typography' ? colors.pressRed : colors.textMuted,
+              activeInspectorTab === 'typography' ? '2px solid #B91C1C' : '2px solid transparent',
+            borderTopLeftRadius: '6px',
+            borderTopRightRadius: '6px',
+            backgroundColor: activeInspectorTab === 'typography' ? '#FFFFFF' : 'transparent',
+            color: activeInspectorTab === 'typography' ? '#991B1B' : '#6B645C',
             cursor: 'pointer',
           }}
         >
@@ -313,6 +361,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
 
       {/* Main Form Body */}
       <div
+        className="studio-scroll"
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -342,20 +391,25 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
               {editorMode === 'simple' && (
                 <div
                   style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #86efac',
-                    borderRadius: '6px',
+                    backgroundColor: '#F3EFE8',
+                    border: '1px solid #DFD7C8',
+                    borderRadius: '8px',
                     padding: '8px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     fontSize: '11.5px',
-                    color: '#166534',
+                    color: '#1C1917',
                     fontWeight: 600,
                   }}
                 >
-                  <span>✨ सरल संपादन मोड (Simple Mode)</span>
-                  <span style={{ fontSize: '10.5px', color: '#15803d' }}>ग्रिड सुरक्षित</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <SparkleIcon size={13} color="#991B1B" />
+                    <span>{locale === 'en' ? 'Simple Edit Mode' : 'सरल संपादन मोड'}</span>
+                  </span>
+                  <span style={{ fontSize: '10.5px', color: '#6B645C', fontWeight: 500 }}>
+                    {locale === 'en' ? 'Grid Locked' : 'ग्रिड सुरक्षित'}
+                  </span>
                 </div>
               )}
 
@@ -363,9 +417,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
               {selectedArticle.frame && editorMode === 'pro' && (
                 <div
                   style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '6px',
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #E3DCD0',
+                    borderRadius: '8px',
                     padding: '10px 12px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -378,13 +432,16 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       fontSize: '11.5px',
-                      fontWeight: 700,
-                      color: '#166534',
+                      fontWeight: 600,
+                      color: '#1C1917',
                     }}
                   >
-                    <span>📐 स्थिति व आकार (Frame in mm)</span>
-                    <span style={{ fontSize: '10px', color: '#15803d', fontWeight: 500 }}>
-                      4mm ग्रिड
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <RulerIcon size={12} />
+                      <span>{locale === 'en' ? 'Frame Position (mm)' : 'आकार व स्थिति (mm)'}</span>
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#6B645C', fontWeight: 500 }}>
+                      {locale === 'en' ? '4mm Snap' : '4mm ग्रिड'}
                     </span>
                   </div>
 
@@ -1547,7 +1604,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
 
                 {/* Multi-column Text Flow & Dividers (des-041) */}
                 <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
                       आंतरिक कॉलम विभाजन (Inner Columns)
                     </label>
@@ -1555,7 +1619,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       {selectedArticle.bodyColumnCount ?? selectedArticle.columnSpan ?? 1} कॉलम
                     </span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(4, 1fr)',
+                      gap: '4px',
+                      marginBottom: '6px',
+                    }}
+                  >
                     {[1, 2, 3, 4].map((cols) => {
                       const isActive = (selectedArticle.bodyColumnCount ?? 1) === cols;
                       return (
@@ -2442,11 +2513,26 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     marginBottom: '10px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <div style={{ fontSize: '12px', fontWeight: 700, color: '#581c87' }}>
                       ✨ 12 राशि भविष्यफल संपादक (Daily Rashifal)
                     </div>
-                    <span style={{ fontSize: '10px', backgroundColor: '#f3e8ff', color: '#6b21a8', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        backgroundColor: '#f3e8ff',
+                        color: '#6b21a8',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontWeight: 600,
+                      }}
+                    >
                       {selectedArticle.rashifalItems?.length || 0} राशियां
                     </span>
                   </div>
@@ -2470,12 +2556,26 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                           },
                         })
                       }
-                      style={{ width: '100%', height: '28px', borderRadius: '4px', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                      style={{
+                        width: '100%',
+                        height: '28px',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd5e1',
+                        cursor: 'pointer',
+                      }}
                     />
                   </div>
 
                   {/* 12 Zodiac Signs List */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '380px', overflowY: 'auto' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      maxHeight: '380px',
+                      overflowY: 'auto',
+                    }}
+                  >
                     {(selectedArticle.rashifalItems || []).map((item, idx) => (
                       <div
                         key={idx}
@@ -2502,7 +2602,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                               onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                             }}
                             title="राशि चिन्ह (Symbol)"
-                            style={{ width: '32px', textAlign: 'center', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                            style={{
+                              width: '32px',
+                              textAlign: 'center',
+                              padding: '4px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '12px',
+                            }}
                           />
                           <input
                             type="text"
@@ -2515,7 +2622,14 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                               onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                             }}
                             placeholder="राशि नाम (उदा. मेष (अ, ल, इ))"
-                            style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px', fontWeight: 600 }}
+                            style={{
+                              flex: 1,
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                            }}
                           />
                         </div>
                         <textarea
@@ -2529,7 +2643,15 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                             onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                           }}
                           placeholder="दैनिक भविष्यफल एवं शुभ अंक..."
-                          style={{ width: '100%', boxSizing: 'border-box', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '10.5px', lineHeight: 1.4 }}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '4px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '10.5px',
+                            lineHeight: 1.4,
+                          }}
                         />
                       </div>
                     ))}
@@ -2542,7 +2664,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     onClick={() => {
                       const updated = [
                         ...(selectedArticle.rashifalItems || []),
-                        { rashi: 'नई राशि', sign: '⭐', prediction: 'दैनिक भविष्यफल यहाँ दर्ज करें...' },
+                        {
+                          rashi: 'नई राशि',
+                          sign: '⭐',
+                          prediction: 'दैनिक भविष्यफल यहाँ दर्ज करें...',
+                        },
                       ];
                       onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                     }}
@@ -3324,7 +3450,13 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     marginTop: '4px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '15px' }}>🗑️</span>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#9f1239' }}>
@@ -3341,7 +3473,9 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                         borderRadius: '4px',
                       }}
                     >
-                      {locale === 'en' ? `Page ${currentPageIndex + 1}` : `पृष्ठ ${currentPageIndex + 1}`}
+                      {locale === 'en'
+                        ? `Page ${currentPageIndex + 1}`
+                        : `पृष्ठ ${currentPageIndex + 1}`}
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: '11px', color: '#881337', lineHeight: 1.4 }}>
@@ -3400,10 +3534,30 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#991B1B' }}>
-                      📰 {locale === 'en' ? 'Publish & Export' : 'प्रकाशन एवं एक्सपोर्ट'}
+                    <span
+                      style={{
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        color: '#1C1917',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <NewspaperIcon size={13} color="#991B1B" />
+                      <span>{locale === 'en' ? 'Publish & Export' : 'प्रकाशन व एक्सपोर्ट'}</span>
                     </span>
-                    <span style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 600 }}>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        color: '#6B645C',
+                        fontWeight: 600,
+                        backgroundColor: '#FAF8F5',
+                        border: '1px solid #E3DCD0',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
                       {pageSize.toUpperCase()}
                     </span>
                   </div>
@@ -3413,22 +3567,22 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     disabled={isExportingPdf}
                     data-testid="inspector-btn-export-pdf"
                     style={{
-                      backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
-                      color: '#ffffff',
+                      backgroundColor: isExportingPdf ? '#991B1B' : '#B91C1C',
+                      color: '#FFFFFF',
                       border: 'none',
-                      borderRadius: '6px',
-                      padding: '10px 14px',
-                      fontSize: '13px',
-                      fontWeight: 700,
+                      borderRadius: '7px',
+                      padding: '9px 14px',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
                       cursor: isExportingPdf ? 'wait' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
+                      gap: '7px',
+                      boxShadow: '0 2px 6px rgba(185, 28, 28, 0.25)',
                     }}
                   >
-                    <span>{isExportingPdf ? '⏳' : '📥'}</span>
+                    <DownloadIcon size={14} />
                     <span>
                       {isExportingPdf
                         ? locale === 'en'
@@ -3447,23 +3601,25 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 <label
                   style={{
                     display: 'block',
-                    fontSize: '12px',
+                    fontSize: '11.5px',
                     fontWeight: 600,
-                    color: '#334155',
+                    color: '#1C1917',
                     marginBottom: '4px',
                   }}
                 >
-                  Paper Dimensions (अख़बार का आकार)
+                  {locale === 'en' ? 'Paper Dimensions' : 'अख़बार का कागज़ आकार'}
                 </label>
                 <select
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(e.target.value as PageSizePreset)}
                   style={{
                     width: '100%',
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
+                    padding: '7px 9px',
+                    borderRadius: '7px',
+                    border: '1px solid #D6CFC4',
+                    backgroundColor: '#FFFFFF',
                     fontSize: '12px',
+                    color: '#1C1917',
                     outline: 'none',
                   }}
                 >
@@ -3482,21 +3638,20 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    borderRadius: '6px',
-                    backgroundColor: '#EDE8E1',
-                    border: '1px solid #D6D0C5',
+                    borderRadius: '7px',
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #E3DCD0',
                     color: '#1C1917',
                     fontSize: '12px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '7px',
                   }}
-                  className="hover:bg-stone-200 transition-colors"
                 >
-                  <span>📐</span>
+                  <RulerIcon size={13} color="#6B645C" />
                   <span>
                     {locale === 'hi' ? 'विस्तृत पेज सेटअप खोलें...' : 'Open Advanced Page Setup...'}
                   </span>
@@ -3510,26 +3665,32 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       display: 'block',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: '#475569',
+                      color: '#57524C',
                       marginBottom: '4px',
                     }}
                   >
-                    Orientation
+                    {locale === 'en' ? 'Orientation' : 'कागज़ दिशा'}
                   </label>
                   <select
                     value={orientation}
                     onChange={(e) => onOrientationChange(e.target.value as PageOrientation)}
                     style={{
                       width: '100%',
-                      padding: '6px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
+                      padding: '6px 8px',
+                      borderRadius: '7px',
+                      border: '1px solid #D6CFC4',
+                      backgroundColor: '#FFFFFF',
                       fontSize: '12px',
+                      color: '#1C1917',
                       outline: 'none',
                     }}
                   >
-                    <option value="portrait">Portrait (ऊर्ध्वाधर)</option>
-                    <option value="landscape">Landscape (क्षैतिज)</option>
+                    <option value="portrait">
+                      {locale === 'en' ? 'Portrait' : 'खड़ा (Portrait)'}
+                    </option>
+                    <option value="landscape">
+                      {locale === 'en' ? 'Landscape' : 'आड़ा (Landscape)'}
+                    </option>
                   </select>
                 </div>
 
@@ -3539,11 +3700,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       display: 'block',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: '#475569',
+                      color: '#57524C',
                       marginBottom: '4px',
                     }}
                   >
-                    Columns per Page
+                    {locale === 'en' ? 'Columns per Page' : 'कॉलम संख्या'}
                   </label>
                   <select
                     value={layout.columnCount}
@@ -3552,18 +3713,26 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     }
                     style={{
                       width: '100%',
-                      padding: '6px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
+                      padding: '6px 8px',
+                      borderRadius: '7px',
+                      border: '1px solid #D6CFC4',
+                      backgroundColor: '#FFFFFF',
                       fontSize: '12px',
+                      color: '#1C1917',
                       outline: 'none',
                     }}
                   >
-                    <option value={2}>2 Columns</option>
-                    <option value={3}>3 Columns</option>
-                    <option value={4}>4 Columns (Classic)</option>
-                    <option value={5}>5 Columns (Broadsheet)</option>
-                    <option value={6}>6 Columns (Dense)</option>
+                    <option value={2}>{locale === 'en' ? '2 Columns' : '2 कॉलम'}</option>
+                    <option value={3}>{locale === 'en' ? '3 Columns' : '3 कॉलम'}</option>
+                    <option value={4}>
+                      {locale === 'en' ? '4 Columns (Classic)' : '4 कॉलम (स्टैंडर्ड)'}
+                    </option>
+                    <option value={5}>
+                      {locale === 'en' ? '5 Columns (Broadsheet)' : '5 कॉलम (ब्रॉडशीट)'}
+                    </option>
+                    <option value={6}>
+                      {locale === 'en' ? '6 Columns (Dense)' : '6 कॉलम (घना)'}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -3576,11 +3745,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       display: 'block',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: '#475569',
+                      color: '#57524C',
                       marginBottom: '4px',
                     }}
                   >
-                    Spacing Density
+                    {locale === 'en' ? 'Spacing Density' : 'कॉलम स्पेसिंग'}
                   </label>
                   <select
                     value={layout.spacingDensity}
@@ -3592,16 +3761,22 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     }
                     style={{
                       width: '100%',
-                      padding: '6px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
+                      padding: '6px 8px',
+                      borderRadius: '7px',
+                      border: '1px solid #D6CFC4',
+                      backgroundColor: '#FFFFFF',
                       fontSize: '12px',
+                      color: '#1C1917',
                       outline: 'none',
                     }}
                   >
-                    <option value="compact">Compact (घना)</option>
-                    <option value="normal">Standard (सामान्य)</option>
-                    <option value="spacious">Spacious (खुला)</option>
+                    <option value="compact">{locale === 'en' ? 'Compact' : 'घना (Compact)'}</option>
+                    <option value="normal">
+                      {locale === 'en' ? 'Standard' : 'सामान्य (Standard)'}
+                    </option>
+                    <option value="spacious">
+                      {locale === 'en' ? 'Spacious' : 'खुला (Spacious)'}
+                    </option>
                   </select>
                 </div>
 
@@ -3611,11 +3786,11 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       display: 'block',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: '#475569',
+                      color: '#57524C',
                       marginBottom: '4px',
                     }}
                   >
-                    Column Dividers
+                    {locale === 'en' ? 'Column Dividers' : 'कॉलम विभाजन'}
                   </label>
                   <label
                     style={{
@@ -3623,6 +3798,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       alignItems: 'center',
                       gap: '6px',
                       fontSize: '12px',
+                      color: '#1C1917',
                       marginTop: '6px',
                       cursor: 'pointer',
                     }}
@@ -3632,7 +3808,7 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                       checked={layout.columnRule}
                       onChange={(e) => onUpdateLayout({ ...layout, columnRule: e.target.checked })}
                     />
-                    Vertical Rules
+                    {locale === 'en' ? 'Vertical Rules' : 'खड़ी रेखाएँ'}
                   </label>
                 </div>
               </div>
@@ -3649,21 +3825,34 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                 /* Interior Page Folio Info */
                 <div
                   style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#FAF8F5',
+                    border: '1px solid #E3DCD0',
                     borderRadius: '8px',
                     padding: '12px',
                     fontSize: '12px',
-                    color: '#475569',
+                    color: '#57524C',
                     lineHeight: 1.5,
                   }}
                 >
-                  <strong>Inside Page {currentPageIndex + 1}:</strong> Front-page masthead is
-                  automatically replaced by an authentic inside running folio (
-                  <em>
-                    {masthead.title} • पृष्ठ {currentPageIndex + 1} • {masthead.date}
-                  </em>
-                  ).
+                  {locale === 'en' ? (
+                    <>
+                      <strong>Inside Page {currentPageIndex + 1}:</strong> Front-page masthead is
+                      automatically replaced by an inside running folio (
+                      <em>
+                        {masthead.title} • Page {currentPageIndex + 1} • {masthead.date}
+                      </em>
+                      ).
+                    </>
+                  ) : (
+                    <>
+                      <strong>अंदर का पेज {currentPageIndex + 1}:</strong> पहले पेज के मास्टहेड की
+                      जगह यहाँ ऊपर अपने आप पेज नंबर व तारीख की पट्टी दिखेगी (
+                      <em>
+                        {masthead.title} • पृष्ठ {currentPageIndex + 1} • {masthead.date}
+                      </em>
+                      ).
+                    </>
+                  )}
                 </div>
               )}
 
@@ -3671,8 +3860,8 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
               {onClearPage && (
                 <div
                   style={{
-                    backgroundColor: '#fff1f2',
-                    border: '1px solid #fecdd3',
+                    backgroundColor: '#FFF8F6',
+                    border: '1px solid #FECACA',
                     borderRadius: '8px',
                     padding: '12px',
                     display: 'flex',
@@ -3681,53 +3870,67 @@ export const ContextualInspector: React.FC<ContextualInspectorProps> = ({
                     marginTop: '4px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '15px' }}>🗑️</span>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#9f1239' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: '#991B1B',
+                      }}
+                    >
+                      <TrashIcon size={14} />
+                      <span style={{ fontSize: '12px', fontWeight: 600 }}>
                         {locale === 'en' ? 'Clear Entire Page' : 'पूरा पृष्ठ खाली करें'}
                       </span>
                     </div>
                     <span
                       style={{
                         fontSize: '10px',
-                        backgroundColor: '#ffe4e6',
-                        color: '#9f1239',
-                        fontWeight: 700,
-                        padding: '2px 6px',
-                        borderRadius: '4px',
+                        backgroundColor: '#FEE2E2',
+                        color: '#991B1B',
+                        fontWeight: 600,
+                        padding: '2px 7px',
+                        borderRadius: '999px',
                       }}
                     >
-                      {locale === 'en' ? `Page ${currentPageIndex + 1}` : `पृष्ठ ${currentPageIndex + 1}`}
+                      {locale === 'en'
+                        ? `Page ${currentPageIndex + 1}`
+                        : `पृष्ठ ${currentPageIndex + 1}`}
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '11px', color: '#881337', lineHeight: 1.4 }}>
+                  <p style={{ margin: 0, fontSize: '11.5px', color: '#7F1D1D', lineHeight: 1.45 }}>
                     {locale === 'en'
                       ? 'Clear all stories, images, and blocks from this page in 1-click. Masthead stays intact.'
-                      : 'इस पृष्ठ के सभी समाचार ब्लॉक व चित्र 1-क्लिक में हटाएँ। मास्टहेड सुरक्षित रहेगा।'}
+                      : 'इस पेज के सारे समाचार और फोटो एक क्लिक में हटाएँ। अख़बार का मुख्य शीर्षक वैसा ही रहेगा।'}
                   </p>
                   <button
                     type="button"
                     data-testid="inspector-btn-clear-page"
                     onClick={onClearPage}
                     style={{
-                      backgroundColor: '#e11d48',
-                      color: '#ffffff',
+                      backgroundColor: '#B91C1C',
+                      color: '#FFFFFF',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '7px',
                       padding: '8px 12px',
                       fontSize: '12px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '6px',
-                      boxShadow: '0 1px 2px rgba(225, 29, 72, 0.2)',
                     }}
                   >
-                    <span>🗑️</span>
-                    <span>{locale === 'en' ? 'Clear Page Canvas' : 'पृष्ठ पूर्णतः साफ़ करें'}</span>
+                    <TrashIcon size={13} />
+                    <span>{locale === 'en' ? 'Clear Page Canvas' : 'पूरा पेज खाली करें'}</span>
                   </button>
                 </div>
               )}

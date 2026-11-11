@@ -3,6 +3,32 @@ import type { PageSizePreset } from '@epaper-studio/document-schema';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 import { useI18n } from '../../i18n';
 import { LanguageSelector } from '../common/LanguageSelector';
+import {
+  ArrowLeftRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DashboardIcon,
+  DownloadIcon,
+  FileJsonIcon,
+  FolderOpenIcon,
+  InspectorRightIcon,
+  LayoutGridIcon,
+  MastheadIcon,
+  MaximizeIcon,
+  NewspaperIcon,
+  PaletteIcon,
+  PlusSquareIcon,
+  PrinterIcon,
+  RedoIcon,
+  RulerIcon,
+  ShieldIcon,
+  SidebarLeftIcon,
+  SlidersIcon,
+  SparkleIcon,
+  TrashIcon,
+  UndoIcon,
+  ZapIcon,
+} from './StudioIcons';
 
 export type ViewMode = 'landing' | 'dashboard' | 'split' | 'preview';
 
@@ -117,6 +143,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const { t, locale } = useI18n();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
   const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
+  const isHi = locale === 'hi';
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [editedTitle, setEditedTitle] = useState(publicationTitle);
@@ -158,29 +185,50 @@ export const TopBar: React.FC<TopBarProps> = ({
   const roundedScale = Math.round(scale * 100) / 100;
   const standardScales = [0.25, 0.35, 0.5, 0.65, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
 
-  /* ─── shared menu-item style ─────────────────────────────── */
   const menuItemBase: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '9px',
     padding: '8px 10px',
-    fontSize: '11.5px',
-    color: '#FAF8F5',
+    fontSize: '12px',
+    fontWeight: 500,
+    color: '#EDEAE4',
     backgroundColor: 'transparent',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '6px',
     cursor: 'pointer',
     textAlign: 'left',
     width: '100%',
+    transition: 'background-color 120ms ease',
   };
+
+  const secondaryRow2Btn: React.CSSProperties = {
+    backgroundColor: '#211E1B',
+    color: '#E5DFD6',
+    border: '1px solid #35302B',
+    borderRadius: '6px',
+    padding: '4px 10px',
+    height: '28px',
+    fontSize: '11.5px',
+    fontWeight: 500,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexShrink: 0,
+  };
+
+  const divider = (
+    <div style={{ height: '16px', width: '1px', backgroundColor: '#2E2924', flexShrink: 0 }} />
+  );
 
   return (
     <header
       data-testid="desktop-top-bar"
       style={{
-        backgroundColor: colors.inkBlack,
+        backgroundColor: '#141210',
         color: '#FAF8F5',
-        borderBottom: `1px solid #2B2825`,
+        borderBottom: '1px solid #2B2723',
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
@@ -189,30 +237,29 @@ export const TopBar: React.FC<TopBarProps> = ({
         position: 'relative',
         overflow: 'visible',
         flexShrink: 0,
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
-      {/* ════════════════════════════════════════════════════════
-       * ROW 1 — Brand | Sidebar | Title | Save Status | Lang | Panel
-       * ════════════════════════════════════════════════════════ */}
+      {/* ROW 1 — Brand | Sidebar | Title | Save Status | Mode | Preflight | Print & Export | Lang | Panel */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 12px',
-          height: '44px',
-          borderBottom: '1px solid #2B2825',
-          gap: '8px',
+          padding: '0 14px',
+          height: '46px',
+          borderBottom: '1px solid #26221E',
+          gap: '10px',
           whiteSpace: 'nowrap',
           flexShrink: 0,
         }}
       >
-        {/* ── LEFT: Sidebar toggle + Brand + Dashboard + Title + Save ── */}
+        {/* LEFT CLUSTER */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '9px',
             minWidth: 0,
             flex: 1,
             overflow: 'hidden',
@@ -220,56 +267,64 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           {onToggleSidebar && (
             <button
+              type="button"
               onClick={onToggleSidebar}
+              className="studio-topbar-btn"
               title={
                 isSidebarOpen
-                  ? locale === 'en' ? 'Hide sidebar' : 'साइडबार छिपाएं'
-                  : locale === 'en' ? 'Show sidebar' : 'साइडबार दिखाएं'
+                  ? isHi
+                    ? 'बायाँ पैनल छिपाएँ'
+                    : 'Hide sidebar'
+                  : isHi
+                    ? 'बायाँ पैनल खोलें'
+                    : 'Show sidebar'
               }
               aria-label="Toggle sidebar"
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#A8A29E',
+                backgroundColor: isSidebarOpen ? '#24211D' : 'transparent',
+                border: '1px solid',
+                borderColor: isSidebarOpen ? '#3A342E' : 'transparent',
+                color: isSidebarOpen ? '#FAF8F5' : '#A8A29E',
                 cursor: 'pointer',
-                padding: '6px',
-                borderRadius: '2px',
+                width: '30px',
+                height: '30px',
+                borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '14px',
                 flexShrink: 0,
               }}
             >
-              {isSidebarOpen ? '◀' : '☰'}
+              <SidebarLeftIcon size={15} />
             </button>
           )}
 
           {/* Brand Crest */}
           <div
             onClick={() => onViewModeChange('landing')}
-            title={locale === 'en' ? 'Return to Home' : 'मुख्य पृष्ठ पर लौटें'}
+            title={isHi ? 'होम पेज पर जाएँ' : 'Return to Home'}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
             <div
               style={{
-                width: '22px',
-                height: '22px',
-                backgroundColor: colors.pressRed,
-                color: '#ffffff',
+                width: '24px',
+                height: '24px',
+                backgroundColor: '#B91C1C',
+                color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 900,
+                fontWeight: 700,
                 fontSize: '13px',
                 fontFamily: fonts.hindiEditorial,
-                borderRadius: '3px',
+                borderRadius: '6px',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
               }}
             >
               प
@@ -277,8 +332,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span
               style={{
                 fontSize: '14px',
-                fontWeight: 800,
-                color: '#ffffff',
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                color: '#FAF8F5',
                 fontFamily: `${fonts.display}, ${fonts.hindiEditorial}`,
               }}
             >
@@ -288,31 +344,42 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           {/* Dashboard Shortcut */}
           <button
+            type="button"
             onClick={() => onViewModeChange('dashboard')}
-            title={locale === 'en' ? 'Go to Publisher Dashboard' : 'प्रकाशक डैशबोर्ड पर जाएं'}
+            className="studio-topbar-btn"
+            title={isHi ? 'डैशबोर्ड पर जाएँ' : 'Go to Publisher Dashboard'}
             style={{
-              background: '#262422',
-              border: '1px solid #3D3835',
-              borderRadius: '3px',
-              color: '#E6E0D5',
-              padding: '3px 8px',
+              backgroundColor: '#211E1B',
+              border: '1px solid #35302B',
+              borderRadius: '6px',
+              color: '#E5DFD6',
+              padding: '4px 10px',
+              height: '28px',
               fontSize: '11.5px',
-              fontWeight: 600,
+              fontWeight: 500,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
               flexShrink: 0,
             }}
           >
-            <span>🏠</span>
+            <DashboardIcon size={13} color="#C7BFAF" />
             <span>{t.common.dashboard}</span>
           </button>
 
-          <div style={{ height: '14px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
+          {divider}
 
-          {/* Editable Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+          {/* Editable Publication Title + Autosave Status */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              minWidth: 0,
+              overflow: 'hidden',
+            }}
+          >
             {isRenaming ? (
               <input
                 type="text"
@@ -328,30 +395,32 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }
                 }}
                 style={{
-                  backgroundColor: '#262422',
-                  color: '#ffffff',
-                  border: `1px solid ${colors.pressRed}`,
-                  borderRadius: '2px',
-                  padding: '2px 6px',
-                  fontSize: '12px',
+                  backgroundColor: '#24211D',
+                  color: '#FFFFFF',
+                  border: '1px solid #B91C1C',
+                  borderRadius: '5px',
+                  padding: '3px 8px',
+                  fontSize: '12.5px',
                   fontFamily: fonts.hindiEditorial,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   outline: 'none',
                 }}
               />
             ) : (
               <span
                 onClick={() => setIsRenaming(true)}
-                title={locale === 'en' ? 'Click to rename publication' : 'नाम बदलने के लिए क्लिक करें'}
+                title={
+                  isHi ? 'अख़बार का नाम बदलने के लिए क्लिक करें' : 'Click to rename publication'
+                }
                 style={{
-                  fontSize: '12.5px',
-                  color: '#E6E0D5',
+                  fontSize: '13px',
+                  color: '#F5F2EC',
                   fontWeight: 600,
                   cursor: 'pointer',
                   fontFamily: fonts.hindiEditorial,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  maxWidth: '180px',
+                  maxWidth: '200px',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -359,207 +428,255 @@ export const TopBar: React.FC<TopBarProps> = ({
               </span>
             )}
 
-            {/* Save Status Badge */}
             {hasUnsavedChanges ? (
               <button
+                type="button"
                 onClick={onSaveDraft}
                 disabled={isSaving}
                 data-testid="autosave-status-badge"
                 style={{
-                  background: 'none',
-                  border: 'none',
+                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  borderRadius: '999px',
                   fontSize: '11px',
-                  color: '#F59E0B',
+                  fontWeight: 500,
+                  color: '#FCD34D',
                   cursor: 'pointer',
-                  padding: '2px 4px',
+                  padding: '2px 8px',
                   flexShrink: 0,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
+                  gap: '5px',
                 }}
               >
-                <span>●</span>
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#F59E0B',
+                  }}
+                />
                 <span>
                   {isSaving
-                    ? locale === 'en' ? 'Saving...' : 'सहेजा जा रहा है...'
-                    : locale === 'en' ? 'Unsaved' : 'अनसेव्ड'}
+                    ? isHi
+                      ? 'सेव हो रहा है...'
+                      : 'Saving...'
+                    : isHi
+                      ? 'सेव करें'
+                      : 'Unsaved'}
                 </span>
               </button>
             ) : (
               <span
                 data-testid="autosave-status-badge"
-                title={locale === 'en' ? 'All changes saved locally' : 'सभी बदलाव स्वतः सहेजे गए हैं'}
+                title={isHi ? 'सब अपने आप सेव है' : 'All changes saved locally'}
                 style={{
                   fontSize: '11px',
-                  color: '#34D399',
+                  fontWeight: 500,
+                  color: '#86EFAC',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  borderRadius: '999px',
+                  padding: '2px 8px',
                   flexShrink: 0,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
+                  gap: '4px',
                 }}
               >
-                <span>✓</span>
-                <span>{locale === 'en' ? 'Saved' : 'स्वतः सहेजा गया'}</span>
+                <span aria-hidden="true">✓</span>
+                <span>{isHi ? 'सेव है' : 'Saved'}</span>
               </span>
             )}
           </div>
         </div>
 
-        {/* ── RIGHT of Row 1: Mode | Preflight | PDF Download | Language | Panel ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          {/* Editor Mode Toggle */}
+        {/* RIGHT CLUSTER */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0 }}>
           {onToggleEditorMode && (
             <button
+              type="button"
               onClick={onToggleEditorMode}
               data-testid="topbar-btn-editor-mode"
+              className="studio-topbar-btn"
               title={
                 editorMode === 'simple'
-                  ? 'पेशेवर संपादक पर जाएं (Switch to Pro Mode)'
-                  : 'सरल मोड पर जाएं (Simple Mode)'
+                  ? isHi
+                    ? 'प्रो मोड में बदलें'
+                    : 'Switch to Pro Mode'
+                  : isHi
+                    ? 'सरल मोड में बदलें'
+                    : 'Switch to Simple Mode'
               }
               style={{
-                backgroundColor: editorMode === 'simple' ? '#14532D' : '#1e293b',
-                color: '#ffffff',
-                border: editorMode === 'simple' ? '1px solid #22c55e' : '1px solid #475569',
-                borderRadius: '16px',
-                padding: '3px 10px',
-                fontSize: '11px',
-                fontWeight: 700,
+                backgroundColor: editorMode === 'simple' ? '#1F2421' : '#26211E',
+                color: editorMode === 'simple' ? '#BBF7D0' : '#FDE68A',
+                border: '1px solid',
+                borderColor: editorMode === 'simple' ? '#2F4A38' : '#4D3D2B',
+                borderRadius: '999px',
+                padding: '4px 10px',
+                height: '28px',
+                fontSize: '11.5px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 flexShrink: 0,
               }}
             >
-              <span>{editorMode === 'simple' ? '✨ सरल मोड' : '⚙️ पेशेवर मोड'}</span>
+              {editorMode === 'simple' ? (
+                <SparkleIcon size={12} color="#86EFAC" />
+              ) : (
+                <SlidersIcon size={12} color="#FDE68A" />
+              )}
+              <span>
+                {editorMode === 'simple'
+                  ? isHi
+                    ? 'सरल मोड'
+                    : 'Simple'
+                  : isHi
+                    ? 'प्रो मोड'
+                    : 'Pro'}
+              </span>
             </button>
           )}
 
-          {/* Preflight Status */}
           {onOpenPreflight && (
             <button
+              type="button"
               data-testid="btn-preflight-status"
               onClick={onOpenPreflight}
-              title={locale === 'en' ? 'Preflight validation report' : 'प्रीफ़्लाइट जांच रिपोर्ट'}
+              className="studio-topbar-btn"
+              title={isHi ? 'प्रिंट जांच रिपोर्ट देखें' : 'Preflight validation report'}
               style={{
-                backgroundColor:
-                  preflightStatus?.overallStatus === 'green'
-                    ? '#143522'
-                    : preflightStatus?.overallStatus === 'yellow'
-                      ? '#3B280A'
-                      : preflightStatus?.overallStatus === 'red'
-                        ? '#3D1414'
-                        : '#262422',
+                backgroundColor: '#211E1B',
                 color:
                   preflightStatus?.overallStatus === 'green'
-                    ? '#86EFAC'
+                    ? '#BBF7D0'
                     : preflightStatus?.overallStatus === 'yellow'
-                      ? '#FDE047'
+                      ? '#FDE68A'
                       : preflightStatus?.overallStatus === 'red'
-                        ? '#FCA5A5'
-                        : '#E6E0D5',
-                border: `1px solid ${
-                  preflightStatus?.overallStatus === 'green'
-                    ? '#166534'
-                    : preflightStatus?.overallStatus === 'yellow'
-                      ? '#854D0E'
-                      : preflightStatus?.overallStatus === 'red'
-                        ? '#991B1B'
-                        : '#3D3835'
-                }`,
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '11px',
-                fontWeight: 700,
+                        ? '#FECACA'
+                        : '#E5DFD6',
+                border: '1px solid #35302B',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                height: '28px',
+                fontSize: '11.5px',
+                fontWeight: 500,
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 flexShrink: 0,
               }}
             >
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  backgroundColor:
+                    preflightStatus?.overallStatus === 'green'
+                      ? '#22C55E'
+                      : preflightStatus?.overallStatus === 'yellow'
+                        ? '#F59E0B'
+                        : preflightStatus?.overallStatus === 'red'
+                          ? '#EF4444'
+                          : '#9CA3AF',
+                }}
+              />
               <span>
                 {preflightStatus?.overallStatus === 'green'
-                  ? '🟢'
+                  ? isHi
+                    ? 'प्रीफ़्लाइट'
+                    : 'Preflight OK'
                   : preflightStatus?.overallStatus === 'yellow'
-                    ? '🟡'
+                    ? isHi
+                      ? `चेतावनी (${preflightStatus.warningCount})`
+                      : `${preflightStatus.warningCount} Warnings`
                     : preflightStatus?.overallStatus === 'red'
-                      ? '🔴'
-                      : '🛡️'}
-              </span>
-              <span>
-                {preflightStatus?.overallStatus === 'green'
-                  ? locale === 'en' ? 'Preflight OK' : 'प्रीफ़्लाइट'
-                  : preflightStatus?.overallStatus === 'yellow'
-                    ? `⚠ ${preflightStatus.warningCount}`
-                    : preflightStatus?.overallStatus === 'red'
-                      ? `✖ ${preflightStatus.blockerCount}`
-                      : locale === 'en' ? 'Preflight' : 'प्रीफ़्लाइट'}
+                      ? isHi
+                        ? `त्रुटि (${preflightStatus.blockerCount})`
+                        : `${preflightStatus.blockerCount} Issues`
+                      : isHi
+                        ? 'प्रीफ़्लाइट'
+                        : 'Preflight'}
               </span>
             </button>
           )}
 
-          {/* Fallback Browser Print / Save as PDF Button */}
           {onPrintPdf && (
             <button
+              type="button"
               data-testid="btn-print-pdf"
               onClick={onPrintPdf}
               disabled={isPrintingPdf}
+              className="studio-topbar-btn"
               title={
-                locale === 'en'
-                  ? 'Browser Print / Save as PDF (Fallback without renderer)'
-                  : 'ब्राउज़र प्रिंट / PDF के रूप में सहेजें (बिना सर्वर)'
+                isHi
+                  ? 'ब्राउज़र से प्रिंट या PDF सेव करें'
+                  : 'Browser Print / Save as PDF (Fallback)'
               }
               style={{
-                backgroundColor: '#1e293b',
-                color: '#f8fafc',
-                border: '1px solid #475569',
-                borderRadius: '4px',
-                padding: '5px 10px',
+                backgroundColor: '#211E1B',
+                color: '#FAF8F5',
+                border: '1px solid #35302B',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                height: '30px',
                 fontSize: '11.5px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: isPrintingPdf ? 'wait' : 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '6px',
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
               }}
             >
-              <span style={{ fontSize: '12px' }}>🖨️</span>
-              <span>{locale === 'en' ? 'Print / PDF' : 'प्रिंट / PDF'}</span>
+              <PrinterIcon size={13} color="#D6CFC4" />
+              <span>{isHi ? 'प्रिंट / PDF' : 'Print / PDF'}</span>
             </button>
           )}
 
-          {/* Primary CTA: PDF Download */}
+          {/* Primary PDF Export CTA */}
           <button
+            type="button"
             data-testid="btn-export-pdf"
             onClick={onExportPdf}
             disabled={isExportingPdf}
-            title={locale === 'en' ? 'Download print-ready vector PDF' : 'प्रेस-रेडी वेक्टर PDF डाउनलोड करें'}
+            className="studio-topbar-primary"
+            title={isHi ? 'प्रिंट-तैयार PDF डाउनलोड करें' : 'Download print-ready vector PDF'}
             style={{
-              backgroundColor: isExportingPdf ? '#991B1B' : colors.pressRed || '#DC2626',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '5px 12px',
+              backgroundColor: isExportingPdf ? '#991B1B' : '#B91C1C',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '6px',
+              padding: '4px 13px',
+              height: '30px',
               fontSize: '11.5px',
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: isExportingPdf ? 'wait' : 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '6px',
               flexShrink: 0,
               whiteSpace: 'nowrap',
-              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+              boxShadow: '0 2px 8px rgba(185, 28, 28, 0.35)',
             }}
           >
-            <span style={{ fontSize: '12px' }}>{isExportingPdf ? '⏳' : '📥'}</span>
+            <DownloadIcon size={13} />
             <span>
               {isExportingPdf
-                ? locale === 'en' ? 'Exporting...' : 'डाउनलोड...'
-                : locale === 'en' ? 'PDF Download' : 'PDF डाउनलोड'}
+                ? isHi
+                  ? 'बन रहा है...'
+                  : 'Exporting...'
+                : isHi
+                  ? 'PDF डाउनलोड'
+                  : 'PDF Download'}
             </span>
           </button>
 
@@ -567,228 +684,262 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           {onToggleInspector && (
             <button
+              type="button"
               onClick={onToggleInspector}
+              className="studio-topbar-btn"
               title={
                 isInspectorOpen
-                  ? locale === 'en' ? 'Hide inspector panel' : 'पैनल छिपाएं'
-                  : locale === 'en' ? 'Show inspector panel' : 'पैनल दिखाएं'
+                  ? isHi
+                    ? 'दायाँ पैनल छिपाएँ'
+                    : 'Hide inspector panel'
+                  : isHi
+                    ? 'दायाँ पैनल दिखाएँ'
+                    : 'Show inspector panel'
               }
               style={{
-                backgroundColor: isInspectorOpen ? '#36322E' : 'transparent',
+                backgroundColor: isInspectorOpen ? '#2B2622' : '#211E1B',
                 border: '1px solid',
-                borderColor: isInspectorOpen ? colors.pressRed || '#DC2626' : '#3D3835',
+                borderColor: isInspectorOpen ? '#B91C1C' : '#35302B',
                 color: isInspectorOpen ? '#FAF8F5' : '#A8A29E',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                padding: '4px 8px',
-                fontSize: '11px',
-                fontWeight: 600,
-                display: 'flex',
+                padding: '4px 9px',
+                height: '30px',
+                fontSize: '11.5px',
+                fontWeight: 500,
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 flexShrink: 0,
               }}
             >
-              <span>⚙</span>
-              <span>{locale === 'en' ? 'Panel' : 'पैनल'}</span>
+              <InspectorRightIcon size={13} />
+              <span>{isHi ? 'पैनल' : 'Panel'}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════
-       * ROW 2 — Undo/Redo | Pages | Zoom | Mode | Masthead | PageSetup | Templates | 278 | Preflight | PDF | Tools▼
-       * ════════════════════════════════════════════════════════ */}
+      {/* ROW 2 — Undo/Redo | Pages | Clear | Zoom | Design Library | Templates | Masthead | Page Setup | Tools */}
       <div
+        className="studio-topbar-row2"
         style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '0 12px',
-          height: '40px',
-          gap: '6px',
+          padding: '0 14px',
+          height: '42px',
+          gap: '8px',
           whiteSpace: 'nowrap',
-          overflowX: 'visible',
-          overflowY: 'visible',
+          backgroundColor: '#191614',
+          overflow: 'visible',
           flexShrink: 0,
           position: 'relative',
         }}
       >
-        {/* ── Undo / Redo ── */}
+        {/* Undo / Redo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
           <button
+            type="button"
             onClick={onUndo}
             disabled={!canUndo}
+            className="studio-topbar-btn"
             title={`${t.common.undo} (Ctrl+Z)`}
             style={{
               backgroundColor: 'transparent',
-              border: 'none',
-              color: canUndo ? '#FAF8F5' : '#57534E',
+              border: '1px solid transparent',
+              color: canUndo ? '#F5F2EC' : '#57524C',
               cursor: canUndo ? 'pointer' : 'not-allowed',
-              padding: '4px 6px',
-              fontSize: '15px',
-              fontWeight: 700,
-              borderRadius: '4px',
+              width: '28px',
+              height: '28px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '5px',
             }}
           >
-            ↶
+            <UndoIcon size={14} />
           </button>
           <button
+            type="button"
             onClick={onRedo}
             disabled={!canRedo}
+            className="studio-topbar-btn"
             title={`${t.common.redo} (Ctrl+Y)`}
             style={{
               backgroundColor: 'transparent',
-              border: 'none',
-              color: canRedo ? '#FAF8F5' : '#57534E',
+              border: '1px solid transparent',
+              color: canRedo ? '#F5F2EC' : '#57524C',
               cursor: canRedo ? 'pointer' : 'not-allowed',
-              padding: '4px 6px',
-              fontSize: '15px',
-              fontWeight: 700,
-              borderRadius: '4px',
+              width: '28px',
+              height: '28px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '5px',
             }}
           >
-            ↷
+            <RedoIcon size={14} />
           </button>
         </div>
 
-        <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
+        {divider}
 
-        {/* ── Page Navigation ── */}
+        {/* Page Stepper */}
         <div
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '4px',
-            backgroundColor: '#262422',
-            border: '1px solid #3D3835',
-            borderRadius: '4px',
+            backgroundColor: '#211E1B',
+            border: '1px solid #35302B',
+            borderRadius: '6px',
             padding: '2px 6px',
+            height: '28px',
+            boxSizing: 'border-box',
             flexShrink: 0,
           }}
         >
           <button
+            type="button"
             disabled={currentPageNumber <= 1}
             onClick={() => onSelectPage(currentPageNumber - 1)}
-            title={locale === 'en' ? 'Previous page' : 'पिछला पेज'}
+            title={isHi ? 'पिछला पेज' : 'Previous page'}
             style={{
               background: 'transparent',
               border: 'none',
-              color: currentPageNumber <= 1 ? '#57534E' : '#E6E0D5',
+              color: currentPageNumber <= 1 ? '#57524C' : '#E5DFD6',
               cursor: currentPageNumber <= 1 ? 'not-allowed' : 'pointer',
-              padding: '2px 4px',
-              fontSize: '12px',
+              padding: '2px',
+              display: 'inline-flex',
+              alignItems: 'center',
             }}
           >
-            ◀
+            <ChevronLeftIcon size={13} />
           </button>
           <span
             style={{
               fontSize: '11.5px',
               color: '#FAF8F5',
-              fontWeight: 700,
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '5px',
+              padding: '0 2px',
             }}
           >
-            <span>{currentPageNumber} / {totalPages}</span>
+            <span>
+              {currentPageNumber} / {totalPages}
+            </span>
             {isPageFull && (
               <span
-                title={locale === 'en' ? 'Page is full!' : 'पेज भर चुका है!'}
+                title={isHi ? 'पेज भर गया है' : 'Page is full'}
                 style={{
                   fontSize: '9px',
-                  padding: '1px 4px',
-                  borderRadius: '3px',
-                  backgroundColor: '#dc2626',
-                  color: '#fff',
-                  fontWeight: 700,
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  backgroundColor: '#B91C1C',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
                 }}
               >
-                FULL
+                {isHi ? 'भरा' : 'FULL'}
               </span>
             )}
           </span>
           <button
+            type="button"
             disabled={currentPageNumber >= totalPages}
             onClick={() => onSelectPage(currentPageNumber + 1)}
-            title={locale === 'en' ? 'Next page' : 'अगला पेज'}
+            title={isHi ? 'अगला पेज' : 'Next page'}
             style={{
               background: 'transparent',
               border: 'none',
-              color: currentPageNumber >= totalPages ? '#57534E' : '#E6E0D5',
+              color: currentPageNumber >= totalPages ? '#57524C' : '#E5DFD6',
               cursor: currentPageNumber >= totalPages ? 'not-allowed' : 'pointer',
-              padding: '2px 4px',
-              fontSize: '12px',
+              padding: '2px',
+              display: 'inline-flex',
+              alignItems: 'center',
             }}
           >
-            ▶
+            <ChevronRightIcon size={13} />
           </button>
           <span
             style={{
-              fontSize: '10px',
-              color: '#A8A29E',
+              fontSize: '9.5px',
+              color: '#B5ADA1',
               textTransform: 'uppercase',
-              fontWeight: 700,
-              backgroundColor: '#1C1917',
-              padding: '2px 5px',
-              borderRadius: '2px',
-              marginLeft: '4px',
+              letterSpacing: '0.04em',
+              fontWeight: 600,
+              backgroundColor: '#141210',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              marginLeft: '2px',
             }}
           >
             {pageSize}
           </span>
         </div>
 
+        {/* Clear Page */}
         {onClearPage && (
           <button
             type="button"
             data-testid="topbar-btn-clear-page"
             onClick={onClearPage}
-            title={locale === 'en' ? 'Clear all stories & blocks from this page' : 'इस पेज के सभी समाचार व ब्लॉक हटाकर खाली करें'}
+            title={
+              isHi
+                ? 'इस पेज की सभी ख़बरें और ब्लॉक साफ़ करें'
+                : 'Clear all stories & blocks from this page'
+            }
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              backgroundColor: '#262422',
-              color: '#f87171',
-              border: '1px solid #7f1d1d',
-              borderRadius: '4px',
-              padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: 600,
+              gap: '5px',
+              backgroundColor: 'rgba(185, 28, 28, 0.12)',
+              color: '#FCA5A5',
+              border: '1px solid rgba(185, 28, 28, 0.35)',
+              borderRadius: '6px',
+              padding: '4px 9px',
+              height: '28px',
+              fontSize: '11.5px',
+              fontWeight: 500,
               cursor: 'pointer',
               flexShrink: 0,
-              transition: 'all 0.15s ease',
+              transition: 'all 140ms ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#450a0a';
-              e.currentTarget.style.color = '#fca5a5';
+              e.currentTarget.style.backgroundColor = 'rgba(185, 28, 28, 0.28)';
+              e.currentTarget.style.color = '#FECACA';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#262422';
-              e.currentTarget.style.color = '#f87171';
+              e.currentTarget.style.backgroundColor = 'rgba(185, 28, 28, 0.12)';
+              e.currentTarget.style.color = '#FCA5A5';
             }}
           >
-            <span style={{ fontSize: '11px' }}>🗑️</span>
-            <span>{locale === 'en' ? 'Clear Page' : 'पेज खाली करें'}</span>
+            <TrashIcon size={12} />
+            <span>{isHi ? 'पेज खाली करें' : 'Clear Page'}</span>
           </button>
         )}
 
-        <div style={{ height: '16px', width: '1px', backgroundColor: '#3D3835', flexShrink: 0 }} />
+        {divider}
 
-        {/* ── Zoom Controls ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+        {/* Zoom Controls */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
           <button
+            type="button"
             onClick={() => onScaleChange(Math.max(0.25, Math.round((scale - 0.1) * 100) / 100))}
+            className="studio-topbar-btn"
             title={t.common.zoomOut}
             style={{
-              backgroundColor: '#1C1917',
-              border: '1px solid #3D3835',
-              color: '#E6E0D5',
-              borderRadius: '4px',
+              backgroundColor: '#211E1B',
+              border: '1px solid #35302B',
+              color: '#E5DFD6',
+              borderRadius: '6px',
               fontSize: '13px',
-              fontWeight: 700,
-              padding: '2px 8px',
+              fontWeight: 600,
+              width: '26px',
+              height: '28px',
               cursor: 'pointer',
             }}
           >
@@ -797,14 +948,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           <select
             value={roundedScale}
             onChange={(e) => onScaleChange(parseFloat(e.target.value))}
+            aria-label={isHi ? 'ज़ूम स्तर' : 'Zoom level'}
             style={{
-              backgroundColor: '#1C1917',
+              backgroundColor: '#211E1B',
               color: '#FAF8F5',
-              border: '1px solid #3D3835',
-              borderRadius: '4px',
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '3px 4px',
+              border: '1px solid #35302B',
+              borderRadius: '6px',
+              fontSize: '11.5px',
+              fontWeight: 500,
+              fontVariantNumeric: 'tabular-nums',
+              padding: '0 6px',
+              height: '28px',
               cursor: 'pointer',
               outline: 'none',
               minWidth: '72px',
@@ -812,7 +966,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             {!standardScales.includes(roundedScale) && (
               <option value={roundedScale}>
-                {Math.round(scale * 100)}% ({locale === 'en' ? 'Fit' : 'फ़िट'})
+                {Math.round(scale * 100)}% ({isHi ? 'फ़िट' : 'Fit'})
               </option>
             )}
             {standardScales.map((val) => (
@@ -822,16 +976,19 @@ export const TopBar: React.FC<TopBarProps> = ({
             ))}
           </select>
           <button
+            type="button"
             onClick={() => onScaleChange(Math.min(3.0, Math.round((scale + 0.1) * 100) / 100))}
+            className="studio-topbar-btn"
             title={t.common.zoomIn}
             style={{
-              backgroundColor: '#1C1917',
-              border: '1px solid #3D3835',
-              color: '#E6E0D5',
-              borderRadius: '4px',
+              backgroundColor: '#211E1B',
+              border: '1px solid #35302B',
+              color: '#E5DFD6',
+              borderRadius: '6px',
               fontSize: '13px',
-              fontWeight: 700,
-              padding: '2px 8px',
+              fontWeight: 600,
+              width: '26px',
+              height: '28px',
               cursor: 'pointer',
             }}
           >
@@ -839,434 +996,472 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
           {onFitPage && (
             <button
+              type="button"
               onClick={onFitPage}
+              className="studio-topbar-btn"
               title={t.common.zoomFit}
               style={{
                 backgroundColor: 'transparent',
-                border: '1px solid #3D3835',
-                color: '#A8A29E',
-                borderRadius: '4px',
-                fontSize: '10.5px',
-                fontWeight: 600,
-                padding: '3px 7px',
+                border: '1px solid #35302B',
+                color: '#C7BFAF',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 500,
+                padding: '0 8px',
+                height: '28px',
                 cursor: 'pointer',
               }}
             >
-              {locale === 'en' ? 'Fit' : 'फ़िट'}
+              {isHi ? 'फ़िट' : 'Fit'}
             </button>
           )}
           {onFitWidth && (
             <button
+              type="button"
               onClick={onFitWidth}
-              title={locale === 'en' ? 'Fit width' : 'चौड़ाई फिट'}
+              className="studio-topbar-btn"
+              title={isHi ? 'चौड़ाई स्क्रीन पर फ़िट करें' : 'Fit width'}
               style={{
                 backgroundColor: 'transparent',
-                border: '1px solid #3D3835',
-                color: '#A8A29E',
-                borderRadius: '4px',
-                fontSize: '10.5px',
-                fontWeight: 600,
-                padding: '3px 7px',
+                border: '1px solid #35302B',
+                color: '#C7BFAF',
+                borderRadius: '6px',
+                padding: '0 7px',
+                height: '28px',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
             >
-              ↔
+              <ArrowLeftRightIcon size={13} />
             </button>
           )}
         </div>
 
-        {/* ── RIGHT cluster of Row 2: Design Library | Templates | Masthead | Page Setup | Tools ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
-          {/* ── 278 DESIGN LIBRARY ── */}
+        {/* RIGHT CLUSTER */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginLeft: 'auto',
+            flexShrink: 0,
+          }}
+        >
           {onOpenDesignLibrary && (
             <button
+              type="button"
               onClick={onOpenDesignLibrary}
               data-testid="topbar-btn-design-library"
-              title="278 संदर्भ डिज़ाइनों का संपादन-योग्य संग्रह"
+              className="studio-topbar-btn"
+              title={isHi ? '278 तैयार डिज़ाइन संग्रह खोलें' : 'Open 278 Editorial Design Library'}
               style={{
-                backgroundColor: '#1e3a8a',
-                color: '#ffffff',
-                border: '1px solid #3b82f6',
-                borderRadius: '4px',
-                padding: '4px 10px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                flexShrink: 0,
-                boxShadow: '0 1px 3px rgba(30, 58, 138, 0.4)',
+                ...secondaryRow2Btn,
+                backgroundColor: '#262129',
+                borderColor: '#453B52',
+                color: '#EDE9FE',
               }}
             >
-              <span>🎨</span>
-              <span>278 डिज़ाइन</span>
+              <LayoutGridIcon size={13} color="#C4B5FD" />
+              <span>{isHi ? '278 डिज़ाइन' : '278 Designs'}</span>
             </button>
           )}
 
-          {/* ── TEMPLATE GALLERY ── */}
           {onOpenTemplateGallery && (
             <button
+              type="button"
               onClick={onOpenTemplateGallery}
               data-testid="topbar-btn-template-gallery"
-              title={locale === 'en' ? 'Open Template Library' : 'रेडीमेड टेम्पलेट चुनें'}
-              style={{
-                backgroundColor: '#262422',
-                color: '#E6E0D5',
-                border: '1px solid #3D3835',
-                borderRadius: '4px',
-                padding: '4px 9px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                flexShrink: 0,
-              }}
+              className="studio-topbar-btn"
+              title={isHi ? 'तैयार पेज टेम्पलेट चुनें' : 'Open Template Library'}
+              style={secondaryRow2Btn}
             >
-              <span>📰</span>
-              <span>{locale === 'en' ? 'Templates' : 'टेम्पलेट'}</span>
+              <NewspaperIcon size={13} color="#C7BFAF" />
+              <span>{isHi ? 'टेम्पलेट' : 'Templates'}</span>
             </button>
           )}
 
-          {/* ── MASTHEAD DESIGNER ── */}
           {onOpenMastheadDesigner && (
             <button
+              type="button"
               onClick={onOpenMastheadDesigner}
               data-testid="topbar-btn-masthead-designer"
-              title={locale === 'en' ? 'Masthead & Header Designer' : 'मास्टहेड डिज़ाइनर'}
-              style={{
-                backgroundColor: '#262422',
-                color: '#E6E0D5',
-                border: '1px solid #3D3835',
-                borderRadius: '4px',
-                padding: '4px 9px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                flexShrink: 0,
-              }}
+              className="studio-topbar-btn"
+              title={isHi ? 'मास्टहेड डिज़ाइनर खोलें' : 'Masthead & Header Designer'}
+              style={secondaryRow2Btn}
             >
-              <span>🗞️</span>
-              <span>{locale === 'en' ? 'Masthead' : 'मास्टहेड'}</span>
+              <MastheadIcon size={13} color="#C7BFAF" />
+              <span>{isHi ? 'मास्टहेड' : 'Masthead'}</span>
             </button>
           )}
 
-          {/* ── PAGE SETUP ── */}
           {onOpenPageSetup && (
             <button
+              type="button"
               onClick={onOpenPageSetup}
               data-testid="topbar-btn-pagesetup"
-              title={locale === 'en' ? 'Page & Paper Setup' : 'कागज़ आकार'}
-              style={{
-                backgroundColor: '#262422',
-                color: '#E6E0D5',
-                border: '1px solid #3D3835',
-                borderRadius: '4px',
-                padding: '4px 9px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                flexShrink: 0,
-              }}
+              className="studio-topbar-btn"
+              title={isHi ? 'कागज़ और मार्जिन सेट करें' : 'Page & Paper Setup'}
+              style={secondaryRow2Btn}
             >
-              <span>📐</span>
-              <span>{locale === 'en' ? 'Page Setup' : 'पेज सेटअप'}</span>
+              <RulerIcon size={13} color="#C7BFAF" />
+              <span>{isHi ? 'पेज सेटअप' : 'Page Setup'}</span>
             </button>
           )}
 
-          {/* ── TOOLS DROPDOWN ── */}
+          {/* TOOLS DROPDOWN */}
           <div style={{ position: 'relative', flexShrink: 0 }} ref={toolsMenuRef}>
-          <button
-            onClick={() => setIsToolsOpen((prev) => !prev)}
-            aria-expanded={isToolsOpen}
-            aria-haspopup="true"
-            title={locale === 'en' ? 'Presets, layout, theme, backup & print tools' : 'प्रारूप, विन्यास, थीम, बैकअप एवं प्रिंट टूल्स'}
-            style={{
-              backgroundColor: isToolsOpen ? '#36322E' : '#262422',
-              color: isToolsOpen ? '#FAF8F5' : '#E6E0D5',
-              border: isToolsOpen ? `1px solid ${colors.pressRed}` : '1px solid #3D3835',
-              borderRadius: '4px',
-              padding: '5px 9px',
-              fontSize: '11.5px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span>🛠️</span>
-            <span>{locale === 'en' ? 'Tools' : 'टूल्स'}</span>
-            <span style={{ fontSize: '8px', marginLeft: '2px', opacity: 0.7 }}>
-              {isToolsOpen ? '▲' : '▼'}
-            </span>
-          </button>
-
-          {isToolsOpen && (
-            <div
-              role="menu"
+            <button
+              type="button"
+              onClick={() => setIsToolsOpen((prev) => !prev)}
+              aria-expanded={isToolsOpen}
+              aria-haspopup="true"
+              className="studio-topbar-btn"
+              title={
+                isHi
+                  ? 'प्रारूप, थीम, बैकअप और प्रिंट विकल्प'
+                  : 'Presets, layout, theme, backup & print tools'
+              }
               style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                right: 0,
-                backgroundColor: '#181615',
-                border: '1px solid #3D3835',
-                borderRadius: '6px',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.15)',
-                minWidth: '220px',
-                padding: '6px',
-                zIndex: 1000,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
+                ...secondaryRow2Btn,
+                backgroundColor: isToolsOpen ? '#2E2925' : '#211E1B',
+                borderColor: isToolsOpen ? colors.pressRed : '#35302B',
+                color: '#FAF8F5',
               }}
             >
-              {/* Newspaper Presets */}
-              <button
-                onClick={() => { onOpenTemplates(); setIsToolsOpen(false); }}
-                data-testid="topbar-btn-presets"
-                style={menuItemBase}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              <SlidersIcon size={13} color="#C7BFAF" />
+              <span>{isHi ? 'टूल्स' : 'Tools'}</span>
+              <span style={{ fontSize: '9px', opacity: 0.7 }}>{isToolsOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {isToolsOpen && (
+              <div
+                role="menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  backgroundColor: '#181513',
+                  border: '1px solid #35302B',
+                  borderRadius: '10px',
+                  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.06)',
+                  minWidth: '232px',
+                  padding: '6px',
+                  zIndex: 1000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                }}
               >
-                <span style={{ fontSize: '13px' }}>📑</span>
-                <span style={{ flex: 1, fontWeight: 600 }}>
-                  {locale === 'en' ? 'Newspaper Presets' : 'टेम्पलेट प्रारूप'}
-                </span>
-              </button>
-
-              {onOpenPageSetup && (
                 <button
-                  onClick={() => { onOpenPageSetup(); setIsToolsOpen(false); }}
-                  data-testid="topbar-tools-pagesetup"
+                  type="button"
+                  onClick={() => {
+                    onOpenTemplates();
+                    setIsToolsOpen(false);
+                  }}
+                  data-testid="topbar-btn-presets"
                   style={menuItemBase}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  <span style={{ fontSize: '13px' }}>📐</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Page Setup' : 'कागज़ आकार'}
-                  </span>
+                  <LayoutGridIcon size={14} color="#C7BFAF" />
+                  <span style={{ flex: 1 }}>{isHi ? 'अख़बार प्रारूप' : 'Newspaper Presets'}</span>
                 </button>
-              )}
 
-              {onOpenMastheadDesigner && (
+                {onOpenPageSetup && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenPageSetup();
+                      setIsToolsOpen(false);
+                    }}
+                    data-testid="topbar-tools-pagesetup"
+                    style={menuItemBase}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <RulerIcon size={14} color="#C7BFAF" />
+                    <span style={{ flex: 1 }}>{isHi ? 'पेज सेटअप' : 'Page Setup'}</span>
+                  </button>
+                )}
+
+                {onOpenMastheadDesigner && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenMastheadDesigner();
+                      setIsToolsOpen(false);
+                    }}
+                    data-testid="topbar-tools-masthead"
+                    style={menuItemBase}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <MastheadIcon size={14} color="#C7BFAF" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'मास्टहेड डिज़ाइनर' : 'Masthead Designer'}
+                    </span>
+                  </button>
+                )}
+
+                {onAutoFit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAutoFit();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: '#93C5FD' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <ZapIcon size={14} color="#93C5FD" />
+                    <span className="studio-sr-only">⚡ ऑटो-फ़िट</span>
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'कॉलम अपने आप संतुलित करें' : 'Balance Columns'}
+                    </span>
+                  </button>
+                )}
+
+                {onAutoAllocateOverflow && (
+                  <button
+                    type="button"
+                    data-testid="btn-auto-overflow"
+                    onClick={() => {
+                      onAutoAllocateOverflow();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: '#FCA5A5' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <PlusSquareIcon size={14} color="#FCA5A5" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'बाक़ी ख़बरें अगले पेज पर भेजें' : 'Auto-allocate Overflow'}
+                    </span>
+                  </button>
+                )}
+
+                {onClearPage && (
+                  <button
+                    type="button"
+                    data-testid="btn-tools-clear-page"
+                    onClick={() => {
+                      onClearPage();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: '#FCA5A5' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3F1515')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <TrashIcon size={14} color="#F87171" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'पूरा पेज खाली करें' : 'Clear Page Canvas'}
+                    </span>
+                  </button>
+                )}
+
+                {onOpenTheme && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenTheme();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: '#DDD6FE' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <PaletteIcon size={14} color="#DDD6FE" />
+                    <span className="studio-sr-only">🎨 रंग / थीम</span>
+                    <span style={{ flex: 1 }}>{isHi ? 'रंग व थीम' : 'Theme & Colors'}</span>
+                  </button>
+                )}
+
+                {onToggleFreeLayout && (
+                  <button
+                    type="button"
+                    data-testid="toggle-free-layout-button"
+                    onClick={() => {
+                      onToggleFreeLayout();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: useFreeLayout ? '#DDD6FE' : '#C7BFAF' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <LayoutGridIcon size={14} color={useFreeLayout ? '#DDD6FE' : '#C7BFAF'} />
+                    <span style={{ flex: 1 }}>
+                      {useFreeLayout
+                        ? isHi
+                          ? 'लेआउट: फ्री मोड ✓'
+                          : 'Layout: Free Mode ✓'
+                        : isHi
+                          ? 'लेआउट: ऑटो ग्रिड'
+                          : 'Layout: Auto Grid'}
+                    </span>
+                  </button>
+                )}
+
+                {onFitWidth && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onFitWidth();
+                      setIsToolsOpen(false);
+                    }}
+                    style={menuItemBase}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <ArrowLeftRightIcon size={14} color="#C7BFAF" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'पूरी चौड़ाई फ़िट करें' : 'Fit Page Width'}
+                    </span>
+                  </button>
+                )}
+
+                {onTogglePhysicalCoordinates && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onTogglePhysicalCoordinates();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{
+                      ...menuItemBase,
+                      color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#FAF8F5',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <MaximizeIcon
+                      size={14}
+                      color={usePhysicalCanvasCoordinates ? '#86EFAC' : '#C7BFAF'}
+                    />
+                    <span style={{ flex: 1 }}>
+                      {usePhysicalCanvasCoordinates
+                        ? isHi
+                          ? 'कैनवस: 1:1 mm (प्रिंट साइज) ✓'
+                          : 'Canvas: 1:1 mm (WYSIWYG) ✓'
+                        : isHi
+                          ? 'कैनवस: 800px'
+                          : 'Canvas: 800px Mode'}
+                    </span>
+                  </button>
+                )}
+
+                {onPrintPdf && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onPrintPdf();
+                      setIsToolsOpen(false);
+                    }}
+                    disabled={isPrintingPdf}
+                    style={{ ...menuItemBase, cursor: isPrintingPdf ? 'wait' : 'pointer' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <PrinterIcon size={14} color="#C7BFAF" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'ब्राउज़र से प्रिंट करें' : 'Browser Print'}
+                    </span>
+                  </button>
+                )}
+
+                {onOpenPublishing && (
+                  <button
+                    type="button"
+                    data-testid="btn-publishing-studio"
+                    onClick={() => {
+                      onOpenPublishing();
+                      setIsToolsOpen(false);
+                    }}
+                    style={{ ...menuItemBase, color: '#93C5FD' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <ShieldIcon size={14} color="#93C5FD" />
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'प्रकाशन स्टूडियो' : 'Publishing Studio'}
+                    </span>
+                  </button>
+                )}
+
+                <div style={{ height: '1px', backgroundColor: '#2B2723', margin: '4px 0' }} />
+
+                {onExportProjectJson && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onExportProjectJson();
+                      setIsToolsOpen(false);
+                    }}
+                    style={menuItemBase}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <FileJsonIcon size={14} color="#C7BFAF" />
+                    <span className="studio-sr-only">📁 बैकअप</span>
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'प्रोजेक्ट बैकअप (JSON)' : 'Export Project JSON'}
+                    </span>
+                  </button>
+                )}
+
+                {onImportProjectJson && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      jsonInputRef.current?.click();
+                      setIsToolsOpen(false);
+                    }}
+                    style={menuItemBase}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <FolderOpenIcon size={14} color="#C7BFAF" />
+                    <span className="studio-sr-only">📂 इम्पोर्ट</span>
+                    <span style={{ flex: 1 }}>
+                      {isHi ? 'बैकअप इम्पोर्ट करें (JSON)' : 'Import Project JSON'}
+                    </span>
+                  </button>
+                )}
+
+                <div style={{ height: '1px', backgroundColor: '#2B2723', margin: '4px 0' }} />
+
                 <button
-                  onClick={() => { onOpenMastheadDesigner(); setIsToolsOpen(false); }}
-                  data-testid="topbar-tools-masthead"
+                  type="button"
+                  onClick={() => {
+                    onNewPublication();
+                    setIsToolsOpen(false);
+                  }}
                   style={menuItemBase}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  <span style={{ fontSize: '13px' }}>🗞️</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Masthead Designer' : 'मास्टहेड डिज़ाइनर'}
-                  </span>
+                  <PlusSquareIcon size={14} color="#C7BFAF" />
+                  <span style={{ flex: 1 }}>+ {t.common.create}</span>
                 </button>
-              )}
 
-              {onAutoFit && (
                 <button
-                  onClick={() => { onAutoFit(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: '#38BDF8' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
+                  type="button"
+                  onClick={() => {
+                    onViewModeChange('landing');
+                    setIsToolsOpen(false);
+                  }}
+                  style={{ ...menuItemBase, color: '#A8A29E' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#282420')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  <span style={{ fontSize: '13px' }}>⚡</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Balance Columns' : 'कॉलम संतुलन'}
-                  </span>
+                  <ChevronLeftIcon size={14} color="#A8A29E" />
+                  <span style={{ flex: 1 }}>{isHi ? 'होम पेज पर लौटें' : 'Exit to Home'}</span>
                 </button>
-              )}
-
-              {onAutoAllocateOverflow && (
-                <button
-                  data-testid="btn-auto-overflow"
-                  onClick={() => { onAutoAllocateOverflow(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: '#FCA5A5' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>📄+</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Auto-allocate Overflow' : 'ऑटो-फ्लो पृष्ठ'}
-                  </span>
-                </button>
-              )}
-
-              {onClearPage && (
-                <button
-                  data-testid="btn-tools-clear-page"
-                  onClick={() => { onClearPage(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: '#F87171' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#450a0a')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>🗑️</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Clear Page Canvas' : 'पूरा पेज खाली करें'}
-                  </span>
-                </button>
-              )}
-
-              {onOpenTheme && (
-                <button
-                  onClick={() => { onOpenTheme(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: '#D8B4FE' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>🎨</span>
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {locale === 'en' ? 'Theme & Colors' : 'थीम व रंग'}
-                  </span>
-                </button>
-              )}
-
-              {onToggleFreeLayout && (
-                <button
-                  data-testid="toggle-free-layout-button"
-                  onClick={() => { onToggleFreeLayout(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: useFreeLayout ? '#D8B4FE' : '#A8A29E' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>🔲</span>
-                  <span style={{ flex: 1 }}>
-                    {useFreeLayout
-                      ? locale === 'en' ? 'Layout: Free Mode ✓' : 'लेआउट: मुक्त विन्यास ✓'
-                      : locale === 'en' ? 'Layout: Auto Grid' : 'लेआउट: ऑटो ग्रिड'}
-                  </span>
-                </button>
-              )}
-
-              {onFitWidth && (
-                <button
-                  onClick={() => { onFitWidth(); setIsToolsOpen(false); }}
-                  style={menuItemBase}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>↔️</span>
-                  <span style={{ flex: 1 }}>
-                    {locale === 'en' ? 'Fit Page Width' : 'चौड़ाई फ़िट करें'}
-                  </span>
-                </button>
-              )}
-
-              {onTogglePhysicalCoordinates && (
-                <button
-                  onClick={() => { onTogglePhysicalCoordinates(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: usePhysicalCanvasCoordinates ? '#86EFAC' : '#FAF8F5' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>📐</span>
-                  <span style={{ flex: 1 }}>
-                    {usePhysicalCanvasCoordinates
-                      ? locale === 'en' ? 'Canvas: 1:1 mm (WYSIWYG) ✓' : 'कैनवस: 1:1 mm ✓'
-                      : locale === 'en' ? 'Canvas: 800px Mode' : 'कैनवस: 800px'}
-                  </span>
-                </button>
-              )}
-
-              {onPrintPdf && (
-                <button
-                  data-testid="btn-print-pdf"
-                  onClick={() => { onPrintPdf(); setIsToolsOpen(false); }}
-                  disabled={isPrintingPdf}
-                  style={{ ...menuItemBase, cursor: isPrintingPdf ? 'wait' : 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>🖨️</span>
-                  <span style={{ flex: 1 }}>
-                    {locale === 'en' ? 'Browser Print' : 'ब्राउज़र प्रिंट'}
-                  </span>
-                </button>
-              )}
-
-              {onOpenPublishing && (
-                <button
-                  data-testid="btn-publishing-studio"
-                  onClick={() => { onOpenPublishing(); setIsToolsOpen(false); }}
-                  style={{ ...menuItemBase, color: '#38BDF8' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>📰</span>
-                  <span style={{ flex: 1 }}>
-                    {locale === 'en' ? 'Publishing Studio' : 'प्रकाशन स्टूडियो'}
-                  </span>
-                </button>
-              )}
-
-              <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
-
-              {onExportProjectJson && (
-                <button
-                  onClick={() => { onExportProjectJson(); setIsToolsOpen(false); }}
-                  style={menuItemBase}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>📁</span>
-                  <span style={{ flex: 1 }}>
-                    {locale === 'en' ? 'Export Project JSON' : 'प्रोजेक्ट JSON बैकअप'}
-                  </span>
-                </button>
-              )}
-
-              {onImportProjectJson && (
-                <button
-                  onClick={() => { jsonInputRef.current?.click(); setIsToolsOpen(false); }}
-                  style={menuItemBase}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <span style={{ fontSize: '13px' }}>📂</span>
-                  <span style={{ flex: 1 }}>
-                    {locale === 'en' ? 'Import Project JSON' : 'प्रोजेक्ट JSON इम्पोर्ट'}
-                  </span>
-                </button>
-              )}
-
-              <div style={{ height: '1px', backgroundColor: '#2B2825', margin: '4px 0' }} />
-
-              <button
-                onClick={() => { onNewPublication(); setIsToolsOpen(false); }}
-                style={menuItemBase}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                <span style={{ fontSize: '13px' }}>✚</span>
-                <span style={{ flex: 1 }}>+ {t.common.create}</span>
-              </button>
-
-              <button
-                onClick={() => { onViewModeChange('landing'); setIsToolsOpen(false); }}
-                style={{ ...menuItemBase, color: '#A8A29E' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#262422')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                <span style={{ fontSize: '13px' }}>←</span>
-                <span style={{ flex: 1 }}>
-                  {locale === 'en' ? 'Exit to Home' : 'मुख्य पृष्ठ पर लौटें'}
-                </span>
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
         {/* Hidden File Input for JSON Backup Import */}
         {onImportProjectJson && (

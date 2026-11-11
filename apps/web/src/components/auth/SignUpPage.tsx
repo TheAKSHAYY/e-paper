@@ -8,6 +8,7 @@ import {
 } from '../../auth/authValidation';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { AlertTriangleIcon, EyeIcon, EyeOffIcon, WrenchIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface SignUpPageProps {
@@ -15,7 +16,7 @@ export interface SignUpPageProps {
   onNavigateToVerifyEmail: (email: string) => void;
   onSuccessDirect: () => void;
   onBackToLanding: () => void;
-  onOpenLegalModal?: (tab: 'privacy' | 'terms') => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 export const SignUpPage: React.FC<SignUpPageProps> = ({
@@ -56,7 +57,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
     if (!fullName.trim()) {
       setValidationError(
-        locale === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.'
+        locale === 'hi' ? 'कृपया अपना पूरा नाम लिखें।' : 'Please enter your full name.'
       );
       return;
     }
@@ -82,7 +83,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
     if (!acceptTerms) {
       setValidationError(
         locale === 'hi'
-          ? 'जारी रखने के लिए कृपया सेवा की शर्तें और गोपनीयता नीति स्वीकार करें।'
+          ? 'आगे बढ़ने के लिए कृपया नियम व शर्तें और गोपनीयता नीति मानें।'
           : 'Please accept the Terms of Service and Privacy Policy to continue.'
       );
       return;
@@ -112,13 +113,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
   return (
     <AuthLayout
-      title={locale === 'hi' ? 'संपादकीय खाता बनाएँ' : 'Create your Publisher Account'}
+      title={locale === 'hi' ? 'नया खाता बनाएँ' : 'Create your Publisher Account'}
       subtitle={
         locale === 'hi'
-          ? 'व्यावसायिक ई-पेपर व समाचार पत्र निर्माण की शुरुआत करें।'
+          ? 'अपने अख़बार और रोज़ के ई-पेपर बनाने की शुरुआत करें।'
           : 'Start composing print-ready broadsheets and digital editions.'
       }
       onBackToLanding={onBackToLanding}
+      onOpenLegalModal={onOpenLegalModal}
     >
       <form onSubmit={handleSubmit} noValidate>
         {/* Auth Mode Status Indicator */}
@@ -129,26 +131,27 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               backgroundColor: '#FFFBEB',
               border: '1px solid #FCD34D',
               color: '#92400E',
-              borderRadius: '8px',
+              borderRadius: '10px',
               padding: '12px 14px',
               fontSize: '12.5px',
-              lineHeight: 1.45,
+              lineHeight: 1.5,
               marginBottom: '20px',
               display: 'flex',
+              alignItems: 'flex-start',
               gap: '10px',
             }}
           >
-            <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+            <span style={{ marginTop: '2px', display: 'inline-flex' }}>
+              <AlertTriangleIcon size={16} color="#B45309" />
+            </span>
             <div>
-              <div style={{ fontWeight: 700, marginBottom: '2px' }}>
-                {locale === 'hi'
-                  ? 'क्लाउड ऑथेंटिकेशन कॉन्फ़िगर नहीं है'
-                  : 'Cloud Auth Not Configured'}
+              <div style={{ fontWeight: 600, marginBottom: '2px' }}>
+                {locale === 'hi' ? 'क्लाउड साइनअप अभी सेटअप नहीं है' : 'Cloud Auth Not Configured'}
               </div>
               <div>
                 {configurationError ||
                   (locale === 'hi'
-                    ? 'उत्पादन वातावरण में Supabase क्रेडेंशियल्स अनुपलब्ध हैं। पंजीकरण अक्षम है।'
+                    ? 'अभी क्लाउड क्रेडेंशियल नहीं जुड़े हैं, इसलिए नया खाता बनाना बंद है।'
                     : 'Supabase credentials are missing in this production environment. Registration is disabled.')}
               </div>
             </div>
@@ -162,29 +165,31 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               backgroundColor: '#EFF6FF',
               border: '1px solid #BFDBFE',
               color: '#1E40AF',
-              borderRadius: '6px',
-              padding: '6px 12px',
-              fontSize: '11px',
-              fontWeight: 700,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              fontSize: '11.5px',
+              fontWeight: 600,
               marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: '8px',
             }}
           >
-            <span>
-              🛠️{' '}
-              {locale === 'hi' ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <WrenchIcon size={14} color="#1E40AF" />
+              {locale === 'hi' ? 'लोकल टेस्ट मोड (ऑफ़लाइन)' : 'DEV MOCK AUTH MODE (Offline)'}
             </span>
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '10.5px',
+                fontWeight: 500,
                 backgroundColor: '#DBEAFE',
-                padding: '1px 5px',
-                borderRadius: '3px',
+                padding: '2px 6px',
+                borderRadius: '4px',
               }}
             >
-              {locale === 'hi' ? 'क्लाउड डिस्कनेक्टेड' : 'No Cloud'}
+              {locale === 'hi' ? 'ऑफ़लाइन' : 'No Cloud'}
             </span>
           </div>
         )}
@@ -196,10 +201,10 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               backgroundColor: '#FEF2F2',
               border: '1px solid #FCA5A5',
               color: '#991B1B',
-              borderRadius: '8px',
+              borderRadius: '10px',
               padding: '12px 14px',
               fontSize: '13px',
-              lineHeight: 1.4,
+              lineHeight: 1.45,
               marginBottom: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -207,7 +212,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             }}
             role="alert"
           >
-            <span style={{ fontSize: '16px' }}>⚠️</span>
+            <AlertTriangleIcon size={16} color="#DC2626" />
             <span>{displayedError}</span>
           </div>
         )}
@@ -219,7 +224,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             style={{
               display: 'block',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#374151',
               marginBottom: '6px',
             }}
@@ -257,12 +262,12 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             style={{
               display: 'block',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#374151',
               marginBottom: '6px',
             }}
           >
-            {locale === 'hi' ? 'ईमेल पता' : 'Email Address'}
+            {locale === 'hi' ? 'आपका ईमेल' : 'Email Address'}
           </label>
           <input
             id="signup-email"
@@ -295,7 +300,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             style={{
               display: 'block',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#374151',
               marginBottom: '6px',
             }}
@@ -331,18 +336,19 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
-                right: '12px',
+                right: '10px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '14px',
                 color: '#6B7280',
                 padding: '4px',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
             >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
+              {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
             </button>
           </div>
 
@@ -357,10 +363,10 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   marginBottom: '4px',
                 }}
               >
-                <span style={{ fontSize: '11px', color: '#6B7280' }}>
-                  {locale === 'hi' ? 'पासवर्ड मजबूती:' : 'Strength:'}
+                <span style={{ fontSize: '11.5px', color: '#6B7280' }}>
+                  {locale === 'hi' ? 'पासवर्ड कैसा है:' : 'Strength:'}
                 </span>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: strength.color }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: strength.color }}>
                   {locale === 'hi' ? strength.labelHindi : strength.label}
                 </span>
               </div>
@@ -388,12 +394,12 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             style={{
               display: 'block',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#374151',
               marginBottom: '6px',
             }}
           >
-            {locale === 'hi' ? 'पासवर्ड की पुष्टि करें' : 'Confirm Password'}
+            {locale === 'hi' ? 'पासवर्ड दोबारा लिखें' : 'Confirm Password'}
           </label>
           <div style={{ position: 'relative' }}>
             <input
@@ -424,18 +430,19 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
-                right: '12px',
+                right: '10px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '14px',
                 color: '#6B7280',
                 padding: '4px',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
             >
-              {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+              {showConfirmPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
             </button>
           </div>
         </div>
@@ -459,11 +466,11 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
           />
           <label
             htmlFor="accept-terms"
-            style={{ fontSize: '12px', color: '#4B5563', lineHeight: 1.5, cursor: 'pointer' }}
+            style={{ fontSize: '12px', color: '#4B5563', lineHeight: 1.55, cursor: 'pointer' }}
           >
             {locale === 'hi' ? (
               <>
-                मैं ई-पेपर स्टूडियो की{' '}
+                मैं E-Paper Studio की{' '}
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal?.('terms')}
@@ -477,7 +484,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  सेवा की शर्तों
+                  नियम व शर्तें
                 </button>{' '}
                 और{' '}
                 <button
@@ -495,7 +502,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 >
                   गोपनीयता नीति
                 </button>{' '}
-                से सहमत हूँ।
+                मानता हूँ।
               </>
             ) : (
               <>
@@ -573,7 +580,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   animation: 'spin 0.8s linear infinite',
                 }}
               />
-              <span>{locale === 'hi' ? 'खाता बनाया जा रहा है...' : 'Creating account...'}</span>
+              <span>{locale === 'hi' ? 'खाता बन रहा है...' : 'Creating account...'}</span>
             </>
           ) : (
             <span>{locale === 'hi' ? 'खाता बनाएँ →' : 'Create Account →'}</span>
@@ -582,7 +589,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
         {/* Toggle to Sign In */}
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: '#6B7280' }}>
-          <span>{locale === 'hi' ? 'पहले से खाता है?' : 'Already have an account?'} </span>
+          <span>
+            {locale === 'hi' ? 'क्या आपका पहले से खाता है?' : 'Already have an account?'}{' '}
+          </span>
           <button
             type="button"
             onClick={onNavigateToLogin}

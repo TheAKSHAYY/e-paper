@@ -20,18 +20,18 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ variant = 'p
         style={{
           backgroundColor: '#FFFFFF',
           border: `1px solid ${colors.borderMuted}`,
-          borderRadius: '4px',
-          padding: '4px 8px',
+          borderRadius: '8px',
+          padding: '6px 10px',
           fontSize: '12px',
-          fontWeight: 600,
+          fontWeight: 500,
+          fontFamily: 'inherit',
           color: colors.inkBlack,
           cursor: 'pointer',
-          outline: 'none',
           ...style,
         }}
       >
         <option value="en">English</option>
-        <option value="hi">हिंदी</option>
+        <option value="hi">हिन्दी</option>
       </select>
     );
   }
@@ -45,7 +45,8 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ variant = 'p
         alignItems: 'center',
         backgroundColor: colors.mutedPaper,
         border: `1px solid ${colors.borderMuted}`,
-        borderRadius: '4px',
+        borderRadius: '10px',
+        overflow: 'hidden',
         padding: '2px',
         gap: '2px',
         ...style,
@@ -56,20 +57,21 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ variant = 'p
         onClick={() => setLocale('en')}
         style={{
           padding: '4px 12px',
-          minHeight: '44px',
-          minWidth: '44px',
+          minHeight: '38px',
+          minWidth: '42px',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '12px',
-          fontWeight: locale === 'en' ? 700 : 500,
+          fontFamily: 'inherit',
+          fontWeight: locale === 'en' ? 600 : 500,
           color: locale === 'en' ? colors.inkBlack : colors.textMuted,
           backgroundColor: locale === 'en' ? '#FFFFFF' : 'transparent',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: '8px',
           cursor: 'pointer',
           boxShadow: locale === 'en' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-          transition: 'all 0.15s ease',
+          transition: 'all 180ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         EN
@@ -79,20 +81,21 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ variant = 'p
         onClick={() => setLocale('hi')}
         style={{
           padding: '4px 12px',
-          minHeight: '44px',
+          minHeight: '38px',
           minWidth: '48px',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '12px',
-          fontWeight: locale === 'hi' ? 700 : 500,
+          fontFamily: 'inherit',
+          fontWeight: locale === 'hi' ? 600 : 500,
           color: locale === 'hi' ? colors.pressRed : colors.textMuted,
           backgroundColor: locale === 'hi' ? '#FFFFFF' : 'transparent',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: '8px',
           cursor: 'pointer',
           boxShadow: locale === 'hi' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-          transition: 'all 0.15s ease',
+          transition: 'all 180ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         हिन्दी

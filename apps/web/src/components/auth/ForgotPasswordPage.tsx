@@ -3,16 +3,19 @@ import { useAuth } from '../../auth/AuthContext';
 import { validateEmail } from '../../auth/authValidation';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { AlertTriangleIcon, CheckCircleIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface ForgotPasswordPageProps {
   onNavigateToLogin: () => void;
   onBackToLanding: () => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
   onNavigateToLogin,
   onBackToLanding,
+  onOpenLegalModal,
 }) => {
   const { locale } = useI18n();
   const { requestPasswordReset } = useAuth();
@@ -44,13 +47,14 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
 
   return (
     <AuthLayout
-      title={locale === 'hi' ? 'पासवर्ड रीसेट करें' : 'Reset your Password'}
+      title={locale === 'hi' ? 'पासवर्ड नया बनाएँ' : 'Reset your Password'}
       subtitle={
         locale === 'hi'
-          ? 'अपना ईमेल दर्ज करें और हम आपको पासवर्ड रीसेट करने का लिंक भेजेंगे।'
+          ? 'अपना ईमेल डालें, हम आपको नया पासवर्ड बनाने का लिंक भेज देंगे।'
           : 'Enter your registered email address to receive a secure recovery link.'
       }
       onBackToLanding={onBackToLanding}
+      onOpenLegalModal={onOpenLegalModal}
     >
       {isSubmitted ? (
         <div style={{ textAlign: 'center' }}>
@@ -61,21 +65,22 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               borderRadius: '50%',
               backgroundColor: '#ECFDF5',
               color: '#059669',
-              fontSize: '24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px auto',
             }}
           >
-            ✓
+            <CheckCircleIcon size={26} color="#059669" />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
-            {locale === 'hi' ? 'रीसेट लिंक भेजा गया' : 'Reset Link Dispatched'}
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>
+            {locale === 'hi' ? 'रीसेट लिंक भेज दिया है' : 'Reset Link Dispatched'}
           </h2>
-          <p style={{ fontSize: '13px', color: '#4B5563', lineHeight: 1.6, marginBottom: '24px' }}>
+          <p
+            style={{ fontSize: '13.5px', color: '#4B5563', lineHeight: 1.6, marginBottom: '24px' }}
+          >
             {locale === 'hi'
-              ? 'यदि यह ईमेल हमारे रिकॉर्ड में मौजूद है, तो हमने पासवर्ड रीसेट करने के निर्देश भेज दिए हैं।'
+              ? 'अगर आपका ईमेल हमारे पास रजिस्टर्ड है, तो पासवर्ड बदलने का लिंक भेज दिया गया है।'
               : 'If an account matches this email, instructions to reset your password have been delivered.'}
           </p>
           <button
@@ -88,13 +93,13 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               color: '#FAF8F5',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '13px',
+              fontSize: '13.5px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
             className="hover:bg-stone-800 transition-colors"
           >
-            {locale === 'hi' ? 'लॉग इन पर वापस जाएँ →' : 'Return to Sign In →'}
+            {locale === 'hi' ? 'लॉग इन पेज पर जाएँ →' : 'Return to Sign In →'}
           </button>
         </div>
       ) : (
@@ -105,10 +110,10 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
                 backgroundColor: '#FEF2F2',
                 border: '1px solid #FCA5A5',
                 color: '#991B1B',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 padding: '12px 14px',
                 fontSize: '13px',
-                lineHeight: 1.4,
+                lineHeight: 1.45,
                 marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -116,7 +121,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               }}
               role="alert"
             >
-              <span>⚠️</span>
+              <AlertTriangleIcon size={16} color="#DC2626" />
               <span>{validationError}</span>
             </div>
           )}
@@ -127,12 +132,12 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
             >
-              {locale === 'hi' ? 'पंजीकृत ईमेल पता' : 'Registered Email Address'}
+              {locale === 'hi' ? 'रजिस्टर्ड ईमेल पता' : 'Registered Email Address'}
             </label>
             <input
               id="forgot-email"

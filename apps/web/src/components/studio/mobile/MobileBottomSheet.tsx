@@ -202,20 +202,20 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   const getTitle = () => {
     switch (mode) {
       case 'pages':
-        return `▤ पृष्ठ प्रबंधन (Page ${currentPageIndex + 1} of ${totalPages})`;
+        return `पृष्ठ प्रबंधन (पृष्ठ ${currentPageIndex + 1} / ${totalPages})`;
       case 'blocks':
-        return '✚ नया समाचार ब्लॉक जोड़ें';
+        return 'नया समाचार ब्लॉक जोड़ें';
       case 'inspector':
         if (isMastheadSelected) {
-          return '✎ मास्टहेड संपादक (Editing: Masthead)';
+          return 'मास्टहेड संपादक';
         }
         return selectedArticle
-          ? `✎ समाचार संपादक: ${selectedArticle.headline ? selectedArticle.headline.slice(0, 20) + '...' : 'ब्लॉक'}`
-          : '✎ पृष्ठ गुण व विन्यास';
+          ? `समाचार संपादक: ${selectedArticle.headline ? selectedArticle.headline.slice(0, 22) + '...' : 'ब्लॉक'}`
+          : 'पृष्ठ गुण व विन्यास';
       case 'presets':
-        return '❖ अख़बार प्रारूप व विन्यास (Presets & Layout)';
+        return 'अख़बार प्रारूप व विन्यास';
       case 'page-setup':
-        return '📐 कागज़ आकार व विन्यास (Page Setup)';
+        return 'कागज़ आकार व विन्यास';
       default:
         return 'टूलबार';
     }
@@ -230,16 +230,17 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         right: 0,
         bottom: 'calc(58px + env(safe-area-inset-bottom, 0px))',
         height: isExpanded ? '68vh' : '42vh',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FAF8F5',
         borderTopLeftRadius: '16px',
         borderTopRightRadius: '16px',
-        boxShadow: '0 -6px 25px rgba(0,0,0,0.22)',
-        borderTop: '1px solid #cbd5e1',
+        boxShadow: '0 -8px 28px rgba(20, 18, 16, 0.24)',
+        borderTop: '1px solid #E3DCD0',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 90,
         transition: 'height 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'hidden',
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
       {/* ── SHEET HEADER ── */}
@@ -248,9 +249,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 12px',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
+          padding: '10px 12px',
+          borderBottom: '1px solid #E3DCD0',
+          backgroundColor: '#FFFFFF',
           flexShrink: 0,
           userSelect: 'none',
         }}
@@ -258,9 +259,9 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
           <span
             style={{
-              fontSize: '12.5px',
+              fontSize: '13px',
               fontWeight: 700,
-              color: '#0f172a',
+              color: '#1C1917',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -275,12 +276,13 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               title="चयन हटाएँ"
               data-testid="mobile-btn-clear-selection"
               style={{
-                fontSize: '10px',
-                color: '#64748b',
-                background: '#e2e8f0',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '2px 6px',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                color: '#57534E',
+                background: '#F4F0E8',
+                border: '1px solid #E3DCD0',
+                borderRadius: '6px',
+                padding: '2px 7px',
                 cursor: 'pointer',
               }}
             >
@@ -298,21 +300,21 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               onClick={onToggleEditorMode}
               title={editorMode === 'simple' ? 'प्रो मोड में स्विच करें' : 'सरल मोड में स्विच करें'}
               style={{
-                fontSize: '10px',
+                fontSize: '10.5px',
                 fontWeight: 700,
-                padding: '4px 8px',
-                borderRadius: '12px',
+                padding: '4px 9px',
+                borderRadius: '9999px',
                 border: '1px solid',
-                borderColor: editorMode === 'simple' ? '#86efac' : '#93c5fd',
-                backgroundColor: editorMode === 'simple' ? '#f0fdf4' : '#eff6ff',
-                color: editorMode === 'simple' ? '#166534' : '#1e40af',
+                borderColor: editorMode === 'simple' ? '#E3DCD0' : '#FECACA',
+                backgroundColor: editorMode === 'simple' ? '#FAF8F5' : '#FEF2F2',
+                color: editorMode === 'simple' ? '#1C1917' : '#B91C1C',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '3px',
               }}
             >
-              <span>{editorMode === 'simple' ? '✨ सरल' : '⚙️ प्रो'}</span>
+              <span>{editorMode === 'simple' ? 'सरल' : 'प्रो'}</span>
             </button>
           )}
 
@@ -328,12 +330,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               justifyContent: 'center',
               width: '32px',
               height: '32px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              backgroundColor: '#ffffff',
-              color: '#334155',
+              borderRadius: '8px',
+              border: '1px solid #E3DCD0',
+              backgroundColor: '#FAF8F5',
+              color: '#44403C',
               cursor: 'pointer',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: 700,
             }}
           >
@@ -352,12 +354,12 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               justifyContent: 'center',
               width: '32px',
               height: '32px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: '#fee2e2',
-              color: '#b91c1c',
+              borderRadius: '8px',
+              border: '1px solid #FECACA',
+              backgroundColor: '#FEF2F2',
+              color: '#B91C1C',
               cursor: 'pointer',
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 700,
             }}
           >
@@ -1446,35 +1448,66 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                         }}
                       >
                         <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#581c87' }}>
-                          ✨ 12 राशि भविष्यफल संपादक ({selectedArticle.rashifalItems?.length || 0} राशियां)
+                          ✨ 12 राशि भविष्यफल संपादक ({selectedArticle.rashifalItems?.length || 0}{' '}
+                          राशियां)
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            maxHeight: '240px',
+                            overflowY: 'auto',
+                          }}
+                        >
                           {(selectedArticle.rashifalItems || []).map((item, idx) => (
-                            <div key={idx} style={{ backgroundColor: '#ffffff', padding: '6px', borderRadius: '4px', border: '1px solid #e9d5ff' }}>
+                            <div
+                              key={idx}
+                              style={{
+                                backgroundColor: '#ffffff',
+                                padding: '6px',
+                                borderRadius: '4px',
+                                border: '1px solid #e9d5ff',
+                              }}
+                            >
                               <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
                                 <span style={{ fontSize: '12px' }}>{item.sign}</span>
                                 <input
                                   type="text"
                                   value={item.rashi}
                                   onChange={(e) => {
-                                    const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
-                                      i === idx ? { ...r, rashi: e.target.value } : r
+                                    const updated = (selectedArticle.rashifalItems || []).map(
+                                      (r, i) => (i === idx ? { ...r, rashi: e.target.value } : r)
                                     );
                                     onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                                   }}
-                                  style={{ flex: 1, padding: '2px 4px', fontSize: '11px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px' }}
+                                  style={{
+                                    flex: 1,
+                                    padding: '2px 4px',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '3px',
+                                  }}
                                 />
                               </div>
                               <textarea
                                 rows={2}
                                 value={item.prediction}
                                 onChange={(e) => {
-                                  const updated = (selectedArticle.rashifalItems || []).map((r, i) =>
-                                    i === idx ? { ...r, prediction: e.target.value } : r
+                                  const updated = (selectedArticle.rashifalItems || []).map(
+                                    (r, i) => (i === idx ? { ...r, prediction: e.target.value } : r)
                                   );
                                   onUpdateArticle({ ...selectedArticle, rashifalItems: updated });
                                 }}
-                                style={{ width: '100%', boxSizing: 'border-box', padding: '3px 5px', fontSize: '10px', border: '1px solid #cbd5e1', borderRadius: '3px' }}
+                                style={{
+                                  width: '100%',
+                                  boxSizing: 'border-box',
+                                  padding: '3px 5px',
+                                  fontSize: '10px',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '3px',
+                                }}
                               />
                             </div>
                           ))}

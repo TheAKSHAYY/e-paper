@@ -5,6 +5,7 @@ import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 import { useI18n } from '../../i18n';
 import { ElementsPanel } from './ElementsPanel';
 import { LayoutBuilderRow } from './LayoutBuilderRow';
+import { ChevronLeftIcon, CopyIcon, DownloadIcon, TrashIcon } from './StudioIcons';
 
 export type SidebarTab = 'pages' | 'blocks' | 'templates';
 
@@ -69,16 +70,35 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
   const [draggedOverPageIndex, setDraggedOverPageIndex] = React.useState<number | null>(null);
   const { locale } = useI18n();
-  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
+  const isHi = locale === 'hi';
+  const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
   const presets = getAllNewspaperPresets();
+
+  const tabButtonStyle = (isActive: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: '9px 6px',
+    fontSize: '12px',
+    fontWeight: isActive ? 600 : 500,
+    border: 'none',
+    borderBottom: isActive ? '2px solid #B91C1C' : '2px solid transparent',
+    backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+    color: isActive ? '#991B1B' : '#6B645C',
+    cursor: 'pointer',
+    borderTopLeftRadius: '6px',
+    borderTopRightRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 120ms ease, background-color 120ms ease',
+  });
 
   return (
     <aside
       data-testid="left-sidebar"
       style={{
-        width: width ?? (isMobile ? '100%' : '280px'),
+        width: width ?? (isMobile ? '100%' : '292px'),
         backgroundColor: '#FFFFFF',
-        borderRight: isMobile ? 'none' : `1px solid ${colors.borderMuted}`,
+        borderRight: isMobile ? 'none' : '1px solid #E3DCD0',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -86,6 +106,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         overflow: 'hidden',
         userSelect: 'none',
         flexShrink: 0,
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
       {/* Tab Navigation & Collapse Button */}
@@ -93,102 +114,58 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <div
           style={{
             display: 'flex',
-            borderBottom: `1px solid ${colors.borderMuted}`,
-            backgroundColor: colors.warmPaper,
-            padding: '4px 6px 0',
+            borderBottom: '1px solid #E3DCD0',
+            backgroundColor: '#FAF8F5',
+            padding: '6px 8px 0',
             gap: '4px',
             alignItems: 'center',
           }}
         >
           <button
+            type="button"
             onClick={() => onTabChange('pages')}
-            style={{
-              flex: 1,
-              padding: '8px 4px',
-              fontSize: '11px',
-              fontWeight: 700,
-              border: 'none',
-              borderBottom:
-                activeTab === 'pages' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
-              background: activeTab === 'pages' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'pages' ? colors.pressRed : colors.textMuted,
-              cursor: 'pointer',
-              borderTopLeftRadius: '4px',
-              borderTopRightRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={tabButtonStyle(activeTab === 'pages')}
           >
-            {locale === 'en' ? 'Pages' : 'पृष्ठ'} ({pages.length})
+            {isHi ? 'पेज' : 'Pages'} ({pages.length})
           </button>
 
           <button
+            type="button"
             onClick={() => onTabChange('blocks')}
-            style={{
-              flex: 1,
-              padding: '8px 4px',
-              fontSize: '11px',
-              fontWeight: 700,
-              border: 'none',
-              borderBottom:
-                activeTab === 'blocks' ? `2px solid ${colors.pressRed}` : '2px solid transparent',
-              background: activeTab === 'blocks' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'blocks' ? colors.pressRed : colors.textMuted,
-              cursor: 'pointer',
-              borderTopLeftRadius: '4px',
-              borderTopRightRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={tabButtonStyle(activeTab === 'blocks')}
           >
-            {locale === 'en' ? 'Elements' : 'तत्व'}
+            {isHi ? 'तत्व' : 'Elements'}
           </button>
 
           <button
+            type="button"
             onClick={() => onTabChange('templates')}
-            style={{
-              flex: 1,
-              padding: '8px 4px',
-              fontSize: '11px',
-              fontWeight: 700,
-              border: 'none',
-              borderBottom:
-                activeTab === 'templates'
-                  ? `2px solid ${colors.pressRed}`
-                  : '2px solid transparent',
-              background: activeTab === 'templates' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'templates' ? colors.pressRed : colors.textMuted,
-              cursor: 'pointer',
-              borderTopLeftRadius: '4px',
-              borderTopRightRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={tabButtonStyle(activeTab === 'templates')}
           >
-            {locale === 'en' ? 'Presets' : 'प्रारूप'}
+            {isHi ? 'प्रारूप' : 'Presets'}
           </button>
 
           {onCloseSidebar && (
             <button
+              type="button"
               onClick={onCloseSidebar}
-              title={locale === 'en' ? 'Collapse sidebar' : 'साइडबार छुपाएँ'}
+              className="studio-rail-btn"
+              title={isHi ? 'साइडबार बंद करें' : 'Collapse sidebar'}
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#94a3b8',
+                color: '#78716C',
                 cursor: 'pointer',
-                padding: '6px 8px',
-                fontSize: '13px',
-                borderRadius: '4px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                marginBottom: '2px',
               }}
             >
-              ◀
+              <ChevronLeftIcon size={14} />
             </button>
           )}
         </div>
@@ -196,6 +173,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {/* Content Container */}
       <div
+        className="studio-scroll"
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -204,9 +182,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* ====================================================================
-         * TAB 1: PAGES MANAGER
-         * ==================================================================== */}
+        {/* TAB 1: PAGES MANAGER */}
         {activeTab === 'pages' && (
           <div>
             <div
@@ -214,37 +190,41 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '12px',
+                gap: '8px',
+                marginBottom: '14px',
               }}
             >
               <div>
-                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                  अख़बार के पेज
+                <h4 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#1C1917' }}>
+                  {isHi ? 'अख़बार के पेज' : 'Newspaper Pages'}
                 </h4>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>
-                  पेज प्रबंधित करें व क्रम बदलें
+                <p style={{ margin: '2px 0 0 0', fontSize: '11.5px', color: '#6B645C' }}>
+                  {isHi ? 'पेज जोड़ें या क्रम बदलें' : 'Manage & reorder pages'}
                 </p>
               </div>
 
               <button
+                type="button"
                 data-testid="add-page-btn"
                 onClick={onAddPage}
-                title="नया पेज जोड़ें"
+                title={isHi ? 'नया पेज जोड़ें' : 'Add new page'}
                 style={{
-                  backgroundColor: '#b91c1c',
-                  color: '#ffffff',
+                  backgroundColor: '#B91C1C',
+                  color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '11px',
+                  padding: '6px 11px',
+                  fontSize: '11.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
+                  flexShrink: 0,
+                  boxShadow: '0 1px 4px rgba(185, 28, 28, 0.22)',
                 }}
               >
-                <span>+</span> नया पेज
+                <span>+</span> {isHi ? 'नया पेज' : 'New Page'}
               </button>
             </div>
 
@@ -303,23 +283,22 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                       padding: '10px 12px',
                       borderRadius: '8px',
                       border: isDropTarget
-                        ? '2px dashed #2563eb'
+                        ? '1.5px dashed #1C1917'
                         : isActive
-                          ? '2px solid #b91c1c'
-                          : '1px solid #e2e8f0',
-                      backgroundColor: isDropTarget ? '#eff6ff' : isActive ? '#fff5f5' : '#ffffff',
+                          ? '1.5px solid #B91C1C'
+                          : '1px solid #E3DCD0',
+                      backgroundColor: isDropTarget ? '#F3EFE8' : isActive ? '#FFF8F6' : '#FFFFFF',
                       cursor: 'grab',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isActive ? '0 2px 6px rgba(185, 28, 28, 0.12)' : 'none',
+                      transition: 'all 140ms ease',
+                      boxShadow: isActive ? '0 2px 8px rgba(185, 28, 28, 0.08)' : 'none',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {/* Drag handle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
                       <span
-                        title="क्रम बदलने के लिए खींचें"
+                        title={isHi ? 'ऊपर-नीचे खींचकर क्रम बदलें' : 'Drag to reorder'}
                         style={{
-                          fontSize: '13px',
-                          color: '#94a3b8',
+                          fontSize: '12px',
+                          color: '#A8A29E',
                           cursor: 'grab',
                           userSelect: 'none',
                         }}
@@ -327,109 +306,132 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         ⋮⋮
                       </span>
 
-                      {/* Page badge */}
                       <div
                         style={{
                           width: '28px',
                           height: '28px',
                           borderRadius: '6px',
-                          backgroundColor: isActive ? '#b91c1c' : '#f1f5f9',
-                          color: isActive ? '#ffffff' : '#475569',
+                          backgroundColor: isActive ? '#B91C1C' : '#F3EFE8',
+                          color: isActive ? '#FFFFFF' : '#44403C',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '12px',
-                          fontWeight: 700,
+                          fontWeight: 600,
+                          fontVariantNumeric: 'tabular-nums',
+                          flexShrink: 0,
                         }}
                       >
                         {index + 1}
                       </div>
 
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <div
                           style={{
-                            fontSize: '12px',
+                            fontSize: '12.5px',
                             fontWeight: 600,
-                            color: '#0f172a',
-                            fontFamily: PUBLISHER_DESIGN_SYSTEM.fonts.hindiEditorial,
+                            color: '#1C1917',
+                            fontFamily: fonts.hindiEditorial,
                             lineHeight: 1.35,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                           }}
                         >
-                          {page.sectionTitle || (isFirst ? 'मुख्य पृष्ठ' : `पेज ${index + 1}`)}
+                          {page.sectionTitle ||
+                            (isFirst
+                              ? isHi
+                                ? 'पहला पेज'
+                                : 'Front Page'
+                              : isHi
+                                ? `पेज ${index + 1}`
+                                : `Page ${index + 1}`)}
                         </div>
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>
-                          {page.articles.length} खबरें
-                          {isFirst ? ' • मास्टहेड' : ' • फोलियो'}
+                        <div style={{ fontSize: '10.5px', color: '#6B645C' }}>
+                          {page.articles.length} {isHi ? 'ख़बरें' : 'stories'} ·{' '}
+                          {isFirst
+                            ? isHi
+                              ? 'मास्टहेड'
+                              : 'Masthead'
+                            : isHi
+                              ? 'अंदर का पेज'
+                              : 'Inside'}
                         </div>
                       </div>
                     </div>
 
                     {/* Quick page actions */}
                     <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '2px' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
+                        type="button"
                         disabled={isFirst}
                         onClick={() => onMovePage(index, index - 1)}
-                        title="पेज ऊपर करें"
+                        title={isHi ? 'पेज ऊपर करें' : 'Move up'}
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: isFirst ? '#cbd5e1' : '#64748b',
+                          color: isFirst ? '#D6CFC4' : '#78716C',
                           cursor: isFirst ? 'not-allowed' : 'pointer',
-                          padding: '3px 4px',
-                          fontSize: '11px',
+                          padding: '4px',
+                          fontSize: '10px',
                         }}
                       >
                         ▲
                       </button>
 
                       <button
+                        type="button"
                         disabled={isLast}
                         onClick={() => onMovePage(index, index + 1)}
-                        title="पेज नीचे करें"
+                        title={isHi ? 'पेज नीचे करें' : 'Move down'}
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: isLast ? '#cbd5e1' : '#64748b',
+                          color: isLast ? '#D6CFC4' : '#78716C',
                           cursor: isLast ? 'not-allowed' : 'pointer',
-                          padding: '3px 4px',
-                          fontSize: '11px',
+                          padding: '4px',
+                          fontSize: '10px',
                         }}
                       >
                         ▼
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => onDuplicatePage(index)}
-                        title="पेज की प्रति बनाएँ"
+                        title={isHi ? 'पेज की कॉपी बनाएँ' : 'Duplicate page'}
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: '#64748b',
+                          color: '#6B645C',
                           cursor: 'pointer',
-                          padding: '3px 4px',
-                          fontSize: '12px',
+                          padding: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
                         }}
                       >
-                        📋
+                        <CopyIcon size={13} />
                       </button>
 
                       {pages.length > 1 && (
                         <button
+                          type="button"
                           onClick={() => onDeletePage(index)}
-                          title="पेज हटाएँ"
+                          title={isHi ? 'पेज हटाएँ' : 'Delete page'}
                           style={{
                             background: 'transparent',
                             border: 'none',
-                            color: '#ef4444',
+                            color: '#DC2626',
                             cursor: 'pointer',
-                            padding: '3px 4px',
-                            fontSize: '12px',
+                            padding: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
                           }}
                         >
-                          🗑️
+                          <TrashIcon size={13} />
                         </button>
                       )}
                     </div>
@@ -440,9 +442,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         )}
 
-        {/* ====================================================================
-         * TAB 2: ELEMENTS LIBRARY (APPLIED ELEMENTS + 5 CATEGORY PRESETS)
-         * ==================================================================== */}
+        {/* TAB 2: ELEMENTS LIBRARY */}
         {activeTab === 'blocks' && (
           <ElementsPanel
             articles={pages[currentPageIndex]?.articles ?? []}
@@ -458,20 +458,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           />
         )}
 
-        {/* ====================================================================
-         * TAB 3: TEMPLATES & PRESETS (WITH 12-COL LAYOUT BUILDER)
-         * ==================================================================== */}
+        {/* TAB 3: TEMPLATES & PRESETS */}
         {activeTab === 'templates' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {onApplyLayoutRow && <LayoutBuilderRow onApplyLayoutRow={onApplyLayoutRow} />}
 
             <div>
               <div style={{ marginBottom: '12px' }}>
-                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                  Newspaper Presets
+                <h4 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#1C1917' }}>
+                  {isHi ? 'अख़बार के प्रारूप' : 'Newspaper Presets'}
                 </h4>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>
-                  Switch styles while preserving your stories
+                <p style={{ margin: '2px 0 0 0', fontSize: '11.5px', color: '#6B645C' }}>
+                  {isHi
+                    ? 'आपकी ख़बरें वैसी ही रहेंगी, बस स्टाइल बदलेगा'
+                    : 'Switch styles while preserving your stories'}
                 </p>
               </div>
 
@@ -484,12 +484,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                       key={preset.id}
                       onClick={() => onSelectPreset(preset.id)}
                       style={{
-                        border: isSelected ? '2px solid #b91c1c' : '1px solid #e2e8f0',
+                        border: isSelected ? '1.5px solid #B91C1C' : '1px solid #E3DCD0',
                         borderRadius: '8px',
                         padding: '12px',
-                        backgroundColor: isSelected ? '#fff5f5' : '#ffffff',
+                        backgroundColor: isSelected ? '#FFF8F6' : '#FFFFFF',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
+                        transition: 'all 140ms ease',
                       }}
                     >
                       <div
@@ -497,15 +497,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
+                          gap: '6px',
                           marginBottom: '4px',
                         }}
                       >
                         <span
                           style={{
                             fontSize: '13px',
-                            fontWeight: 700,
-                            color: '#0f172a',
-                            fontFamily: PUBLISHER_DESIGN_SYSTEM.fonts.hindiEditorial,
+                            fontWeight: 600,
+                            color: '#1C1917',
+                            fontFamily: fonts.hindiEditorial,
                             lineHeight: 1.35,
                           }}
                         >
@@ -516,24 +517,24 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                           <span
                             style={{
                               fontSize: '10px',
-                              fontWeight: 700,
-                              backgroundColor: '#b91c1c',
-                              color: '#ffffff',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
+                              fontWeight: 600,
+                              backgroundColor: '#B91C1C',
+                              color: '#FFFFFF',
+                              padding: '2px 7px',
+                              borderRadius: '999px',
                             }}
                           >
-                            ACTIVE
+                            {isHi ? 'चालू' : 'ACTIVE'}
                           </span>
                         )}
                       </div>
 
                       <div
                         style={{
-                          fontSize: '11px',
-                          color: '#64748b',
+                          fontSize: '11.5px',
+                          color: '#6B645C',
                           marginBottom: '8px',
-                          lineHeight: 1.35,
+                          lineHeight: 1.4,
                         }}
                       >
                         {preset.description}
@@ -543,24 +544,26 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         style={{
                           display: 'flex',
                           gap: '6px',
-                          fontSize: '10px',
-                          color: '#475569',
+                          fontSize: '10.5px',
+                          color: '#57524C',
                         }}
                       >
                         <span
                           style={{
-                            backgroundColor: '#f1f5f9',
-                            padding: '2px 6px',
+                            backgroundColor: '#F3EFE8',
+                            padding: '2px 7px',
                             borderRadius: '4px',
+                            fontWeight: 500,
                           }}
                         >
-                          {preset.defaultColumns} Cols
+                          {preset.defaultColumns} {isHi ? 'कॉलम' : 'Cols'}
                         </span>
                         <span
                           style={{
-                            backgroundColor: '#f1f5f9',
-                            padding: '2px 6px',
+                            backgroundColor: '#F3EFE8',
+                            padding: '2px 7px',
                             borderRadius: '4px',
+                            fontWeight: 500,
                             textTransform: 'uppercase',
                           }}
                         >
@@ -580,41 +583,42 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <div
           style={{
             padding: '10px 12px',
-            borderTop: '1px solid #e2e8f0',
-            backgroundColor: '#f8fafc',
+            borderTop: '1px solid #E3DCD0',
+            backgroundColor: '#FAF8F5',
             flexShrink: 0,
           }}
         >
           <button
+            type="button"
             onClick={onExportPdf}
             disabled={isExportingPdf}
             data-testid="sidebar-btn-export-pdf"
             style={{
               width: '100%',
-              backgroundColor: isExportingPdf ? '#991B1B' : '#DC2626',
-              color: '#ffffff',
+              backgroundColor: isExportingPdf ? '#991B1B' : '#B91C1C',
+              color: '#FFFFFF',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '7px',
               padding: '9px 12px',
               fontSize: '12.5px',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: isExportingPdf ? 'wait' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)',
+              gap: '7px',
+              boxShadow: '0 2px 6px rgba(185, 28, 28, 0.25)',
             }}
           >
-            <span>{isExportingPdf ? '⏳' : '📥'}</span>
+            <DownloadIcon size={14} />
             <span>
               {isExportingPdf
-                ? locale === 'en'
-                  ? 'Generating PDF...'
-                  : 'PDF बन रहा है...'
-                : locale === 'en'
-                  ? 'Download Print PDF'
-                  : 'प्रिंट PDF डाउनलोड करें'}
+                ? isHi
+                  ? 'PDF बन रहा है...'
+                  : 'Generating PDF...'
+                : isHi
+                  ? 'प्रिंट PDF डाउनलोड करें'
+                  : 'Download Print PDF'}
             </span>
           </button>
         </div>

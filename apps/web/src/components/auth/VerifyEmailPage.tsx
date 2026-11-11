@@ -3,18 +3,21 @@ import { useAuth } from '../../auth/AuthContext';
 import { maskEmail } from '../../auth/authValidation';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { MailIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface VerifyEmailPageProps {
   email: string;
   onNavigateToLogin: () => void;
   onBackToLanding: () => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
   email,
   onNavigateToLogin,
   onBackToLanding,
+  onOpenLegalModal,
 }) => {
   const { locale } = useI18n();
   const { resendVerificationEmail } = useAuth();
@@ -42,12 +45,17 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
       if (res.success) {
         setResendStatus(
           locale === 'hi'
-            ? 'एक नया सत्यापन लिंक भेजा गया है।'
+            ? 'हमने आपको फिर से एक नया लिंक भेज दिया है।'
             : 'A new verification link has been sent to your email.'
         );
         setCooldown(60);
       } else {
-        setResendStatus(res.error || 'Failed to resend email. Please try again.');
+        setResendStatus(
+          res.error ||
+            (locale === 'hi'
+              ? 'ईमेल दोबारा नहीं भेजा जा सका, फिर कोशिश करें।'
+              : 'Failed to resend email. Please try again.')
+        );
       }
     } finally {
       setIsResending(false);
@@ -58,39 +66,38 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
 
   return (
     <AuthLayout
-      title={locale === 'hi' ? 'ईमेल सत्यापित करें' : 'Verify your Email'}
+      title={locale === 'hi' ? 'अपना ईमेल कन्फर्म करें' : 'Verify your Email'}
       subtitle={
         locale === 'hi'
-          ? 'हमने आपके इनबॉक्स पर एक पुष्टिकरण लिंक भेजा है।'
+          ? 'हमने आपके इनबॉक्स में एक कन्फर्मेशन लिंक भेजा है।'
           : 'We have dispatched a verification link to your newsroom inbox.'
       }
       onBackToLanding={onBackToLanding}
+      onOpenLegalModal={onOpenLegalModal}
     >
       <div style={{ textAlign: 'center' }}>
         {/* Envelope Graphic */}
         <div
           style={{
-            width: '64px',
-            height: '64px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             backgroundColor: '#FEF3C7',
             color: '#B45309',
-            fontSize: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 20px auto',
           }}
         >
-          ✉️
+          <MailIcon size={26} color="#B45309" />
         </div>
 
         {/* Email Notification */}
-        <p style={{ fontSize: '14px', color: '#374151', lineHeight: 1.6, marginBottom: '20px' }}>
+        <p style={{ fontSize: '14px', color: '#374151', lineHeight: 1.65, marginBottom: '20px' }}>
           {locale === 'hi' ? (
             <>
-              कृपया <strong>{masked}</strong> पर भेजे गए लिंक पर क्लिक करके अपना संपादकीय खाता
-              सक्रिय करें।
+              अपना खाता शुरू करने के लिए <strong>{masked}</strong> पर भेजे गए लिंक पर क्लिक करें।
             </>
           ) : (
             <>
@@ -107,9 +114,9 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
               backgroundColor: '#F0FDF4',
               border: '1px solid #BBF7D0',
               color: '#166534',
-              borderRadius: '8px',
+              borderRadius: '10px',
               padding: '10px 12px',
-              fontSize: '12px',
+              fontSize: '12.5px',
               marginBottom: '20px',
             }}
           >
@@ -129,7 +136,7 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
               borderRadius: '8px',
               padding: '10px 20px',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: cooldown > 0 ? '#9CA3AF' : '#1C1917',
               cursor: cooldown > 0 ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
@@ -143,13 +150,11 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
             ) : cooldown > 0 ? (
               <span>
                 {locale === 'hi'
-                  ? `पुनः भेजें (${cooldown}s)`
+                  ? `दोबारा भेजें (${cooldown}s)`
                   : `Resend verification (${cooldown}s)`}
               </span>
             ) : (
-              <span>
-                {locale === 'hi' ? 'सत्यापन लिंक पुनः भेजें' : 'Resend verification email'}
-              </span>
+              <span>{locale === 'hi' ? 'लिंक फिर से भेजें' : 'Resend verification email'}</span>
             )}
           </button>
         </div>
@@ -165,15 +170,15 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({
             color: '#FAF8F5',
             border: 'none',
             borderRadius: '8px',
-            padding: '10px 24px',
-            fontSize: '13px',
+            padding: '11px 24px',
+            fontSize: '13.5px',
             fontWeight: 600,
             cursor: 'pointer',
             width: '100%',
           }}
           className="hover:bg-stone-800 transition-colors"
         >
-          {locale === 'hi' ? 'लॉग इन पर वापस जाएँ →' : 'Return to Sign In →'}
+          {locale === 'hi' ? 'लॉग इन पेज पर जाएँ →' : 'Return to Sign In →'}
         </button>
       </div>
     </AuthLayout>

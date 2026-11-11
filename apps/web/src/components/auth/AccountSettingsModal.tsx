@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n';
 import { validatePassword, validatePasswordMatch } from '../../auth/authValidation';
+import { AlertTriangleIcon, CloudIcon, WrenchIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface AccountSettingsModalProps {
@@ -135,13 +136,16 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '90vh',
+          fontFamily: "'Poppins', 'Hind', sans-serif",
+          WebkitFontSmoothing: 'antialiased',
+          letterSpacing: locale === 'hi' ? '0em' : undefined,
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div
           style={{
-            padding: '20px 24px',
+            padding: '18px 24px',
             borderBottom: '1px solid #E7E2DA',
             display: 'flex',
             alignItems: 'center',
@@ -153,12 +157,12 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <h2
               style={{
                 fontSize: '18px',
-                fontWeight: 800,
+                fontWeight: 600,
                 color: colors.inkBlack,
                 margin: '0 0 2px 0',
               }}
             >
-              {locale === 'hi' ? 'खाता एवं सुरक्षा सेटिंग्स' : 'Account & Security Settings'}
+              {locale === 'hi' ? 'खाता और सुरक्षा सेटिंग्स' : 'Account & Security Settings'}
             </h2>
             <p style={{ fontSize: '12px', color: '#78716C', margin: 0 }}>{user?.email}</p>
           </div>
@@ -194,24 +198,30 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-            <span>{authMode === 'cloud' ? '☁️' : authMode === 'mock' ? '🛠️' : '⚠️'}</span>
+            {authMode === 'cloud' ? (
+              <CloudIcon size={15} color="#166534" />
+            ) : authMode === 'mock' ? (
+              <WrenchIcon size={15} color="#1E40AF" />
+            ) : (
+              <AlertTriangleIcon size={15} color="#92400E" />
+            )}
             <span
               style={{
-                fontWeight: 700,
+                fontWeight: 600,
                 color:
                   authMode === 'cloud' ? '#166534' : authMode === 'mock' ? '#1E40AF' : '#92400E',
               }}
             >
               {authMode === 'cloud'
                 ? locale === 'hi'
-                  ? 'Supabase क्लाउड से सुरक्षित रूप से कनेक्टेड'
+                  ? 'क्लाउड से सुरक्षित रूप से जुड़ा है'
                   : 'Connected to Supabase Cloud'
                 : authMode === 'mock'
                   ? locale === 'hi'
-                    ? 'डेवलपमेंट मॉक ऑथ मोड (ऑफ़लाइन टेस्ट हार्नेस)'
+                    ? 'लोकल टेस्ट मोड (ऑफ़लाइन)'
                     : 'Development Mock Auth Mode (Offline Test Harness)'
                   : locale === 'hi'
-                    ? 'क्लाउड क्रेडेंशियल्स कॉन्फ़िगर नहीं हैं'
+                    ? 'क्लाउड लॉगिन अभी सेटअप नहीं है'
                     : 'Cloud Credentials Not Configured'}
             </span>
           </div>
@@ -227,6 +237,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             borderBottom: '1px solid #E5E7EB',
             backgroundColor: '#F9FAFB',
             padding: '0 24px',
+            overflowX: 'auto',
           }}
         >
           <button
@@ -238,12 +249,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               border: 'none',
               background: 'none',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
               color: activeTab === 'profile' ? '#111827' : '#6B7280',
               borderBottom:
                 activeTab === 'profile' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
             }}
           >
-            {locale === 'hi' ? 'संपादकीय प्रोफ़ाइल' : 'Editorial Profile'}
+            {locale === 'hi' ? 'मेरी प्रोफ़ाइल' : 'Editorial Profile'}
           </button>
           <button
             onClick={() => setActiveTab('security')}
@@ -254,12 +266,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               border: 'none',
               background: 'none',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
               color: activeTab === 'security' ? '#111827' : '#6B7280',
               borderBottom:
                 activeTab === 'security' ? `2px solid ${colors.inkBlack}` : '2px solid transparent',
             }}
           >
-            {locale === 'hi' ? 'सुरक्षा एवं सत्र' : 'Security & Session'}
+            {locale === 'hi' ? 'सुरक्षा और लॉगिन' : 'Security & Session'}
           </button>
         </div>
 
@@ -288,7 +301,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#374151',
                     marginBottom: '6px',
                   }}
@@ -315,12 +328,12 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#374151',
                     marginBottom: '6px',
                   }}
                 >
-                  {locale === 'hi' ? 'समाचार पत्र का नाम' : 'Publication Title'}
+                  {locale === 'hi' ? 'अख़बार का नाम' : 'Publication Title'}
                 </label>
                 <input
                   type="text"
@@ -342,7 +355,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#374151',
                     marginBottom: '6px',
                   }}
@@ -369,12 +382,12 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#374151',
                     marginBottom: '6px',
                   }}
                 >
-                  {locale === 'hi' ? 'इंटरफ़ेस भाषा' : 'Interface Language'}
+                  {locale === 'hi' ? 'वेबसाइट की भाषा' : 'Interface Language'}
                 </label>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
@@ -389,7 +402,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                       borderRadius: '8px',
                       border: `1.5px solid ${locale === 'en' ? colors.inkBlack : '#E5E7EB'}`,
                       backgroundColor: locale === 'en' ? '#FAF8F5' : '#FFFFFF',
-                      fontSize: '12px',
+                      fontSize: '12.5px',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
@@ -408,7 +421,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                       borderRadius: '8px',
                       border: `1.5px solid ${locale === 'hi' ? colors.inkBlack : '#E5E7EB'}`,
                       backgroundColor: locale === 'hi' ? '#FAF8F5' : '#FFFFFF',
-                      fontSize: '12px',
+                      fontSize: '12.5px',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
@@ -434,10 +447,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               >
                 {isSavingProfile
                   ? locale === 'hi'
-                    ? 'सहेजा जा रहा है...'
+                    ? 'सेव हो रहा है...'
                     : 'Saving...'
                   : locale === 'hi'
-                    ? 'परिवर्तन सहेजें'
+                    ? 'बदलाव सेव करें'
                     : 'Save Changes'}
               </button>
             </form>
@@ -456,28 +469,51 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 }}
               >
                 <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                  }}
                 >
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>
-                    {locale === 'hi' ? 'प्रमाणीकरण मोड' : 'Auth Mode'}
+                    {locale === 'hi' ? 'लॉगिन मोड' : 'Auth Mode'}
                   </span>
                   <span
                     style={{
                       fontSize: '11px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       padding: '2px 8px',
                       borderRadius: '9999px',
                       backgroundColor: isCloudConnected ? '#ECFDF5' : '#FEF3C7',
                       color: isCloudConnected ? '#059669' : '#B45309',
                     }}
                   >
-                    {isCloudConnected ? 'Cloud Supabase RBAC' : 'Local-First Desktop'}
+                    {isCloudConnected
+                      ? locale === 'hi'
+                        ? 'क्लाउड से जुड़ा'
+                        : 'Cloud Supabase RBAC'
+                      : locale === 'hi'
+                        ? 'सिर्फ आपके डिवाइस पर'
+                        : 'Local-First Desktop'}
                   </span>
                 </div>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: '6px 0 0 0' }}>
-                  {isCloudConnected
-                    ? 'Connected to live Supabase backend with encrypted cloud session management.'
-                    : 'Running in air-gapped local-first mode. All drafts and publisher profile stay 100% on this machine.'}
+                <p
+                  style={{
+                    fontSize: '11.5px',
+                    color: '#6B7280',
+                    margin: '6px 0 0 0',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {locale === 'hi'
+                    ? isCloudConnected
+                      ? 'आपका खाता क्लाउड बैकएंड से सुरक्षित रूप से जुड़ा है।'
+                      : 'अभी लोकल मोड चालू है। आपके सारे अंक और डेटा 100% इसी डिवाइस पर रहते हैं।'
+                    : isCloudConnected
+                      ? 'Connected to live Supabase backend with encrypted cloud session management.'
+                      : 'Running in air-gapped local-first mode. All drafts and publisher profile stay 100% on this machine.'}
                 </p>
               </div>
 
@@ -486,7 +522,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 <h3
                   style={{
                     fontSize: '14px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     color: '#111827',
                     margin: '0 0 12px 0',
                   }}
@@ -514,8 +550,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '12px',
-                      fontWeight: 600,
+                      fontSize: '12.5px',
+                      fontWeight: 500,
                       color: '#4B5563',
                       marginBottom: '4px',
                     }}
@@ -542,13 +578,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '12px',
-                      fontWeight: 600,
+                      fontSize: '12.5px',
+                      fontWeight: 500,
                       color: '#4B5563',
                       marginBottom: '4px',
                     }}
                   >
-                    {locale === 'hi' ? 'नए पासवर्ड की पुष्टि करें' : 'Confirm New Password'}
+                    {locale === 'hi' ? 'पासवर्ड दोबारा लिखें' : 'Confirm New Password'}
                   </label>
                   <input
                     type="password"
@@ -575,7 +611,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                     color: '#FAF8F5',
                     border: 'none',
                     borderRadius: '8px',
-                    fontSize: '12px',
+                    fontSize: '12.5px',
                     fontWeight: 600,
                     cursor: isSavingPassword || !newPassword ? 'not-allowed' : 'pointer',
                     opacity: isSavingPassword || !newPassword ? 0.6 : 1,
@@ -583,10 +619,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 >
                   {isSavingPassword
                     ? locale === 'hi'
-                      ? 'अपडेट हो रहा है...'
+                      ? 'सेव हो रहा है...'
                       : 'Updating...'
                     : locale === 'hi'
-                      ? 'पासवर्ड अपडेट करें'
+                      ? 'पासवर्ड बदलें'
                       : 'Update Password'}
                 </button>
               </form>
@@ -595,15 +631,21 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
               {/* Sign Out Button */}
               <div
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
               >
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
-                    {locale === 'hi' ? 'सत्र समाप्त करें' : 'Sign Out'}
+                    {locale === 'hi' ? 'खाते से बाहर निकलें' : 'Sign Out'}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                  <div style={{ fontSize: '11.5px', color: '#6B7280' }}>
                     {locale === 'hi'
-                      ? 'इस डिवाइस पर अपने सत्र से लॉग आउट करें।'
+                      ? 'इस डिवाइस से अपने खाते को लॉग आउट करें।'
                       : 'Log out of your session on this device.'}
                   </div>
                 </div>
@@ -619,7 +661,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                     color: '#DC2626',
                     border: '1px solid #FCA5A5',
                     borderRadius: '8px',
-                    fontSize: '12px',
+                    fontSize: '12.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}

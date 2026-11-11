@@ -76,10 +76,10 @@ export type TypographyRole =
 
 export const APP_UI_TYPOGRAPHY = {
   fonts: {
-    sans: "'Inter', 'Hind', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    hindiUi: "'Hind', 'Mukta', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    display: "'Playfair Display', 'Rozha One', Georgia, serif",
-    hindiDisplay: "'Rozha One', 'Noto Serif Devanagari', Georgia, serif",
+    sans: "'Poppins', 'Hind', sans-serif",
+    hindiUi: "'Poppins', 'Hind', 'Mukta', sans-serif",
+    display: "'Playfair Display', 'Poppins', Georgia, serif",
+    hindiDisplay: "'Rozha One', 'Noto Serif Devanagari', 'Hind', Georgia, serif",
     mono: "'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace",
   },
   weights: {
@@ -87,7 +87,7 @@ export const APP_UI_TYPOGRAPHY = {
     medium: 500,
     semibold: 600,
     bold: 700,
-    black: 900,
+    black: 700,
   },
   sizes: {
     xs: '11px',

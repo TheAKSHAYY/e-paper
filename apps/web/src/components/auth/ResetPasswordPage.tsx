@@ -7,16 +7,19 @@ import {
 } from '../../auth/authValidation';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { AlertTriangleIcon, CheckCircleIcon, EyeIcon, EyeOffIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface ResetPasswordPageProps {
   onNavigateToLogin: () => void;
   onBackToLanding: () => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
   onNavigateToLogin,
   onBackToLanding,
+  onOpenLegalModal,
 }) => {
   const { locale } = useI18n();
   const { resetPassword, error: authError, clearError } = useAuth();
@@ -65,13 +68,14 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
 
   return (
     <AuthLayout
-      title={locale === 'hi' ? 'नया पासवर्ड निर्धारित करें' : 'Set New Password'}
+      title={locale === 'hi' ? 'नया पासवर्ड सेट करें' : 'Set New Password'}
       subtitle={
         locale === 'hi'
-          ? 'अपने खाते की सुरक्षा के लिए एक मजबूत पासवर्ड चुनें।'
+          ? 'अपने खाते के लिए एक मजबूत नया पासवर्ड चुनें।'
           : 'Choose a strong, unique password to secure your publication account.'
       }
       onBackToLanding={onBackToLanding}
+      onOpenLegalModal={onOpenLegalModal}
     >
       {isSuccess ? (
         <div style={{ textAlign: 'center' }}>
@@ -82,21 +86,22 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               borderRadius: '50%',
               backgroundColor: '#ECFDF5',
               color: '#059669',
-              fontSize: '24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px auto',
             }}
           >
-            ✓
+            <CheckCircleIcon size={26} color="#059669" />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
-            {locale === 'hi' ? 'पासवर्ड सफलतापूर्वक अपडेट हुआ' : 'Password Successfully Updated'}
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>
+            {locale === 'hi' ? 'पासवर्ड बदल गया है' : 'Password Successfully Updated'}
           </h2>
-          <p style={{ fontSize: '13px', color: '#4B5563', lineHeight: 1.6, marginBottom: '24px' }}>
+          <p
+            style={{ fontSize: '13.5px', color: '#4B5563', lineHeight: 1.6, marginBottom: '24px' }}
+          >
             {locale === 'hi'
-              ? 'आपका नया पासवर्ड सक्रिय हो गया है। अब आप नए पासवर्ड से लॉगिन कर सकते हैं।'
+              ? 'आपका नया पासवर्ड सेट हो गया है। अब आप इससे लॉग इन कर सकते हैं।'
               : 'Your new password is now active. You may now proceed to sign in.'}
           </p>
           <button
@@ -109,13 +114,13 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               color: '#FAF8F5',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '13px',
+              fontSize: '13.5px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
             className="hover:bg-stone-800 transition-colors"
           >
-            {locale === 'hi' ? 'लॉग इन करें →' : 'Sign In Now →'}
+            {locale === 'hi' ? 'अब लॉग इन करें →' : 'Sign In Now →'}
           </button>
         </div>
       ) : (
@@ -126,10 +131,10 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                 backgroundColor: '#FEF2F2',
                 border: '1px solid #FCA5A5',
                 color: '#991B1B',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 padding: '12px 14px',
                 fontSize: '13px',
-                lineHeight: 1.4,
+                lineHeight: 1.45,
                 marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -137,7 +142,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               }}
               role="alert"
             >
-              <span>⚠️</span>
+              <AlertTriangleIcon size={16} color="#DC2626" />
               <span>{displayedError}</span>
             </div>
           )}
@@ -149,7 +154,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
@@ -185,18 +190,19 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '14px',
                   color: '#6B7280',
                   padding: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
               </button>
             </div>
 
@@ -211,10 +217,10 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                     marginBottom: '4px',
                   }}
                 >
-                  <span style={{ fontSize: '11px', color: '#6B7280' }}>
-                    {locale === 'hi' ? 'पासवर्ड मजबूती:' : 'Strength:'}
+                  <span style={{ fontSize: '11.5px', color: '#6B7280' }}>
+                    {locale === 'hi' ? 'पासवर्ड कैसा है:' : 'Strength:'}
                   </span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: strength.color }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: strength.color }}>
                     {locale === 'hi' ? strength.labelHindi : strength.label}
                   </span>
                 </div>
@@ -242,12 +248,12 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
             >
-              {locale === 'hi' ? 'नए पासवर्ड की पुष्टि करें' : 'Confirm New Password'}
+              {locale === 'hi' ? 'पासवर्ड दोबारा लिखें' : 'Confirm New Password'}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -278,18 +284,19 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
                 aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '14px',
                   color: '#6B7280',
                   padding: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                {showConfirmPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
               </button>
             </div>
           </div>
@@ -314,10 +321,10 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
           >
             {isSubmitting
               ? locale === 'hi'
-                ? 'अपडेट हो रहा है...'
+                ? 'सेव हो रहा है...'
                 : 'Updating password...'
               : locale === 'hi'
-                ? 'पासवर्ड अपडेट करें →'
+                ? 'पासवर्ड बदलें →'
                 : 'Update Password →'}
           </button>
         </form>

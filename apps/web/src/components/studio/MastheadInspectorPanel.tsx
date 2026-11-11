@@ -8,7 +8,16 @@ import type {
 } from '@epaper-studio/document-schema';
 import { getNewspaperPreset } from '@epaper-studio/template-engine';
 import { toEnglishDigits } from '../../utils/formatters';
+import { useI18n } from '../../i18n';
 import { ColorStrip } from './mobile/ColorStrip';
+import {
+  CloseIcon,
+  MastheadIcon,
+  NewspaperIcon,
+  PaletteIcon,
+  ResetIcon,
+  SparkleIcon,
+} from './StudioIcons';
 
 export interface MastheadInspectorPanelProps {
   masthead: MastheadConfig;
@@ -33,7 +42,11 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
   compactMode = false,
   onOpenTemplateGallery,
 }) => {
-  const [activeTab, setActiveTab] = useState<'title' | 'subheaders' | 'meta' | 'rules'>(initialTab || 'title');
+  const { locale } = useI18n();
+  const isHi = locale === 'hi';
+  const [activeTab, setActiveTab] = useState<'title' | 'subheaders' | 'meta' | 'rules'>(
+    initialTab || 'title'
+  );
 
   useEffect(() => {
     if (initialTab) {
@@ -349,116 +362,141 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid #f1f5f9',
+            flexDirection: 'column',
+            gap: '8px',
+            borderBottom: '1px solid #E3DCD0',
             paddingBottom: '10px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>🗞️</span>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                मास्टहेड संपादक (Masthead)
-              </h3>
-              <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>
-                पारंपरिक भारतीय समाचार पत्र शीर्ष सज्जा
-              </p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <span
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '7px',
+                  backgroundColor: '#FAF8F5',
+                  border: '1px solid #E3DCD0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#1C1917',
+                  flexShrink: 0,
+                }}
+              >
+                <MastheadIcon size={14} />
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: '13.5px', fontWeight: 600, color: '#1C1917' }}>
+                  {isHi ? 'मास्टहेड संपादक' : 'Masthead Editor'}
+                </h3>
+                <p style={{ margin: 0, fontSize: '11px', color: '#6B645C', lineHeight: 1.35 }}>
+                  {isHi ? 'अख़बार के ऊपर का नाम व पट्टी' : 'Publication header & folio styling'}
+                </p>
+              </div>
             </div>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={isHi ? 'बंद करें' : 'Close'}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#78716C',
+                  padding: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <CloseIcon size={14} />
+              </button>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             {masthead.showVolumeIssue !== false ? (
               <button
                 type="button"
                 data-testid="btn-header-quick-clear-volume"
                 onClick={handleClearVolumeIssue}
-                title="कैनवास से वर्ष व अंक तुरंत हटाएँ"
+                title={isHi ? 'पेज से वर्ष व अंक हटाएँ' : 'Hide volume & issue from masthead'}
                 style={{
-                  padding: '4px 8px',
+                  padding: '4px 9px',
                   fontSize: '11px',
-                  fontWeight: 700,
-                  backgroundColor: '#fef2f2',
-                  color: '#b91c1c',
-                  border: '1px solid #fecaca',
-                  borderRadius: '5px',
+                  fontWeight: 600,
+                  backgroundColor: '#FFF5F5',
+                  color: '#991B1B',
+                  border: '1px solid #FECACA',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  whiteSpace: 'nowrap',
+                  gap: '4px',
                 }}
               >
                 <span>✕</span>
-                <span>वर्ष/अंक हटाएँ</span>
+                <span>{isHi ? 'वर्ष/अंक हटाएँ' : 'Hide Vol/Issue'}</span>
               </button>
             ) : (
               <button
                 type="button"
                 data-testid="btn-header-quick-restore-volume"
                 onClick={() => handleToggleVolumeIssue(true)}
-                title="कैनवास पर वर्ष व अंक जोड़ें"
+                title={isHi ? 'पेज पर वर्ष व अंक जोड़ें' : 'Show volume & issue on masthead'}
                 style={{
-                  padding: '4px 8px',
+                  padding: '4px 9px',
                   fontSize: '11px',
                   fontWeight: 600,
-                  backgroundColor: '#f0fdf4',
-                  color: '#15803d',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '5px',
+                  backgroundColor: '#F0FDF4',
+                  color: '#166534',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  whiteSpace: 'nowrap',
+                  gap: '4px',
                 }}
               >
                 <span>+</span>
-                <span>वर्ष/अंक जोड़ें</span>
+                <span>{isHi ? 'वर्ष/अंक जोड़ें' : 'Add Vol/Issue'}</span>
               </button>
             )}
             <button
               type="button"
               onClick={handleResetToTemplate}
-              title="वर्तमान प्रारूप के अनुसार डिफ़ॉल्ट मान पुनर्स्थापित करें"
+              title={isHi ? 'डिफ़ॉल्ट मास्टहेड पर वापस जाएँ' : 'Reset masthead to template default'}
               style={{
-                padding: '4px 8px',
+                padding: '4px 9px',
                 fontSize: '11px',
-                fontWeight: 600,
-                backgroundColor: '#f8fafc',
-                color: '#475569',
-                border: '1px solid #cbd5e1',
-                borderRadius: '5px',
+                fontWeight: 500,
+                backgroundColor: '#FAF8F5',
+                color: '#44403C',
+                border: '1px solid #E3DCD0',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
               }}
             >
-              <span>↺</span>
-              <span>रीसेट</span>
+              <ResetIcon size={12} />
+              <span>{isHi ? 'रीसेट' : 'Reset'}</span>
             </button>
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  color: '#94a3b8',
-                  padding: '2px 6px',
-                }}
-              >
-                ✕
-              </button>
-            )}
           </div>
         </div>
       )}
 
-      {/* ── Quick Header & Sub-header Preset Actions (Mobile & Desktop) ── */}
+      {/* Quick Header & Sub-header Preset Actions */}
       {onOpenTemplateGallery && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
           <button
@@ -467,12 +505,12 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             onClick={() => onOpenTemplateGallery('mastheads')}
             style={{
               padding: '8px 10px',
-              backgroundColor: '#eff6ff',
-              color: '#1d4ed8',
-              border: '1px solid #bfdbfe',
-              borderRadius: '6px',
+              backgroundColor: '#FAF8F5',
+              color: '#1C1917',
+              border: '1px solid #E3DCD0',
+              borderRadius: '7px',
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -480,8 +518,8 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               gap: '5px',
             }}
           >
-            <span>📰</span>
-            <span>हेडर टेम्पलेट्स</span>
+            <NewspaperIcon size={13} />
+            <span>{isHi ? 'हेडर टेम्पलेट्स' : 'Header Templates'}</span>
           </button>
           <button
             type="button"
@@ -489,12 +527,12 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             onClick={() => onOpenTemplateGallery('breaking')}
             style={{
               padding: '8px 10px',
-              backgroundColor: '#fef2f2',
-              color: '#b91c1c',
-              border: '1px solid #fecaca',
-              borderRadius: '6px',
+              backgroundColor: '#FFF5F5',
+              color: '#991B1B',
+              border: '1px solid #FECACA',
+              borderRadius: '7px',
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -502,8 +540,8 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               gap: '5px',
             }}
           >
-            <span>📢</span>
-            <span>सब-हेडर / ब्रेकिंग</span>
+            <SparkleIcon size={13} />
+            <span>{isHi ? 'ब्रेकिंग पट्टी' : 'Breaking Strip'}</span>
           </button>
         </div>
       )}
@@ -518,31 +556,31 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            backgroundColor: '#0f172a',
-            color: '#ffffff',
+            backgroundColor: '#141210',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: '6px',
-            padding: '8px 12px',
+            borderRadius: '7px',
+            padding: '9px 12px',
             fontSize: '12px',
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            boxShadow: '0 2px 6px rgba(20, 18, 16, 0.14)',
           }}
         >
-          <span>🎨</span>
-          <span>उन्नत मास्टहेड स्टूडियो खोलें (Full Designer)</span>
+          <PaletteIcon size={14} />
+          <span>{isHi ? 'पूरा मास्टहेड स्टूडियो खोलें' : 'Open Full Masthead Designer'}</span>
         </button>
       )}
 
-      {/* ── Navigation Sub-Tabs ── */}
+      {/* Navigation Sub-Tabs */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '4px',
-          backgroundColor: '#f1f5f9',
+          backgroundColor: '#F3EFE8',
           padding: '3px',
-          borderRadius: '7px',
+          borderRadius: '8px',
         }}
       >
         <button
@@ -552,16 +590,16 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           style={{
             padding: '6px 2px',
             fontSize: '11px',
-            fontWeight: activeTab === 'title' ? 700 : 500,
-            color: activeTab === 'title' ? '#0f172a' : '#64748b',
-            backgroundColor: activeTab === 'title' ? '#ffffff' : 'transparent',
-            borderRadius: '5px',
+            fontWeight: activeTab === 'title' ? 600 : 500,
+            color: activeTab === 'title' ? '#1C1917' : '#6B645C',
+            backgroundColor: activeTab === 'title' ? '#FFFFFF' : 'transparent',
+            borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: activeTab === 'title' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            boxShadow: activeTab === 'title' ? '0 1px 3px rgba(20,18,16,0.08)' : 'none',
           }}
         >
-          शीर्षक
+          {isHi ? 'शीर्षक' : 'Title'}
         </button>
         <button
           type="button"
@@ -570,16 +608,16 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           style={{
             padding: '6px 2px',
             fontSize: '11px',
-            fontWeight: activeTab === 'subheaders' ? 700 : 500,
-            color: activeTab === 'subheaders' ? '#991b1b' : '#64748b',
-            backgroundColor: activeTab === 'subheaders' ? '#ffffff' : 'transparent',
-            borderRadius: '5px',
+            fontWeight: activeTab === 'subheaders' ? 600 : 500,
+            color: activeTab === 'subheaders' ? '#991B1B' : '#6B645C',
+            backgroundColor: activeTab === 'subheaders' ? '#FFFFFF' : 'transparent',
+            borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: activeTab === 'subheaders' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            boxShadow: activeTab === 'subheaders' ? '0 1px 3px rgba(20,18,16,0.08)' : 'none',
           }}
         >
-          सब-हेडर व अंक
+          {isHi ? 'सब-हेडर व अंक' : 'Subheaders'}
         </button>
         <button
           type="button"
@@ -588,16 +626,16 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           style={{
             padding: '6px 2px',
             fontSize: '11px',
-            fontWeight: activeTab === 'meta' ? 700 : 500,
-            color: activeTab === 'meta' ? '#0f172a' : '#64748b',
-            backgroundColor: activeTab === 'meta' ? '#ffffff' : 'transparent',
-            borderRadius: '5px',
+            fontWeight: activeTab === 'meta' ? 600 : 500,
+            color: activeTab === 'meta' ? '#1C1917' : '#6B645C',
+            backgroundColor: activeTab === 'meta' ? '#FFFFFF' : 'transparent',
+            borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: activeTab === 'meta' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            boxShadow: activeTab === 'meta' ? '0 1px 3px rgba(20,18,16,0.08)' : 'none',
           }}
         >
-          मौसम व विवरण
+          {isHi ? 'मौसम व विवरण' : 'Weather & Info'}
         </button>
         <button
           type="button"
@@ -606,16 +644,16 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
           style={{
             padding: '6px 2px',
             fontSize: '11px',
-            fontWeight: activeTab === 'rules' ? 700 : 500,
-            color: activeTab === 'rules' ? '#0f172a' : '#64748b',
-            backgroundColor: activeTab === 'rules' ? '#ffffff' : 'transparent',
-            borderRadius: '5px',
+            fontWeight: activeTab === 'rules' ? 600 : 500,
+            color: activeTab === 'rules' ? '#1C1917' : '#6B645C',
+            backgroundColor: activeTab === 'rules' ? '#FFFFFF' : 'transparent',
+            borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: activeTab === 'rules' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            boxShadow: activeTab === 'rules' ? '0 1px 3px rgba(20,18,16,0.08)' : 'none',
           }}
         >
-          फॉन्ट व बॉर्डर
+          {isHi ? 'फ़ॉन्ट व बॉर्डर' : 'Fonts & Rules'}
         </button>
       </div>
 
@@ -629,26 +667,26 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             <label
               style={{
                 display: 'block',
-                fontSize: '11px',
-                fontWeight: 700,
-                color: '#334155',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: '#1C1917',
                 marginBottom: '4px',
               }}
             >
-              समाचार पत्र का नाम (Newspaper Name)
+              {isHi ? 'अख़बार का नाम' : 'Newspaper Name'}
             </label>
             <input
               type="text"
               data-testid="input-masthead-title"
               value={masthead.title}
               onChange={(e) => updateField('title', e.target.value)}
-              placeholder="उदा. जनवाणी समाचार"
+              placeholder={isHi ? 'जैसे: जनवाणी समाचार' : 'e.g. Daily Chronicle'}
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
                 padding: '7px 10px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
+                borderRadius: '7px',
+                border: '1px solid #D6CFC4',
                 fontSize: '14px',
                 fontWeight: 700,
                 fontFamily: masthead.fontFamily || "'Rozha One', serif",
@@ -662,18 +700,18 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label
                 style={{
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: '#1C1917',
                   marginBottom: '4px',
                 }}
               >
-                ध्येय वाक्य / टैगलाइन (Tagline / Motto)
+                {isHi ? 'टैगलाइन / ध्येय वाक्य' : 'Tagline / Motto'}
               </label>
               <label
                 style={{
-                  fontSize: '10px',
-                  color: '#64748b',
+                  fontSize: '10.5px',
+                  color: '#6B645C',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -685,7 +723,7 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                   checked={masthead.showTagline !== false}
                   onChange={(e) => updateField('showTagline', e.target.checked)}
                 />
-                दिखाएँ
+                {isHi ? 'दिखाएँ' : 'Show'}
               </label>
             </div>
             <input
@@ -695,14 +733,18 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 updateField('tagline', e.target.value);
                 updateField('subtitle', e.target.value);
               }}
-              placeholder="उदा. सत्य, निष्पक्षता और जनसेवा का प्रतीक"
+              placeholder={
+                isHi
+                  ? 'जैसे: सच्ची, निष्पक्ष और सीधी ख़बरें'
+                  : 'e.g. Independent Journalism Since 1995'
+              }
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: '6px 8px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                fontSize: '11.5px',
+                padding: '6px 9px',
+                borderRadius: '7px',
+                border: '1px solid #D6CFC4',
+                fontSize: '12px',
                 outline: 'none',
                 opacity: masthead.showTagline === false ? 0.5 : 1,
               }}
@@ -820,7 +862,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
        * TAB 2: SUB-HEADERS, VOLUME & ISSUE, AND ANNOUNCEMENT STRIP
        * ========================================================== */}
       {activeTab === 'subheaders' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '60px' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '60px' }}
+        >
           {/* ── 1. वर्ष व अंक नियंत्रण (Volume & Issue - "वर्ष 78 • अंक 142") ── */}
           {renderVolumeIssueSection()}
 
@@ -969,7 +1013,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 </div>
 
                 {/* Announcement Strip Color Pickers */}
-                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div
+                  style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}
+                >
                   <ColorStrip
                     selectedColor={masthead.announcementStripBg || '#b91c1c'}
                     onSelectColor={(col) => updateField('announcementStripBg', col)}
@@ -1081,7 +1127,9 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                 </div>
 
                 {/* Secondary Header Color Pickers */}
-                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div
+                  style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}
+                >
                   <ColorStrip
                     selectedColor={masthead.secondaryHeaderBg || '#f8fafc'}
                     onSelectColor={(col) => updateField('secondaryHeaderBg', col)}
@@ -1168,14 +1216,27 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
                 📢 बायां कान विज्ञापन (Left Ear Ad / Slot)
               </div>
-              <label style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
                 <input
                   type="checkbox"
                   data-testid="toggle-left-slot"
                   checked={Boolean(masthead.leftSlot?.enabled)}
                   onChange={(e) => {
                     const current = masthead.leftSlot || { enabled: false, type: 'text' };
-                    updateField('leftSlot', { ...current, enabled: e.target.checked, type: current.type === 'none' ? 'text' : current.type });
+                    updateField('leftSlot', {
+                      ...current,
+                      enabled: e.target.checked,
+                      type: current.type === 'none' ? 'text' : current.type,
+                    });
                   }}
                 />
                 सक्रिय (Enable)
@@ -1193,7 +1254,12 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                       updateField('leftSlot', { ...masthead.leftSlot!, title: e.target.value });
                     }}
                     placeholder="शीर्षक (उदा. विशेष रिपोर्ट)"
-                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
                   <input
                     type="text"
@@ -1203,7 +1269,12 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                       updateField('leftSlot', { ...masthead.leftSlot!, subtitle: e.target.value });
                     }}
                     placeholder="उप-शीर्षक (उदा. ताज़ा अपडेट)"
-                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
                 </div>
                 <input
@@ -1214,19 +1285,45 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     updateField('leftSlot', { ...masthead.leftSlot!, text: e.target.value });
                   }}
                   placeholder="विवरण या फ़ोन (उदा. संपर्क: 0751-2456789)"
-                  style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  style={{
+                    padding: '5px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                  }}
                 />
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="text"
                     value={masthead.leftSlot.imageUrl ?? ''}
                     onChange={(e) => {
-                      updateField('leftSlot', { ...masthead.leftSlot!, type: 'image', imageUrl: e.target.value });
+                      updateField('leftSlot', {
+                        ...masthead.leftSlot!,
+                        type: 'image',
+                        imageUrl: e.target.value,
+                      });
                     }}
                     placeholder="छवि URL या लोगो"
-                    style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      flex: 1,
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
-                  <label style={{ padding: '5px 10px', backgroundColor: '#0284c7', color: '#fff', borderRadius: '4px', fontSize: '10.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <label
+                    style={{
+                      padding: '5px 10px',
+                      backgroundColor: '#0284c7',
+                      color: '#fff',
+                      borderRadius: '4px',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     अपलोड 📁
                     <input
                       type="file"
@@ -1237,7 +1334,11 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                         if (file) {
                           const reader = new FileReader();
                           reader.onload = (ev) => {
-                            updateField('leftSlot', { ...masthead.leftSlot!, type: 'image', imageUrl: ev.target?.result as string });
+                            updateField('leftSlot', {
+                              ...masthead.leftSlot!,
+                              type: 'image',
+                              imageUrl: ev.target?.result as string,
+                            });
                           };
                           reader.readAsDataURL(file);
                         }
@@ -1265,14 +1366,27 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
               <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a' }}>
                 📢 दायां कान विज्ञापन (Right Ear Ad / Slot)
               </div>
-              <label style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+              <label
+                style={{
+                  fontSize: '10.5px',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                }}
+              >
                 <input
                   type="checkbox"
                   data-testid="toggle-right-slot"
                   checked={Boolean(masthead.rightSlot?.enabled)}
                   onChange={(e) => {
                     const current = masthead.rightSlot || { enabled: false, type: 'text' };
-                    updateField('rightSlot', { ...current, enabled: e.target.checked, type: current.type === 'none' ? 'text' : current.type });
+                    updateField('rightSlot', {
+                      ...current,
+                      enabled: e.target.checked,
+                      type: current.type === 'none' ? 'text' : current.type,
+                    });
                   }}
                 />
                 सक्रिय (Enable)
@@ -1290,17 +1404,30 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                       updateField('rightSlot', { ...masthead.rightSlot!, title: e.target.value });
                     }}
                     placeholder="शीर्षक (उदा. विज्ञापन संपर्क)"
-                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
                   <input
                     type="text"
                     data-testid="input-right-slot-subtitle"
                     value={masthead.rightSlot.subtitle ?? ''}
                     onChange={(e) => {
-                      updateField('rightSlot', { ...masthead.rightSlot!, subtitle: e.target.value });
+                      updateField('rightSlot', {
+                        ...masthead.rightSlot!,
+                        subtitle: e.target.value,
+                      });
                     }}
                     placeholder="उप-शीर्षक (उदा. दैनिक सेवा)"
-                    style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
                 </div>
                 <input
@@ -1311,19 +1438,45 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                     updateField('rightSlot', { ...masthead.rightSlot!, text: e.target.value });
                   }}
                   placeholder="विवरण या फ़ोन (उदा. फोन: 0751-2456789)"
-                  style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                  style={{
+                    padding: '5px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '11px',
+                  }}
                 />
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="text"
                     value={masthead.rightSlot.imageUrl ?? ''}
                     onChange={(e) => {
-                      updateField('rightSlot', { ...masthead.rightSlot!, type: 'image', imageUrl: e.target.value });
+                      updateField('rightSlot', {
+                        ...masthead.rightSlot!,
+                        type: 'image',
+                        imageUrl: e.target.value,
+                      });
                     }}
                     placeholder="छवि URL या लोगो"
-                    style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }}
+                    style={{
+                      flex: 1,
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                    }}
                   />
-                  <label style={{ padding: '5px 10px', backgroundColor: '#0284c7', color: '#fff', borderRadius: '4px', fontSize: '10.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <label
+                    style={{
+                      padding: '5px 10px',
+                      backgroundColor: '#0284c7',
+                      color: '#fff',
+                      borderRadius: '4px',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     अपलोड 📁
                     <input
                       type="file"
@@ -1334,7 +1487,11 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
                         if (file) {
                           const reader = new FileReader();
                           reader.onload = (ev) => {
-                            updateField('rightSlot', { ...masthead.rightSlot!, type: 'image', imageUrl: ev.target?.result as string });
+                            updateField('rightSlot', {
+                              ...masthead.rightSlot!,
+                              type: 'image',
+                              imageUrl: ev.target?.result as string,
+                            });
                           };
                           reader.readAsDataURL(file);
                         }
@@ -1787,7 +1944,6 @@ export const MastheadInspectorPanel: React.FC<MastheadInspectorPanelProps> = ({
        * ========================================================== */}
       {activeTab === 'rules' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
           {/* Font Family & Size */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
             <div>

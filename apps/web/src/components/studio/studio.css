@@ -1,0 +1,140 @@
+/* Architectural Warm Pressroom Styles for Studio Editor Chrome */
+
+.studio-workspace {
+  --studio-ink: #141210;
+  --studio-ink-soft: #1f1c19;
+  --studio-ink-border: #2e2924;
+  --studio-surface: #ffffff;
+  --studio-surface-warm: #faf8f5;
+  --studio-surface-muted: #f3efe8;
+  --studio-border: #e3dcd0;
+  --studio-border-strong: #cfc6b8;
+  --studio-text: #1c1917;
+  --studio-text-muted: #6b645c;
+  --studio-accent: #b91c1c;
+  --studio-accent-hover: #991b1b;
+  --studio-table-bg: #e7e2d9;
+  --studio-table-dot: #d2cabd;
+  font-family: 'Poppins', 'Hind', sans-serif;
+}
+
+/* Keep Devanagari headlines/labels clean without letter-spacing collisions */
+.studio-workspace button,
+.studio-workspace input,
+.studio-workspace select,
+.studio-workspace textarea {
+  font-family: 'Poppins', 'Hind', sans-serif;
+}
+
+.studio-workspace :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--studio-accent);
+  outline-offset: 2px;
+}
+
+/* Drafting Mat Canvas Backdrop */
+.studio-drafting-canvas {
+  background-color: var(--studio-table-bg) !important;
+  background-image: radial-gradient(var(--studio-table-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.studio-drafting-canvas .newspaper-page {
+  box-shadow:
+    0 24px 56px rgba(20, 18, 16, 0.16),
+    0 4px 14px rgba(20, 18, 16, 0.08),
+    0 0 0 1px rgba(20, 18, 16, 0.06);
+}
+
+/* TopBar Subtle Tactile Hover States */
+.studio-topbar-btn {
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 100ms ease;
+}
+
+.studio-topbar-btn:hover:not(:disabled) {
+  background-color: #292522 !important;
+  border-color: #46403a !important;
+  color: #ffffff !important;
+}
+
+.studio-topbar-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.studio-topbar-primary {
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 100ms ease;
+}
+
+.studio-topbar-primary:hover:not(:disabled) {
+  background-color: #991b1b !important;
+  box-shadow: 0 3px 10px rgba(185, 28, 28, 0.38) !important;
+}
+
+.studio-rail-btn {
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.studio-rail-btn:hover {
+  background-color: var(--studio-surface-muted) !important;
+  color: var(--studio-text) !important;
+}
+
+/* Clean Minimal Scrollbars inside Panels & Viewport */
+.studio-scroll::-webkit-scrollbar,
+.studio-drafting-canvas::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.studio-scroll::-webkit-scrollbar-track,
+.studio-drafting-canvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.studio-scroll::-webkit-scrollbar-thumb {
+  background: #d6cec1;
+  border-radius: 999px;
+}
+
+.studio-scroll::-webkit-scrollbar-thumb:hover {
+  background: #b9ae9e;
+}
+
+.studio-drafting-canvas::-webkit-scrollbar-thumb {
+  background: #c2b9aa;
+  border-radius: 999px;
+}
+
+.studio-drafting-canvas::-webkit-scrollbar-thumb:hover {
+  background: #9f9484;
+}
+
+/* Row 2 Responsive Overflow Safety for Narrow Desktop / Tablet */
+.studio-topbar-row2 {
+  scrollbar-width: none;
+}
+
+.studio-topbar-row2::-webkit-scrollbar {
+  display: none;
+}
+
+/* Visually hidden helper for accessible regex match compatibility */
+.studio-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

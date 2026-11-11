@@ -3,16 +3,19 @@ import { supabase, isSupabaseConfigured } from '../../auth/supabaseClient';
 import { sanitizeRedirectUrl } from '../../auth/authValidation';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { AlertTriangleIcon, CheckCircleIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface AuthCallbackPageProps {
   onSuccess: (destination: string) => void;
   onNavigateToLogin: () => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
   onSuccess,
   onNavigateToLogin,
+  onOpenLegalModal,
 }) => {
   const { locale } = useI18n();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
@@ -35,7 +38,7 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
         setErrorMessage(
           errorDescription ||
             (locale === 'hi'
-              ? 'सत्यापन लिंक अमान्य या समाप्त हो चुका है।'
+              ? 'यह लिंक गलत है या इसकी वैलिडिटी खत्म हो चुकी है।'
               : 'The authentication or verification link is invalid or has expired.')
         );
         return;
@@ -86,21 +89,22 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
       title={
         status === 'error'
           ? locale === 'hi'
-            ? 'सत्यापन विफल'
+            ? 'कन्फर्मेशन नहीं हो पाया'
             : 'Verification Failed'
           : locale === 'hi'
-            ? 'सत्यापन संपन्न हो रहा है...'
+            ? 'आपका खाता चेक हो रहा है...'
             : 'Completing Verification...'
       }
       subtitle={
         status === 'error'
           ? locale === 'hi'
-            ? 'सत्यापन टोकन अमान्य है या उसकी अवधि समाप्त हो गई है।'
+            ? 'यह लिंक गलत है या अब काम नहीं कर रहा है।'
             : 'Your verification token is invalid or has expired.'
           : locale === 'hi'
-            ? 'कृपया प्रतीक्षा करें, आपकी क्रेडेंशियल्स सत्यापित की जा रही हैं।'
+            ? 'बस थोड़ा इंतज़ार करें, हम आपका खाता शुरू कर रहे हैं।'
             : 'Please wait while we verify your editorial credentials.'
       }
+      onOpenLegalModal={onOpenLegalModal}
     >
       <div style={{ textAlign: 'center', padding: '16px 0' }}>
         {status === 'processing' && (
@@ -116,9 +120,9 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
                 animation: 'spin 0.8s linear infinite',
               }}
             />
-            <p style={{ fontSize: '13px', color: '#6B7280' }}>
+            <p style={{ fontSize: '13.5px', color: '#6B7280' }}>
               {locale === 'hi'
-                ? 'सत्र स्थापित किया जा रहा है...'
+                ? 'आपका सेशन शुरू किया जा रहा है...'
                 : 'Establishing newsroom session...'}
             </p>
           </div>
@@ -133,21 +137,22 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
                 borderRadius: '50%',
                 backgroundColor: '#ECFDF5',
                 color: '#059669',
-                fontSize: '24px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px auto',
               }}
             >
-              ✓
+              <CheckCircleIcon size={26} color="#059669" />
             </div>
-            <p style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>
-              {locale === 'hi' ? 'सत्यापन सफल!' : 'Verification Complete!'}
+            <p
+              style={{ fontSize: '14.5px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}
+            >
+              {locale === 'hi' ? 'खाता कन्फर्म हो गया!' : 'Verification Complete!'}
             </p>
-            <p style={{ fontSize: '12px', color: '#6B7280' }}>
+            <p style={{ fontSize: '12.5px', color: '#6B7280' }}>
               {locale === 'hi'
-                ? 'आपको रीडायरेक्ट किया जा रहा है...'
+                ? 'आपको डैशबोर्ड पर ले जा रहे हैं...'
                 : 'Redirecting to your dashboard...'}
             </p>
           </div>
@@ -162,14 +167,13 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
                 borderRadius: '50%',
                 backgroundColor: '#FEF2F2',
                 color: '#DC2626',
-                fontSize: '24px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px auto',
               }}
             >
-              ⚠️
+              <AlertTriangleIcon size={26} color="#DC2626" />
             </div>
             <p
               style={{ fontSize: '13px', color: '#991B1B', margin: '0 0 20px 0', lineHeight: 1.5 }}
@@ -186,7 +190,7 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({
                 color: '#FAF8F5',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '13px',
+                fontSize: '13.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}

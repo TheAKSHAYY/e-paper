@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EditionSummary } from '../../storage/types';
 import { editionStorage } from '../../storage';
 import { publisherProfileStorage } from '../../storage/PublisherProfileStorage';
-import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 import { useI18n } from '../../i18n';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { ProfileDropdownMenu } from '../auth/ProfileDropdownMenu';
 import { useAuth } from '../../auth/AuthContext';
+import './dashboard.css';
 
 export interface PublisherDashboardProps {
   onOpenEditor: (editionId?: string) => void;
@@ -18,6 +18,423 @@ export interface PublisherDashboardProps {
   onOpenSettings?: () => void;
 }
 
+type StatusFilter = 'all' | 'saved' | 'draft' | 'modified';
+type SortOrder = 'updated' | 'title';
+type LibraryView = 'cards' | 'table';
+
+interface DashboardCopy {
+  editionBadge: string;
+  devMock: string;
+  homeBtn: string;
+  profileBtn: string;
+  newEditionBtn: string;
+  heroEyebrow: string;
+  heroGreeting: (name: string) => string;
+  heroSubtext: (date: string) => string;
+  templatesBtn: string;
+  openStudioBtn: string;
+  continueLatestBtn: string;
+  latestPanelLabel: string;
+  latestPanelEmptyTitle: string;
+  latestPanelEmptyHint: string;
+  openNowBtn: string;
+  statTotalTitle: string;
+  statTotalSub: (saved: number, draft: number) => string;
+  statFormatTitle: string;
+  statFormatSub: string;
+  statLanguageTitle: string;
+  statLanguageValue: string;
+  statLanguageSub: string;
+  statStorageTitle: string;
+  statStorageValue: string;
+  statStorageSub: string;
+  libraryTitle: string;
+  librarySubtitle: string;
+  filters: Record<StatusFilter, string>;
+  searchPlaceholder: string;
+  sortUpdated: string;
+  sortTitle: string;
+  viewCardsLabel: string;
+  viewTableLabel: string;
+  loadingLabel: string;
+  emptyTitle: string;
+  emptySubtitle: string;
+  emptyCta: string;
+  filteredEmptyTitle: string;
+  filteredEmptySubtitle: string;
+  resetFiltersBtn: string;
+  colEdition: string;
+  colPublication: string;
+  colFormat: string;
+  colUpdated: string;
+  colStatus: string;
+  colActions: string;
+  storiesLabel: (count: number) => string;
+  statusLabels: Record<'saved' | 'draft' | 'modified', string>;
+  editBtn: string;
+  copyTitle: string;
+  deleteTitle: string;
+  deleteDialogTitle: string;
+  deleteDialogBody: string;
+  cancelBtn: string;
+  confirmDeleteBtn: string;
+  copySuffix: string;
+  menuOpenLabel: string;
+  menuCloseLabel: string;
+}
+
+const EN_DB: DashboardCopy = {
+  editionBadge: 'Press Desk',
+  devMock: 'Local Mode',
+  homeBtn: 'Home',
+  profileBtn: 'Profile Setup',
+  newEditionBtn: 'New Edition',
+  heroEyebrow: 'Publisher Workspace',
+  heroGreeting: (name) => `Welcome back, ${name}`,
+  heroSubtext: (date) =>
+    `${date}. Start a fresh newspaper issue, reopen saved pages, or switch paper sizes.`,
+  templatesBtn: 'Paper Formats',
+  openStudioBtn: 'Open Blank Studio',
+  continueLatestBtn: 'Continue Latest Issue',
+  latestPanelLabel: 'Latest Saved Issue',
+  latestPanelEmptyTitle: 'No saved issues yet',
+  latestPanelEmptyHint: 'Create your first newspaper issue or pick a calibrated broadsheet preset.',
+  openNowBtn: 'Open in Studio',
+  statTotalTitle: 'Saved Editions',
+  statTotalSub: (saved, draft) =>
+    `${saved} finalized • ${draft} ${draft === 1 ? 'draft' : 'drafts'}`,
+  statFormatTitle: 'Default Page Size',
+  statFormatSub: '300 DPI Vector PDF Ready',
+  statLanguageTitle: 'Publishing Script',
+  statLanguageValue: 'English & Hindi',
+  statLanguageSub: '41 Self Hosted Fonts Ready',
+  statStorageTitle: 'Browser Storage',
+  statStorageValue: 'Offline Safe',
+  statStorageSub: 'Instant Autosave Active',
+  libraryTitle: 'Saved Editions',
+  librarySubtitle: 'Every newspaper edition saved locally inside your browser.',
+  filters: {
+    all: 'All',
+    saved: 'Saved',
+    draft: 'Drafts',
+    modified: 'Updated',
+  },
+  searchPlaceholder: 'Search edition name or date',
+  sortUpdated: 'Newest first',
+  sortTitle: 'Name A to Z',
+  viewCardsLabel: 'Card Grid',
+  viewTableLabel: 'Compact Table',
+  loadingLabel: 'Loading your saved newspaper editions...',
+  emptyTitle: 'Your newsroom archive is empty',
+  emptySubtitle:
+    'Start your first edition to lay out stories, customize headers, and export press ready PDF files.',
+  emptyCta: 'Create First Edition',
+  filteredEmptyTitle: 'No editions match this filter',
+  filteredEmptySubtitle: 'Clear your search text or switch status filters to view all editions.',
+  resetFiltersBtn: 'Show All Editions',
+  colEdition: 'Edition & Date',
+  colPublication: 'Newspaper Name',
+  colFormat: 'Format & Stories',
+  colUpdated: 'Last Updated',
+  colStatus: 'Status',
+  colActions: 'Actions',
+  storiesLabel: (count) => `${count} ${count === 1 ? 'story' : 'stories'}`,
+  statusLabels: {
+    saved: 'Saved',
+    draft: 'Draft',
+    modified: 'Updated',
+  },
+  editBtn: 'Open',
+  copyTitle: 'Duplicate edition',
+  deleteTitle: 'Delete edition',
+  deleteDialogTitle: 'Delete this edition?',
+  deleteDialogBody:
+    'This removes the selected newspaper issue permanently from browser storage and cannot be undone.',
+  cancelBtn: 'Cancel',
+  confirmDeleteBtn: 'Yes, Delete',
+  copySuffix: 'Copy',
+  menuOpenLabel: 'Open navigation menu',
+  menuCloseLabel: 'Close navigation menu',
+};
+
+const HI_DB: DashboardCopy = {
+  editionBadge: 'संपादक डेस्क',
+  devMock: 'लोकल मोड',
+  homeBtn: 'मुख्य पेज',
+  profileBtn: 'अख़बार सेटिंग्स',
+  newEditionBtn: 'नया अंक बनाएँ',
+  heroEyebrow: 'अख़बार प्रबंधन केंद्र',
+  heroGreeting: (name) => `नमस्ते, ${name}`,
+  heroSubtext: (date) =>
+    `आज ${date} है। यहीं से नया अख़बार बनाएँ, पुराने अंक खोलें या पेपर साइज बदलें।`,
+  templatesBtn: 'तैयार पेपर साइज',
+  openStudioBtn: 'सादा स्टूडियो खोलें',
+  continueLatestBtn: 'आख़िरी अंक खोलें',
+  latestPanelLabel: 'सबसे ताज़ा सेव अंक',
+  latestPanelEmptyTitle: 'अभी कोई अंक सेव नहीं है',
+  latestPanelEmptyHint: 'अपना पहला अख़बार बनाना शुरू करें या तैयार पेपर साइज चुनें।',
+  openNowBtn: 'स्टूडियो में खोलें',
+  statTotalTitle: 'कुल सेव अंक',
+  statTotalSub: (saved, draft) => `${saved} तैयार • ${draft} ड्राफ़्ट`,
+  statFormatTitle: 'मुख्य पेपर साइज',
+  statFormatSub: '300 DPI प्रिंट PDF तैयार',
+  statLanguageTitle: 'अख़बार भाषा',
+  statLanguageValue: 'हिंदी व अंग्रेज़ी',
+  statLanguageSub: '41 साफ़ फ़ॉन्ट पहले से तैयार',
+  statStorageTitle: 'ब्राउज़र सेव सिस्टम',
+  statStorageValue: 'ऑफ़लाइन सुरक्षित',
+  statStorageSub: 'काम अपने आप सेव होता है',
+  libraryTitle: 'आपके बनाए हुए अंक',
+  librarySubtitle: 'आपके ब्राउज़र में सेव सभी अख़बार और ड्राफ़्ट यहाँ दिखेंगे।',
+  filters: {
+    all: 'सभी',
+    saved: 'सेव किए',
+    draft: 'ड्राफ़्ट',
+    modified: 'बदले गए',
+  },
+  searchPlaceholder: 'अंक का नाम या तारीख़ खोजें',
+  sortUpdated: 'नए पहले',
+  sortTitle: 'नाम के अनुसार',
+  viewCardsLabel: 'कार्ड व्यू',
+  viewTableLabel: 'लिस्ट व्यू',
+  loadingLabel: 'आपके सेव किए अंक लोड हो रहे हैं...',
+  emptyTitle: 'अभी तक कोई अख़बार सेव नहीं है',
+  emptySubtitle:
+    'पहला अंक बनाकर ख़बरें सजाएँ, हेडर रंग बदलें और प्रिंट के लिए साफ़ PDF डाउनलोड करें।',
+  emptyCta: 'पहला अंक बनाएँ',
+  filteredEmptyTitle: 'खोज के हिसाब से कोई अंक नहीं मिला',
+  filteredEmptySubtitle: 'खोज हटाएँ या सभी अंक देखने के लिए फ़िल्टर रीसेट करें।',
+  resetFiltersBtn: 'सभी अंक दिखाएँ',
+  colEdition: 'अंक और तारीख़',
+  colPublication: 'अख़बार का नाम',
+  colFormat: 'पेपर साइज व ख़बरें',
+  colUpdated: 'आख़िरी बदलाव',
+  colStatus: 'स्थिति',
+  colActions: 'विकल्प',
+  storiesLabel: (count) => `${count} ख़बरें`,
+  statusLabels: {
+    saved: 'सेव है',
+    draft: 'ड्राफ़्ट',
+    modified: 'अपडेटेड',
+  },
+  editBtn: 'खोलें',
+  copyTitle: 'इसकी दूसरी कॉपी बनाएँ',
+  deleteTitle: 'अंक हटाएँ',
+  deleteDialogTitle: 'क्या यह अंक हटा दें?',
+  deleteDialogBody:
+    'यह अख़बार अंक आपके ब्राउज़र से हमेशा के लिए हट जाएगा और बाद में वापस नहीं मिलेगा।',
+  cancelBtn: 'रहने दें',
+  confirmDeleteBtn: 'हाँ, हटा दें',
+  copySuffix: 'कॉपी',
+  menuOpenLabel: 'मेनू खोलें',
+  menuCloseLabel: 'मेनू बंद करें',
+};
+
+/* Geometric SVG Icons matching LandingPage stroke language */
+const IconNewspaper: React.FC<{ size?: number }> = ({ size = 18 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M4 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z" />
+    <line x1="8" y1="10" x2="16" y2="10" />
+    <line x1="8" y1="14" x2="12" y2="14" />
+    <line x1="15" y1="14" x2="16" y2="14" />
+  </svg>
+);
+
+const IconPlus: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const IconSearch: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <line x1="16.5" y1="16.5" x2="21" y2="21" />
+  </svg>
+);
+
+const IconCopy: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
+const IconTrash: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+  </svg>
+);
+
+const IconArrowRight: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
+const IconGrid: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+  </svg>
+);
+
+const IconList: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
+
+const IconMenu: React.FC<{ size?: number }> = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="4" y1="7" x2="20" y2="7" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="17" x2="20" y2="17" />
+  </svg>
+);
+
+const IconClose: React.FC<{ size?: number }> = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="6" y1="6" x2="18" y2="18" />
+    <line x1="18" y1="6" x2="6" y2="18" />
+  </svg>
+);
+
+function getStatusPillStyle(status: EditionSummary['saveStatus']) {
+  if (status === 'saved') {
+    return {
+      backgroundColor: 'var(--db-success-soft)',
+      color: 'var(--db-success)',
+      borderColor: '#A7F3D0',
+    };
+  }
+  if (status === 'draft') {
+    return {
+      backgroundColor: 'var(--db-warn-soft)',
+      color: 'var(--db-warn)',
+      borderColor: '#FDE68A',
+    };
+  }
+  return {
+    backgroundColor: 'var(--db-info-soft)',
+    color: 'var(--db-info)',
+    borderColor: '#BFDBFE',
+  };
+}
+
 export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
   onOpenEditor,
   onNewEdition,
@@ -27,16 +444,19 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
   onSignOut,
   onOpenSettings,
 }) => {
-  const { t, locale } = useI18n();
+  const { locale } = useI18n();
+  const copy = locale === 'hi' ? HI_DB : EN_DB;
   const { authMode } = useAuth();
   const profile = publisherProfileStorage.getProfile();
+
   const [editions, setEditions] = useState<EditionSummary[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<StatusFilter>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('updated');
+  const [libraryView, setLibraryView] = useState<LibraryView>('cards');
   const [editionToDelete, setEditionToDelete] = useState<string | null>(null);
-
-  const colors = PUBLISHER_DESIGN_SYSTEM.colors;
-  const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const loadEditions = useCallback(async () => {
     setIsLoading(true);
@@ -54,6 +474,18 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
     loadEditions();
   }, [loadEditions]);
 
+  useEffect(() => {
+    if (!editionToDelete && !mobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditionToDelete(null);
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editionToDelete, mobileMenuOpen]);
+
   const handleDeleteEdition = async (id: string) => {
     try {
       await editionStorage.deleteEdition(id);
@@ -66,20 +498,48 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
 
   const handleDuplicateEdition = async (id: string, name: string) => {
     try {
-      await editionStorage.duplicateEdition(
-        id,
-        `${name} (${locale === 'en' ? 'Copy' : 'प्रतिलिपि'})`
-      );
+      await editionStorage.duplicateEdition(id, `${name} (${copy.copySuffix})`);
       await loadEditions();
     } catch (e) {
       console.error('[PublisherDashboard] Failed to duplicate edition:', e);
     }
   };
 
-  const filteredEditions = editions.filter((ed) => {
-    if (selectedStatusFilter === 'all') return true;
-    return ed.saveStatus === selectedStatusFilter;
-  });
+  const counts = useMemo(() => {
+    let saved = 0;
+    let draft = 0;
+    let modified = 0;
+    for (const ed of editions) {
+      if (ed.saveStatus === 'saved') saved += 1;
+      else if (ed.saveStatus === 'draft') draft += 1;
+      else modified += 1;
+    }
+    return { all: editions.length, saved, draft, modified };
+  }, [editions]);
+
+  const filteredEditions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const list = editions.filter((ed) => {
+      const matchesStatus =
+        selectedStatusFilter === 'all' || ed.saveStatus === selectedStatusFilter;
+      if (!matchesStatus) return false;
+      if (!query) return true;
+      return (
+        ed.editionName.toLowerCase().includes(query) ||
+        ed.publicationName.toLowerCase().includes(query) ||
+        ed.editionDate.toLowerCase().includes(query)
+      );
+    });
+
+    return [...list].sort((a, b) => {
+      if (sortOrder === 'title') {
+        return a.editionName.localeCompare(b.editionName);
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [editions, searchQuery, selectedStatusFilter, sortOrder]);
+
+  const latestEdition = editions[0] || null;
 
   const currentDateFormatted = new Date().toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-US', {
     weekday: 'long',
@@ -88,115 +548,84 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
     day: 'numeric',
   });
 
+  const newspaperDisplayTitle =
+    profile.newspaperTitle || (locale === 'hi' ? 'दैनिक नवप्रभात' : 'The Morning Chronicle');
+
+  const formatLabel = (size: string) => {
+    const normalized = size.trim().toLowerCase();
+    if (!normalized) return locale === 'hi' ? 'ब्रॉडशीट' : 'Broadsheet';
+    if (locale === 'hi') {
+      if (normalized === 'broadsheet') return 'ब्रॉडशीट';
+      if (normalized === 'tabloid') return 'टैब्लॉयड';
+      if (normalized === 'berliner') return 'बर्लिनर';
+    }
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: colors.warmPaper,
-        color: colors.inkBlack,
-        fontFamily: fonts.interface,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* ====================================================================
-       * 1. DASHBOARD TOP BAR
-       * ==================================================================== */}
-      <header
-        style={{
-          borderBottom: `1px solid ${colors.borderMuted}`,
-          backgroundColor: '#FFFFFF',
-          padding: '12px 24px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div
-              style={{
-                width: '34px',
-                height: '34px',
-                backgroundColor: colors.pressRed,
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: '18px',
-                fontFamily: fonts.hindiEditorial,
-                borderRadius: '4px',
-              }}
-            >
-              प
+    <div className="db-root" data-locale={locale}>
+      {/* Floating Frosted Newsroom Header */}
+      <div className="db-header-wrap">
+        <header className="db-header">
+          <div className="db-brand-group">
+            <div className="db-brand-mark">
+              <IconNewspaper size={18} />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: 900,
-                    color: colors.inkBlack,
-                    fontFamily: fonts.display,
-                  }}
-                >
-                  {profile.newspaperTitle ||
-                    (locale === 'en' ? 'The Morning Chronicle' : 'दैनिक नवप्रभात')}
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    backgroundColor: colors.mutedPaper,
-                    color: colors.textSecondary,
-                    padding: '2px 6px',
-                    borderRadius: '3px',
-                  }}
-                >
-                  {locale === 'hi' ? 'हिंदी संस्करण' : 'English Edition'}
-                </span>
+            <div className="db-brand-text">
+              <div className="db-brand-title-row">
+                <span className="db-brand-title">{newspaperDisplayTitle}</span>
+                <span className="db-pill db-desktop-only">{copy.editionBadge}</span>
               </div>
-              <div style={{ fontSize: '12px', color: colors.textMuted }}>
+              <span
+                className="db-desktop-only"
+                style={{ fontSize: '12px', color: 'var(--db-ink-muted)' }}
+              >
                 {profile.publisherName} • {currentDateFormatted}
-              </div>
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="db-header-actions">
             {authMode === 'mock' && (
               <span
                 data-testid="dashboard-mock-indicator"
+                className="db-pill db-desktop-only"
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  backgroundColor: '#EFF6FF',
-                  color: '#1E40AF',
-                  border: '1px solid #BFDBFE',
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
+                  backgroundColor: 'var(--db-info-soft)',
+                  color: 'var(--db-info)',
+                  borderColor: '#BFDBFE',
                 }}
-                title="Running in local offline development mock mode"
               >
-                <span>🛠️</span>
-                <span>{locale === 'hi' ? 'मॉक मोड' : 'Dev Mock'}</span>
+                {copy.devMock}
               </span>
             )}
 
-            <LanguageSelector variant="pill" />
+            <div className="db-desktop-only">
+              <LanguageSelector
+                variant="compact"
+                style={{ borderRadius: '10px', overflow: 'hidden' }}
+              />
+            </div>
+
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="db-btn-ghost db-desktop-only"
+              >
+                {copy.homeBtn}
+              </button>
+            )}
+
+            {onEditProfile && (
+              <button
+                type="button"
+                onClick={onEditProfile}
+                className="db-btn-secondary db-desktop-only"
+              >
+                {copy.profileBtn}
+              </button>
+            )}
 
             {onOpenSettings && onSignOut && (
               <ProfileDropdownMenu
@@ -206,569 +635,665 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
               />
             )}
 
-            {onBackToLanding && (
-              <button
-                onClick={onBackToLanding}
-                style={{
-                  background: 'none',
-                  border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '7px 12px',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  color: colors.textSecondary,
-                  cursor: 'pointer',
-                }}
-              >
-                ← {locale === 'en' ? 'Home' : 'मुख्य पृष्ठ'}
-              </button>
-            )}
-
-            {onEditProfile && (
-              <button
-                onClick={onEditProfile}
-                style={{
-                  background: '#FFFFFF',
-                  border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '7px 12px',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  color: colors.textSecondary,
-                  cursor: 'pointer',
-                }}
-              >
-                ⚙️ {locale === 'en' ? 'Profile' : 'प्रोफ़ाइल सेटिंग्स'}
-              </button>
-            )}
+            <button type="button" onClick={onNewEdition} className="db-btn-primary db-desktop-only">
+              <IconPlus size={16} />
+              <span>{copy.newEditionBtn}</span>
+            </button>
 
             <button
-              onClick={onNewEdition}
-              style={{
-                backgroundColor: colors.pressRed,
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 1px 3px rgba(158, 48, 41, 0.25)',
-              }}
+              type="button"
+              className="db-mobile-menu-btn"
+              aria-label={mobileMenuOpen ? copy.menuCloseLabel : copy.menuOpenLabel}
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
-              <span>{t.dashboard.newEditionBtn}</span>
+              {mobileMenuOpen ? <IconClose /> : <IconMenu />}
             </button>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
-      {/* ====================================================================
-       * 2. MAIN DASHBOARD CONTENT AREA
-       * ==================================================================== */}
-      <main
-        style={{
-          flex: 1,
-          maxWidth: '1280px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '32px 24px',
-        }}
+      {/* Full-Screen Mobile Action Drawer */}
+      <div
+        className={`db-mobile-drawer${mobileMenuOpen ? ' is-open' : ''}`}
+        aria-hidden={!mobileMenuOpen}
       >
-        {/* Welcome Banner */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            border: `1px solid ${colors.borderMuted}`,
-            borderRadius: '6px',
-            padding: '24px',
-            marginBottom: '28px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '16px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-          }}
-        >
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className="db-brand-mark">
+                <IconNewspaper size={18} />
+              </span>
+              <span style={{ fontSize: '18px', fontWeight: 600 }}>{newspaperDisplayTitle}</span>
+            </div>
+            <button
+              type="button"
+              className="db-mobile-menu-btn"
+              aria-label={copy.menuCloseLabel}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <IconClose />
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              marginTop: '32px',
+            }}
+          >
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onBackToLanding();
+                }}
+                className="db-btn-secondary"
+                style={{ justifyContent: 'flex-start' }}
+              >
+                {copy.homeBtn}
+              </button>
+            )}
+            {onEditProfile && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onEditProfile();
+                }}
+                className="db-btn-secondary"
+                style={{ justifyContent: 'flex-start' }}
+              >
+                {copy.profileBtn}
+              </button>
+            )}
+            {onOpenTemplates && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenTemplates();
+                }}
+                className="db-btn-secondary"
+                style={{ justifyContent: 'flex-start' }}
+              >
+                {copy.templatesBtn}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <LanguageSelector />
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onNewEdition();
+            }}
+            className="db-btn-primary"
+            style={{ width: '100%' }}
+          >
+            <IconPlus />
+            <span>{copy.newEditionBtn}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="db-main">
+        {/* Hero Command Card + Latest Issue Spotlight */}
+        <section className="db-hero-card">
           <div>
             <span
               style={{
-                fontSize: '11.5px',
-                fontWeight: 800,
-                color: colors.pressRed,
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--db-accent)',
                 textTransform: 'uppercase',
+                letterSpacing: '0.04em',
               }}
             >
-              {locale === 'en' ? 'Publisher Control Center' : 'प्रकाशक नियंत्रण केंद्र'}
+              {copy.heroEyebrow}
             </span>
             <h1
               style={{
-                fontSize: '24px',
-                fontWeight: 900,
-                color: colors.inkBlack,
-                margin: '4px 0 6px 0',
-                fontFamily: locale === 'hi' ? fonts.hindiEditorial : fonts.display,
-                lineHeight: locale === 'hi' ? 1.35 : 1.2,
+                fontSize: 'clamp(26px, 3vw, 36px)',
+                fontWeight: 600,
+                color: 'var(--db-ink)',
+                margin: '8px 0 12px 0',
+                letterSpacing: '-0.02em',
+                textWrap: 'balance',
               }}
             >
-              {locale === 'en'
-                ? `Welcome, ${profile.publisherName}`
-                : `नमस्ते, ${profile.publisherName}`}
+              {copy.heroGreeting(profile.publisherName)}
             </h1>
-            <p style={{ fontSize: '13.5px', color: colors.textSecondary, margin: 0 }}>
-              {locale === 'en'
-                ? `Today is ${currentDateFormatted}. Manage daily editions, newspaper templates, and physical print layouts.`
-                : `आज ${currentDateFormatted} है। अपने समाचार पत्र के दैनिक संस्करणों, टेम्पलेट्स और प्रिंट लेआउट का प्रबंधन करें।`}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {onOpenTemplates && (
-              <button
-                onClick={onOpenTemplates}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: colors.textSecondary,
-                  border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '10px 16px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {t.dashboard.openTemplatesBtn}
-              </button>
-            )}
-
-            <button
-              onClick={onNewEdition}
-              style={{
-                backgroundColor: colors.pressRed,
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '10px 18px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              {t.dashboard.newEditionBtn}
-            </button>
-
-            {editions.length > 0 && (
-              <button
-                onClick={() => onOpenEditor(editions[0]?.id)}
-                style={{
-                  backgroundColor: colors.inkBlack,
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '10px 18px',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                {t.dashboard.continueEditing}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Metrics Bar */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-            marginBottom: '32px',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
-              {t.dashboard.statTotalEditions}
-            </div>
-            <div
-              style={{
-                fontSize: '26px',
-                fontWeight: 900,
-                color: colors.inkBlack,
-                margin: '4px 0 2px 0',
-              }}
-            >
-              {editions.length}
-            </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
-              Local Edition Archive
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
-              {locale === 'en' ? 'Primary Geometry' : 'प्राथमिक मुद्रण आकार'}
-            </div>
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: 800,
-                color: colors.inkBlack,
-                margin: '6px 0 4px 0',
-                textTransform: 'capitalize',
-              }}
-            >
-              {profile.preferredPageSize || 'Broadsheet'}
-            </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
-              Vector PDF Print Standard
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
-              {locale === 'en' ? 'Primary Language' : 'प्रकाशन भाषा'}
-            </div>
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: 800,
-                color: colors.inkBlack,
-                margin: '6px 0 4px 0',
-              }}
-            >
-              {locale === 'hi' ? 'हिंदी (Devanagari)' : 'English (Latin)'}
-            </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
-              41 Self-Hosted Typefaces
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
-              {t.dashboard.statReadyForPrint}
-            </div>
-            <div
-              style={{ fontSize: '20px', fontWeight: 800, color: '#047857', margin: '6px 0 4px 0' }}
-            >
-              ✓ {locale === 'en' ? 'Active' : 'सक्रिय'}
-            </div>
-            <div style={{ fontSize: '11.5px', color: colors.textSecondary }}>
-              Zero Silent Overflow
-            </div>
-          </div>
-        </div>
-
-        {/* Editions Header & Filter */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px',
-            marginBottom: '16px',
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                fontSize: '19px',
-                fontWeight: 800,
-                color: colors.inkBlack,
-                margin: '0 0 2px 0',
-              }}
-            >
-              {t.dashboard.editionsTableTitle}
-            </h2>
-            <p style={{ fontSize: '12.5px', color: colors.textMuted, margin: 0 }}>
-              {t.dashboard.editionsTableSubtitle}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {['all', 'saved', 'draft', 'modified'].map((st) => (
-              <button
-                key={st}
-                onClick={() => setSelectedStatusFilter(st)}
-                style={{
-                  backgroundColor: selectedStatusFilter === st ? colors.inkBlack : '#FFFFFF',
-                  color: selectedStatusFilter === st ? '#FFFFFF' : colors.textSecondary,
-                  border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '5px 12px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {st === 'all'
-                  ? locale === 'en'
-                    ? 'All'
-                    : 'सभी'
-                  : st === 'saved'
-                    ? locale === 'en'
-                      ? 'Saved'
-                      : 'सहेजे गए'
-                    : st === 'draft'
-                      ? locale === 'en'
-                        ? 'Draft'
-                        : 'ड्राफ्ट'
-                      : locale === 'en'
-                        ? 'Modified'
-                        : 'संशोधित'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Editions List or Empty State */}
-        {isLoading ? (
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '48px',
-              textAlign: 'center',
-              color: colors.textMuted,
-            }}
-          >
-            {t.common.loading}
-          </div>
-        ) : filteredEditions.length === 0 ? (
-          /* ====================================================================
-           * AUTHENTIC EMPTY STATE
-           * ==================================================================== */
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px dashed ${colors.borderMuted}`,
-              borderRadius: '6px',
-              padding: '64px 24px',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📰</div>
-            <h3
-              style={{
-                fontSize: '18px',
-                fontWeight: 800,
-                color: colors.inkBlack,
-                margin: '0 0 8px 0',
-              }}
-            >
-              {t.dashboard.emptyTitle}
-            </h3>
             <p
               style={{
-                fontSize: '13.5px',
-                color: colors.textSecondary,
-                maxWidth: '480px',
-                margin: '0 auto 24px auto',
-                lineHeight: 1.5,
+                fontSize: '15px',
+                lineHeight: 1.6,
+                color: 'var(--db-ink-secondary)',
+                margin: 0,
+                maxWidth: '560px',
+                textWrap: 'pretty',
               }}
             >
-              {t.dashboard.emptySubtitle}
+              {copy.heroSubtext(currentDateFormatted)}
             </p>
-            <button
-              onClick={onNewEdition}
+
+            <div className="db-hero-actions">
+              <button type="button" onClick={onNewEdition} className="db-btn-accent">
+                <IconPlus size={16} />
+                <span>{copy.newEditionBtn}</span>
+              </button>
+
+              {onOpenTemplates && (
+                <button type="button" onClick={onOpenTemplates} className="db-btn-secondary">
+                  {copy.templatesBtn}
+                </button>
+              )}
+
+              <button type="button" onClick={() => onOpenEditor()} className="db-btn-secondary">
+                {copy.openStudioBtn}
+              </button>
+            </div>
+          </div>
+
+          {/* Latest Issue Quick Resume Panel */}
+          <div className="db-latest-panel">
+            <span
               style={{
-                backgroundColor: colors.pressRed,
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: 700,
-                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--db-ink-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
               }}
             >
-              {t.dashboard.emptyCta}
-            </button>
-          </div>
-        ) : (
-          /* Editions Table */
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: `1px solid ${colors.borderMuted}`,
-              borderRadius: '6px',
-              overflow: 'hidden',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            }}
-          >
-            <div style={{ overflowX: 'auto' }}>
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  textAlign: 'left',
-                  fontSize: '13px',
-                }}
-              >
-                <thead>
-                  <tr
+              {copy.latestPanelLabel}
+            </span>
+
+            {latestEdition ? (
+              <>
+                <div>
+                  <div
                     style={{
-                      backgroundColor: '#FAF9F6',
-                      borderBottom: `1px solid ${colors.borderMuted}`,
-                      color: colors.textMuted,
-                      fontSize: '11.5px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
+                      fontSize: '18px',
+                      fontWeight: 600,
+                      color: 'var(--db-ink)',
+                      marginBottom: '4px',
                     }}
                   >
-                    <th style={{ padding: '12px 16px' }}>{t.dashboard.colTitle}</th>
-                    <th style={{ padding: '12px 16px' }}>
-                      {locale === 'en' ? 'Publication' : 'प्रकाशन'}
-                    </th>
-                    <th style={{ padding: '12px 16px' }}>{t.dashboard.colSize}</th>
-                    <th style={{ padding: '12px 16px' }}>
-                      {locale === 'en' ? 'Last Modified' : 'अंतिम संशोधन'}
-                    </th>
-                    <th style={{ padding: '12px 16px' }}>{t.dashboard.colStatus}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      {t.dashboard.colActions}
-                    </th>
+                    {latestEdition.editionName}
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'var(--db-ink-secondary)' }}>
+                    {latestEdition.editionDate} • {copy.storiesLabel(latestEdition.articleCount)}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    marginTop: '8px',
+                  }}
+                >
+                  <span className="db-pill" style={getStatusPillStyle(latestEdition.saveStatus)}>
+                    {copy.statusLabels[latestEdition.saveStatus]}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenEditor(latestEdition.id)}
+                    className="db-btn-primary"
+                  >
+                    <span>{copy.continueLatestBtn}</span>
+                    <IconArrowRight size={16} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--db-ink)' }}>
+                  {copy.latestPanelEmptyTitle}
+                </div>
+                <p
+                  style={{
+                    fontSize: '13px',
+                    lineHeight: 1.55,
+                    color: 'var(--db-ink-secondary)',
+                    margin: 0,
+                  }}
+                >
+                  {copy.latestPanelEmptyHint}
+                </p>
+                <button
+                  type="button"
+                  onClick={onNewEdition}
+                  className="db-btn-primary"
+                  style={{ alignSelf: 'flex-start', marginTop: '4px' }}
+                >
+                  <span>{copy.openNowBtn}</span>
+                  <IconArrowRight size={16} />
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* 4 Summary Metrics Cards */}
+        <section className="db-stats-grid" aria-label="Workspace Summary">
+          <div className="db-stat-card">
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--db-ink-muted)' }}>
+              {copy.statTotalTitle}
+            </span>
+            <span style={{ fontSize: '30px', fontWeight: 600, color: 'var(--db-ink)' }}>
+              {editions.length}
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--db-ink-secondary)' }}>
+              {copy.statTotalSub(counts.saved, counts.draft)}
+            </span>
+          </div>
+
+          <div className="db-stat-card">
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--db-ink-muted)' }}>
+              {copy.statFormatTitle}
+            </span>
+            <span style={{ fontSize: '22px', fontWeight: 600, color: 'var(--db-ink)' }}>
+              {formatLabel(profile.preferredPageSize || 'broadsheet')}
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--db-ink-secondary)' }}>
+              {copy.statFormatSub}
+            </span>
+          </div>
+
+          <div className="db-stat-card">
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--db-ink-muted)' }}>
+              {copy.statLanguageTitle}
+            </span>
+            <span style={{ fontSize: '22px', fontWeight: 600, color: 'var(--db-ink)' }}>
+              {copy.statLanguageValue}
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--db-ink-secondary)' }}>
+              {copy.statLanguageSub}
+            </span>
+          </div>
+
+          <div className="db-stat-card">
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--db-ink-muted)' }}>
+              {copy.statStorageTitle}
+            </span>
+            <span style={{ fontSize: '22px', fontWeight: 600, color: 'var(--db-success)' }}>
+              {copy.statStorageValue}
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--db-ink-secondary)' }}>
+              {copy.statStorageSub}
+            </span>
+          </div>
+        </section>
+
+        {/* Saved Editions Library */}
+        <section className="db-library-shell">
+          <div className="db-library-head">
+            <div>
+              <h2
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: 'var(--db-ink)',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                {copy.libraryTitle}
+              </h2>
+              <p style={{ fontSize: '14px', color: 'var(--db-ink-secondary)', margin: 0 }}>
+                {copy.librarySubtitle}
+              </p>
+            </div>
+
+            <div className="db-desktop-only" style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                aria-label={copy.viewCardsLabel}
+                aria-pressed={libraryView === 'cards'}
+                onClick={() => setLibraryView('cards')}
+                className="db-icon-action"
+                style={{
+                  backgroundColor: libraryView === 'cards' ? 'var(--db-ink)' : 'var(--db-surface)',
+                  color: libraryView === 'cards' ? '#FFFFFF' : 'var(--db-ink-secondary)',
+                  borderColor: libraryView === 'cards' ? 'var(--db-ink)' : 'var(--db-border)',
+                }}
+              >
+                <IconGrid size={16} />
+              </button>
+              <button
+                type="button"
+                aria-label={copy.viewTableLabel}
+                aria-pressed={libraryView === 'table'}
+                onClick={() => setLibraryView('table')}
+                className="db-icon-action"
+                style={{
+                  backgroundColor: libraryView === 'table' ? 'var(--db-ink)' : 'var(--db-surface)',
+                  color: libraryView === 'table' ? '#FFFFFF' : 'var(--db-ink-secondary)',
+                  borderColor: libraryView === 'table' ? 'var(--db-ink)' : 'var(--db-border)',
+                }}
+              >
+                <IconList size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Filters, Search & Sort Toolbar */}
+          <div className="db-toolbar-row">
+            <div className="db-filter-pills" role="tablist" aria-label="Status Filters">
+              {(['all', 'saved', 'draft', 'modified'] as StatusFilter[]).map((statusKey) => {
+                const active = selectedStatusFilter === statusKey;
+                return (
+                  <button
+                    key={statusKey}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setSelectedStatusFilter(statusKey)}
+                    className={`db-filter-btn${active ? ' is-active' : ''}`}
+                  >
+                    {copy.filters[statusKey]} ({counts[statusKey]})
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="db-search-tools">
+              <div className="db-search-box">
+                <span style={{ color: 'var(--db-ink-muted)', display: 'inline-flex' }}>
+                  <IconSearch size={15} />
+                </span>
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={copy.searchPlaceholder}
+                  aria-label={copy.searchPlaceholder}
+                  className="db-search-input"
+                />
+              </div>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                aria-label="Sort editions"
+                className="db-select"
+              >
+                <option value="updated">{copy.sortUpdated}</option>
+                <option value="title">{copy.sortTitle}</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Content State: Loading / Empty / Cards Grid / Compact Table */}
+          {isLoading ? (
+            <div className="db-empty-state">
+              <span style={{ fontSize: '14px', color: 'var(--db-ink-secondary)' }}>
+                {copy.loadingLabel}
+              </span>
+            </div>
+          ) : editions.length === 0 ? (
+            <div className="db-empty-state">
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  backgroundColor: 'var(--db-surface)',
+                  border: '1px solid var(--db-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--db-accent)',
+                }}
+              >
+                <IconNewspaper size={26} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--db-ink)' }}>
+                {copy.emptyTitle}
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '14px',
+                  lineHeight: 1.6,
+                  color: 'var(--db-ink-secondary)',
+                  maxWidth: '460px',
+                }}
+              >
+                {copy.emptySubtitle}
+              </p>
+              <button type="button" onClick={onNewEdition} className="db-btn-accent">
+                <IconPlus size={16} />
+                <span>{copy.emptyCta}</span>
+              </button>
+            </div>
+          ) : filteredEditions.length === 0 ? (
+            <div className="db-empty-state">
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--db-ink)' }}>
+                {copy.filteredEmptyTitle}
+              </h3>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--db-ink-secondary)' }}>
+                {copy.filteredEmptySubtitle}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedStatusFilter('all');
+                  setSearchQuery('');
+                }}
+                className="db-btn-secondary"
+              >
+                {copy.resetFiltersBtn}
+              </button>
+            </div>
+          ) : libraryView === 'cards' ? (
+            <div className="db-cards-grid">
+              {filteredEditions.map((ed) => {
+                const pillStyle = getStatusPillStyle(ed.saveStatus);
+                return (
+                  <article key={ed.id} className="db-edition-card">
+                    {/* Miniature Newspaper Wireframe Preview */}
+                    <div className="db-edition-thumb">
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <span className="db-pill" style={pillStyle}>
+                          {copy.statusLabels[ed.saveStatus]}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--db-ink-muted)' }}>
+                          {formatLabel(ed.pageSize)}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: '4px',
+                          paddingTop: '8px',
+                          borderTop: '2px solid var(--db-ink)',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div
+                            style={{
+                              height: '10px',
+                              borderRadius: '2px',
+                              backgroundColor: 'var(--db-ink)',
+                              width: '90%',
+                            }}
+                          />
+                          <div
+                            style={{
+                              height: '5px',
+                              borderRadius: '2px',
+                              backgroundColor: 'var(--db-border)',
+                            }}
+                          />
+                          <div
+                            style={{
+                              height: '5px',
+                              borderRadius: '2px',
+                              backgroundColor: 'var(--db-border)',
+                              width: '75%',
+                            }}
+                          />
+                        </div>
+                        <div
+                          style={{
+                            borderRadius: '4px',
+                            backgroundColor: 'var(--db-surface-subtle)',
+                            border: '1px solid var(--db-border)',
+                            height: '32px',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Edition Metadata */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          color: 'var(--db-ink)',
+                        }}
+                      >
+                        {ed.editionName}
+                      </h3>
+                      <div style={{ fontSize: '13px', color: 'var(--db-ink-secondary)' }}>
+                        {ed.publicationName} • {ed.editionDate}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--db-ink-muted)' }}>
+                        {copy.storiesLabel(ed.articleCount)} •{' '}
+                        {new Date(ed.updatedAt).toLocaleDateString(
+                          locale === 'hi' ? 'hi-IN' : 'en-US'
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Row */}
+                    <div className="db-edition-actions">
+                      <button
+                        type="button"
+                        onClick={() => onOpenEditor(ed.id)}
+                        className="db-btn-primary"
+                        style={{ flex: 1 }}
+                      >
+                        <span>{copy.editBtn}</span>
+                        <IconArrowRight size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicateEdition(ed.id, ed.editionName)}
+                        className="db-icon-action"
+                        title={copy.copyTitle}
+                        aria-label={copy.copyTitle}
+                      >
+                        <IconCopy size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditionToDelete(ed.id)}
+                        className="db-icon-action is-danger"
+                        title={copy.deleteTitle}
+                        aria-label={copy.deleteTitle}
+                      >
+                        <IconTrash size={15} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="db-table-wrap">
+              <table className="db-table">
+                <thead>
+                  <tr>
+                    <th>{copy.colEdition}</th>
+                    <th>{copy.colPublication}</th>
+                    <th>{copy.colFormat}</th>
+                    <th>{copy.colUpdated}</th>
+                    <th>{copy.colStatus}</th>
+                    <th style={{ textAlign: 'right' }}>{copy.colActions}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEditions.map((ed) => {
-                    const statusColors: Record<string, { bg: string; text: string }> = {
-                      saved: { bg: '#ECFDF5', text: '#047857' },
-                      draft: { bg: '#FEF3C7', text: '#92400E' },
-                      modified: { bg: '#EFF6FF', text: '#1D4ED8' },
-                    };
-                    const badge = statusColors[ed.saveStatus] || { bg: '#F3F4F6', text: '#374151' };
-
+                    const pillStyle = getStatusPillStyle(ed.saveStatus);
                     return (
-                      <tr key={ed.id} style={{ borderBottom: `1px solid #F3F4F6` }}>
-                        <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 700, color: colors.inkBlack }}>
+                      <tr key={ed.id}>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--db-ink)' }}>
                             {ed.editionName}
                           </div>
-                          <div style={{ fontSize: '11.5px', color: colors.textMuted }}>
+                          <div style={{ fontSize: '12px', color: 'var(--db-ink-muted)' }}>
                             {ed.editionDate}
                           </div>
                         </td>
-                        <td style={{ padding: '14px 16px', color: colors.textSecondary }}>
-                          {ed.publicationName}
+                        <td style={{ color: 'var(--db-ink-secondary)' }}>{ed.publicationName}</td>
+                        <td style={{ color: 'var(--db-ink-secondary)' }}>
+                          {formatLabel(ed.pageSize)} • {copy.storiesLabel(ed.articleCount)}
                         </td>
-                        <td
-                          style={{
-                            padding: '14px 16px',
-                            color: colors.textSecondary,
-                            textTransform: 'capitalize',
-                          }}
-                        >
-                          {ed.pageSize} • {ed.articleCount} समाचार
+                        <td style={{ color: 'var(--db-ink-muted)', fontSize: '12px' }}>
+                          {new Date(ed.updatedAt).toLocaleDateString(
+                            locale === 'hi' ? 'hi-IN' : 'en-US'
+                          )}
                         </td>
-                        <td
-                          style={{
-                            padding: '14px 16px',
-                            color: colors.textMuted,
-                            fontSize: '12px',
-                          }}
-                        >
-                          {new Date(ed.updatedAt).toLocaleDateString()}
-                        </td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              padding: '3px 8px',
-                              borderRadius: '3px',
-                              backgroundColor: badge.bg,
-                              color: badge.text,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {ed.saveStatus}
+                        <td>
+                          <span className="db-pill" style={pillStyle}>
+                            {copy.statusLabels[ed.saveStatus]}
                           </span>
                         </td>
-                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', gap: '8px' }}>
                             <button
+                              type="button"
                               onClick={() => onOpenEditor(ed.id)}
-                              style={{
-                                backgroundColor: colors.inkBlack,
-                                color: '#FFFFFF',
-                                border: 'none',
-                                borderRadius: '3px',
-                                padding: '6px 12px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
+                              className="db-btn-primary"
                             >
-                              {locale === 'en' ? 'Edit →' : 'संपादित करें →'}
+                              {copy.editBtn}
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleDuplicateEdition(ed.id, ed.editionName)}
-                              style={{
-                                backgroundColor: '#FFFFFF',
-                                color: colors.textSecondary,
-                                border: `1px solid ${colors.borderMuted}`,
-                                borderRadius: '3px',
-                                padding: '6px 10px',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                              }}
-                              title={
-                                locale === 'en' ? 'Duplicate edition' : 'संस्करण की प्रति बनाएं'
-                              }
+                              className="db-icon-action"
+                              title={copy.copyTitle}
+                              aria-label={copy.copyTitle}
                             >
-                              {locale === 'en' ? 'Copy' : 'प्रतिलिपि'}
+                              <IconCopy size={15} />
                             </button>
                             <button
+                              type="button"
                               onClick={() => setEditionToDelete(ed.id)}
-                              style={{
-                                backgroundColor: '#FFFFFF',
-                                color: colors.pressRed,
-                                border: `1px solid #FCA5A5`,
-                                borderRadius: '3px',
-                                padding: '6px 10px',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                              }}
-                              title={locale === 'en' ? 'Delete edition' : 'संस्करण हटाएं'}
+                              className="db-icon-action is-danger"
+                              title={copy.deleteTitle}
+                              aria-label={copy.deleteTitle}
                             >
-                              {locale === 'en' ? 'Delete' : 'हटाएं'}
+                              <IconTrash size={15} />
                             </button>
                           </div>
                         </td>
@@ -778,84 +1303,57 @@ export const PublisherDashboard: React.FC<PublisherDashboardProps> = ({
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          )}
+        </section>
       </main>
 
-      {/* Delete Confirmation Modal */}
+      {/* Accessible Delete Confirmation Modal */}
       {editionToDelete && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '16px',
-          }}
+          className="db-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="db-delete-title"
+          onClick={() => setEditionToDelete(null)}
         >
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '6px',
-              maxWidth: '420px',
-              width: '100%',
-              padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-            }}
-          >
+          <div className="db-modal-card" onClick={(e) => e.stopPropagation()}>
             <h3
+              id="db-delete-title"
               style={{
-                margin: '0 0 10px 0',
-                fontSize: '16px',
-                fontWeight: 800,
-                color: colors.pressRed,
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: 600,
+                color: 'var(--db-accent)',
               }}
             >
-              संस्करण हटाएं (Delete Edition)
+              {copy.deleteDialogTitle}
             </h3>
             <p
               style={{
-                fontSize: '13px',
-                color: colors.textSecondary,
-                lineHeight: 1.5,
-                margin: '0 0 20px 0',
+                margin: 0,
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'var(--db-ink-secondary)',
               }}
             >
-              क्या आप सुनिश्चित हैं कि आप इस संस्करण को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की
-              जा सकती।
+              {copy.deleteDialogBody}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}
+            >
               <button
+                type="button"
                 onClick={() => setEditionToDelete(null)}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '8px 14px',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
+                className="db-btn-secondary"
               >
-                रद्द करें
+                {copy.cancelBtn}
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteEdition(editionToDelete)}
-                style={{
-                  backgroundColor: colors.pressRed,
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 16px',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                className="db-btn-accent"
               >
-                हाँ, हटाएं
+                {copy.confirmDeleteBtn}
               </button>
             </div>
           </div>

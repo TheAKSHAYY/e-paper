@@ -4,6 +4,7 @@ import {
   type PublisherProfile,
 } from '../../storage/PublisherProfileStorage';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
+import { useI18n } from '../../i18n';
 
 export interface PublisherOnboardingModalProps {
   isOpen: boolean;
@@ -16,12 +17,19 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
   onComplete,
   onCancel,
 }) => {
+  const { locale, setLocale } = useI18n();
+  const isHi = locale === 'hi';
   const current = publisherProfileStorage.getProfile();
   const [publisherName, setPublisherName] = useState(current.publisherName || '');
-  const [newspaperTitle, setNewspaperTitle] = useState(current.newspaperTitle || 'दैनिक नवप्रभात');
-  const [tagline, setTagline] = useState(current.tagline || 'सत्य, निष्पक्षता और जनसेवा का प्रतीक');
+  const [newspaperTitle, setNewspaperTitle] = useState(
+    current.newspaperTitle || (isHi ? 'दैनिक नवप्रभात' : 'The Morning Chronicle')
+  );
+  const [tagline, setTagline] = useState(
+    current.tagline ||
+      (isHi ? 'सत्य, निष्पक्षता और जनसेवा का प्रतीक' : 'Independent Voice of Truth')
+  );
   const [primaryLanguage, setPrimaryLanguage] = useState<'hi' | 'en'>(
-    current.primaryLanguage || 'hi'
+    current.primaryLanguage || (locale === 'en' ? 'en' : 'hi')
   );
   const [preferredPageSize, setPreferredPageSize] = useState<
     'broadsheet' | 'tabloid' | 'berliner' | 'a3' | 'a4'
@@ -31,7 +39,6 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
   if (!isOpen) return null;
 
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
-  const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +52,7 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
       preferredPageSize,
       email: email.trim() || undefined,
     });
+    setLocale(primaryLanguage);
 
     onComplete(profile);
   };
@@ -60,34 +68,40 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
         justifyContent: 'center',
         zIndex: 100,
         padding: '16px',
-        backdropFilter: 'blur(2px)',
+        backdropFilter: 'blur(3px)',
       }}
     >
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '8px',
+          borderRadius: '16px',
+          border: `1px solid ${colors.borderMuted}`,
           maxWidth: '560px',
           width: '100%',
-          padding: '32px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          padding: '28px 24px',
+          boxSizing: 'border-box',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          fontFamily: fonts.interface,
+          fontFamily: "'Poppins', 'Hind', sans-serif",
+          WebkitFontSmoothing: 'antialiased',
+          letterSpacing: isHi ? '0em' : undefined,
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '22px' }}>
           <div
             style={{
-              width: '42px',
-              height: '42px',
-              backgroundColor: colors.pressRed,
-              color: '#ffffff',
+              width: '40px',
+              height: '40px',
+              backgroundColor: colors.inkBlack,
+              color: '#FAF8F5',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: '22px',
-              fontFamily: fonts.hindiEditorial,
-              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '18px',
+              fontFamily: 'inherit',
+              borderRadius: '10px',
               marginBottom: '12px',
             }}
           >
@@ -95,19 +109,20 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
           </div>
           <h2
             style={{
-              fontSize: '22px',
-              fontWeight: 900,
+              fontSize: '20px',
+              fontWeight: 600,
               color: colors.inkBlack,
               margin: '0 0 6px 0',
-              fontFamily: fonts.hindiEditorial,
+              fontFamily: 'inherit',
               lineHeight: 1.35,
             }}
           >
-            प्रकाशक ऑनबोर्डिंग (Publisher Setup)
+            {isHi ? 'अपने अख़बार की जानकारी भरें' : 'Publication Profile Setup'}
           </h2>
-          <p style={{ fontSize: '13px', color: colors.textSecondary, margin: 0 }}>
-            अपने समाचार पत्र और प्रकाशन की बुनियादी जानकारी दर्ज करें। यह जानकारी मास्टहेड और प्रिंट
-            संस्करणों पर दिखाई देगी।
+          <p style={{ fontSize: '13px', color: colors.textSecondary, margin: 0, lineHeight: 1.55 }}>
+            {isHi
+              ? 'अपने अख़बार और संपादक का नाम लिखें। यही जानकारी आपके हर नए अंक के मास्टहेड पर दिखेगी।'
+              : 'Set up your editor name, newspaper title, and default page format. This appears on your masthead.'}
           </p>
         </div>
 
@@ -120,28 +135,29 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             <label
               style={{
                 display: 'block',
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '13px',
+                fontWeight: 500,
                 color: colors.inkBlack,
-                marginBottom: '4px',
+                marginBottom: '6px',
               }}
             >
-              संपादक / प्रकाशक का नाम (Editor / Publisher Name) *
+              {isHi ? 'संपादक / प्रकाशक का नाम *' : 'Editor / Publisher Name *'}
             </label>
             <input
               type="text"
               required
               value={publisherName}
               onChange={(e) => setPublisherName(e.target.value)}
-              placeholder="उदा. राजेश शर्मा / प्रधान संपादक"
+              placeholder={isHi ? 'जैसे: राजेश शर्मा / मुख्य संपादक' : 'e.g. Rajesh Sharma'}
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '4px',
+                borderRadius: '8px',
                 border: `1px solid ${colors.borderMuted}`,
                 fontSize: '13.5px',
                 color: colors.inkBlack,
                 backgroundColor: colors.warmPaper,
+                boxSizing: 'border-box',
                 outline: 'none',
               }}
             />
@@ -152,28 +168,29 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             <label
               style={{
                 display: 'block',
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '13px',
+                fontWeight: 500,
                 color: colors.inkBlack,
-                marginBottom: '4px',
+                marginBottom: '6px',
               }}
             >
-              समाचार पत्र का नाम (Publication Title) *
+              {isHi ? 'अख़बार का नाम *' : 'Newspaper Title *'}
             </label>
             <input
               type="text"
               required
               value={newspaperTitle}
               onChange={(e) => setNewspaperTitle(e.target.value)}
-              placeholder="उदा. दैनिक नवप्रभात / National Herald"
+              placeholder={isHi ? 'जैसे: दैनिक नवप्रभात' : 'e.g. The Morning Chronicle'}
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '4px',
+                borderRadius: '8px',
                 border: `1px solid ${colors.borderMuted}`,
                 fontSize: '13.5px',
                 color: colors.inkBlack,
                 backgroundColor: colors.warmPaper,
+                boxSizing: 'border-box',
                 outline: 'none',
               }}
             />
@@ -184,45 +201,56 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             <label
               style={{
                 display: 'block',
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '13px',
+                fontWeight: 500,
                 color: colors.inkBlack,
-                marginBottom: '4px',
+                marginBottom: '6px',
               }}
             >
-              ध्येय वाक्य / उप-शीर्षक (Tagline / Motto)
+              {isHi ? 'अख़बार की टैगलाइन' : 'Publication Tagline'}
             </label>
             <input
               type="text"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
-              placeholder="उदा. सत्य, निष्पक्षता और जनसेवा का प्रतीक"
+              placeholder={
+                isHi
+                  ? 'जैसे: सत्य, निष्पक्षता और जनसेवा का प्रतीक'
+                  : 'e.g. Truth, Integrity and Public Trust'
+              }
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '4px',
+                borderRadius: '8px',
                 border: `1px solid ${colors.borderMuted}`,
                 fontSize: '13.5px',
                 color: colors.inkBlack,
                 backgroundColor: colors.warmPaper,
+                boxSizing: 'border-box',
                 outline: 'none',
               }}
             />
           </div>
 
           {/* Language & Preferred Size Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '14px',
+            }}
+          >
             <div>
               <label
                 style={{
                   display: 'block',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
+                  fontSize: '13px',
+                  fontWeight: 500,
                   color: colors.inkBlack,
-                  marginBottom: '4px',
+                  marginBottom: '6px',
                 }}
               >
-                प्राथमिक भाषा (Language)
+                {isHi ? 'मुख्य भाषा' : 'Primary Language'}
               </label>
               <select
                 value={primaryLanguage}
@@ -230,15 +258,16 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   border: `1px solid ${colors.borderMuted}`,
                   fontSize: '13px',
                   color: colors.inkBlack,
                   backgroundColor: colors.warmPaper,
+                  boxSizing: 'border-box',
                   outline: 'none',
                 }}
               >
-                <option value="hi">हिंदी (Devanagari)</option>
+                <option value="hi">हिन्दी (Devanagari)</option>
                 <option value="en">English (Latin)</option>
               </select>
             </div>
@@ -247,13 +276,13 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
               <label
                 style={{
                   display: 'block',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
+                  fontSize: '13px',
+                  fontWeight: 500,
                   color: colors.inkBlack,
-                  marginBottom: '4px',
+                  marginBottom: '6px',
                 }}
               >
-                मानक प्रिंट साइज़ (Default Size)
+                {isHi ? 'डिफ़ॉल्ट पेज साइज' : 'Default Print Size'}
               </label>
               <select
                 value={preferredPageSize}
@@ -261,11 +290,12 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   border: `1px solid ${colors.borderMuted}`,
                   fontSize: '13px',
                   color: colors.inkBlack,
                   backgroundColor: colors.warmPaper,
+                  boxSizing: 'border-box',
                   outline: 'none',
                 }}
               >
@@ -283,13 +313,13 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
             <label
               style={{
                 display: 'block',
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '13px',
+                fontWeight: 500,
                 color: colors.inkBlack,
-                marginBottom: '4px',
+                marginBottom: '6px',
               }}
             >
-              ईमेल संपर्क (Publisher Email - Optional)
+              {isHi ? 'संपादक ईमेल (अगर चाहें)' : 'Publisher Email (Optional)'}
             </label>
             <input
               type="email"
@@ -299,11 +329,12 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '4px',
+                borderRadius: '8px',
                 border: `1px solid ${colors.borderMuted}`,
                 fontSize: '13.5px',
                 color: colors.inkBlack,
                 backgroundColor: colors.warmPaper,
+                boxSizing: 'border-box',
                 outline: 'none',
               }}
             />
@@ -311,7 +342,13 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
 
           {/* Action Buttons */}
           <div
-            style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+              marginTop: '10px',
+              flexWrap: 'wrap',
+            }}
           >
             {onCancel && (
               <button
@@ -321,14 +358,14 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
                   backgroundColor: '#FFFFFF',
                   color: colors.textSecondary,
                   border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '4px',
-                  padding: '10px 16px',
+                  borderRadius: '9999px',
+                  padding: '10px 18px',
                   fontSize: '13px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: 'pointer',
                 }}
               >
-                रद्द करें
+                {isHi ? 'बंद करें' : 'Cancel'}
               </button>
             )}
 
@@ -338,15 +375,15 @@ export const PublisherOnboardingModal: React.FC<PublisherOnboardingModalProps> =
                 backgroundColor: colors.pressRed,
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '9999px',
                 padding: '10px 22px',
                 fontSize: '13.5px',
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(158, 48, 41, 0.25)',
+                boxShadow: '0 2px 4px rgba(158, 48, 41, 0.2)',
               }}
             >
-              पूर्ण करें व डैशबोर्ड खोलें →
+              {isHi ? 'सेव करें और डैशबोर्ड खोलें →' : 'Save & Open Dashboard →'}
             </button>
           </div>
         </form>

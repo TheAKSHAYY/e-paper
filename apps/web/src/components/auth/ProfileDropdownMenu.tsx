@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n';
+import { GlobeIcon, LogOutIcon, SettingsIcon } from './AuthIcons';
 
 export interface ProfileDropdownMenuProps {
   onOpenSettings: () => void;
@@ -49,7 +50,8 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
           color: variant === 'dark' ? '#1C1917' : '#FAF8F5',
           border: 'none',
           fontSize: '13px',
-          fontWeight: 700,
+          fontWeight: 600,
+          fontFamily: "'Poppins', 'Hind', sans-serif",
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -76,6 +78,8 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
             padding: '8px 0',
             zIndex: 100,
             color: '#111827',
+            fontFamily: "'Poppins', 'Hind', sans-serif",
+            letterSpacing: locale === 'hi' ? '0em' : undefined,
           }}
           role="menu"
         >
@@ -84,7 +88,7 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
             <div
               style={{
                 fontSize: '13px',
-                fontWeight: 700,
+                fontWeight: 600,
                 color: '#111827',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -132,7 +136,7 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               }}
               style={{
                 width: '100%',
-                padding: '8px 16px',
+                padding: '9px 16px',
                 textAlign: 'left',
                 border: 'none',
                 background: 'none',
@@ -146,8 +150,8 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               className="hover:bg-stone-50"
               role="menuitem"
             >
-              <span>⚙️</span>
-              <span>{locale === 'hi' ? 'खाता सेटिंग्स' : 'Account Settings'}</span>
+              <SettingsIcon size={15} color="#57534E" />
+              <span>{locale === 'hi' ? 'खाते की सेटिंग्स' : 'Account Settings'}</span>
             </button>
 
             <button
@@ -158,7 +162,7 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               }}
               style={{
                 width: '100%',
-                padding: '8px 16px',
+                padding: '9px 16px',
                 textAlign: 'left',
                 border: 'none',
                 background: 'none',
@@ -172,7 +176,7 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               className="hover:bg-stone-50"
               role="menuitem"
             >
-              <span>🌐</span>
+              <GlobeIcon size={15} color="#57534E" />
               <span>{locale === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}</span>
             </button>
           </div>
@@ -186,7 +190,7 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               }}
               style={{
                 width: '100%',
-                padding: '8px 16px',
+                padding: '9px 16px',
                 textAlign: 'left',
                 border: 'none',
                 background: 'none',
@@ -201,8 +205,8 @@ export const ProfileDropdownMenu: React.FC<ProfileDropdownMenuProps> = ({
               className="hover:bg-red-50"
               role="menuitem"
             >
-              <span>🚪</span>
-              <span>{locale === 'hi' ? 'लॉग आउट' : 'Sign Out'}</span>
+              <LogOutIcon size={15} color="#DC2626" />
+              <span>{locale === 'hi' ? 'लॉग आउट करें' : 'Sign Out'}</span>
             </button>
           </div>
         </div>

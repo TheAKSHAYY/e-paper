@@ -66,7 +66,6 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
   if (!isOpen) return null;
 
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
-  const fonts = PUBLISHER_DESIGN_SYSTEM.fonts;
   const dimensions = getPageDimensions(pageSize, orientation);
   const pageDef = PAGE_SIZE_DEFINITIONS[pageSize];
 
@@ -107,14 +106,17 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '8px',
+          borderRadius: '16px',
+          border: `1px solid ${colors.borderMuted}`,
           maxWidth: '680px',
           width: '100%',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          fontFamily: fonts.interface,
+          fontFamily: "'Poppins', 'Hind', sans-serif",
+          WebkitFontSmoothing: 'antialiased',
+          letterSpacing: locale === 'hi' ? '0em' : undefined,
           overflow: 'hidden',
         }}
       >
@@ -132,21 +134,21 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           <div>
             <div
               style={{
-                fontSize: '11px',
-                fontWeight: 800,
+                fontSize: '11.5px',
+                fontWeight: 600,
                 color: colors.pressRed,
                 textTransform: 'uppercase',
               }}
             >
-              {t.wizard.modalTitle} • {locale === 'en' ? `Step ${step} of 4` : `चरण ${step} / 4`}
+              {t.wizard.modalTitle} • {locale === 'en' ? `Step ${step} of 4` : `स्टेप ${step} / 4`}
             </div>
             <h2
               style={{
                 fontSize: '18px',
-                fontWeight: 800,
+                fontWeight: 600,
                 color: colors.inkBlack,
                 margin: '2px 0 0 0',
-                fontFamily: fonts.display,
+                fontFamily: 'inherit',
               }}
             >
               {step === 1 && t.wizard.step1Title}
@@ -170,7 +172,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
         </div>
 
         {/* Wizard Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {/* STEP 1: IDENTITY */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -178,13 +180,13 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 <label
                   style={{
                     display: 'block',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
+                    fontSize: '13px',
+                    fontWeight: 500,
                     color: colors.inkBlack,
-                    marginBottom: '4px',
+                    marginBottom: '6px',
                   }}
                 >
-                  {locale === 'en' ? 'Edition / Issue Name *' : 'संस्करण का नाम *'}
+                  {locale === 'en' ? 'Edition / Issue Name *' : 'अंक का नाम *'}
                 </label>
                 <input
                   type="text"
@@ -194,10 +196,11 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    borderRadius: '4px',
+                    borderRadius: '8px',
                     border: `1px solid ${colors.borderMuted}`,
                     fontSize: '13.5px',
                     backgroundColor: colors.warmPaper,
+                    boxSizing: 'border-box',
                     outline: 'none',
                   }}
                 />
@@ -207,10 +210,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 <label
                   style={{
                     display: 'block',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
+                    fontSize: '13px',
+                    fontWeight: 500,
                     color: colors.inkBlack,
-                    marginBottom: '4px',
+                    marginBottom: '6px',
                   }}
                 >
                   {t.wizard.newspaperName} *
@@ -224,10 +227,11 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    borderRadius: '4px',
+                    borderRadius: '8px',
                     border: `1px solid ${colors.borderMuted}`,
                     fontSize: '13.5px',
                     backgroundColor: colors.warmPaper,
+                    boxSizing: 'border-box',
                     outline: 'none',
                   }}
                 />
@@ -237,10 +241,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 <label
                   style={{
                     display: 'block',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
+                    fontSize: '13px',
+                    fontWeight: 500,
                     color: colors.inkBlack,
-                    marginBottom: '4px',
+                    marginBottom: '6px',
                   }}
                 >
                   {t.wizard.tagline}
@@ -253,24 +257,31 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    borderRadius: '4px',
+                    borderRadius: '8px',
                     border: `1px solid ${colors.borderMuted}`,
                     fontSize: '13.5px',
                     backgroundColor: colors.warmPaper,
+                    boxSizing: 'border-box',
                     outline: 'none',
                   }}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '14px',
+                }}
+              >
                 <div>
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
+                      fontSize: '13px',
+                      fontWeight: 500,
                       color: colors.inkBlack,
-                      marginBottom: '4px',
+                      marginBottom: '6px',
                     }}
                   >
                     {t.wizard.primaryLanguage}
@@ -281,13 +292,14 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
                       border: `1px solid ${colors.borderMuted}`,
                       fontSize: '13px',
                       backgroundColor: colors.warmPaper,
+                      boxSizing: 'border-box',
                     }}
                   >
-                    <option value="hi">हिंदी (Devanagari)</option>
+                    <option value="hi">हिन्दी (Devanagari)</option>
                     <option value="en">English (Latin)</option>
                   </select>
                 </div>
@@ -296,10 +308,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
+                      fontSize: '13px',
+                      fontWeight: 500,
                       color: colors.inkBlack,
-                      marginBottom: '4px',
+                      marginBottom: '6px',
                     }}
                   >
                     {t.wizard.publicationDate}
@@ -311,10 +323,11 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
                       border: `1px solid ${colors.borderMuted}`,
                       fontSize: '13px',
                       backgroundColor: colors.warmPaper,
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
@@ -330,7 +343,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     color: colors.inkBlack,
                     marginBottom: '8px',
                   }}
@@ -340,7 +353,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
                     gap: '10px',
                   }}
                 >
@@ -357,7 +370,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                               ? `2px solid ${colors.pressRed}`
                               : `1px solid ${colors.borderMuted}`,
                             backgroundColor: isSelected ? '#FDF2F1' : colors.warmPaper,
-                            borderRadius: '6px',
+                            borderRadius: '10px',
                             padding: '12px',
                             cursor: 'pointer',
                           }}
@@ -365,14 +378,18 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                           <div
                             style={{
                               fontSize: '13px',
-                              fontWeight: 800,
+                              fontWeight: 600,
                               color: isSelected ? colors.pressRed : colors.inkBlack,
                             }}
                           >
                             {def.name}
                           </div>
                           <div
-                            style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}
+                            style={{
+                              fontSize: '11.5px',
+                              color: colors.textMuted,
+                              marginTop: '2px',
+                            }}
                           >
                             {def.widthMm}mm × {def.heightMm}mm
                           </div>
@@ -388,51 +405,51 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   style={{
                     display: 'block',
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     color: colors.inkBlack,
                     marginBottom: '8px',
                   }}
                 >
-                  {locale === 'en' ? 'Page Orientation' : 'अभिविन्यास'}
+                  {locale === 'en' ? 'Page Orientation' : 'पेज का ओरिएंटेशन'}
                 </label>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={() => setOrientation('portrait')}
                     style={{
-                      flex: 1,
+                      flex: '1 1 140px',
                       padding: '10px',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
                       border:
                         orientation === 'portrait'
                           ? `2px solid ${colors.pressRed}`
                           : `1px solid ${colors.borderMuted}`,
                       backgroundColor: orientation === 'portrait' ? '#FDF2F1' : '#FFFFFF',
                       fontSize: '13px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: 'pointer',
                     }}
                   >
-                    {locale === 'en' ? 'Portrait' : 'पोर्ट्रेट (उर्ध्व)'}
+                    {locale === 'en' ? 'Portrait' : 'पोर्ट्रेट (खड़ा पेज)'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setOrientation('landscape')}
                     style={{
-                      flex: 1,
+                      flex: '1 1 140px',
                       padding: '10px',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
                       border:
                         orientation === 'landscape'
                           ? `2px solid ${colors.pressRed}`
                           : `1px solid ${colors.borderMuted}`,
                       backgroundColor: orientation === 'landscape' ? '#FDF2F1' : '#FFFFFF',
                       fontSize: '13px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: 'pointer',
                     }}
                   >
-                    {locale === 'en' ? 'Landscape' : 'लैंडस्केप (क्षैतिज)'}
+                    {locale === 'en' ? 'Landscape' : 'लैंडस्केप (आड़ा पेज)'}
                   </button>
                 </div>
               </div>
@@ -442,31 +459,31 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 style={{
                   backgroundColor: '#FAF9F6',
                   border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '6px',
+                  borderRadius: '10px',
                   padding: '14px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
+                    fontSize: '12.5px',
+                    fontWeight: 600,
                     color: colors.inkBlack,
                     marginBottom: '4px',
                   }}
                 >
-                  {locale === 'en' ? 'Physical Geometry Summary:' : 'भौतिक ज्यामिति सारांश:'}
+                  {locale === 'en' ? 'Physical Geometry Summary:' : 'पेज साइज की जानकारी:'}
                 </div>
-                <div style={{ fontSize: '12px', color: colors.textSecondary }}>
-                  • {locale === 'en' ? 'Overall Dimensions:' : 'कुल आकार:'} {dimensions.widthMm}mm ×{' '}
+                <div style={{ fontSize: '12px', color: colors.textSecondary, lineHeight: 1.6 }}>
+                  • {locale === 'en' ? 'Overall Dimensions:' : 'कुल साइज:'} {dimensions.widthMm}mm ×{' '}
                   {dimensions.heightMm}mm ({dimensions.widthIn}" × {dimensions.heightIn}")
                   <br />•{' '}
                   {locale === 'en'
                     ? 'Print Quality: Pure vector output at plate dimensions'
-                    : 'मुद्रण गुणवत्ता: शुद्ध वेक्टर मानक'}
+                    : 'प्रिंट क्वालिटी: एकदम साफ़ वेक्टर प्रिंट के लिए तैयार'}
                   <br />•{' '}
                   {locale === 'en'
                     ? 'Grid Layout: 12-column physical modular grid'
-                    : 'डिफ़ॉल्ट ग्रिड: 12-कॉलम मॉड्यूलर विभाजन'}
+                    : 'कॉलम ग्रिड: 12 कॉलम वाला आसान लेआउट'}
                 </div>
               </div>
             </div>
@@ -475,42 +492,42 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
           {/* STEP 3: TEMPLATE SELECTION */}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '4px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => setStartBlank(false)}
                   style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '4px',
+                    flex: '1 1 180px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
                     border: !startBlank
                       ? `2px solid ${colors.pressRed}`
                       : `1px solid ${colors.borderMuted}`,
                     backgroundColor: !startBlank ? '#FDF2F1' : '#FFFFFF',
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
-                  {locale === 'en' ? 'Use Master Preset Template' : 'तैयार टेम्पलेट से शुरू करें'}
+                  {locale === 'en' ? 'Use Master Preset Template' : 'बना-बनाया टेम्पलेट चुनें'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStartBlank(true)}
                   style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '4px',
+                    flex: '1 1 180px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
                     border: startBlank
                       ? `2px solid ${colors.pressRed}`
                       : `1px solid ${colors.borderMuted}`,
                     backgroundColor: startBlank ? '#FDF2F1' : '#FFFFFF',
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
-                  {locale === 'en' ? 'Start with Blank Page' : 'कोरे पृष्ठ से शुरू करें'}
+                  {locale === 'en' ? 'Start with Blank Page' : 'खाली पेज से शुरू करें'}
                 </button>
               </div>
 
@@ -529,7 +546,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                               ? `2px solid ${colors.pressRed}`
                               : `1px solid ${colors.borderMuted}`,
                             backgroundColor: isSelected ? '#FDF2F1' : '#FFFFFF',
-                            borderRadius: '6px',
+                            borderRadius: '10px',
                             padding: '14px',
                             cursor: 'pointer',
                           }}
@@ -539,15 +556,16 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
+                              gap: '8px',
                             }}
                           >
                             <span
-                              style={{ fontSize: '14px', fontWeight: 800, color: colors.inkBlack }}
+                              style={{ fontSize: '14px', fontWeight: 600, color: colors.inkBlack }}
                             >
                               {preset.name}
                             </span>
-                            <span style={{ fontSize: '11px', color: colors.textMuted }}>
-                              {preset.defaultColumns} Columns
+                            <span style={{ fontSize: '11.5px', color: colors.textMuted }}>
+                              {preset.defaultColumns} {locale === 'hi' ? 'कॉलम' : 'Columns'}
                             </span>
                           </div>
                           <div
@@ -555,6 +573,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                               fontSize: '12px',
                               color: colors.textSecondary,
                               marginTop: '4px',
+                              lineHeight: 1.5,
                             }}
                           >
                             {preset.description}
@@ -571,20 +590,24 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     padding: '24px',
                     backgroundColor: '#FAF9F6',
                     border: `1px dashed ${colors.borderMuted}`,
-                    borderRadius: '6px',
+                    borderRadius: '10px',
                     textAlign: 'center',
                   }}
                 >
-                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.inkBlack }}>
-                    {locale === 'en' ? 'Clean Blank 12-Column Canvas' : 'स्वच्छ कोरा पृष्ठ'}
+                  <div style={{ fontSize: '14.5px', fontWeight: 600, color: colors.inkBlack }}>
+                    {locale === 'en' ? 'Clean Blank 12-Column Canvas' : 'बिल्कुल साफ खाली पेज'}
                   </div>
                   <p
-                    style={{ fontSize: '12.5px', color: colors.textSecondary, margin: '4px 0 0 0' }}
+                    style={{
+                      fontSize: '12.5px',
+                      color: colors.textSecondary,
+                      margin: '6px 0 0 0',
+                      lineHeight: 1.6,
+                    }}
                   >
                     {locale === 'en'
                       ? 'Begin with masthead and empty 12-column grid. You can place news stories, images, and ads directly in the studio.'
-                      : 'मास्टहेड हेडर और कोरे 12-कॉलम ग्रिड के साथ शुरुआत करें। आप संपादक में मनचाहे समाचार, कॉलम और विज्ञापन सीधे जोड़ सकेंगे।'}
+                      : 'ऊपर मास्टहेड और नीचे खाली 12-कॉलम ग्रिड के साथ शुरुआत करें। आप स्टूडियो में अपनी मर्ज़ी से खबरें, फ़ोटो और विज्ञापन जोड़ सकते हैं।'}
                   </p>
                 </div>
               )}
@@ -598,14 +621,14 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 style={{
                   backgroundColor: '#FAF9F6',
                   border: `1px solid ${colors.borderMuted}`,
-                  borderRadius: '6px',
+                  borderRadius: '10px',
                   padding: '16px',
                 }}
               >
                 <h3
                   style={{
                     fontSize: '15px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: colors.inkBlack,
                     margin: '0 0 12px 0',
                   }}
@@ -615,7 +638,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                     gap: '10px',
                     fontSize: '12.5px',
                   }}
@@ -640,7 +663,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                     <span style={{ color: colors.textMuted }}>
                       {locale === 'en' ? 'Language:' : 'भाषा:'}
                     </span>{' '}
-                    <strong>{language === 'hi' ? 'हिंदी' : 'English'}</strong>
+                    <strong>{language === 'hi' ? 'हिन्दी' : 'English'}</strong>
                   </div>
                   <div>
                     <span style={{ color: colors.textMuted }}>{t.wizard.publicationDate}:</span>{' '}
@@ -652,10 +675,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                       {startBlank
                         ? locale === 'en'
                           ? 'Blank Canvas'
-                          : 'कोरा पृष्ठ'
+                          : 'खाली पेज'
                         : locale === 'en'
                           ? 'Preset Template'
-                          : 'तैयार टेम्पलेट'}
+                          : 'बना-बनाया टेम्पलेट'}
                     </strong>
                   </div>
                 </div>
@@ -666,12 +689,12 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   fontSize: '12.5px',
                   color: colors.textSecondary,
                   margin: 0,
-                  lineHeight: 1.5,
+                  lineHeight: 1.6,
                 }}
               >
                 {locale === 'en'
                   ? 'Clicking "Create Edition" initializes the newspaper edition and launches the studio editor.'
-                  : '"संस्करण बनाएं" पर क्लिक करते ही नया समाचार पत्र सुरक्षित रूप से सृजित हो जाएगा और स्टूडियो संपादक खुल जाएगा।'}
+                  : '"नया अंक बनाएँ" दबाते ही आपका अख़बार बन जाएगा और स्टूडियो एडिटर खुल जाएगा।'}
               </p>
             </div>
           )}
@@ -686,6 +709,8 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
           }}
         >
           {step > 1 ? (
@@ -696,10 +721,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 backgroundColor: '#FFFFFF',
                 color: colors.textSecondary,
                 border: `1px solid ${colors.borderMuted}`,
-                borderRadius: '4px',
+                borderRadius: '8px',
                 padding: '8px 16px',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
               }}
             >
@@ -709,7 +734,7 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
             <div />
           )}
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={onClose}
@@ -717,10 +742,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                 backgroundColor: '#FFFFFF',
                 color: colors.textMuted,
                 border: `1px solid ${colors.borderMuted}`,
-                borderRadius: '4px',
+                borderRadius: '8px',
                 padding: '8px 14px',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
               }}
             >
@@ -735,10 +760,10 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   backgroundColor: colors.pressRed,
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   padding: '8px 20px',
                   fontSize: '13px',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
               >
@@ -752,12 +777,12 @@ export const NewEditionModal: React.FC<NewEditionModalProps> = ({
                   backgroundColor: colors.pressRed,
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 24px',
+                  borderRadius: '8px',
+                  padding: '8px 22px',
                   fontSize: '13.5px',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(158, 48, 41, 0.25)',
+                  boxShadow: '0 2px 4px rgba(158, 48, 41, 0.2)',
                 }}
               >
                 {t.wizard.createEditionBtn} →

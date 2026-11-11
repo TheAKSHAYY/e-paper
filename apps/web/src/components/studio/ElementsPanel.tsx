@@ -7,6 +7,7 @@ import type {
 } from '@epaper-studio/document-schema';
 import { BUILTIN_EDITORIAL_PRESETS } from '@epaper-studio/template-engine';
 import { editorialPresetsStorage } from '../../storage/LocalStorageEditorialPresetsAdapter';
+import { LayersIcon, SparkleIcon } from './StudioIcons';
 
 export interface ElementsPanelProps {
   articles: Article[];
@@ -667,17 +668,18 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FAF8F5',
+        fontFamily: "'Poppins', 'Hind', sans-serif",
       }}
     >
       {/* Top Toggle: Applied Elements vs Catalog */}
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          padding: '4px',
-          gap: '4px',
+          borderBottom: '1px solid #E3DCD0',
+          backgroundColor: '#FAF8F5',
+          padding: '6px',
+          gap: '6px',
         }}
       >
         <button
@@ -688,11 +690,11 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             padding: '7px 10px',
             fontSize: '12px',
             fontWeight: 700,
-            border: 'none',
-            borderRadius: '6px',
-            backgroundColor: activeTab === 'catalog' ? '#ffffff' : 'transparent',
-            color: activeTab === 'catalog' ? '#b91c1c' : '#64748b',
-            boxShadow: activeTab === 'catalog' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            border: activeTab === 'catalog' ? '1px solid #E3DCD0' : '1px solid transparent',
+            borderRadius: '8px',
+            backgroundColor: activeTab === 'catalog' ? '#FFFFFF' : 'transparent',
+            color: activeTab === 'catalog' ? '#B91C1C' : '#57534E',
+            boxShadow: activeTab === 'catalog' ? '0 1px 2px rgba(20, 18, 16, 0.06)' : 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -700,7 +702,8 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             gap: '6px',
           }}
         >
-          <span>✨</span> नए तत्व जोड़ें (Catalog)
+          <SparkleIcon size={13} />
+          <span>नए तत्व जोड़ें</span>
         </button>
 
         <button
@@ -711,11 +714,11 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             padding: '7px 10px',
             fontSize: '12px',
             fontWeight: 700,
-            border: 'none',
-            borderRadius: '6px',
-            backgroundColor: activeTab === 'applied' ? '#ffffff' : 'transparent',
-            color: activeTab === 'applied' ? '#b91c1c' : '#64748b',
-            boxShadow: activeTab === 'applied' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            border: activeTab === 'applied' ? '1px solid #E3DCD0' : '1px solid transparent',
+            borderRadius: '8px',
+            backgroundColor: activeTab === 'applied' ? '#FFFFFF' : 'transparent',
+            color: activeTab === 'applied' ? '#B91C1C' : '#57534E',
+            boxShadow: activeTab === 'applied' ? '0 1px 2px rgba(20, 18, 16, 0.06)' : 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -723,7 +726,10 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({
             gap: '6px',
           }}
         >
-          <span>📋</span> पेज {pageNumber} के तत्व ({articles.length})
+          <LayersIcon size={13} />
+          <span>
+            पेज {pageNumber} के तत्व ({articles.length})
+          </span>
         </button>
       </div>
 

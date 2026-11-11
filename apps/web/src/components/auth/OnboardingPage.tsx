@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n';
 import { AuthLayout } from './AuthLayout';
+import { NewspaperIcon } from './AuthIcons';
 import { PUBLISHER_DESIGN_SYSTEM } from '@epaper-studio/ui';
 
 export interface OnboardingPageProps {
   onComplete: () => void;
   onBackToLanding: () => void;
+  onOpenLegalModal?: (tab: 'privacy' | 'terms' | 'contact' | 'faq') => void;
 }
 
 const ONBOARDING_STEP_KEY = 'epaper_studio_onboarding_step';
 
-export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBackToLanding }) => {
+export const OnboardingPage: React.FC<OnboardingPageProps> = ({
+  onComplete,
+  onBackToLanding,
+  onOpenLegalModal,
+}) => {
   const { locale, setLocale } = useI18n();
   const { user, profile, completeOnboarding } = useAuth();
   const colors = PUBLISHER_DESIGN_SYSTEM.colors;
@@ -86,38 +92,39 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
       title={
         step === 1
           ? locale === 'hi'
-            ? 'संपादकीय प्रोफ़ाइल'
+            ? 'आपकी पहचान'
             : 'Editor Profile'
           : step === 2
             ? locale === 'hi'
-              ? 'प्रकाशन की स्थापना'
+              ? 'अख़बार का नाम'
               : 'Publication Setup'
             : step === 3
               ? locale === 'hi'
-                ? 'मुद्रण प्राथमिकताएँ'
+                ? 'भाषा और पेज साइज'
                 : 'Print Preferences'
               : locale === 'hi'
-                ? 'स्वागत है!'
+                ? 'सब तैयार है!'
                 : 'Welcome to your Newsroom!'
       }
       subtitle={
         step === 1
           ? locale === 'hi'
-            ? 'चरण १/४: अपने संपादक खाते का विवरण दें।'
+            ? 'स्टेप 1 / 4: अपना नाम और ईमेल चेक करें।'
             : 'Step 1 of 4: Setup your editorial identity.'
           : step === 2
             ? locale === 'hi'
-              ? 'चरण २/४: अपने मुख्य समाचार पत्र का नाम और टैगलाइन निर्धारित करें।'
+              ? 'स्टेप 2 / 4: अपने अख़बार का नाम और टैगलाइन लिखें।'
               : 'Step 2 of 4: Configure your primary newspaper title.'
             : step === 3
               ? locale === 'hi'
-                ? 'चरण ३/४: पसंदीदा पृष्ठ आकार और भाषा चुनें।'
+                ? 'स्टेप 3 / 4: अपनी भाषा और पेज का आकार चुनें।'
                 : 'Step 3 of 4: Choose your default broadsheet or tabloid geometry.'
               : locale === 'hi'
-                ? 'चरण ४/४: आपका संपादकीय डेस्क तैयार है।'
+                ? 'स्टेप 4 / 4: आपका अख़बार स्टूडियो काम करने के लिए तैयार है।'
                 : 'Step 4 of 4: Your editorial workspace is ready.'
       }
       onBackToLanding={onBackToLanding}
+      onOpenLegalModal={onOpenLegalModal}
     >
       {/* Step Progress Bar */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '28px' }}>
@@ -161,7 +168,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
@@ -174,7 +181,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Aria Park"
+              placeholder={locale === 'hi' ? 'राजेश शर्मा' : 'Aria Park'}
               style={{
                 width: '100%',
                 padding: '10px 14px',
@@ -193,12 +200,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
             >
-              {locale === 'hi' ? 'ईमेल खाता' : 'Account Email'}
+              {locale === 'hi' ? 'आपका ईमेल' : 'Account Email'}
             </label>
             <input
               id="onboarding-email"
@@ -222,7 +229,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
             type="button"
             onClick={() => {
               if (!fullName.trim()) {
-                setError(locale === 'hi' ? 'कृपया अपना नाम दर्ज करें।' : 'Please enter your name.');
+                setError(locale === 'hi' ? 'कृपया अपना नाम लिखें।' : 'Please enter your name.');
                 return;
               }
               setError(null);
@@ -241,7 +248,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
             }}
             className="hover:bg-stone-800 transition-colors"
           >
-            {locale === 'hi' ? 'अगला: प्रकाशन की स्थापना →' : 'Next: Publication Setup →'}
+            {locale === 'hi' ? 'आगे बढ़ें: अख़बार का नाम →' : 'Next: Publication Setup →'}
           </button>
         </div>
       )}
@@ -255,12 +262,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
             >
-              {locale === 'hi' ? 'समाचार पत्र का नाम' : 'Newspaper Title'}
+              {locale === 'hi' ? 'अख़बार का नाम' : 'Newspaper Title'}
             </label>
             <input
               id="pub-name"
@@ -287,12 +294,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '6px',
               }}
             >
-              {locale === 'hi' ? 'टैगलाइन / ध्येय वाक्य' : 'Publication Tagline (Optional)'}
+              {locale === 'hi' ? 'टैगलाइन (अगर चाहें)' : 'Publication Tagline (Optional)'}
             </label>
             <input
               id="pub-tagline"
@@ -327,7 +334,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
                 border: '1px solid #D1D5DB',
                 borderRadius: '8px',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 cursor: 'pointer',
               }}
@@ -340,7 +347,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
                 if (!publicationName.trim()) {
                   setError(
                     locale === 'hi'
-                      ? 'कृपया प्रकाशन का नाम दर्ज करें।'
+                      ? 'कृपया अपने अख़बार का नाम लिखें।'
                       : 'Please enter your publication name.'
                   );
                   return;
@@ -361,7 +368,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               }}
               className="hover:bg-stone-800 transition-colors"
             >
-              {locale === 'hi' ? 'अगला: प्राथमिकताएँ →' : 'Next: Preferences →'}
+              {locale === 'hi' ? 'आगे: भाषा व पेज साइज →' : 'Next: Preferences →'}
             </button>
           </div>
         </div>
@@ -377,12 +384,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '8px',
               }}
             >
-              {locale === 'hi' ? 'प्राथमिक भाषा' : 'Primary Editorial Language'}
+              {locale === 'hi' ? 'अख़बार की मुख्य भाषा' : 'Primary Editorial Language'}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <button
@@ -435,18 +442,30 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               style={{
                 display: 'block',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 marginBottom: '8px',
               }}
             >
-              {locale === 'hi' ? 'डिफ़ॉल्ट मुद्रण प्रारूप' : 'Default Print Geometry'}
+              {locale === 'hi' ? 'डिफ़ॉल्ट पेज साइज' : 'Default Print Geometry'}
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { id: 'broadsheet', name: 'Broadsheet (600×750mm)', sub: '8-Column Classic Daily' },
-                { id: 'tabloid', name: 'Tabloid (280×430mm)', sub: '4-Column Compact Local' },
-                { id: 'berliner', name: 'Berliner (315×470mm)', sub: 'European Editorial Format' },
+                {
+                  id: 'broadsheet',
+                  name: 'Broadsheet (600×750mm)',
+                  sub: locale === 'hi' ? '8 कॉलम वाला बड़ा अख़बार' : '8-Column Classic Daily',
+                },
+                {
+                  id: 'tabloid',
+                  name: 'Tabloid (280×430mm)',
+                  sub: locale === 'hi' ? '4 कॉलम वाला कॉम्पैक्ट अख़बार' : '4-Column Compact Local',
+                },
+                {
+                  id: 'berliner',
+                  name: 'Berliner (315×470mm)',
+                  sub: locale === 'hi' ? 'मीडियम साइज अख़बार फॉर्मेट' : 'European Editorial Format',
+                },
               ].map((item) => (
                 <div
                   key={item.id}
@@ -468,7 +487,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
                       {item.name}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#6B7280' }}>{item.sub}</div>
+                    <div style={{ fontSize: '11.5px', color: '#6B7280' }}>{item.sub}</div>
                   </div>
                   <input
                     type="radio"
@@ -495,7 +514,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
                 border: '1px solid #D1D5DB',
                 borderRadius: '8px',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#374151',
                 cursor: 'pointer',
               }}
@@ -518,7 +537,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               }}
               className="hover:bg-stone-800 transition-colors"
             >
-              {locale === 'hi' ? 'समीक्षा करें →' : 'Review & Finish →'}
+              {locale === 'hi' ? 'एक नज़र चेक करें →' : 'Review & Finish →'}
             </button>
           </div>
         </div>
@@ -529,22 +548,21 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
         <div style={{ textAlign: 'center' }}>
           <div
             style={{
-              width: '64px',
-              height: '64px',
+              width: '60px',
+              height: '60px',
               borderRadius: '50%',
               backgroundColor: '#ECFDF5',
               color: '#059669',
-              fontSize: '28px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px auto',
             }}
           >
-            📰
+            <NewspaperIcon size={26} color="#059669" />
           </div>
 
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 8px 0' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: '0 0 6px 0' }}>
             {publicationName}
           </h2>
           <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 24px 0' }}>
@@ -558,7 +576,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               border: '1px solid #E5E7EB',
               padding: '16px',
               textAlign: 'left',
-              fontSize: '12px',
+              fontSize: '12.5px',
               color: '#4B5563',
               marginBottom: '28px',
               display: 'flex',
@@ -566,23 +584,21 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               gap: '8px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
               <span style={{ color: '#6B7280' }}>
                 {locale === 'hi' ? 'मुख्य संपादक:' : 'Editor in Chief:'}
               </span>
               <span style={{ fontWeight: 600, color: '#111827' }}>{fullName}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#6B7280' }}>
-                {locale === 'hi' ? 'प्रकाशन भाषा:' : 'Language:'}
-              </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+              <span style={{ color: '#6B7280' }}>{locale === 'hi' ? 'भाषा:' : 'Language:'}</span>
               <span style={{ fontWeight: 600, color: '#111827' }}>
                 {primaryLanguage === 'hi' ? 'हिन्दी (Hindi)' : 'English'}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
               <span style={{ color: '#6B7280' }}>
-                {locale === 'hi' ? 'पृष्ठ प्रारूप:' : 'Geometry:'}
+                {locale === 'hi' ? 'पेज साइज:' : 'Geometry:'}
               </span>
               <span style={{ fontWeight: 600, color: '#111827', textTransform: 'capitalize' }}>
                 {preferredPageSize}
@@ -602,7 +618,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
               border: 'none',
               borderRadius: '8px',
               fontSize: '14px',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: isSubmitting ? 'not-allowed' : 'pointer',
               opacity: isSubmitting ? 0.7 : 1,
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -611,10 +627,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onComplete, onBa
           >
             {isSubmitting
               ? locale === 'hi'
-                ? 'सेटअप पूर्ण हो रहा है...'
+                ? 'शुरू हो रहा है...'
                 : 'Completing setup...'
               : locale === 'hi'
-                ? 'डैशबोर्ड में प्रवेश करें →'
+                ? 'डैशबोर्ड खोलें →'
                 : 'Enter Publisher Dashboard →'}
           </button>
         </div>

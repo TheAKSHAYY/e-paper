@@ -2,10 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>E-Paper Studio — Modern Newspaper Publishing</title>
     <meta
       name="description"
@@ -100,36 +97,60 @@
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <link
       rel="preload"
-      href="/fonts/hind-latin-400.woff2"
+      href="/fonts/poppins-latin-400.woff2"
       as="font"
       type="font/woff2"
       crossorigin
     />
     <link
       rel="preload"
-      href="/fonts/hind-devanagari-400.woff2"
+      href="/fonts/poppins-devanagari-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/poppins-latin-600.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/poppins-devanagari-600.woff2"
       as="font"
       type="font/woff2"
       crossorigin
     />
     <style>
       :root {
-        --font-ui-sans:
-          'Inter', 'Hind', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-ui-hindi: 'Hind', 'Mukta', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        --font-ui-display: 'Playfair Display', 'Rozha One', Georgia, serif;
-        --font-ui-hindi-display: 'Rozha One', 'Noto Serif Devanagari', Georgia, serif;
+        --font-ui-sans: 'Poppins', 'Hind', sans-serif;
+        --font-ui-hindi: 'Poppins', 'Hind', 'Mukta', sans-serif;
+        --font-ui-display: 'Poppins', 'Playfair Display', 'Rozha One', Georgia, serif;
+        --font-ui-hindi-display: 'Poppins', 'Hind', 'Noto Serif Devanagari', Georgia, serif;
         --font-ui-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
         --lh-en-heading: 1.15;
         --lh-en-body: 1.55;
-        --lh-hi-heading: 1.35;
+        --lh-hi-heading: 1.32;
         --lh-hi-body: 1.65;
         --lh-control: 1.25;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
       }
       *,
       *::before,
       *::after {
         box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
       }
       html,
       body {
@@ -139,8 +160,25 @@
         min-height: 100%;
         overflow-x: hidden;
         -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: var(--font-ui-sans);
         background-color: #faf8f5;
         color: #1c1917;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid #991b1b;
+        outline-offset: 2px;
       }
       #root {
         width: 100%;
